@@ -1,0 +1,54 @@
+version: "3.8" # docker compose version
+services:
+    laravel:
+        container_name: backend
+        build:
+            context: ./backend # path to the laravel directory
+            dockerfile: Dockerfile
+        ports:
+            - "8000:80"
+        volumes:
+            - ./backend:/var/www/html # syncing laravel directory to container working directory
+        depends_on:
+            - mysql_db
+
+    mysql_db:
+        container_name: mysql_db
+        image: mysql:8.2
+        environment:
+            MYSQL_ROOT_USER: root
+            MYSQL_ROOT_PASSWORD: root
+            MYSQL_DATABASE: laravel_api_db
+            MYSQL_USER: db_user
+            MYSQL_PASSWORD: secret
+        ports:
+            - 3309:3309
+        volumes:
+            - mysql_data:/var/lib/mysql # named volume for MySQL data
+
+    phpmyadmin:
+        container_name: phpmyadmin
+        image: phpmyadmin/phpmyadmin
+        environment:
+            PMA_ARBITRARY: 1
+        ports:
+            - "8080:80"
+        depends_on:
+            - mysql_db
+
+    react:
+        container_name: frontend
+        build:
+            context: ./frontend #path to the react app
+            dockerfile: Dockerfile
+        ports:
+            - "3001:3001"
+        volumes:
+            - ./frontend:/frontend
+            - /frontend/node_modules
+        depends_on:
+            - laravel
+        command: npm run dev # run the project to live
+
+volumes:
+    mysql_data:
