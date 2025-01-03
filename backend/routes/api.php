@@ -2,6 +2,7 @@
 
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\AuthController;
+use App\Http\Controllers\ForgotPasswordController;
 
 /*
 |--------------------------------------------------------------------------
@@ -16,5 +17,10 @@ use App\Http\Controllers\AuthController;
 
 
 Route::post('login', [AuthController::class, 'login']);
+Route::post('register', [AuthController::class, 'register']);
 
 Route::middleware('auth:api')->post('logout', [AuthController::class, 'logout']);
+
+Route::post('forgot-password/send-otp', [ForgotPasswordController::class, 'sendOtp']);
+Route::post('forgot-password/verify-otp', [ForgotPasswordController::class, 'verifyOtp']);
+Route::post('forgot-password/reset', [ForgotPasswordController::class, 'resetPassword']);
