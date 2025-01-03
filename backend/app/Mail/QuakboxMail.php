@@ -13,6 +13,8 @@ class QuakboxMail extends Mailable
 {
     use Queueable, SerializesModels;
 
+    public $details;
+
     /**
      * Create a new message instance.
      */
@@ -37,7 +39,7 @@ class QuakboxMail extends Mailable
     public function content(): Content
     {
         return new Content(
-            view: 'view.name',
+            view: 'emails.forgotpassword',
         );
     }
 
@@ -53,7 +55,8 @@ class QuakboxMail extends Mailable
 
     public function build()
     {
-        return $this->subject('Example Subject')
-            ->view('emails.example');
+        return $this->subject($this->details['subject'])
+                    ->view('emails.forgotpassword') // Custom Blade template
+                    ->with('data', $this->details);
     }
 }
