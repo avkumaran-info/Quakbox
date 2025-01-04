@@ -115,6 +115,8 @@ const Signup = () => {
                 backgroundImage: `url(${bg})`,
                 backgroundSize: "cover",
                 backgroundPosition: "center",
+                height: "100vh", // Ensure full height
+                overflow: "hidden", // Prevent scrollbar on left side
               }}
             >
               {/* Overlay */}
@@ -203,21 +205,27 @@ const Signup = () => {
             </div>
 
             {/* Right Side - Centered Login Form */}
-            <div className="col-lg-4 col-md-12 col-12 d-flex align-items-center justify-content-center">
+            <div
+              className="col-lg-4 col-md-12 col-12 d-flex align-items-center justify-content-center"
+              style={{
+                maxHeight: "100vh", // Ensure the right side takes full height
+                overflowY: "auto", // Make the right section scrollable
+              }}
+            >
               <div className="p-4 w-100" style={{ maxWidth: "550px" }}>
                 {/* Company Logo and Name for small/medium screens */}
                 <div className="d-block d-lg-none text-center mb-4">
-                    <div className="d-flex align-items-center justify-content-center">
-                      <img
-                        src={logo}
-                        alt="Logo"
-                        style={{ width: "40px", marginRight: "10px" }} // Adjust logo size
-                      />
-                      <h2 className="fw-bold mb-0 fs-1">Quakbox</h2>
-                    </div>
+                  <div className="d-flex align-items-center justify-content-center">
+                    <img
+                      src={logo}
+                      alt="Logo"
+                      style={{ width: "40px", marginRight: "10px" }} // Adjust logo size
+                    />
+                    <h2 className="fw-bold mb-0 fs-1">Quakbox</h2>
                   </div>
+                </div>
+
                 <div className="bg-white rounded p-4" id="form">
-                  
                   <h2 className="text-center fw-bold mb-2 fs-3">Signup</h2>
                   <p className="form-subtitle text-center mb-1 small">
                     {t("Create a QuakBox account in 5 minutes.")}

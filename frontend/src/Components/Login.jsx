@@ -57,7 +57,7 @@ const Login = () => {
         // }
 
         // Navigate to dashboard with user details
-        navigate("/dashboard", { state: { user: userInfo } });
+        navigate("/d", { state: { user: userInfo } });
       } catch (error) {
         console.error("Error fetching user info:", error);
       }
@@ -254,7 +254,9 @@ const Login = () => {
                           Remember me
                         </label>
                       </div>
-                      <a href="#" className="small text-decoration-none">
+                      <a
+                        href="/forgetpassword"
+                        className="small text-decoration-none">
                         Forgot Password?
                       </a>
                     </div>
