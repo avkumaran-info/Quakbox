@@ -254,7 +254,14 @@ const Login = () => {
                           Remember me
                         </label>
                       </div>
-                      <a href="#" className="small text-decoration-none">
+                      <a
+                        href="#"
+                        className="small text-decoration-none"
+                        onClick={(e) => {
+                          e.preventDefault();
+                          navigate("/forgetpassword");
+                        }}
+                      >
                         Forgot Password?
                       </a>
                     </div>
