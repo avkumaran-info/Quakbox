@@ -433,7 +433,7 @@ const ForgetPassword = () => {
 
                 {step === "reset" && (
                   <>
-                    <h2 className="text-center fw-bold mb-4">
+                    <h2 className="text-center fw-bold mb-4 text-primary">
                       Reset New Password
                     </h2>
                     <form onSubmit={handleResetPassword}>
