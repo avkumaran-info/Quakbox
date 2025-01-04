@@ -10,6 +10,6 @@ export default defineConfig({
 		},
 		host: true,
 		strictPort: true,
-		port: 3005,
+		port: 3002,
 	},
 });
