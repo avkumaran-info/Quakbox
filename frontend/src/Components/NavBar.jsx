@@ -2,7 +2,9 @@ import React, { useEffect, useState } from "react";
 import axios from "axios";
 import logo from "../assets/images/quak_logo.png";
 import userImage from "../assets/images/vector-users-icon.jpg";
-
+import LeftSidebar from "./LeftSidebar";
+import Feed from "./Feed";
+import RightSidebar from "./RightSidebar";
 const NavBar = () => {
   const [countries, setCountries] = useState([]);
 
@@ -23,10 +25,10 @@ const NavBar = () => {
   }, []);
 
   return (
-    <div>
+    <div className="app">
       {/* Navbar */}
       <nav
-        className="navbar navbar-expand-lg navbar-light"
+        className="navbar navbar-expand-lg navbar-light "
         style={{
           background: "linear-gradient(90deg, #1e90ff, #87cefa)",
           padding: "0.6rem 1rem",
@@ -92,7 +94,7 @@ const NavBar = () => {
                     onClick={() => {
                       // Update the URL to include the country code
                       const countryCode = country.cca2.toLowerCase();
-                      window.location.href = `/${countryCode}`;
+                      window.location.href = `/d/${countryCode}`;
                     }}
                   >
                     <img
@@ -361,53 +363,11 @@ const NavBar = () => {
         </a>
       </div>
       {/* Sidebar (below the navbar) */}
-      <div className="sidebar w-100" style={{ paddingTop: "20px" }}>
-        <div className="d-flex flex-column">
-          <a href="#" className="list-group-item list-group-item-action py-2">
-            <i className="fas fa-tachometer-alt fa-fw me-3"></i>
-            <span>Main dashboard</span>
-          </a>
-          <a href="#" className="list-group-item list-group-item-action py-2">
-            <i className="fas fa-chart-area fa-fw me-3"></i>
-            <span>Website Traffic</span>
-          </a>
-          <a href="#" className="list-group-item list-group-item-action py-2">
-            <i className="fas fa-lock fa-fw me-3"></i>
-            <span>Password</span>
-          </a>
-          <a href="#" className="list-group-item list-group-item-action py-2">
-            <i className="fas fa-chart-line fa-fw me-3"></i>
-            <span>Analytics</span>
-          </a>
-          <a href="#" className="list-group-item list-group-item-action py-2">
-            <i className="fas fa-chart-pie fa-fw me-3"></i>
-            <span>SEO</span>
-          </a>
-          <a href="#" className="list-group-item list-group-item-action py-2">
-            <i className="fas fa-chart-bar fa-fw me-3"></i>
-            <span>Orders</span>
-          </a>
-          <a href="#" className="list-group-item list-group-item-action py-2">
-            <i className="fas fa-globe fa-fw me-3"></i>
-            <span>International</span>
-          </a>
-          <a href="#" className="list-group-item list-group-item-action py-2">
-            <i className="fas fa-building fa-fw me-3"></i>
-            <span>Partners</span>
-          </a>
-          <a href="#" className="list-group-item list-group-item-action py-2">
-            <i className="fas fa-calendar fa-fw me-3"></i>
-            <span>Calendar</span>
-          </a>
-          <a href="#" className="list-group-item list-group-item-action py-2">
-            <i className="fas fa-users fa-fw me-3"></i>
-            <span>Users</span>
-          </a>
-          <a href="#" className="list-group-item list-group-item-action py-2">
-            <i className="fas fa-money-bill fa-fw me-3"></i>
-            <span>Sales</span>
-          </a>
-        </div>
+
+      <div className="d-flex justify-content-between py-2">
+        <LeftSidebar />
+        <Feed />
+        <RightSidebar />
       </div>
     </div>
   );
