@@ -4,7 +4,7 @@ namespace App\Http\Controllers;
 \Log::info(memory_get_usage());
 ini_set('memory_limit', '2G');
 use App\Models\User;
-use App\Models\members;
+use App\Models\Members;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;

@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\User;
 use App\Models\PasswordResetOtp;
+use App\Mail\QuakboxMail;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Validator;
 use Carbon\Carbon;
@@ -20,7 +21,12 @@ class ForgotPasswordController extends Controller
         ]);
 
         if ($validator->fails()) {
-            return response()->json(['errors' => $validator->errors()], 422);
+            return response()->json([
+                "status" => false,
+                "code" => 422,
+                "message" => "Invalid Input data",
+                "errors" => $validator->errors()
+            ], 422);
         }
 
         $email = $request->email;
@@ -38,12 +44,19 @@ class ForgotPasswordController extends Controller
         );
 
         // Send OTP via email
-        Mail::raw("Your OTP is: $otp", function ($message) use ($email) {
-            $message->to($email)
-                ->subject('Password Reset OTP');
-        });
+        $data = [
+            'subject' => 'Password Reset OTP',
+            'title' => 'Password Reset Mail',
+            'message' => 'Your OTP is:'. $otp
+        ];
 
-        return response()->json(['message' => 'OTP sent successfully'], 200);
+        Mail::to($email)->send(new QuakboxMail($data));
+
+        return response()->json([
+            "status" => true,
+            "code" => 200,
+            "message" => "OTP sent successfully"
+        ], 200);
     }
 
     public function verifyOtp(Request $request)
@@ -55,7 +68,12 @@ class ForgotPasswordController extends Controller
         ]);
 
         if ($validator->fails()) {
-            return response()->json(['errors' => $validator->errors()], 422);
+            return response()->json([
+                "status" => false,
+                "code" => 422,
+                "message" => "Invalid Input data",
+                "errors" => $validator->errors()
+            ], 422);
         }
 
         $otpRecord = PasswordResetOtp::where('email', $request->email)
@@ -63,11 +81,20 @@ class ForgotPasswordController extends Controller
             ->first();
 
         if (!$otpRecord || Carbon::now()->isAfter($otpRecord->expires_at)) {
-            return response()->json(['error' => 'Invalid or expired OTP'], 422);
+            return response()->json([
+                "status" => false,
+                "code" => 422,
+                "message" => "Invalid or expired OTP",
+                "errors" => $validator->errors()
+            ], 422);
         }
 
         // OTP is valid
-        return response()->json(['message' => 'OTP verified successfully'], 200);
+        return response()->json([
+            "status" => true,
+            "code" => 200,
+            "message" => "OTP verified successfully"
+        ], 200);
     }
 
     public function resetPassword(Request $request)
@@ -80,7 +107,12 @@ class ForgotPasswordController extends Controller
         ]);
 
         if ($validator->fails()) {
-            return response()->json(['errors' => $validator->errors()], 422);
+            return response()->json([
+                "status" => false,
+                "code" => 422,
+                "message" => "Invalid Input data",
+                "errors" => $validator->errors()
+            ], 422);
         }
 
         $otpRecord = PasswordResetOtp::where('email', $request->email)
@@ -88,7 +120,12 @@ class ForgotPasswordController extends Controller
             ->first();
 
         if (!$otpRecord || Carbon::now()->isAfter($otpRecord->expires_at)) {
-            return response()->json(['error' => 'Invalid or expired OTP'], 422);
+            return response()->json([
+                "status" => false,
+                "code" => 422,
+                "message" => "Invalid or expired OTP",
+                "errors" => $validator->errors()
+            ], 422);
         }
 
         // Update password
@@ -99,7 +136,11 @@ class ForgotPasswordController extends Controller
         // Delete OTP record
         $otpRecord->delete();
 
-        return response()->json(['message' => 'Password reset successfully'], 200);
+        return response()->json([
+            "status" => true,
+            "code" => 200,
+            "message" => "Password reset successfully"
+        ], 200);
     }
 
 }
