@@ -283,15 +283,12 @@ const ForgetPassword = () => {
                 </div>
               </div>
 
-              <div className="bg-white rounded p-4">
+              <div className="bg-white rounded p-1">
                 {step === "forget" && (
                   <>
-                    <h2 className="text-center fw-bold mb-4 text-primary">
+                    <h2 className="text-center fw-bold mb-3 text-primary">
                       Forget Password
                     </h2>
-                    <h5 className="text-center mb-4 text-secondary">
-                      Enter Your Email Address
-                    </h5>
                     <form
                       onSubmit={handleForgetPassword}
                       className="w-100 mx-auto p-4 shadow-lg rounded bg-white d-flex flex-column justify-content-center align-items-center"
@@ -335,43 +332,26 @@ const ForgetPassword = () => {
 
                     <div className="text-center my-3 text-muted">or</div>
 
-                    <div className="d-flex justify-content-center gap-4 mb-4">
-                      <a
-                        href="https://www.google.com"
-                        target="_blank"
-                        rel="noopener noreferrer"
+                      <button
+                        type="button"
+                        className="btn btn-outline-danger w-100 mb-2"
+                        onClick={() => login()}
                       >
-                        <i
-                          className="bi bi-google"
-                          style={{ fontSize: "40px", cursor: "pointer" }}
-                        ></i>
-                      </a>
-                      <a
-                        href="https://www.facebook.com"
-                        target="_blank"
-                        rel="noopener noreferrer"
+                        <i className="fab fa-google me-2"></i>Sign in with Google
+                      </button>
+
+                      <button
+                        type="button"
+                        className="btn btn-outline-primary w-100"
                       >
-                        <i
-                          className="bi bi-facebook"
-                          style={{ fontSize: "40px", cursor: "pointer" }}
-                        ></i>
-                      </a>
-                      <a
-                        href="https://www.apple.com"
-                        target="_blank"
-                        rel="noopener noreferrer"
-                      >
-                        <i
-                          className="bi bi-apple"
-                          style={{ fontSize: "40px", cursor: "pointer" }}
-                        ></i>
-                      </a>
-                    </div>
+                        <i className="fab fa-facebook me-2"></i>Sign in with
+                        Facebook
+                      </button>
 
                     <div className="text-center">
-                      <p className="mb-1">Don't have an account?</p>
+                      <p className=" mt-3 mb-1 ">Don't have an account?</p>
                       <button
-                        className="btn btn-outline-dark rounded-pill px-4 py-2"
+                        className="btn btn-outline-dark rounded-pill px-4 py-2 mt-2"
                         onClick={() => navigate("/signup")}
                       >
                         Sign Up
@@ -383,7 +363,7 @@ const ForgetPassword = () => {
                 {step === "otp" && (
                   <>
                     <h2 className="text-center fw-bold mb-4 text-primary">
-                      Enter Verification Code
+                      Verification
                     </h2>
                     <form
                       onSubmit={handleVerifyOtp}
@@ -460,13 +440,13 @@ const ForgetPassword = () => {
                       {/* New Password Field */}
                       <div className="mb-3">
                         <label htmlFor="newPassword" className="form-label">
-                          {t("Enter your new password")}
+                          {t("Enter New Password")}
                         </label>
                         <input
                           type="password"
                           id="newPassword"
                           className="form-control"
-                          placeholder="Enter new password"
+                          placeholder="New Password"
                           value={newPassword}
                           onChange={(e) => setNewPassword(e.target.value)}
                         />
@@ -475,13 +455,13 @@ const ForgetPassword = () => {
                       {/* Confirm New Password Field */}
                       <div className="mb-3">
                         <label htmlFor="confirmPassword" className="form-label">
-                          {t("Confirm your new password")}
+                          {t("Confirm Password")}
                         </label>
                         <input
                           type="password"
                           id="confirmPassword"
                           className="form-control"
-                          placeholder="Confirm your new password"
+                          placeholder="Confirm Password"
                           value={confirmPassword}
                           onChange={(e) => setConfirmPassword(e.target.value)}
                         />
