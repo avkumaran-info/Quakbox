@@ -4,6 +4,7 @@ import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
 import Dashboard from "./Components/Dashboard";
 import Signup from "./Components/Signup";
 import ForgetPassword from "./Components/ForgetPassword";
+import NavBar from "./Components/NavBar";
 
 const App = () => {
   return (
@@ -13,6 +14,7 @@ const App = () => {
         <Route path="/dashboard" element={<Dashboard />} />
         <Route path="/signup" element={<Signup />} />
         <Route path="/forgetpassword" element={<ForgetPassword />} />
+        <Route path="/d" element={<NavBar/>}/>
       </Routes>
     </Router>
   );

@@ -80,7 +80,7 @@ const Login = () => {
       const userInfo = response.data;
       // Store the token (optional)
       localStorage.setItem("api_token", token);
-      navigate("/dashboard", { state: { user: userInfo } });
+      navigate("/d", { state: { user: userInfo } });
     } catch (error) {
       // Handle errors
       if (error.response) {
