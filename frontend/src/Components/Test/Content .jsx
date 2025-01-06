@@ -1,14 +1,14 @@
 import React from "react";
-import userImage from "../assets/images/vector-users-icon.jpg";
-import logo from "../assets/images/quak_logo.png";
-import imag3 from "../assets/images/login-illustration .png";
-const Feed = () => {
+import userImage from "../../assets/images/vector-users-icon.jpg";
+import logo from "../../assets/images/quak_logo.png";
+import imag3 from "../../assets/images/login-illustration .png";
+
+const Content = () => {
   return (
-    <div class="col-md-6 bg-white">
-      <h5 class="p-3">Feed</h5>
-      <div class="container w-75">
+    <div className="col-6 container p-3">
+      <div class="container">
         <div class="card p-3">
-          <div class="d-flex align-items-center mb-3">
+          <div class="d-flex align-items-center">
             <img
               src={userImage}
               alt="Profile"
@@ -29,17 +29,12 @@ const Feed = () => {
             <button class="btn btn-light d-flex align-items-center flex-grow-1 m-1">
               <i class="fa fa-image me-2 text-success"></i> Photo/video
             </button>
-            <button class="btn btn-light d-flex align-items-center flex-grow-1 m-1">
-              <i class="fa fa-face-smile me-2 text-warning"></i>{" "}
-              Feeling/activity
-            </button>
           </div>
         </div>
       </div>
-
       <div class="container my-4">
         {/* <!-- Post Card --> */}
-        <div class="card mx-auto w-75" style={{ maxWidth: "300px;" }}>
+        <div class="card mx-auto" style={{ maxWidth: "300px;" }}>
           {/* <!-- Header --> */}
           <div class="card-header d-flex align-items-center bg-white border-0">
             <img
@@ -87,7 +82,7 @@ const Feed = () => {
 
       <div class="container my-4">
         {/* <!-- Post Card --> */}
-        <div class="card mx-auto w-75" style={{ maxWidth: "300px;" }}>
+        <div class="card mx-auto" style={{ maxWidth: "300px;" }}>
           {/* <!-- Header --> */}
           <div class="card-header d-flex align-items-center bg-white border-0">
             <img
@@ -131,7 +126,7 @@ const Feed = () => {
 
       <div class="container my-4">
         {/* <!-- Post Card --> */}
-        <div class="card mx-auto w-75" style={{ maxWidth: "300px;" }}>
+        <div class="card mx-auto" style={{ maxWidth: "300px;" }}>
           {/* <!-- Header --> */}
           <div class="card-header d-flex align-items-center bg-white border-0">
             <img
@@ -176,4 +171,4 @@ const Feed = () => {
   );
 };
 
-export default Feed;
+export default Content;

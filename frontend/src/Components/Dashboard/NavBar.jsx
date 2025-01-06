@@ -1,10 +1,7 @@
 import React, { useEffect, useState } from "react";
 import axios from "axios";
-import logo from "../assets/images/quak_logo.png";
-import userImage from "../assets/images/vector-users-icon.jpg";
-import LeftSidebar from "./LeftSidebar";
-import Feed from "./Feed";
-import RightSidebar from "./RightSidebar";
+import logo from "../../assets/images/quak_logo.png";
+import userImage from "../../assets/images/vector-users-icon.jpg";
 const NavBar = () => {
   const [countries, setCountries] = useState([]);
 
@@ -25,10 +22,10 @@ const NavBar = () => {
   }, []);
 
   return (
-    <div className="app">
+    <>
       {/* Navbar */}
       <nav
-        className="navbar navbar-expand-lg navbar-light "
+        className="navbar navbar-expand-lg navbar-light fixed-top"
         style={{
           background: "linear-gradient(90deg, #1e90ff, #87cefa)",
           padding: "0.6rem 1rem",
@@ -362,14 +359,7 @@ const NavBar = () => {
           <p style={{ fontSize: "0.75rem", margin: 0 }}>Profile</p>
         </a>
       </div>
-      {/* Sidebar (below the navbar) */}
-
-      <div className="d-flex justify-content-between py-2">
-        <LeftSidebar />
-        <Feed />
-        <RightSidebar />
-      </div>
-    </div>
+    </>
   );
 };
 
