@@ -30,6 +30,7 @@ const RightSidebar = () => {
       </ul>
     </div>
   );
+  
 };
 
 export default RightSidebar;
