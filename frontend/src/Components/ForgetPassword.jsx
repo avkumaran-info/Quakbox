@@ -15,6 +15,7 @@ const ForgetPassword = () => {
   const [step, setStep] = useState("forget"); // "forget", "otp", "reset"
   const [loading, setLoading] = useState(false);
   const [countdown, setCountdown] = useState(0); // Countdown timer for resend OTP
+  const [passwordsMatch, setPasswordsMatch] = useState(true); // New state to track password match status
 
   useEffect(() => {
     let timer;
@@ -74,11 +75,13 @@ const ForgetPassword = () => {
         }
       );
       const data = await response.json();
+      console.log("data for handleForgetPassword");
+      console.log(data);
       if (data.status && data.code === 200) {
         alert(data.message); // Show success message
         setStep("otp"); // Move to OTP step
       } else {
-        alert("Failed to send OTP");
+        alert(`${data.message} OR email`);
       }
     } catch (error) {
       console.error(error);
@@ -104,20 +107,21 @@ const ForgetPassword = () => {
         }
       );
       const data = await response.json();
-
+      console.log(data);
       if (data.status && data.code === 200) {
         alert("OTP verified successfully"); // Show success message
         setStep("reset"); // Move to reset password step
       } else {
-        // Handle validation errors from the API response
-        if (data.errors) {
-          if (data.errors.email) {
-            alert(data.errors.email[0]);
-          }
-          if (data.errors.otp) {
-            alert(data.errors.otp[0]);
+        // Handle error based on response
+        if (data.message) {
+          // If a message exists in the response, display it
+          alert(data.message);
+          // Clear the OTP input field if OTP is invalid or expired
+          if (data.message === "Invalid or expired OTP") {
+            setOtp(""); // Clear OTP input field
           }
         } else {
+          // Fallback error message if message field is missing
           alert("Failed to verify OTP");
         }
       }
@@ -137,7 +141,7 @@ const ForgetPassword = () => {
       alert("Passwords do not match!");
       return;
     }
-
+    setPasswordsMatch(true);
     setLoading(true);
     try {
       const response = await fetch(
@@ -463,7 +467,10 @@ const ForgetPassword = () => {
                           className="form-control"
                           placeholder="Confirm Password"
                           value={confirmPassword}
-                          onChange={(e) => setConfirmPassword(e.target.value)}
+                          onChange={(e) => {
+                            setConfirmPassword(e.target.value);
+                            setPasswordsMatch(newPassword === e.target.value);
+                          }}
                         />
                       </div>
 
@@ -471,9 +478,13 @@ const ForgetPassword = () => {
                       <button
                         type="submit"
                         className="btn btn-primary w-100 mb-3"
-                        disabled={loading || newPassword !== confirmPassword}
+                        disabled={loading || !passwordsMatch}
                       >
-                        {loading ? "Resetting..." : "Reset Password"}
+                        {loading
+                          ? "Resetting..."
+                          : passwordsMatch
+                          ? "Reset Password"
+                          : "Password not matched"}
                       </button>
                     </form>
                   </>
