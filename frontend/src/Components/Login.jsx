@@ -279,13 +279,8 @@ const Login = () => {
                         </label>
                       </div>
                       <a
-                        href="#"
-                        className="small text-decoration-none"
-                        onClick={(e) => {
-                          e.preventDefault();
-                          navigate("/forgetpassword");
-                        }}
-                      >
+                        href="/forgetpassword"
+                        className="small text-decoration-none">
                         Forgot Password?
                       </a>
                     </div>
