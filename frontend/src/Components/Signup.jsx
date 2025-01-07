@@ -243,6 +243,7 @@ const Signup = () => {
                         className="form-control form-control-sm"
                         placeholder="Enter your username"
                         onChange={(e) => changeUserFieldHandler(e)}
+                        required
                       />
                     </div>
 
@@ -259,6 +260,7 @@ const Signup = () => {
                           className="form-control form-control-sm"
                           placeholder="Enter your desired email"
                           onChange={(e) => changeUserFieldHandler(e)}
+                          required
                         />
                         <span
                           style={{
@@ -285,6 +287,7 @@ const Signup = () => {
                         className="form-control form-control-sm"
                         placeholder="Enter your email"
                         onChange={(e) => changeUserFieldHandler(e)}
+                        required
                       />
                     </div>
 
@@ -299,6 +302,7 @@ const Signup = () => {
                         value={userField.dob}
                         className="form-control form-control-sm"
                         onChange={(e) => changeUserFieldHandler(e)}
+                        required
                       />
                     </div>
 

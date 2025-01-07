@@ -10,11 +10,11 @@ import axios from "axios";
 
 const Login = () => {
   const navigate = useNavigate();
-
   const { t } = useTranslation();
   const [userField, setUserField] = useState({
     email: "",
   });
+
   const changeLanguage = (lng) => {
     i18n.changeLanguage(lng);
   };
@@ -29,6 +29,8 @@ const Login = () => {
 
   const login = useGoogleLogin({
     onSuccess: async (tokenResponse) => {
+      console.log("tokenResponse");
+      console.log(tokenResponse);
       try {
         // Fetch user details from Google
         const userResponse = await fetch(
@@ -57,7 +59,7 @@ const Login = () => {
         // }
 
         // Navigate to dashboard with user details
-        navigate("/d", { state: { user: userInfo } });
+        navigate("/dashboard", { state: { user: userInfo } });
       } catch (error) {
         console.error("Error fetching user info:", error);
       }
@@ -66,8 +68,24 @@ const Login = () => {
       console.log("Login Failed");
     },
   });
-
+  const validateForm = () => {
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!userField.email) {
+      alert("Email is required");
+      return false;
+    }
+    if (!emailRegex.test(userField.email)) {
+      alert("Please enter a valid email address");
+      return false;
+    }
+    if (!userField.password) {
+      alert("Password is required");
+      return false;
+    }
+    return true;
+  };
   const mailLogin = async () => {
+    if (!validateForm()) return;
     try {
       const response = await axios.post(
         "https://develop.quakbox.com/admin/api/login",
@@ -86,6 +104,12 @@ const Login = () => {
       if (error.response) {
         // Server responded with a status other than 2xx
         console.error("Error Response:", error.response.data);
+        alert(error.response.data.message);
+        // Clear the password field if login failed
+        setUserField((prevState) => ({
+          ...prevState,
+          password: "", // Clear the password field
+        }));
       } else if (error.request) {
         // No response was received
         console.error("No Response:", error.request);
