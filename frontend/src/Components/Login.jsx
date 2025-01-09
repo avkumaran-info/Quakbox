@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from "react";
 import logo from "../assets/logo/quak_logo.png";
-
 import bg from "../assets/images/blurred-empty-open-space-office-600nw-2411635125.webp";
 import { useGoogleLogin } from "@react-oauth/google";
 import { useNavigate } from "react-router-dom";
@@ -24,7 +23,7 @@ const Login = () => {
       ...userField,
       [e.target.name]: e.target.value,
     });
-    console.log(userField);
+    // console.log(userField);
   };
 
   const login = useGoogleLogin({
@@ -93,12 +92,12 @@ const Login = () => {
       );
 
       // Handle successful login
-      console.log("Login Successful:", response.data);
+      // console.log("Login Successful:", response.data);
       const token = response.data.token;
       const userInfo = response.data;
       // Store the token (optional)
       localStorage.setItem("api_token", token);
-      navigate("/d", { state: { user: userInfo } });
+      navigate("/dashboard", { state: { user: userInfo } });
     } catch (error) {
       // Handle errors
       if (error.response) {
