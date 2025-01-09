@@ -24,7 +24,7 @@ const Login = () => {
       ...userField,
       [e.target.name]: e.target.value,
     });
-    console.log(userField);
+    // console.log(userField);
   };
 
   const login = useGoogleLogin({
@@ -57,7 +57,7 @@ const Login = () => {
         // }
 
         // Navigate to dashboard with user details
-        navigate("/d", { state: { user: userInfo } });
+        navigate("/dashboard", { state: { user: userInfo } });
       } catch (error) {
         console.error("Error fetching user info:", error);
       }
@@ -75,7 +75,7 @@ const Login = () => {
       );
 
       // Handle successful login
-      console.log("Login Successful:", response.data);
+      // console.log("Login Successful:", response.data);
       const token = response.data.token;
       const userInfo = response.data;
       // Store the token (optional)
@@ -256,7 +256,8 @@ const Login = () => {
                       </div>
                       <a
                         href="/forgetpassword"
-                        className="small text-decoration-none">
+                        className="small text-decoration-none"
+                      >
                         Forgot Password?
                       </a>
                     </div>

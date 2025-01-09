@@ -1,18 +1,27 @@
 import React, { useEffect, useState } from "react";
+import { jwtDecode } from "jwt-decode";
 import axios from "axios";
 import logo from "../../assets/images/quak_logo.png";
 import userImage from "../../assets/images/vector-users-icon.jpg";
+import { useNavigate } from "react-router-dom";
 const NavBar = () => {
+  const navigate = useNavigate();
   const [countries, setCountries] = useState([]);
+  const [showDropdown, setShowDropdown] = useState(false);
+  const [decodedToken, setDecodedToken] = useState(null);
 
   useEffect(() => {
+    const token = localStorage.getItem("api_token");
+    if (token) {
+      const decoded = jwtDecode(token); // Decode the token
+      setDecodedToken(decoded); // Set the decoded token to state
+      console.log(decoded); // Log the decoded token to the console (for debugging)
+    }
+
     const fetchCountries = async () => {
       try {
         const res = await axios.get("https://restcountries.com/v3.1/all");
         setCountries(res.data);
-        console.log(res.data);
-
-        console.log(countries);
       } catch (error) {
         console.error("Error fetching countries:", error);
       }
@@ -21,9 +30,40 @@ const NavBar = () => {
     fetchCountries();
   }, []);
 
+  const handleLogout = async () => {
+    const token = localStorage.getItem("api_token");
+
+    if (!token) {
+      console.log("No token found, user may not be logged in.");
+      return;
+    }
+
+    try {
+      // Make the API call with the token in the header
+      const response = await axios.post(
+        "https://develop.quakbox.com/admin/api/logout",
+        {},
+        {
+          headers: {
+            Authorization: `Bearer ${token}`, // Send token in Authorization header
+          },
+        }
+      );
+
+      // Clear local storage and redirect
+      localStorage.clear();
+      navigate("/", { replace: true }); // Redirect to login page
+    } catch (error) {
+      // Handle error from the API
+      if (error.response) {
+        console.error("Error Response:", error.response.data);
+      } else {
+        console.error("Logout Error:", error.message);
+      }
+    }
+  };
   return (
     <>
-      {/* Navbar */}
       <nav
         className="navbar navbar-expand-lg navbar-light fixed-top"
         style={{
@@ -206,7 +246,14 @@ const NavBar = () => {
               <i className="fa-solid fa-search"></i>
             </div>
 
-            <button
+            <a
+              href="#"
+              className="nav-link"
+              style={{ color: "#ffffff", fontSize: "1.8rem" }}
+            >
+              <i className="fa-regular fa-comments"></i>
+            </a>
+            {/* <button
               className="navbar-toggler"
               type="button"
               data-bs-toggle="collapse"
@@ -216,7 +263,7 @@ const NavBar = () => {
               aria-label="Toggle navigation"
             >
               <span className="navbar-toggler-icon"></span>
-            </button>
+            </button> */}
           </div>
 
           {/* Desktop Full Menu */}
@@ -227,7 +274,7 @@ const NavBar = () => {
             <ul className="navbar-nav mx-auto">
               <li className="nav-item">
                 <a
-                  href="#"
+                  href="/dashboard"
                   className="nav-link"
                   style={{ color: "#ffffff", fontSize: "1rem" }}
                 >
@@ -259,6 +306,24 @@ const NavBar = () => {
                   style={{ color: "#ffffff", fontSize: "1rem" }}
                 >
                   <i className="fa-solid fa-bell"></i> Notifications
+                </a>
+              </li>
+              <li className="nav-item">
+                <a
+                  href="#"
+                  className="nav-link"
+                  style={{ color: "#ffffff", fontSize: "1rem" }}
+                >
+                  <i className="fa-solid fa-star"></i> favourite country
+                </a>
+              </li>
+              <li className="nav-item">
+                <a
+                  href="#"
+                  className="nav-link"
+                  style={{ color: "#ffffff", fontSize: "1rem" }}
+                >
+                  <i className="fa-solid fa-comments"></i> Chat Room
                 </a>
               </li>
             </ul>
@@ -301,6 +366,9 @@ const NavBar = () => {
                   marginLeft: "10px",
                   border: "2px solid #ffffff",
                 }}
+                onClick={() => {
+                  setShowDropdown((prev) => !prev);
+                }}
               >
                 <img
                   src={userImage}
@@ -308,44 +376,89 @@ const NavBar = () => {
                   style={{ width: "100%", height: "100%", objectFit: "cover" }}
                 />
               </div>
+              {showDropdown && (
+                <div
+                  className="dropdown-menu"
+                  style={{
+                    position: "absolute",
+                    top: "50px",
+                    right: "0",
+                    backgroundColor: "#ffffff",
+                    boxShadow: "0 4px 6px rgba(0, 0, 0, 0.1)",
+                    borderRadius: "5px",
+                    zIndex: 1000,
+                    width: "200px",
+                    display: "block",
+                  }}
+                >
+                  <a
+                    href="#"
+                    className="dropdown-item"
+                    style={{ padding: "10px 15px", color: "#333" }}
+                    onClick={() =>
+                      console.log("Change Profile Picture clicked")
+                    }
+                  >
+                    Change Profile Picture
+                  </a>
+                  <a
+                    href="#"
+                    className="dropdown-item"
+                    style={{ padding: "10px 15px", color: "#333" }}
+                    onClick={() => console.log("Change Password clicked")}
+                  >
+                    Change Password
+                  </a>
+                  <div className="dropdown-divider"></div>
+                  <a
+                    href="#"
+                    className="dropdown-item"
+                    style={{ padding: "10px 15px", color: "#333" }}
+                    onClick={handleLogout}
+                  >
+                    Logout
+                  </a>
+                </div>
+              )}
             </div>
           </div>
         </div>
       </nav>
-
       {/* Mobile Icon Row (Just Below the Logo) */}
       <div
-        className="d-lg-none bg-light d-flex justify-content-around py-2"
+        className="d-lg-none bg-light d-flex justify-content-around fixed-top"
         style={{
           borderTop: "1px solid #ddd",
           padding: "10px",
+          marginTop: "65px",
         }}
       >
-        <a href="#" className="text-dark text-center">
-          <i className="fa-solid fa-house" style={{ fontSize: "1.5rem" }}></i>
+        <a href="/dashboard" className="text-dark text-center">
+          <i className="fa-solid fa-house" style={{ fontSize: "1rem" }}></i>
           <p style={{ fontSize: "0.75rem", margin: 0 }}>Home</p>
         </a>
         <a href="#" className="text-dark text-center">
-          <i className="fa-solid fa-globe" style={{ fontSize: "1.5rem" }}></i>
+          <i className="fa-solid fa-globe" style={{ fontSize: "1rem" }}></i>
           <p style={{ fontSize: "0.75rem", margin: 0 }}>World</p>
         </a>
         <a href="#" className="text-dark text-center">
           <i
             className="fa-solid fa-user-friends"
-            style={{ fontSize: "1.5rem" }}
+            style={{ fontSize: "1rem" }}
           ></i>
           <p style={{ fontSize: "0.75rem", margin: 0 }}>Friends</p>
         </a>
         <a href="#" className="text-dark text-center">
-          <i className="fa-solid fa-bell" style={{ fontSize: "1.5rem" }}></i>
+          <i className="fa-solid fa-bell" style={{ fontSize: "1rem" }}></i>
           <p style={{ fontSize: "0.75rem", margin: 0 }}>Alerts</p>
         </a>
+
         <a href="#" className="text-dark text-center">
           <div
             style={{
               borderRadius: "50%",
-              width: "30px",
-              height: "30px",
+              width: "25px",
+              height: "25px",
               overflow: "hidden",
               margin: "0 auto",
             }}

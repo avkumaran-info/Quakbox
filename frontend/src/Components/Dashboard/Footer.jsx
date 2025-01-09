@@ -16,7 +16,8 @@ const Footer = () => {
             {/* Icons with Labels */}
             <div className="col-auto d-flex flex-column justify-content-center align-items-center">
               <i className="fa-solid fa-globe"></i>
-              <span className="d-none d-sm-block">Home</span> {/* Hide text on small screens */}
+              <span className="d-none d-sm-block">Home</span>{" "}
+              {/* Hide text on small screens */}
             </div>
             <div className="col-auto d-flex flex-column justify-content-center align-items-center">
               <i className="fa-solid fa-arrow-right"></i>
