@@ -75,13 +75,11 @@ const ForgetPassword = () => {
         }
       );
       const data = await response.json();
-      console.log("data for handleForgetPassword");
-      console.log(data);
       if (data.status && data.code === 200) {
         alert(data.message); // Show success message
         setStep("otp"); // Move to OTP step
       } else {
-        alert(`${data.message} OR email`);
+        alert("Failed to send OTP");
       }
     } catch (error) {
       console.error(error);
@@ -107,21 +105,20 @@ const ForgetPassword = () => {
         }
       );
       const data = await response.json();
-      console.log(data);
+
       if (data.status && data.code === 200) {
         alert("OTP verified successfully"); // Show success message
         setStep("reset"); // Move to reset password step
       } else {
-        // Handle error based on response
-        if (data.message) {
-          // If a message exists in the response, display it
-          alert(data.message);
-          // Clear the OTP input field if OTP is invalid or expired
-          if (data.message === "Invalid or expired OTP") {
-            setOtp(""); // Clear OTP input field
+        // Handle validation errors from the API response
+        if (data.errors) {
+          if (data.errors.email) {
+            alert(data.errors.email[0]);
+          }
+          if (data.errors.otp) {
+            alert(data.errors.otp[0]);
           }
         } else {
-          // Fallback error message if message field is missing
           alert("Failed to verify OTP");
         }
       }
@@ -141,7 +138,7 @@ const ForgetPassword = () => {
       alert("Passwords do not match!");
       return;
     }
-    setPasswordsMatch(true);
+
     setLoading(true);
     try {
       const response = await fetch(
@@ -290,208 +287,11 @@ const ForgetPassword = () => {
                 </div>
               </div>
 
-              <div className="bg-white rounded p-1">
-                {step === "forget" && (
-                  <>
-                    <h2 className="text-center fw-bold mb-3 text-primary">
-                      Forget Password
-                    </h2>
-                    <form
-                      onSubmit={handleForgetPassword}
-                      className="w-100 mx-auto p-4 shadow-lg rounded bg-white d-flex flex-column justify-content-center align-items-center"
-                      style={{ maxWidth: "400px" }} // Add max width for the form
-                    >
-                      <div className="mb-3 w-100">
-                        <label
-                          htmlFor="email"
-                          className="form-label fw-semibold"
-                        >
-                          Email Address
-                        </label>
-                        <input
-                          type="email"
-                          id="email"
-                          className="form-control"
-                          placeholder="Enter your email"
-                          value={email}
-                          onChange={(e) => setEmail(e.target.value)}
-                          required
-                        />
-                      </div>
-
-                      <button
-                        type="button"
-                        className="btn btn-link w-100 text-decoration-none mb-3"
-                        onClick={() => navigate("/")}
-                      >
-                        <i className="bi bi-arrow-left-circle"></i> Back to Sign
-                        In
-                      </button>
-
-                      <button
-                        type="submit"
-                        className="btn btn-primary w-100 mb-3 py-2"
-                        disabled={loading}
-                      >
-                        {loading ? "Sending..." : "Submit"}
-                      </button>
-                    </form>
-
-                    <div className="text-center my-3 text-muted">or</div>
-
-                    <button
-                      type="button"
-                      className="btn btn-outline-danger w-100 mb-2"
-                      onClick={() => login()}
-                    >
-                      <i className="fab fa-google me-2"></i>Sign in with Google
-                    </button>
-
-                    <button
-                      type="button"
-                      className="btn btn-outline-primary w-100"
-                    >
-                      <i className="fab fa-facebook me-2"></i>Sign in with
-                      Facebook
-                    </button>
-
-                    <div className="text-center">
-                      <p className=" mt-3 mb-1 ">Don't have an account?</p>
-                      <button
-                        className="btn btn-outline-dark rounded-pill px-4 py-2 mt-2"
-                        onClick={() => navigate("/signup")}
-                      >
-                        Sign Up
-                      </button>
-                    </div>
-                  </>
-                )}
-
-                {step === "otp" && (
-                  <>
-                    <h2 className="text-center fw-bold mb-4 text-primary">
-                      Verification
-                    </h2>
-                    <form
-                      onSubmit={handleVerifyOtp}
-                      className="w-100 mx-auto p-4 shadow-lg rounded bg-white"
-                      style={{ maxWidth: "400px" }} // Limiting the form width
-                    >
-                      {/*  */}
-                      <div className="mb-4">
-                        <label
-                          htmlFor="otp"
-                          className="form-label fw-semibold text-dark"
-                        >
-                          {t("Enter OTP sent to your email")}
-                        </label>
-                        <input
-                          type="text"
-                          id="otp"
-                          className="form-control form-control-lg"
-                          placeholder="Enter OTP"
-                          value={otp}
-                          onChange={(e) => setOtp(e.target.value)}
-                          required
-                        />
-                      </div>
-                      {/*  */}
-                      <button
-                        type="submit"
-                        className="btn btn-primary w-100 mb-3 py-2"
-                        disabled={loading}
-                      >
-                        {loading ? (
-                          <span
-                            className="spinner-border spinner-border-sm"
-                            role="status"
-                            aria-hidden="true"
-                          ></span>
-                        ) : (
-                          "Verify OTP"
-                        )}
-                      </button>
-                      {/* Resend OTP Link */}
-                      <div className="text-center mt-3">
-                        <button
-                          type="button"
-                          className="btn btn-link text-decoration-none"
-                          onClick={handleResendOtp}
-                          disabled={loading || countdown > 0}
-                        >
-                          {loading ? (
-                            "Resending..."
-                          ) : countdown > 0 ? (
-                            `Resend in ${countdown}s`
-                          ) : (
-                            <span>
-                              If you didn't receive any code !
-                              <span className="text-danger fw-bold">
-                                {" "}
-                                Resend
-                              </span>
-                            </span>
-                          )}
-                        </button>
-                      </div>
-                    </form>
-                  </>
-                )}
-
-                {step === "reset" && (
-                  <>
-                    <h2 className="text-center fw-bold mb-4 text-primary">
-                      Reset New Password
-                    </h2>
-                    <form onSubmit={handleResetPassword}>
-                      {/* New Password Field */}
-                      <div className="mb-3">
-                        <label htmlFor="newPassword" className="form-label">
-                          {t("Enter New Password")}
-                        </label>
-                        <input
-                          type="password"
-                          id="newPassword"
-                          className="form-control"
-                          placeholder="New Password"
-                          value={newPassword}
-                          onChange={(e) => setNewPassword(e.target.value)}
-                        />
-                      </div>
-
-                      {/* Confirm New Password Field */}
-                      <div className="mb-3">
-                        <label htmlFor="confirmPassword" className="form-label">
-                          {t("Confirm Password")}
-                        </label>
-                        <input
-                          type="password"
-                          id="confirmPassword"
-                          className="form-control"
-                          placeholder="Confirm Password"
-                          value={confirmPassword}
-                          onChange={(e) => {
-                            setConfirmPassword(e.target.value);
-                            setPasswordsMatch(newPassword === e.target.value);
-                          }}
-                        />
-                      </div>
-
-                      {/* Submit Button */}
-                      <button
-                        type="submit"
-                        className="btn btn-primary w-100 mb-3"
-                        disabled={loading || !passwordsMatch}
-                      >
-                        {loading
-                          ? "Resetting..."
-                          : passwordsMatch
-                          ? "Reset Password"
-                          : "Password not matched"}
-                      </button>
-                    </form>
-                  </>
-                )}
+              {/* Copyright */}
+              <div>
+                <p className="small mb-0">
+                  © 2024 Quakbox. All rights reserved.
+                </p>
               </div>
             </div>
           </div>
@@ -515,12 +315,15 @@ const ForgetPassword = () => {
             </div>
           </div>
 
-          <div className="bg-white rounded p-1">
+          <div className="bg-white rounded">
             {step === "forget" && (
               <>
-                <h2 className="text-center fw-bold mb-3 text-primary">
+                <h2 className="text-center fw-bold mb-4 text-primary ">
                   Forget Password
                 </h2>
+                <h5 className="text-center mb-4 text-secondary">
+                  Enter Your Email Address
+                </h5>
                 <form
                   onSubmit={handleForgetPassword}
                   className="w-100 mx-auto p-4 shadow-lg rounded bg-white d-flex flex-column justify-content-center align-items-center"
@@ -560,22 +363,43 @@ const ForgetPassword = () => {
 
                 <div className="text-center my-3 text-muted">or</div>
 
-                <button
-                  type="button"
-                  className="btn btn-outline-danger w-100 mb-2"
-                  onClick={() => login()}
-                >
-                  <i className="fab fa-google me-2"></i>Sign in with Google
-                </button>
-
-                <button type="button" className="btn btn-outline-primary w-100">
-                  <i className="fab fa-facebook me-2"></i>Sign in with Facebook
-                </button>
+                <div className="d-flex justify-content-center gap-4 mb-4">
+                  <a
+                    href="https://www.google.com"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                  >
+                    <i
+                      className="bi bi-google"
+                      style={{ fontSize: "40px", cursor: "pointer" }}
+                    ></i>
+                  </a>
+                  <a
+                    href="https://www.facebook.com"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                  >
+                    <i
+                      className="bi bi-facebook"
+                      style={{ fontSize: "40px", cursor: "pointer" }}
+                    ></i>
+                  </a>
+                  <a
+                    href="https://www.apple.com"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                  >
+                    <i
+                      className="bi bi-apple"
+                      style={{ fontSize: "40px", cursor: "pointer" }}
+                    ></i>
+                  </a>
+                </div>
 
                 <div className="text-center">
-                  <p className=" mt-3 mb-1 ">Don't have an account?</p>
+                  <p className="mb-1">Don't have an account?</p>
                   <button
-                    className="btn btn-outline-dark rounded-pill px-4 py-2 mt-2"
+                    className="btn btn-outline-dark rounded-pill px-4 py-2"
                     onClick={() => navigate("/signup")}
                   >
                     Sign Up
@@ -587,7 +411,7 @@ const ForgetPassword = () => {
             {step === "otp" && (
               <>
                 <h2 className="text-center fw-bold mb-4 text-primary">
-                  Verification
+                  Enter Verification Code
                 </h2>
                 <form
                   onSubmit={handleVerifyOtp}
@@ -659,13 +483,13 @@ const ForgetPassword = () => {
                   {/* New Password Field */}
                   <div className="mb-3">
                     <label htmlFor="newPassword" className="form-label">
-                      {t("Enter New Password")}
+                      {t("Enter your new password")}
                     </label>
                     <input
                       type="password"
                       id="newPassword"
                       className="form-control"
-                      placeholder="New Password"
+                      placeholder="Enter new password"
                       value={newPassword}
                       onChange={(e) => setNewPassword(e.target.value)}
                     />
@@ -674,18 +498,15 @@ const ForgetPassword = () => {
                   {/* Confirm New Password Field */}
                   <div className="mb-3">
                     <label htmlFor="confirmPassword" className="form-label">
-                      {t("Confirm Password")}
+                      {t("Confirm your new password")}
                     </label>
                     <input
                       type="password"
                       id="confirmPassword"
                       className="form-control"
-                      placeholder="Confirm Password"
+                      placeholder="Confirm your new password"
                       value={confirmPassword}
-                      onChange={(e) => {
-                        setConfirmPassword(e.target.value);
-                        setPasswordsMatch(newPassword === e.target.value);
-                      }}
+                      onChange={(e) => setConfirmPassword(e.target.value)}
                     />
                   </div>
 
@@ -693,13 +514,9 @@ const ForgetPassword = () => {
                   <button
                     type="submit"
                     className="btn btn-primary w-100 mb-3"
-                    disabled={loading || !passwordsMatch}
+                    disabled={loading || newPassword !== confirmPassword}
                   >
-                    {loading
-                      ? "Resetting..."
-                      : passwordsMatch
-                      ? "Reset Password"
-                      : "Password not matched"}
+                    {loading ? "Resetting..." : "Reset Password"}
                   </button>
                 </form>
               </>

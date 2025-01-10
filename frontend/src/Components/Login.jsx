@@ -1,14 +1,13 @@
 import React, { useState, useEffect } from "react";
 import logo from "../assets/logo/quak_logo.png";
+import { ToastContainer, toast, Bounce, Zoom } from "react-toastify";
 import bg from "../assets/images/blurred-empty-open-space-office-600nw-2411635125.webp";
+import "react-toastify/dist/ReactToastify.css";
 import { useGoogleLogin } from "@react-oauth/google";
 import { useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import i18n from "../i18n.js";
 import axios from "axios";
-import ErrorMessage from "./ErrorMessage.jsx";
-import SuccessMessage from "./SuccessMessage.jsx";
-import ConfirmationMessage from "./ConfirmationMessage.jsx";
 
 const Login = () => {
   const navigate = useNavigate();
@@ -16,7 +15,7 @@ const Login = () => {
   const [userField, setUserField] = useState({
     email: "",
   });
-  const [modalData, setModalData] = useState(null); // Manage modal data state
+
   const changeLanguage = (lng) => {
     i18n.changeLanguage(lng);
   };
@@ -26,7 +25,7 @@ const Login = () => {
       ...userField,
       [e.target.name]: e.target.value,
     });
-    // console.log(userField);
+    console.log(userField);
   };
 
   const login = useGoogleLogin({
@@ -61,42 +60,63 @@ const Login = () => {
         // }
 
         // Navigate to dashboard with user details
+        toast.success("Google login successful!", {
+          position: "top-right",
+          autoClose: 5000,
+          hideProgressBar: false,
+          closeOnClick: true,
+          pauseOnHover: true,
+          draggable: true,
+          theme: "light",
+          transition: Bounce,
+        });
         navigate("/dashboard", { state: { user: userInfo } });
       } catch (error) {
+        toast.error("Error logging in with Google", { transition: Bounce });
         console.error("Error fetching user info:", error);
       }
     },
     onError: () => {
       console.log("Login Failed");
+      toast.error("Google login failed", {
+        position: "top-right",
+        autoClose: 5000,
+        hideProgressBar: false,
+        closeOnClick: true,
+        pauseOnHover: true,
+        draggable: true,
+        theme: "light",
+        transition: Bounce,
+      });
     },
   });
   const validateForm = () => {
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!userField.email) {
       // alert("Email is required");
-      setModalData({
-        type: "error",
-        message: "Email is required",
-        onConfirm: closeModal,
+
+      toast.error("Email is required", {
+        position: "top-center",
+        autoClose: 5000,
+        hideProgressBar: false,
+        closeOnClick: true,
+        pauseOnHover: true,
+        draggable: true,
+        theme: "light",
+        transition: Bounce,
       });
       return false;
     }
     if (!emailRegex.test(userField.email)) {
       // alert("Please enter a valid email address");
-      setModalData({
-        type: "error",
-        message: "Please enter a valid email address",
-        onConfirm: closeModal,
-      });
+
+      toast.error("Please enter a valid email address", { transition: Bounce });
       return false;
     }
     if (!userField.password) {
       // alert("Password is required");
-      setModalData({
-        type: "error",
-        message: "Password is required",
-        onConfirm: closeModal,
-      });
+
+      toast.error("Password is required", { transition: Bounce });
       return false;
     }
     return true;
@@ -110,11 +130,12 @@ const Login = () => {
       );
 
       // Handle successful login
-      // console.log("Login Successful:", response.data);
+      console.log("Login Successful:", response.data);
       const token = response.data.token;
       const userInfo = response.data;
       // Store the token (optional)
       localStorage.setItem("api_token", token);
+      toast.success("Login successful!", { transition: Bounce });
       navigate("/dashboard", { state: { user: userInfo } });
     } catch (error) {
       // Handle errors
@@ -122,11 +143,8 @@ const Login = () => {
         // Server responded with a status other than 2xx
         console.error("Error Response:", error.response.data);
         // alert(error.response.data.message);
-        setModalData({
-          type: "error",
-          message: error.response.data.message,
-          onConfirm: closeModal,
-        });
+
+        toast.error(error.response.data.message, { transition: Bounce });
         // Clear the password field if login failed
         setUserField((prevState) => ({
           ...prevState,
@@ -135,15 +153,17 @@ const Login = () => {
       } else if (error.request) {
         // No response was received
         console.error("No Response:", error.request);
+        toast.error("No response received from the server", {
+          transition: Bounce,
+        });
       } else {
         // Something else caused the error
         console.error("Error Message:", error.message);
+        toast.error("An unexpected error occurred", { transition: Bounce });
       }
     }
   };
-  const closeModal = () => {
-    setModalData(null);
-  };
+
   return (
     <>
       <div className="container-fluid vh-100 d-flex flex-column flex-md-row p-0">
@@ -328,8 +348,12 @@ const Login = () => {
                     </label>
                   </div>
                   <a
-                    href="/forgetpassword"
                     className="small text-decoration-none"
+                    style={{ cursor: "pointer" }}
+                    onClick={(e) => {
+                      e.preventDefault();
+                      navigate("/forgetpassword"); // Use navigate to route without refreshing the page
+                    }}
                   >
                     Forgot Password?
                   </a>
@@ -378,26 +402,19 @@ const Login = () => {
           </div>
         </div>
       </div>
-      {/* Conditional Modal Rendering */}
-      {modalData && modalData.type === "success" && (
-        <SuccessMessage
-          message={modalData.message}
-          onConfirm={modalData.onConfirm}
-        />
-      )}
-      {modalData && modalData.type === "error" && (
-        <ErrorMessage
-          message={modalData.message}
-          onConfirm={modalData.onConfirm}
-        />
-      )}
-      {modalData && modalData.type === "confirmation" && (
-        <ConfirmationMessage
-          message={modalData.message}
-          onConfirm={modalData.onConfirm}
-          onCancel={modalData.onCancel}
-        />
-      )}
+      <ToastContainer
+        position="top-center"
+        autoClose={5000}
+        hideProgressBar={false}
+        newestOnTop={false}
+        closeOnClick={true}
+        rtl={false}
+        pauseOnFocusLoss
+        draggable
+        pauseOnHover
+        theme="light"
+        transition={Bounce}
+      />
     </>
   );
 };

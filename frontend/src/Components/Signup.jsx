@@ -1,19 +1,17 @@
 import { useState, useEffect } from "react";
-
+import { ToastContainer, toast, Bounce, Zoom } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
 import axios from "axios";
 import { useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import logo from "../assets/logo/quak_logo.png";
 import bg from "../assets/images/blurred-empty-open-space-office-600nw-2411635125.webp";
-import ErrorMessage from "./ErrorMessage.jsx";
-import SuccessMessage from "./SuccessMessage.jsx";
-import ConfirmationMessage from "./ConfirmationMessage.jsx";
+
 const Signup = () => {
   const navigate = useNavigate();
   const { t } = useTranslation();
   const [selectedCountry, setSelectedCountry] = useState(null);
   const [dropdownVisible, setDropdownVisible] = useState(false);
-  const [validationErrors, setValidationErrors] = useState({});
   const [message, setMessage] = useState(""); // For Success, Error, or Confirmation messages
   const countries = [
     {
@@ -56,9 +54,16 @@ const Signup = () => {
     event.preventDefault();
     const errors = validateFields();
     if (errors.length > 0) {
-      setMessage(
-        <ErrorMessage message={errors[0].message} onConfirm={clearMessage} />
-      );
+      toast.error(errors[0].message, {
+        position: "top-center",
+        autoClose: 5000,
+        hideProgressBar: false,
+        closeOnClick: true,
+        pauseOnHover: true,
+        draggable: true,
+        theme: "light",
+        transition: Bounce,
+      });
     } else {
       signup(); // Proceed with signup if no errors
     }
@@ -74,9 +79,16 @@ const Signup = () => {
     // Re-validate the form to clear the current error if resolved
     const errors = validateFields();
     if (errors.length > 0 && errors[0].field === name) {
-      setMessage(
-        <ErrorMessage message={errors[0].message} onConfirm={clearMessage} />
-      );
+      toast.error(errors[0].message, {
+        position: "top-center",
+        autoClose: 5000,
+        hideProgressBar: false,
+        closeOnClick: true,
+        pauseOnHover: true,
+        draggable: true,
+        theme: "light",
+        transition: Bounce,
+      });
     } else {
       setMessage(""); // Reset message if there are no errors
     }
@@ -114,35 +126,57 @@ const Signup = () => {
         userField
       );
       console.log(response);
-      // Handle successful login
+
       if (response.data.result) {
-        setMessage(<SuccessMessage message="Registered successfully!" />);
+        toast.success("Registered successfully!", {
+          position: "top-center",
+          autoClose: 5000,
+          hideProgressBar: false,
+          closeOnClick: true,
+          pauseOnHover: true,
+          draggable: true,
+          theme: "light",
+          transition: Bounce,
+        });
+
         if (window.confirm("Registered successfully!")) {
           navigate("/", {});
         }
       }
     } catch (error) {
       if (error.response) {
-        setMessage(
-          <ErrorMessage
-            message="Server error occurred. Please try again."
-            onConfirm={clearMessage}
-          />
-        );
+        toast.error(errors[0].message, {
+          position: "top-center",
+          autoClose: 5000,
+          hideProgressBar: false,
+          closeOnClick: true,
+          pauseOnHover: true,
+          draggable: true,
+          theme: "light",
+          transition: Bounce,
+        });
       } else if (error.request) {
-        setMessage(
-          <ErrorMessage
-            message="No response received. Please try again."
-            onConfirm={clearMessage}
-          />
-        );
+        toast.error("No response received. Please try again.", {
+          position: "top-center",
+          autoClose: 5000,
+          hideProgressBar: false,
+          closeOnClick: true,
+          pauseOnHover: true,
+          draggable: true,
+          theme: "light",
+          transition: Bounce,
+        });
       } else {
-        setMessage(
-          <ErrorMessage
-            message="Something went wrong. Please try again."
-            onConfirm={clearMessage}
-          />
-        );
+        toast.error("Something went wrong. Please try again.", {
+          position: "top-center",
+          autoClose: 5000,
+          hideProgressBar: false,
+          closeOnClick: true,
+          pauseOnHover: true,
+          draggable: true,
+          theme: "light",
+          transition: Bounce,
+        });
       }
     }
   };
@@ -365,9 +399,6 @@ const Signup = () => {
                   placeholder="Enter your username"
                   onChange={(e) => changeUserFieldHandler(e)}
                 />
-                {validationErrors.name && (
-                  <small className="text-danger">{validationErrors.name}</small>
-                )}
               </div>
 
               <div className="form-group">
@@ -395,11 +426,6 @@ const Signup = () => {
                     @quakbox.com
                   </span>
                 </div>
-                {validationErrors.quakboxEmail && (
-                  <small className="text-danger">
-                    {validationErrors.quakboxEmail}
-                  </small>
-                )}
               </div>
 
               <div className="form-group mb-1">
@@ -415,11 +441,6 @@ const Signup = () => {
                   placeholder="Enter your email"
                   onChange={(e) => changeUserFieldHandler(e)}
                 />
-                {validationErrors.email && (
-                  <small className="text-danger">
-                    {validationErrors.email}
-                  </small>
-                )}
               </div>
 
               <div className="form-group mb-1">
@@ -434,9 +455,6 @@ const Signup = () => {
                   className="form-control form-control-sm"
                   onChange={(e) => changeUserFieldHandler(e)}
                 />
-                {validationErrors.dob && (
-                  <small className="text-danger">{validationErrors.dob}</small>
-                )}
               </div>
               {/* Country Dropdown */}
               <div className="mb-3">
@@ -467,47 +485,30 @@ const Signup = () => {
                         />
                       </div>
                     )}
-                    <select
-                      className="form-select ms-2"
-                      id="country"
-                      value={selectedCountry ? selectedCountry.code : ""}
-                      onChange={(e) =>
-                        handleSelect(
-                          countries.find(
-                            (country) => country.code === e.target.value
+                    <div className="custom-dropdown">
+                      <select
+                        className="form-select ms-2"
+                        id="country"
+                        value={selectedCountry ? selectedCountry.code : ""}
+                        onChange={(e) =>
+                          handleSelect(
+                            countries.find(
+                              (country) => country.code === e.target.value
+                            )
                           )
-                        )
-                      }
-                    >
-                      <option value="">Select your country</option>
-                      {countries.map((country) => {
-                        return (
+                        }
+                      >
+                        <option value="">Select your country</option>
+                        {countries.map((country) => (
                           <option key={country.code} value={country.code}>
-                            <img
-                              src={country.flag}
-                              alt={country.name}
-                              style={{
-                                width: "20px",
-                                height: "14px",
-                                marginRight: "8px",
-                                verticalAlign: "middle",
-                              }}
-                            />
                             {country.name}
                           </option>
-                        );
-                      })}
-                    </select>
-                    {validationErrors.country && (
-                      <small className="text-danger ms-2">
-                        {validationErrors.country}
-                      </small>
-                    )}
+                        ))}
+                      </select>
+                    </div>
                   </div>
                 </div>
               </div>
-
-              {/* Country Dropdown close */}
               <div className="form-group mb-1">
                 <label htmlFor="password" className="fs-6">
                   Password
@@ -521,11 +522,6 @@ const Signup = () => {
                   placeholder="Create a password"
                   onChange={(e) => changeUserFieldHandler(e)}
                 />
-                {validationErrors.password && (
-                  <small className="text-danger">
-                    {validationErrors.password}
-                  </small>
-                )}
               </div>
               <div className="form-group mb-1">
                 <label htmlFor="confirmPassword" className="fs-6">
@@ -540,11 +536,6 @@ const Signup = () => {
                   placeholder="Confirm your password"
                   onChange={(e) => changeUserFieldHandler(e)}
                 />
-                {validationErrors.confirmPassword && (
-                  <small className="text-danger">
-                    {validationErrors.confirmPassword}
-                  </small>
-                )}
               </div>
               <div className="form-group d-flex justify-content-between">
                 <div>
@@ -558,11 +549,6 @@ const Signup = () => {
                   </label>{" "}
                   <a href="/terms">{t("terms and conditions")}</a>
                 </div>
-                {validationErrors.terms && (
-                  <small className="text-danger">
-                    {validationErrors.terms}
-                  </small>
-                )}
               </div>
               {/* Submit Button */}
               <div className="text-center mt-3">
@@ -590,6 +576,21 @@ const Signup = () => {
               </a>
             </p>
           </div>
+          {/* ToastContainer to display toasts */}
+
+          <ToastContainer
+            position="top-center"
+            autoClose={5000}
+            hideProgressBar={false}
+            newestOnTop={false}
+            closeOnClick={true}
+            rtl={false}
+            pauseOnFocusLoss
+            draggable
+            pauseOnHover
+            theme="light"
+            transition={Bounce}
+          />
         </div>
       </div>
     </div>
