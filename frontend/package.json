@@ -23,6 +23,7 @@
     "react-icons": "^5.4.0",
     "react-router-dom": "^7.0.2",
     "react-social-login-buttons": "^4.1.0",
+    "react-toastify": "^11.0.2",
     "reactjs-social-login": "^2.6.3"
   },
   "devDependencies": {
