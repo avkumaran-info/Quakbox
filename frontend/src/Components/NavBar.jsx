@@ -1,11 +1,9 @@
 import React, { useEffect, useRef, useState } from "react";
-import logo from "../../assets/logo/logo.png";
-import profileImage from "../../assets/images/vector-users-icon.jpg";
+import logo from "../assets/logo/logo.png";
+import profileImage from "../assets/images/vector-users-icon.jpg";
 import axios from "axios";
-import { useNavigate } from "react-router-dom";
 
 const NavBar = () => {
-  const navigate = useNavigate();
   const [countries, setCountries] = useState([]);
   const dropdownRef = useRef(null);
   const [showDropdown, setShowDropdown] = useState(false);
@@ -32,7 +30,6 @@ const NavBar = () => {
           },
         }
       );
-      console.log(response);
 
       // Clear local storage and redirect
       localStorage.clear();
@@ -280,7 +277,6 @@ const NavBar = () => {
             </div>
 
             {/* World Icon */}
-            
             <i
               className="fas fa-globe d-none d-lg-block"
               style={{ color: "white" }}
@@ -439,7 +435,7 @@ const NavBar = () => {
                         color: "#333",
                         fontSize: "0.9rem",
                       }}
-                      onClick={handleLogout}
+                      onClick={() => console.log("Logout clicked")}
                     >
                       Logout
                     </a>
@@ -497,7 +493,7 @@ const NavBar = () => {
             className="d-lg-none bg-light d-flex justify-content-around fixed-top"
             style={{
               borderTop: "1px solid #ddd",
-              marginTop: "45px",
+              marginTop: "48px",
             }}
           >
             <a href="/dashboard" className="text-dark text-center">

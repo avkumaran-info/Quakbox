@@ -6,7 +6,7 @@ import imag3 from "../../assets/images/login-illustration .png";
 const Feed = () => {
   return (
     <>
-      <div className="col-lg-6 col-md-8 col-sm-12 mx-auto p-5 mt-5">
+      <div className="col-lg-6 col-md-8 col-sm-12 mx-auto p-2 mt-4">
         {/* Post Input Section */}
         <div className="card p-3 mb-4">
           <div className="d-flex align-items-center">
