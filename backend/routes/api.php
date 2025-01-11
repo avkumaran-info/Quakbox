@@ -5,7 +5,6 @@ use App\Http\Controllers\AuthController;
 use App\Http\Controllers\ForgotPasswordController;
 
 //facebook
-use Illuminate\Support\Facades\Route;
 use Laravel\Socialite\Facades\Socialite;
 
 /*
