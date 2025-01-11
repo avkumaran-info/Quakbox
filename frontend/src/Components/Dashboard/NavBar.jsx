@@ -88,6 +88,7 @@ const NavBar = () => {
           backgroundColor: "rgb(122, 129, 135)",
           borderBottom: "7px solid",
           borderImage: "linear-gradient(to right, #1e90ff, #87cefa) 1",
+          // height:"54px"
         }}
       >
         <div className="container-fluid">
@@ -299,7 +300,7 @@ const NavBar = () => {
             ></i>
 
             {/* Search Input */}
-            <div className="d-none d-lg-block " style={{ width: "200px" }}>
+            <div className="d-none d-lg-block " style={{ width: "400px" }}>
               {/* Smaller width for input */}
               <input
                 type="text"
