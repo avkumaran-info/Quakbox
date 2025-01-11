@@ -20,35 +20,43 @@ class AuthController extends Controller
 
         // Validate the incoming request
         $request->validate([
-            'email' => 'required|email',
+            'email' => [
+                'required',
+                'string',
+                function ($attribute, $value, $fail) {
+                    // Check if the value is a valid email
+                    if (filter_var($value, FILTER_VALIDATE_EMAIL)) {
+                        return true; // No need for further checks if it's a valid email.
+                    }
+
+                    // Check if the value is a valid username
+                    if (!preg_match('/^[a-zA-Z0-9_-]{3,20}$/', $value)) {
+                        return $fail('The ' . $attribute . ' must be a valid email or username.');
+                    }
+                }
+            ],
             'password' => 'required|string',
         ]);
 
-        // Check if the credentials are correct
-        if (Auth::attempt(['email' => $request->email, 'password' => $request->password])) {
-            // Generate and return the access token
+        // Login with email or username
+        $mailCredentials = $request->only('email', 'password');
+        $nameCredentials = $request->only('username', 'password');
+
+        if (Auth::attempt($mailCredentials) || Auth::attempt($nameCredentials)) {
             $user = Auth::user();
             $members = Members::where('member_id', $user["id"])->get();
-            $token = $user->createToken('Quakbox')->accessToken;
+            $token = $user->createToken('AuthToken')->accessToken;
 
             if ($request->route()->middleware() && in_array('api', $request->route()->middleware())) {
                 return response()->json([
                     'result' => true,
                     'message' => 'Login successful',
-                    'token' => $token,
-                    'user' => $user,
-                    'members' => $members,
-
+                    'token' => $token
                 ]);
             }
 
             return redirect()->route('home');
         }
-
-        // If authentication fails, throw an error
-        throw ValidationException::withMessages([
-            'email' => ['The provided credentials are incorrect.'],
-        ]);
     }
 
     public function register(Request $request)
@@ -99,10 +107,21 @@ class AuthController extends Controller
     {
         $request->user()->token()->delete();
 
-        return response()->json(['message' => 'Logged out successfully']);
+        return response()->json([
+            'result' => true,
+            'message' => 'Logged out successfully'
+        ]);
     }
     public function showLoginForm(Request $request)
     {
 	   return true;
+    }
+    public function user(Request $request)
+    {
+        return response()->json([
+            'result' => true,
+            'message' => 'User Details',
+            'users' => $request->user()
+        ]);
     }
 }

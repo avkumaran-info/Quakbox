@@ -10,10 +10,10 @@
         "laravel/framework": "^10.10",
         "laravel/passport": "^12.3",
         "laravel/sanctum": "^3.2",
+        "laravel/socialite": "*",
         "laravel/tinker": "^2.8"
     },
     "require-dev": {
-        "barryvdh/laravel-debugbar": "*",
         "fakerphp/faker": "^1.9.1",
         "laravel/pint": "^1.0",
         "laravel/sail": "^1.18",
