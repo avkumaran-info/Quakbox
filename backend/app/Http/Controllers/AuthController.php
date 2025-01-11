@@ -37,7 +37,7 @@ class AuthController extends Controller
             ],
             'password' => 'required|string',
         ]);
-
+        $request["username"] = $request["email"];
         // Login with email or username
         $mailCredentials = $request->only('email', 'password');
         $nameCredentials = $request->only('username', 'password');
