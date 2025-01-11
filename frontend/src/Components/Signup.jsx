@@ -69,6 +69,30 @@ const Signup = () => {
     }
   };
 
+  // const changeUserFieldHandler = (e) => {
+  //   const { name, value } = e.target;
+  //   setUserField({
+  //     ...userField,
+  //     [name]: value,
+  //   });
+
+  //   // Re-validate the form to clear the current error if resolved
+  //   const errors = validateFields();
+  //   if (errors.length > 0 && errors[0].field === name) {
+  //     toast.error(errors[0].message, {
+  //       position: "top-center",
+  //       autoClose: 5000,
+  //       hideProgressBar: false,
+  //       closeOnClick: true,
+  //       pauseOnHover: true,
+  //       draggable: true,
+  //       theme: "light",
+  //       transition: Bounce,
+  //     });
+  //   } else {
+  //     setMessage(""); // Reset message if there are no errors
+  //   }
+  // };
   const changeUserFieldHandler = (e) => {
     const { name, value } = e.target;
     setUserField({
@@ -76,24 +100,14 @@ const Signup = () => {
       [name]: value,
     });
 
-    // Re-validate the form to clear the current error if resolved
-    const errors = validateFields();
-    if (errors.length > 0 && errors[0].field === name) {
-      toast.error(errors[0].message, {
-        position: "top-center",
-        autoClose: 5000,
-        hideProgressBar: false,
-        closeOnClick: true,
-        pauseOnHover: true,
-        draggable: true,
-        theme: "light",
-        transition: Bounce,
-      });
-    } else {
-      setMessage(""); // Reset message if there are no errors
+    // Optionally clear the message if the field being edited resolves the issue
+    if (message) {
+      const errors = validateFields();
+      if (errors.length === 0 || errors.every((err) => err.field !== name)) {
+        setMessage("");
+      }
     }
   };
-
   const handleSelect = (country) => {
     setSelectedCountry(country);
     // setDropdownVisible(false); // Close dropdown
