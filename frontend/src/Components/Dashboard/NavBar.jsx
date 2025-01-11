@@ -189,7 +189,7 @@ const NavBar = () => {
                   style={{
                     position: "absolute",
                     top: "45px",
-                    left: "-300px",
+                    left: "-250px",
                     backgroundColor: "#ffffff",
                     border: "1px solid #ddd",
                     borderRadius: "5px",
@@ -229,8 +229,8 @@ const NavBar = () => {
                     style={{
                       display: "grid",
                       gridTemplateColumns:
-                        "repeat(auto-fill, minmax(120px, 1fr))",
-                      gap: "10px",
+                        "repeat(auto-fill, minmax(70px, 1fr))",
+                      gap: "1px",
                     }}
                   >
                     {filteredCountries.map((country, index) => (
@@ -267,7 +267,7 @@ const NavBar = () => {
                             whiteSpace: "nowrap",
                             overflow: "hidden",
                             textOverflow: "ellipsis",
-                            maxWidth: "100px",
+                            maxWidth: "70px",
                           }}
                         >
                           {country.name.common}
@@ -280,7 +280,7 @@ const NavBar = () => {
             </div>
 
             {/* World Icon */}
-            
+
             <i
               className="fas fa-globe d-none d-lg-block"
               style={{ color: "white" }}
