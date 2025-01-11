@@ -28,8 +28,6 @@ Route::post('forgot-password/send-otp', [ForgotPasswordController::class, 'sendO
 Route::post('forgot-password/verify-otp', [ForgotPasswordController::class, 'verifyOtp']);
 Route::post('forgot-password/reset', [ForgotPasswordController::class, 'resetPassword']);
 
-
-
 Route::get('/auth/facebook', function () {
     return Socialite::driver('facebook')->redirect();
 })->name('facebook.login');
@@ -53,3 +51,5 @@ Route::get('/auth/facebook/callback', function () {
 
     return redirect('/dashboard'); // Redirect to the desired page
 });
+
+Route::middleware('auth:api')->get('user', [AuthController::class, 'user']);
