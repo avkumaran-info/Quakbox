@@ -20,18 +20,29 @@ class AuthController extends Controller
 
         // Validate the incoming request
         $request->validate([
-            'username' => 'required_without:email|string',
-            'email' => 'required_without:username|email',
+            'email' => [
+                'required',
+                'string',
+                function ($attribute, $value, $fail) {
+                    // Check if the value is a valid email
+                    if (filter_var($value, FILTER_VALIDATE_EMAIL)) {
+                        return true; // No need for further checks if it's a valid email.
+                    }
+
+                    // Check if the value is a valid username
+                    if (!preg_match('/^[a-zA-Z0-9_-]{3,20}$/', $value)) {
+                        return $fail('The ' . $attribute . ' must be a valid email or username.');
+                    }
+                }
+            ],
             'password' => 'required|string',
         ]);
 
         // Login with email or username
-        $credentials = $request->only('email', 'password');
-        if (isset($request->username)) {
-            $credentials = $request->only('username', 'password');
-        }
+        $mailCredentials = $request->only('email', 'password');
+        $nameCredentials = $request->only('username', 'password');
 
-        if (Auth::attempt($credentials)) {
+        if (Auth::attempt($mailCredentials) || Auth::attempt($nameCredentials)) {
             $user = Auth::user();
             $members = Members::where('member_id', $user["id"])->get();
             $token = $user->createToken('AuthToken')->accessToken;
@@ -96,7 +107,10 @@ class AuthController extends Controller
     {
         $request->user()->token()->delete();
 
-        return response()->json(['message' => 'Logged out successfully']);
+        return response()->json([
+            'result' => true,
+            'message' => 'Logged out successfully'
+        ]);
     }
     public function showLoginForm(Request $request)
     {
@@ -104,6 +118,10 @@ class AuthController extends Controller
     }
     public function user(Request $request)
     {
-        return response()->json($request->user());
+        return response()->json([
+            'result' => true,
+            'message' => 'User Details',
+            'users' => $request->user()
+        ]);
     }
 }

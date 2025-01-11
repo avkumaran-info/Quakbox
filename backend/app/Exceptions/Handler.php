@@ -34,10 +34,16 @@ class Handler extends ExceptionHandler
         if ($exception->getMessage() == 'Unauthenticated.') {
             // Check for expired token
             if (str_contains($exception->getMessage(), 'expired')) {
-                return response()->json(['error' => 'Token has expired. Please log in again.'], 401);
+                return response()->json([
+                    'result' => false,
+                    'error' => 'Token has expired'
+                ], 401);
             }
 
-            return response()->json(['error' => 'Unauthenticated.'], 401);
+            return response()->json([
+                'result' => false,
+                'error' => 'Unauthenticated'
+            ], 401);
         }
     }
 }

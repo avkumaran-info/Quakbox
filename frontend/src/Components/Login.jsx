@@ -90,7 +90,7 @@ const Login = () => {
     },
   });
   const validateForm = () => {
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    const emailRegex = /^[a-zA-Z0-9._-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$|^[a-zA-Z0-9_-]{3,20}$/;
     if (!userField.email) {
       // alert("Email is required");
 
@@ -309,14 +309,14 @@ const Login = () => {
               <form>
                 <div className="mb-3">
                   <label htmlFor="email" className="form-label">
-                    {t(" Your Email or Mobile Number")}
+                    {t(" Your Email or UserName")}
                   </label>
                   <input
                     type="email"
                     id="email"
                     className="form-control"
                     name="email"
-                    placeholder="Enter Email or Mobile"
+                    placeholder="Enter Email or UserName"
                     value={userField.email}
                     onChange={(e) => changeUserFieldHandler(e)}
                   />
