@@ -1,40 +1,185 @@
 import React from "react";
 
-const LeftSidebar = ({ friends, onFriendClick }) => {
+const LeftSidebar = ({ news, photos, videos }) => {
   return (
     <div
-      className="col-3 bg-light position-fixed d-none d-md-block mt-4"
+      className="col-3 bg-light position-fixed d-none d-md-block"
       style={{
-        top: "60px", // Height of the topbar
+        top: "65px", // Height of the navbar
+        bottom: "55px", // Height of the footer
         left: "0",
+        display: "flex",
+        flexDirection: "column",
+        overflow: "hidden",
       }}
     >
-      <div className="card">
-        {/* Header */}
-        <div className="card-header bg-primary text-white">
-          <h6 className="mb-0">Friends</h6>
+      <div className="card bg-light h-100 d-flex justify-content-center flex-column">
+        {/* QB News Section */}
+        <div
+          className="flex-grow-1 d-flex flex-column"
+          style={{ overflow: "hidden" }}
+        >
+          <div className="text-center mb-3 p-1">
+            {" "}
+            {/* Centered Header */}
+            <h5
+              className="text-light text-center h-100"
+              style={{ backgroundColor: "blue" }}
+            >
+              QB News
+            </h5>
+          </div>
+          <div
+            id="newsCarousel"
+            className="carousel slide flex-grow-1"
+            data-bs-ride="carousel"
+          >
+            <div className="carousel-inner h-100">
+              {news.map((item, index) => (
+                <div
+                  key={index}
+                  className={`carousel-item ${index === 0 ? "active" : ""}`}
+                  style={{ height: "100%" }}
+                >
+                  <div
+                    style={{
+                      display: "flex",
+                      flexDirection: "column",
+                      alignItems: "center",
+                      height: "100%",
+                      justifyContent: "space-between",
+                      padding: "15px",
+                    }}
+                  >
+                    <img
+                      src={item.image}
+                      className="d-block"
+                      alt={item.title}
+                      style={{
+                        width: "100%",
+                        height: "180px", // Standardized height
+                        objectFit: "cover",
+                        borderRadius: "5px",
+                      }}
+                    />
+                    <div className="text-center mt-3">
+                      <h6 className="fw-bold">{item.title}</h6>
+                      <p className="text-muted mb-1">{item.description}</p>
+                      <p className="text-dark small">{item.longDescription}</p>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+            <button
+              className="carousel-control-prev"
+              type="button"
+              data-bs-target="#newsCarousel"
+              data-bs-slide="prev"
+            >
+              <span
+                className="carousel-control-prev-icon"
+                aria-hidden="true"
+              ></span>
+              <span className="visually-hidden">Previous</span>
+            </button>
+            <button
+              className="carousel-control-next"
+              type="button"
+              data-bs-target="#newsCarousel"
+              data-bs-slide="next"
+            >
+              <span
+                className="carousel-control-next-icon"
+                aria-hidden="true"
+              ></span>
+              <span className="visually-hidden">Next</span>
+            </button>
+          </div>
         </div>
 
-        {/* Friend Items */}
-        <div className="card-body">
-          {friends.map((friend) => (
-            <div
-              key={friend.id}
-              className="d-flex align-items-center mb-2 cursor-pointer"
-              style={{ cursor: "pointer" }}
-              onClick={() => onFriendClick(friend)}
+        {/* Popular Photos and Videos Section */}
+        <div
+          className="flex-grow-1 d-flex flex-column mt-4"
+          style={{ overflow: "hidden" }}
+        >
+          <div className="text-center mb-3">
+            {" "}
+            {/* Centered Header */}
+            <h5
+              className="text-light text-center h-100"
+              style={{ backgroundColor: "blue" }}
             >
-              <img
-                src={friend.image}
-                alt={friend.name}
-                className="rounded-circle"
-                style={{ width: "50px", height: "50px", objectFit: "cover" }}
-              />
-              <div className="ms-2">
-                <h6 className="mb-0">{friend.name}</h6>
-              </div>
+              Popular Photos and Videos
+            </h5>
+          </div>
+          <div
+            id="mediaCarousel"
+            className="carousel slide flex-grow-1"
+            data-bs-ride="carousel"
+          >
+            <div className="carousel-inner h-100">
+              {[...photos, ...videos].map((item, index) => (
+                <div
+                  key={index}
+                  className={`carousel-item ${index === 0 ? "active" : ""}`}
+                  style={{ height: "100%" }}
+                >
+                  <div
+                    style={{
+                      display: "flex",
+                      flexDirection: "column",
+                      alignItems: "center",
+                      height: "100%",
+                      justifyContent: "space-between",
+                      padding: "15px",
+                    }}
+                  >
+                    <img
+                      src={item.image}
+                      className="d-block"
+                      alt={item.title}
+                      style={{
+                        width: "100%",
+                        height: "180px", // Standardized height
+                        objectFit: "cover",
+                        borderRadius: "5px",
+                      }}
+                    />
+                    <div className="text-center mt-3">
+                      <h6 className="fw-bold">{item.title}</h6>
+                      <p className="text-muted mb-1">{item.description}</p>
+                      <p className="text-dark small">{item.longDescription}</p>
+                    </div>
+                  </div>
+                </div>
+              ))}
             </div>
-          ))}
+            <button
+              className="carousel-control-prev"
+              type="button"
+              data-bs-target="#mediaCarousel"
+              data-bs-slide="prev"
+            >
+              <span
+                className="carousel-control-prev-icon"
+                aria-hidden="true"
+              ></span>
+              <span className="visually-hidden">Previous</span>
+            </button>
+            <button
+              className="carousel-control-next"
+              type="button"
+              data-bs-target="#mediaCarousel"
+              data-bs-slide="next"
+            >
+              <span
+                className="carousel-control-next-icon"
+                aria-hidden="true"
+              ></span>
+              <span className="visually-hidden">Next</span>
+            </button>
+          </div>
         </div>
       </div>
     </div>
