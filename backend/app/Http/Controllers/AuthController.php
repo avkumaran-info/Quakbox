@@ -17,46 +17,40 @@ class AuthController extends Controller
 {
     public function login(Request $request)
     {
-
-        // Validate the incoming request
+        // Validate incoming request
         $request->validate([
-            'email' => [
-                'required',
-                'string',
-                function ($attribute, $value, $fail) {
-                    // Check if the value is a valid email
-                    if (filter_var($value, FILTER_VALIDATE_EMAIL)) {
-                        return true; // No need for further checks if it's a valid email.
-                    }
-
-                    // Check if the value is a valid username
-                    if (!preg_match('/^[a-zA-Z0-9_-]{3,20}$/', $value)) {
-                        return $fail('The ' . $attribute . ' must be a valid email or username.');
-                    }
-                }
-            ],
+            'email' => 'required|string',
             'password' => 'required|string',
         ]);
-        $request["username"] = $request["email"];
-        // Login with email or username
-        $mailCredentials = $request->only('email', 'password');
-        $nameCredentials = $request->only('username', 'password');
 
-        if (Auth::attempt($mailCredentials) || Auth::attempt($nameCredentials)) {
-            $user = Auth::user();
-            $members = Members::where('member_id', $user["id"])->get();
+        $credentials = $request->only('email', 'password');
+
+        // Find the user by email or username
+        $user = User::where('email', $credentials['email'])
+                    ->orWhere('username', $credentials['email'])
+                    ->first();
+
+        // If user is not found or password is incorrect
+        if (!$user || !Hash::check($credentials['password'], $user->password)) {
+            return response()->json([
+                'result' => false,
+                'error' => 'The provided credentials are incorrect'
+            ], 401);
+        }
+
+        // Check if the user is a valid API user
+        if (Auth::loginUsingId($user->id)) {
+            // Generate the personal access token using Passport
             $token = $user->createToken('AuthToken')->accessToken;
 
-            if ($request->route()->middleware() && in_array('api', $request->route()->middleware())) {
-                return response()->json([
-                    'result' => true,
-                    'message' => 'Login successful',
-                    'token' => $token
-                ]);
-            }
-
-            return redirect()->route('home');
+            return response()->json([
+                'result' => true,
+                'message' => 'Login successful',
+                'token' => $token
+            ], 200);
         }
+
+        return response()->json(['message' => 'Unauthorized'], 401);
     }
 
     public function register(Request $request)
