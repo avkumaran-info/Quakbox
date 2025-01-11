@@ -4,7 +4,8 @@ import bg from "../assets/images/blurred-empty-open-space-office-600nw-241163512
 import { useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import i18n from "../i18n.js";
-
+import { ToastContainer, toast, Bounce, Zoom } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
 const ForgetPassword = () => {
   const navigate = useNavigate();
   const { t } = useTranslation();
@@ -46,12 +47,40 @@ const ForgetPassword = () => {
       );
       const data = await response.json();
       if (data.status && data.code === 200) {
-        alert(data.message); // Show success message
+        toast.success(data.message, {
+          position: "top-center",
+          autoClose: 5000,
+          hideProgressBar: false,
+          closeOnClick: true,
+          pauseOnHover: true,
+          draggable: true,
+          theme: "light",
+          transition: Bounce,
+        });
         setCountdown(30); // Set countdown to 30 seconds for example
       } else {
-        alert("Failed to resend OTP");
+        toast.error("Failed to resend OTP", {
+          position: "top-center",
+          autoClose: 5000,
+          hideProgressBar: false,
+          closeOnClick: true,
+          pauseOnHover: true,
+          draggable: true,
+          theme: "light",
+          transition: Bounce,
+        });
       }
     } catch (error) {
+      toast.error("An error occurred while resending OTP", {
+        position: "top-center",
+        autoClose: 5000,
+        hideProgressBar: false,
+        closeOnClick: true,
+        pauseOnHover: true,
+        draggable: true,
+        theme: "light",
+        transition: Bounce,
+      });
       console.error(error);
       alert("An error occurred while resending OTP");
     } finally {
@@ -61,6 +90,20 @@ const ForgetPassword = () => {
 
   const handleForgetPassword = async (e) => {
     e.preventDefault();
+    // Check if the email is blank or invalid
+    if (!email || !/^[\w-]+(\.[\w-]+)*@([\w-]+\.)+[a-zA-Z]{2,7}$/.test(email)) {
+      toast.error("Please enter a valid email address", {
+        position: "top-center",
+        autoClose: 5000,
+        hideProgressBar: false,
+        closeOnClick: true,
+        pauseOnHover: true,
+        draggable: true,
+        theme: "light",
+        transition: Bounce,
+      });
+      return;
+    }
     setLoading(true);
     try {
       // Send OTP API Call
@@ -76,14 +119,41 @@ const ForgetPassword = () => {
       );
       const data = await response.json();
       if (data.status && data.code === 200) {
-        alert(data.message); // Show success message
+        toast.success(data.message, {
+          position: "top-center",
+          autoClose: 5000,
+          hideProgressBar: false,
+          closeOnClick: true,
+          pauseOnHover: true,
+          draggable: true,
+          theme: "light",
+          transition: Bounce,
+        });
         setStep("otp"); // Move to OTP step
       } else {
-        alert("Failed to send OTP");
+        toast.error("Failed to send OTP", {
+          position: "top-center",
+          autoClose: 5000,
+          hideProgressBar: false,
+          closeOnClick: true,
+          pauseOnHover: true,
+          draggable: true,
+          theme: "light",
+          transition: Bounce,
+        });
       }
     } catch (error) {
       console.error(error);
-      alert("An error occurred while sending OTP");
+      toast.error("An error occurred while sending OTP", {
+        position: "top-center",
+        autoClose: 5000,
+        hideProgressBar: false,
+        closeOnClick: true,
+        pauseOnHover: true,
+        draggable: true,
+        theme: "light",
+        transition: Bounce,
+      });
     } finally {
       setLoading(false);
     }
@@ -91,6 +161,33 @@ const ForgetPassword = () => {
 
   const handleVerifyOtp = async (e) => {
     e.preventDefault();
+    if (!otp) {
+      toast.error("Please enter the OTP", {
+        position: "top-center",
+        autoClose: 5000,
+        hideProgressBar: false,
+        closeOnClick: true,
+        pauseOnHover: true,
+        draggable: true,
+        theme: "light",
+        transition: Bounce,
+      });
+      return;
+    }
+    // Ensure OTP is in the correct format (e.g., 6 digits)
+    if (otp.length !== 6 || !/^\d{6}$/.test(otp)) {
+      toast.error("Invalid OTP format. Please enter a 6-digit OTP", {
+        position: "top-center",
+        autoClose: 5000,
+        hideProgressBar: false,
+        closeOnClick: true,
+        pauseOnHover: true,
+        draggable: true,
+        theme: "light",
+        transition: Bounce,
+      });
+      return;
+    }
     setLoading(true);
     try {
       // Verify OTP API Call
@@ -104,27 +201,47 @@ const ForgetPassword = () => {
           body: JSON.stringify({ email, otp }),
         }
       );
-      const data = await response.json();
 
+      const data = await response.json();
+      console.log("data");
+      console.log(data.errors);
       if (data.status && data.code === 200) {
-        alert("OTP verified successfully"); // Show success message
+        toast.success("OTP verified successfully", {
+          position: "top-center",
+          autoClose: 5000,
+          hideProgressBar: false,
+          closeOnClick: true,
+          pauseOnHover: true,
+          draggable: true,
+          theme: "light",
+          transition: Bounce,
+        });
         setStep("reset"); // Move to reset password step
       } else {
-        // Handle validation errors from the API response
-        if (data.errors) {
-          if (data.errors.email) {
-            alert(data.errors.email[0]);
-          }
-          if (data.errors.otp) {
-            alert(data.errors.otp[0]);
-          }
-        } else {
-          alert("Failed to verify OTP");
-        }
+        // Show error message from API response
+        toast.error(data.message || "Failed to verify OTP", {
+          position: "top-center",
+          autoClose: 5000,
+          hideProgressBar: false,
+          closeOnClick: true,
+          pauseOnHover: true,
+          draggable: true,
+          theme: "light",
+          transition: Bounce,
+        });
       }
     } catch (error) {
       console.error(error);
-      alert("An error occurred while verifying OTP");
+      toast.error("An error occurred while verifying OTP", {
+        position: "top-center",
+        autoClose: 5000,
+        hideProgressBar: false,
+        closeOnClick: true,
+        pauseOnHover: true,
+        draggable: true,
+        theme: "light",
+        transition: Bounce,
+      });
     } finally {
       setLoading(false);
     }
@@ -135,7 +252,16 @@ const ForgetPassword = () => {
     e.preventDefault();
 
     if (newPassword !== confirmPassword) {
-      alert("Passwords do not match!");
+      toast.error("Passwords do not match!", {
+        position: "top-center",
+        autoClose: 5000,
+        hideProgressBar: false,
+        closeOnClick: true,
+        pauseOnHover: true,
+        draggable: true,
+        theme: "light",
+        transition: Bounce,
+      });
       return;
     }
 
@@ -159,18 +285,54 @@ const ForgetPassword = () => {
       const data = await response.json();
 
       if (data.status && data.code === 200) {
-        alert("Password reset successfully");
+        toast.success("Password reset successfully", {
+          position: "top-center",
+          autoClose: 5000,
+          hideProgressBar: false,
+          closeOnClick: true,
+          pauseOnHover: true,
+          draggable: true,
+          theme: "light",
+          transition: Bounce,
+        });
         navigate("/");
       } else if (data.errors) {
         if (data.errors.password) {
-          alert(data.errors.password[0]);
+          toast.error(data.errors.password[0], {
+            position: "top-center",
+            autoClose: 5000,
+            hideProgressBar: false,
+            closeOnClick: true,
+            pauseOnHover: true,
+            draggable: true,
+            theme: "light",
+            transition: Bounce,
+          });
         }
       } else {
-        alert("Failed to reset password");
+        toast.error("Failed to reset password", {
+          position: "top-center",
+          autoClose: 5000,
+          hideProgressBar: false,
+          closeOnClick: true,
+          pauseOnHover: true,
+          draggable: true,
+          theme: "light",
+          transition: Bounce,
+        });
       }
     } catch (error) {
       console.error(error);
-      alert("An error occurred while resetting the password");
+      toast.error("An error occurred while resetting the password", {
+        position: "top-center",
+        autoClose: 5000,
+        hideProgressBar: false,
+        closeOnClick: true,
+        pauseOnHover: true,
+        draggable: true,
+        theme: "light",
+        transition: Bounce,
+      });
     } finally {
       setLoading(false);
     }
@@ -340,7 +502,6 @@ const ForgetPassword = () => {
                       placeholder="Enter your email"
                       value={email}
                       onChange={(e) => setEmail(e.target.value)}
-                      required
                     />
                   </div>
 
@@ -433,7 +594,6 @@ const ForgetPassword = () => {
                       placeholder="Enter OTP"
                       value={otp}
                       onChange={(e) => setOtp(e.target.value)}
-                      required
                     />
                   </div>
                   {/*  */}
@@ -524,6 +684,19 @@ const ForgetPassword = () => {
           </div>
         </div>
       </div>
+      <ToastContainer
+        position="top-center"
+        autoClose={5000}
+        hideProgressBar={false}
+        newestOnTop={false}
+        closeOnClick={true}
+        rtl={false}
+        pauseOnFocusLoss
+        draggable
+        pauseOnHover
+        theme="light"
+        transition={Bounce}
+      />
     </div>
   );
 };

@@ -8,7 +8,6 @@ import { useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import i18n from "../i18n.js";
 import axios from "axios";
-
 const Login = () => {
   const navigate = useNavigate();
   const { t } = useTranslation();
