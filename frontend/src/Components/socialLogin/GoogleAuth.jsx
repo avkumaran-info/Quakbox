@@ -9,11 +9,11 @@ const GoogleAuth = () => {
         console.log(token);
         // Send token to your Laravel backend
         fetch('https://develop.quakbox.com/admin/api/auth/google', {
-          method: 'POST',
-          headers: {
+            method: 'POST',
+            headers: {
             'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({ token }),
+            },
+            body: JSON.stringify({ token }),
         })
         .then((response) => response.json())
         .then((data) => {
@@ -23,7 +23,7 @@ const GoogleAuth = () => {
             navigate("/dashboard", {});
         })
         .catch((error) => {
-          console.error('Error:', error);
+            console.error('Error:', error);
         });
     };
 

@@ -98,11 +98,16 @@ class AuthController extends Controller
                     'result' => true,
                     'message' => 'Login successful',
                     'token' => $token
-                ]);
+                ], 200);
             }
 
             return redirect()->route('home');
         }
+
+        return response()->json([
+            'result' => false,
+            'message' => 'Login Unsuccessful'
+        ], 200);
     }
 
     public function register(Request $request)
