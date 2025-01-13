@@ -10,6 +10,10 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "@emotion/react": "^11.14.0",
+    "@emotion/styled": "^11.14.0",
+    "@mui/icons-material": "^6.3.1",
+    "@mui/material": "^6.3.1",
     "@react-oauth/google": "^0.12.1",
     "axios": "^1.7.9",
     "bootstrap": "^5.3.3",
@@ -24,6 +28,7 @@
     "react-router-dom": "^7.0.2",
     "react-social-login-buttons": "^4.1.0",
     "react-toastify": "^11.0.2",
+    "react-webcam": "^7.2.0",
     "reactjs-social-login": "^2.6.3"
   },
   "devDependencies": {
