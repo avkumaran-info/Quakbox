@@ -1,54 +1,108 @@
 <?php
 
 namespace App\Http\Controllers;
+
 \Log::info(memory_get_usage());
 ini_set('memory_limit', '2G');
-use App\Models\User;
-use App\Models\Members;
-use Illuminate\Http\Request;
+
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Http;
+use Illuminate\Http\Request;
+
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Validation\ValidationException;
 use Illuminate\Support\Str;
 use Illuminate\Auth\Events\Registered;
+use Laravel\Socialite\Facades\Socialite;
+
+use App\Models\User;
+use App\Models\Members;
+
+use GuzzleHttp\Client;
 
 class AuthController extends Controller
 {
+    // Handle Google login using the token passed from frontend
+    public function loginWithGoogle(Request $request)
+    {
+        $token = $request->input('token');
+
+        // Call the tokeninfo endpoint to verify the token
+        $response = Http::get('https://www.googleapis.com/oauth2/v3/tokeninfo', [
+            'id_token' => $token,
+        ]);
+
+        if ($response->successful()) {
+            // Token is valid, parse user info
+            $googleUser = $response->json();
+            $user = User::where('email', $googleUser['email'])->first();
+
+            if (!$user) {
+                // Create a new user if they don't exist
+                $authUser = User::create([
+                    'username' => $googleUser['name'],
+                    'email' => $googleUser['email'],
+                    'email_verified_at' => TRUE,
+                    'google_login' => TRUE,
+                ]);
+            }
+
+            // Generate an API token using Passport or Sanctum
+            $authToken = $user->createToken('AuthToken')->accessToken;
+
+            // Return the user data and token
+            return response()->json([
+                'token' => $authToken
+            ]);
+            
+        } else {
+            // If the response is not successful
+            return response()->json(['error' => 'Invalid Token'], 400);
+        }
+    }
     public function login(Request $request)
     {
 
         // Validate the incoming request
         $request->validate([
-            'email' => 'required|email',
+            'email' => [
+                'required',
+                'string',
+                function ($attribute, $value, $fail) {
+                    // Check if the value is a valid email
+                    if (filter_var($value, FILTER_VALIDATE_EMAIL)) {
+                        return true; // No need for further checks if it's a valid email.
+                    }
+
+                    // Check if the value is a valid username
+                    if (!preg_match('/^[a-zA-Z0-9_-]{3,20}$/', $value)) {
+                        return $fail('The ' . $attribute . ' must be a valid email or username.');
+                    }
+                }
+            ],
             'password' => 'required|string',
         ]);
 
-        // Check if the credentials are correct
-        if (Auth::attempt(['email' => $request->email, 'password' => $request->password])) {
-            // Generate and return the access token
+        // Login with email or username
+        $mailCredentials = $request->only('email', 'password');
+        $nameCredentials = $request->only('username', 'password');
+
+        if (Auth::attempt($mailCredentials) || Auth::attempt($nameCredentials)) {
             $user = Auth::user();
             $members = Members::where('member_id', $user["id"])->get();
-            $token = $user->createToken('Quakbox')->accessToken;
+            $token = $user->createToken('AuthToken')->accessToken;
 
             if ($request->route()->middleware() && in_array('api', $request->route()->middleware())) {
                 return response()->json([
                     'result' => true,
                     'message' => 'Login successful',
-                    'token' => $token,
-                    'user' => $user,
-                    'members' => $members,
-
+                    'token' => $token
                 ]);
             }
 
             return redirect()->route('home');
         }
-
-        // If authentication fails, throw an error
-        throw ValidationException::withMessages([
-            'email' => ['The provided credentials are incorrect.'],
-        ]);
     }
 
     public function register(Request $request)
@@ -56,7 +110,7 @@ class AuthController extends Controller
 
         // Validate input
         $validator = Validator::make($request->all(), [
-            'name' => ['required', 'string', 'max:255'],
+            'username' => ['required', 'string', 'max:255'],
             'email' => ['required', 'string', 'email', 'max:255', 'unique:users'],
             'password' => ['required', 'string', 'min:8', 'confirmed'],
             'birthdate' => ['nullable', 'string', 'max:15'],
@@ -81,7 +135,7 @@ class AuthController extends Controller
     {
         // Create the user in the 'users' table
         $user = User::create([
-            'name' => $data['name'],
+            'username' => $data['username'],
             'email' => $data['email'],
             'password' => Hash::make($data['password']),
         ]);
@@ -99,10 +153,21 @@ class AuthController extends Controller
     {
         $request->user()->token()->delete();
 
-        return response()->json(['message' => 'Logged out successfully']);
+        return response()->json([
+            'result' => true,
+            'message' => 'Logged out successfully'
+        ]);
     }
     public function showLoginForm(Request $request)
     {
 	   return true;
+    }
+    public function user(Request $request)
+    {
+        return response()->json([
+            'result' => true,
+            'message' => 'User Details',
+            'users' => $request->user()
+        ]);
     }
 }

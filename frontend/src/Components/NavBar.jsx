@@ -1,8 +1,18 @@
 import React, { useEffect, useRef, useState } from "react";
-import logo from "../../assets/logo/logo.png";
-import profileImage from "../../assets/images/vector-users-icon.jpg";
+import logo from "../assets/logo/logo.png";
+import profileImage from "../assets/images/vector-users-icon.jpg";
 import axios from "axios";
 import { useNavigate } from "react-router-dom";
+import Feed from "./Dashboard/Feed";
+import RightSidebar from "./Dashboard/RigthSideBar";
+import Footer from "./Dashboard/Footer";
+import LeftSidebar from "./Dashboard/LeftSideBar";
+import user1 from "../assets/images/user1.png";
+import user2 from "../assets/images/user2.jpg";
+import user3 from "../assets/images/vector-users-icon.jpg";
+import p1 from "../assets/images/images (1).jpeg";
+import p2 from "../assets/images/images.jpeg";
+import p3 from "../assets/images/images1.jpeg";
 
 const NavBar = () => {
   const navigate = useNavigate();
@@ -81,7 +91,7 @@ const NavBar = () => {
     .sort((a, b) => a.name.common.localeCompare(b.name.common)); // Sort A-Z
 
   return (
-    <div>
+    <>
       <nav
         className="fixed-top d-flex align-items-center justify-content-start"
         style={{
@@ -92,7 +102,7 @@ const NavBar = () => {
           height: "54px",
         }}
       >
-        <div className="container-fluid ">
+        <div className="container-fluid p-">
           <div
             className="navbar-brand d-flex align-items-center"
             style={{
@@ -299,6 +309,23 @@ const NavBar = () => {
               className="fas fa-broadcast-tower d-none d-lg-block"
               style={{ color: "white" }}
             ></i>
+            {/* Search Input */}
+            <div className="d-none d-lg-block " style={{ width: "250px" }}>
+              {/* Smaller width for input */}
+              <input
+                type="text"
+                placeholder="Search..."
+                style={{
+                  width: "100%",
+                  padding: "2px 15px",
+                  fontSize: "1rem",
+                  border: "1px solid #ccc",
+                  borderRadius: "20px",
+                }}
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+              />
+            </div>
 
             {/* Friends Icon */}
             <i
@@ -329,23 +356,6 @@ const NavBar = () => {
               className="fas fa-heart d-none d-lg-block"
               style={{ color: "white" }}
             ></i>
-            {/* Search Input */}
-            <div className="d-none d-lg-block " style={{ width: "250px" }}>
-              {/* Smaller width for input */}
-              <input
-                type="text"
-                placeholder="Search..."
-                style={{
-                  width: "100%",
-                  padding: "2px 15px",
-                  fontSize: "1rem",
-                  border: "1px solid #ccc",
-                  borderRadius: "20px",
-                }}
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-              />
-            </div>
 
             {/* Profile Section */}
             <div
@@ -611,7 +621,129 @@ const NavBar = () => {
           </div>
         </div>
       </nav>
-    </div>
+      <div className="d-flex justify-content-between">
+        <LeftSidebar
+          news={[
+            {
+              image: p1,
+              title: "Polities News",
+              description: "Short summary of the news",
+              longDescription:
+                "A more detailed description of the news that spans multiple lines.",
+            },
+            {
+              image: p2,
+              title: "Sports News",
+              description: "Short summary of the news",
+              longDescription:
+                "A more detailed description of the news that spans multiple lines.",
+            },
+            {
+              image: p3,
+              title: "Business News",
+              description: "Short summary of the news",
+              longDescription:
+                "A more detailed description of the news that spans multiple lines.",
+            },
+            {
+              image: user1,
+              title: "Health News",
+              description: "Short summary of the news",
+              longDescription:
+                "A more detailed description of the news that spans multiple lines.",
+            },
+          ]}
+          photos={[
+            {
+              image: user1,
+              title: "Amazing Photo",
+              description: "Short summary of the photo",
+              longDescription:
+                "A more detailed explanation or story behind the photo.",
+            },
+            {
+              image: user3,
+              title: "Amazing Photo",
+              description: "Short summary of the photo",
+              longDescription:
+                "A more detailed explanation or story behind the photo.",
+            },
+          ]}
+          videos={[
+            {
+              image: user2,
+              title: "Amazing Photo",
+              description: "Short summary of the photo",
+              longDescription:
+                "A more detailed explanation or story behind the photo.",
+            },
+            {
+              image: user1,
+              title: "Amazing Photo",
+              description: "Short summary of the photo",
+              longDescription:
+                "A more detailed explanation or story behind the photo.",
+            },
+          ]}
+        />
+        {/* <div
+            className="col-3 bg-light position-fixed d-none d-md-block mt-4"
+            style={{
+              top: "60px", // Height of the topbar
+              left: "0",
+            }}
+          >
+            <div className="card">
+              <div className="card-header bg-primary text-white">
+                <h5>Friends</h5>
+              </div>
+              <ul className="list-group list-group-flush">
+                {friends.map((friend) => (
+                  <li
+                    key={friend.id}
+                    className={`list-group-item ${
+                      selectedFriend?.id === friend.id ? "active" : ""
+                    }`}
+                    onClick={() => setSelectedFriend(friend)}
+                    style={{ cursor: "pointer" }}
+                  >
+                    <div className="d-flex align-items-center">
+                      <img
+                        src={friend.image}
+                        alt={friend.name}
+                        className="rounded-circle me-2"
+                        style={{
+                          width: "40px",
+                          height: "40px",
+                          objectFit: "cover",
+                        }}
+                      />
+                      <span>{friend.name}</span>
+                    </div>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          </div> */}
+
+        {/* Chat Window */}
+        {/* <>
+            {selectedFriend ? (
+              <ChatWindow
+                selectedFriend={selectedFriend}
+                onSendMessage={(newMessage) =>
+                  handleSendMessage(selectedFriend.id, newMessage)
+                }
+              />
+            ) : (
+              <Feed />
+            )}
+          </> */}
+        <Feed />
+        <RightSidebar />
+        <Footer />
+      </div>
+    </>
   );
 };
 
