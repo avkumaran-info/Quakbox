@@ -60,7 +60,7 @@ const Login = () => {
     }
     return true;
   };
-  const mailLogin = async () => {
+  const mailLogin = async (flag) => {
     if (!validateForm()) return;
     try {
       const response = await axios.post(
@@ -74,7 +74,12 @@ const Login = () => {
       // Store the token (optional)
       localStorage.setItem("api_token", token);
       toast.success("Login successful!", { transition: Bounce });
-      navigate("/dashboard", {});
+      if(flag == 1) {
+        navigate("/dashboard", {});
+      } else if (flag == 2) {
+        navigate("/test", {});
+      }
+      
     } catch (error) {
       // Handle errors
       if (error.response) {
@@ -300,10 +305,19 @@ const Login = () => {
                   <button
                     type="button"
                     className="btn btn-primary mb-3"
-                    onClick={() => mailLogin()}
+                    onClick={() => mailLogin(1)}
                   >
                     Quakin
                   </button>
+
+                  <button
+                    type="button"
+                    className="btn btn-primary mb-3"
+                    onClick={() => mailLogin(2)}
+                  >
+                    Quakin_search_center
+                  </button>
+
                   <button type="button" className="btn btn-secondary mb-3">
                     QuakMail
                   </button>

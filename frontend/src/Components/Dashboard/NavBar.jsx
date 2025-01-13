@@ -295,7 +295,7 @@ const NavBar = () => {
             ></i>
 
             {/* Go Live Icon */}
-            <i
+            <i onClick={(e) => { e.preventDefault(); navigate("/golive"); }}
               className="fas fa-broadcast-tower d-none d-lg-block"
               style={{ color: "white" }}
             ></i>
