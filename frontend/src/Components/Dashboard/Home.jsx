@@ -7,6 +7,9 @@ import LeftSidebar from "./LeftSideBar";
 import user1 from "../../assets/images/user1.png";
 import user2 from "../../assets/images/user2.jpg";
 import user3 from "../../assets/images/vector-users-icon.jpg";
+import p1 from "../../assets/images/images (1).jpeg";
+import p2 from "../../assets/images/images.jpeg";
+import p3 from "../../assets/images/images1.jpeg";
 import ChatWindow from "./ChatWindow";
 
 const Home = () => {
@@ -47,8 +50,72 @@ const Home = () => {
     <>
       <div className="app">
         <NavBar />
-        <div className="d-flex justify-content-between mt-5">
-          <div
+        <div className="d-flex justify-content-between">
+          <LeftSidebar
+            news={[
+              {
+                image: p1,
+                title: "Polities News",
+                description: "Short summary of the news",
+                longDescription:
+                  "A more detailed description of the news that spans multiple lines.",
+              },
+              {
+                image: p2,
+                title: "Sports News",
+                description: "Short summary of the news",
+                longDescription:
+                  "A more detailed description of the news that spans multiple lines.",
+              },
+              {
+                image: p3,
+                title: "Business News",
+                description: "Short summary of the news",
+                longDescription:
+                  "A more detailed description of the news that spans multiple lines.",
+              },
+              {
+                image: user1,
+                title: "Health News",
+                description: "Short summary of the news",
+                longDescription:
+                  "A more detailed description of the news that spans multiple lines.",
+              },
+            ]}
+            photos={[
+              {
+                image: user1,
+                title: "Amazing Photo",
+                description: "Short summary of the photo",
+                longDescription:
+                  "A more detailed explanation or story behind the photo.",
+              },
+              {
+                image: user3,
+                title: "Amazing Photo",
+                description: "Short summary of the photo",
+                longDescription:
+                  "A more detailed explanation or story behind the photo.",
+              },
+            ]}
+            videos={[
+              {
+                image: user2,
+                title: "Amazing Photo",
+                description: "Short summary of the photo",
+                longDescription:
+                  "A more detailed explanation or story behind the photo.",
+              },
+              {
+                image: user1,
+                title: "Amazing Photo",
+                description: "Short summary of the photo",
+                longDescription:
+                  "A more detailed explanation or story behind the photo.",
+              },
+            ]}
+          />
+          {/* <div
             className="col-3 bg-light position-fixed d-none d-md-block mt-4"
             style={{
               top: "60px", // Height of the topbar
@@ -86,10 +153,10 @@ const Home = () => {
                 ))}
               </ul>
             </div>
-          </div>
+          </div> */}
 
           {/* Chat Window */}
-          <>
+          {/* <>
             {selectedFriend ? (
               <ChatWindow
                 selectedFriend={selectedFriend}
@@ -100,7 +167,8 @@ const Home = () => {
             ) : (
               <Feed />
             )}
-          </>
+          </> */}
+          <Feed />
           <RigthSideBar />
           <Footer />
         </div>
