@@ -28,6 +28,9 @@ Route::post('forgot-password/send-otp', [ForgotPasswordController::class, 'sendO
 Route::post('forgot-password/verify-otp', [ForgotPasswordController::class, 'verifyOtp']);
 Route::post('forgot-password/reset', [ForgotPasswordController::class, 'resetPassword']);
 
+// Route to handle the Google login token
+Route::post('auth/google', [AuthController::class, 'loginWithGoogle']);
+
 Route::get('/auth/facebook', function () {
     return Socialite::driver('facebook')->redirect();
 })->name('facebook.login');

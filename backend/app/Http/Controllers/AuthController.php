@@ -1,20 +1,66 @@
 <?php
 
 namespace App\Http\Controllers;
+
 \Log::info(memory_get_usage());
 ini_set('memory_limit', '2G');
-use App\Models\User;
-use App\Models\Members;
-use Illuminate\Http\Request;
+
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Http;
+use Illuminate\Http\Request;
+
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Validation\ValidationException;
 use Illuminate\Support\Str;
 use Illuminate\Auth\Events\Registered;
+use Laravel\Socialite\Facades\Socialite;
+
+use App\Models\User;
+use App\Models\Members;
+
+use GuzzleHttp\Client;
 
 class AuthController extends Controller
 {
+    // Handle Google login using the token passed from frontend
+    public function loginWithGoogle(Request $request)
+    {
+        $token = $request->input('token');
+
+        // Call the tokeninfo endpoint to verify the token
+        $response = Http::get('https://www.googleapis.com/oauth2/v3/tokeninfo', [
+            'id_token' => $token,
+        ]);
+
+        if ($response->successful()) {
+            // Token is valid, parse user info
+            $googleUser = $response->json();
+            $user = User::where('email', $googleUser['email'])->first();
+
+            if (!$user) {
+                // Create a new user if they don't exist
+                $authUser = User::create([
+                    'username' => $googleUser['name'],
+                    'email' => $googleUser['email'],
+                    'email_verified_at' => TRUE,
+                    'google_login' => TRUE,
+                ]);
+            }
+
+            // Generate an API token using Passport or Sanctum
+            $authToken = $user->createToken('AuthToken')->accessToken;
+
+            // Return the user data and token
+            return response()->json([
+                'token' => $authToken
+            ]);
+            
+        } else {
+            // If the response is not successful
+            return response()->json(['error' => 'Invalid Token'], 400);
+        }
+    }
     public function login(Request $request)
     {
 
@@ -64,7 +110,7 @@ class AuthController extends Controller
 
         // Validate input
         $validator = Validator::make($request->all(), [
-            'name' => ['required', 'string', 'max:255'],
+            'username' => ['required', 'string', 'max:255'],
             'email' => ['required', 'string', 'email', 'max:255', 'unique:users'],
             'password' => ['required', 'string', 'min:8', 'confirmed'],
             'birthdate' => ['nullable', 'string', 'max:15'],
@@ -89,7 +135,7 @@ class AuthController extends Controller
     {
         // Create the user in the 'users' table
         $user = User::create([
-            'name' => $data['name'],
+            'username' => $data['username'],
             'email' => $data['email'],
             'password' => Hash::make($data['password']),
         ]);
