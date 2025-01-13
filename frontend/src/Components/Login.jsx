@@ -3,11 +3,13 @@ import logo from "../assets/logo/quak_logo.png";
 import { ToastContainer, toast, Bounce, Zoom } from "react-toastify";
 import bg from "../assets/images/blurred-empty-open-space-office-600nw-2411635125.webp";
 import "react-toastify/dist/ReactToastify.css";
-import { useGoogleLogin } from "@react-oauth/google";
 import { useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import i18n from "../i18n.js";
 import axios from "axios";
+import GoogleAuth from './socialLogin/GoogleAuth';
+
+
 const Login = () => {
   const navigate = useNavigate();
   const { t } = useTranslation();
@@ -27,68 +29,6 @@ const Login = () => {
     console.log(userField);
   };
 
-  const login = useGoogleLogin({
-    onSuccess: async (tokenResponse) => {
-      console.log("tokenResponse");
-      console.log(tokenResponse);
-      try {
-        // Fetch user details from Google
-        const userResponse = await fetch(
-          "https://www.googleapis.com/oauth2/v3/userinfo",
-          {
-            headers: { Authorization: `Bearer ${tokenResponse.access_token}` },
-          }
-        );
-        const userInfo = await userResponse.json();
-
-        // Check if it's the first-time login
-        const isFirstLogin = !localStorage.getItem("user_logged_in");
-        // if (isFirstLogin) {
-        //   // Show an alert or modal for user permission
-        //   const userConsent = window.confirm(
-        //     `Hi ${userInfo.given_name}, do you agree to share your profile information with us?`
-        //   );
-
-        //   if (!userConsent) {
-        //     alert("You need to grant permission to continue.");
-        //     return;
-        //   }
-
-        //   // Set a flag in localStorage
-        //   localStorage.setItem("user_logged_in", "true");
-        // }
-
-        // Navigate to dashboard with user details
-        toast.success("Google login successful!", {
-          position: "top-right",
-          autoClose: 5000,
-          hideProgressBar: false,
-          closeOnClick: true,
-          pauseOnHover: true,
-          draggable: true,
-          theme: "light",
-          transition: Bounce,
-        });
-        navigate("/dashboard", { state: { user: userInfo } });
-      } catch (error) {
-        toast.error("Error logging in with Google", { transition: Bounce });
-        console.error("Error fetching user info:", error);
-      }
-    },
-    onError: () => {
-      console.log("Login Failed");
-      toast.error("Google login failed", {
-        position: "top-right",
-        autoClose: 5000,
-        hideProgressBar: false,
-        closeOnClick: true,
-        pauseOnHover: true,
-        draggable: true,
-        theme: "light",
-        transition: Bounce,
-      });
-    },
-  });
   const validateForm = () => {
     const emailRegex = /^[a-zA-Z0-9._-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$|^[a-zA-Z0-9_-]{3,20}$/;
     if (!userField.email) {
@@ -131,11 +71,10 @@ const Login = () => {
       // Handle successful login
       console.log("Login Successful:", response.data);
       const token = response.data.token;
-      const userInfo = response.data;
       // Store the token (optional)
       localStorage.setItem("api_token", token);
       toast.success("Login successful!", { transition: Bounce });
-      navigate("/dashboard", { state: { user: userInfo } });
+      navigate("/dashboard", {});
     } catch (error) {
       // Handle errors
       if (error.response) {
@@ -372,15 +311,10 @@ const Login = () => {
                 <p className="text-center text-muted small mb-2">
                   or Log In with
                 </p>
-                <button
-                  type="button"
-                  className="btn btn-outline-danger w-100 mb-2"
-                  onClick={() => login()}
-                >
-                  <i className="fab fa-google me-2"></i>Sign in with Google
-                </button>
 
-                <button type="button" className="btn btn-outline-primary w-100">
+                <GoogleAuth />
+
+                <button type="button" className="btn btn-outline-primary mt-3 w-100">
                   <i className="fab fa-facebook me-2"></i>Sign in with Facebook
                 </button>
               </form>
