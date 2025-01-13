@@ -1,12 +1,39 @@
-import React from "react";
+import React, { useEffect, useState } from "react";
 import userImage from "../../assets/images/vector-users-icon.jpg";
 import logo from "../../assets/images/quak_logo.png";
 import imag3 from "../../assets/images/login-illustration .png";
 
 const Feed = () => {
+  const [navbarHeight, setNavbarHeight] = useState(52); // Default navbar height
+
+  useEffect(() => {
+    // Function to determine the navbar height based on screen size
+    const updateNavbarHeight = () => {
+      if (window.innerWidth <= 768) {
+        setNavbarHeight(88); // Smaller screen height
+      } else {
+        setNavbarHeight(48); // Larger screen height
+      }
+    };
+
+    // Update navbar height on load and when the window is resized
+    updateNavbarHeight();
+    window.addEventListener("resize", updateNavbarHeight);
+
+    // Cleanup listener on component unmount
+    return () => {
+      window.removeEventListener("resize", updateNavbarHeight);
+    };
+  }, []);
   return (
     <>
-      <div className="col-lg-6 col-md-8 col-sm-12 mx-auto p-5 mt-5">
+      <div
+        className="col-lg-6 col-md-8 col-sm-12 mx-auto p-2"
+        style={{
+          marginTop: `${navbarHeight}px`,
+          paddingBottom: "20px",
+        }}
+      >
         {/* Post Input Section */}
         <div className="card p-3 mb-4">
           <div className="d-flex align-items-center">

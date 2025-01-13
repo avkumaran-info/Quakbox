@@ -4,6 +4,7 @@ namespace App\Exceptions;
 
 use Illuminate\Foundation\Exceptions\Handler as ExceptionHandler;
 use Throwable;
+use Illuminate\Auth\AuthenticationException;
 
 class Handler extends ExceptionHandler
 {
@@ -26,5 +27,23 @@ class Handler extends ExceptionHandler
         $this->reportable(function (Throwable $e) {
             //
         });
+    }
+
+    public function unauthenticated($request, AuthenticationException $exception)
+    {
+        if ($exception->getMessage() == 'Unauthenticated.') {
+            // Check for expired token
+            if (str_contains($exception->getMessage(), 'expired')) {
+                return response()->json([
+                    'result' => false,
+                    'error' => 'Token has expired'
+                ], 401);
+            }
+
+            return response()->json([
+                'result' => false,
+                'error' => 'Unauthenticated'
+            ], 401);
+        }
     }
 }
