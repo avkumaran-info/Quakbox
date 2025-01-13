@@ -83,15 +83,16 @@ const NavBar = () => {
   return (
     <div>
       <nav
-        className="fixed-top p-2"
+        className="fixed-top d-flex align-items-center justify-content-start"
         style={{
           backgroundColor: "rgb(122, 129, 135)",
-          borderBottom: "7px solid",
-          borderImage: "linear-gradient(to right, #1e90ff, #87cefa) 1",
-          // height:"54px"
+          borderBottom: "3px solid",
+          // borderImage: "linear-gradient(to right, #1e90ff, #87cefa) 1",
+          borderColor: "blue",
+          height: "54px",
         }}
       >
-        <div className="container-fluid">
+        <div className="container-fluid ">
           <div
             className="navbar-brand d-flex align-items-center"
             style={{
@@ -141,7 +142,7 @@ const NavBar = () => {
               onMouseLeave={() => setShowAllFlags(false)}
             >
               {/* Display only the first 3 flags */}
-              <div style={{ display: "flex", gap: "8px" }}>
+              <div style={{ display: "flex", gap: "3px" }}>
                 {countries.slice(0, 3).map((country, index) => (
                   <div
                     key={index}
@@ -160,21 +161,21 @@ const NavBar = () => {
                       src={country.flags.png}
                       alt={country.name.common}
                       style={{
-                        width: "45px",
-                        height: "25px",
+                        width: "40px",
+                        height: "20px",
                         objectFit: "cover",
                       }}
                     />
                     <span
                       style={{
-                        fontSize: "0.75rem",
+                        fontSize: "0.6rem",
                         color: "#ffffff",
-                        marginTop: "5px",
+                        // marginTop: "5px",
                         textAlign: "center",
                         whiteSpace: "nowrap",
                         overflow: "hidden",
                         textOverflow: "ellipsis",
-                        maxWidth: "80px",
+                        maxWidth: "50px",
                       }}
                     >
                       {country.name.common}
@@ -189,8 +190,8 @@ const NavBar = () => {
                   className="all-flags"
                   style={{
                     position: "absolute",
-                    top: "45px",
-                    left: "-250px",
+                    top: "35px",
+                    left: "-220px",
                     backgroundColor: "#ffffff",
                     border: "1px solid #ddd",
                     borderRadius: "5px",
@@ -299,24 +300,6 @@ const NavBar = () => {
               style={{ color: "white" }}
             ></i>
 
-            {/* Search Input */}
-            <div className="d-none d-lg-block " style={{ width: "400px" }}>
-              {/* Smaller width for input */}
-              <input
-                type="text"
-                placeholder="Search..."
-                style={{
-                  width: "100%",
-                  padding: "8px 15px",
-                  fontSize: "1rem",
-                  border: "1px solid #ccc",
-                  borderRadius: "20px",
-                }}
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-              />
-            </div>
-
             {/* Friends Icon */}
             <i
               className="fas fa-user-friends d-none d-lg-block"
@@ -346,6 +329,23 @@ const NavBar = () => {
               className="fas fa-heart d-none d-lg-block"
               style={{ color: "white" }}
             ></i>
+            {/* Search Input */}
+            <div className="d-none d-lg-block " style={{ width: "250px" }}>
+              {/* Smaller width for input */}
+              <input
+                type="text"
+                placeholder="Search..."
+                style={{
+                  width: "100%",
+                  padding: "2px 15px",
+                  fontSize: "1rem",
+                  border: "1px solid #ccc",
+                  borderRadius: "20px",
+                }}
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+              />
+            </div>
 
             {/* Profile Section */}
             <div

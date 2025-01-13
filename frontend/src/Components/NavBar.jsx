@@ -2,8 +2,20 @@ import React, { useEffect, useRef, useState } from "react";
 import logo from "../assets/logo/logo.png";
 import profileImage from "../assets/images/vector-users-icon.jpg";
 import axios from "axios";
+import { useNavigate } from "react-router-dom";
+import Feed from "./Dashboard/Feed";
+import RightSidebar from "./Dashboard/RigthSideBar";
+import Footer from "./Dashboard/Footer";
+import LeftSidebar from "./Dashboard/LeftSideBar";
+import user1 from "../assets/images/user1.png";
+import user2 from "../assets/images/user2.jpg";
+import user3 from "../assets/images/vector-users-icon.jpg";
+import p1 from "../assets/images/images (1).jpeg";
+import p2 from "../assets/images/images.jpeg";
+import p3 from "../assets/images/images1.jpeg";
 
 const NavBar = () => {
+  const navigate = useNavigate();
   const [countries, setCountries] = useState([]);
   const dropdownRef = useRef(null);
   const [showDropdown, setShowDropdown] = useState(false);
@@ -30,6 +42,7 @@ const NavBar = () => {
           },
         }
       );
+      console.log(response);
 
       // Clear local storage and redirect
       localStorage.clear();
@@ -78,16 +91,18 @@ const NavBar = () => {
     .sort((a, b) => a.name.common.localeCompare(b.name.common)); // Sort A-Z
 
   return (
-    <div>
+    <>
       <nav
-        className="fixed-top p-2"
+        className="fixed-top d-flex align-items-center justify-content-start"
         style={{
           backgroundColor: "rgb(122, 129, 135)",
-          borderBottom: "7px solid",
-          borderImage: "linear-gradient(to right, #1e90ff, #87cefa) 1",
+          borderBottom: "3px solid",
+          // borderImage: "linear-gradient(to right, #1e90ff, #87cefa) 1",
+          borderColor: "blue",
+          height: "54px",
         }}
       >
-        <div className="container-fluid">
+        <div className="container-fluid p-">
           <div
             className="navbar-brand d-flex align-items-center"
             style={{
@@ -137,7 +152,7 @@ const NavBar = () => {
               onMouseLeave={() => setShowAllFlags(false)}
             >
               {/* Display only the first 3 flags */}
-              <div style={{ display: "flex", gap: "8px" }}>
+              <div style={{ display: "flex", gap: "3px" }}>
                 {countries.slice(0, 3).map((country, index) => (
                   <div
                     key={index}
@@ -156,21 +171,21 @@ const NavBar = () => {
                       src={country.flags.png}
                       alt={country.name.common}
                       style={{
-                        width: "45px",
-                        height: "25px",
+                        width: "40px",
+                        height: "20px",
                         objectFit: "cover",
                       }}
                     />
                     <span
                       style={{
-                        fontSize: "0.75rem",
+                        fontSize: "0.6rem",
                         color: "#ffffff",
-                        marginTop: "5px",
+                        // marginTop: "5px",
                         textAlign: "center",
                         whiteSpace: "nowrap",
                         overflow: "hidden",
                         textOverflow: "ellipsis",
-                        maxWidth: "80px",
+                        maxWidth: "50px",
                       }}
                     >
                       {country.name.common}
@@ -185,8 +200,8 @@ const NavBar = () => {
                   className="all-flags"
                   style={{
                     position: "absolute",
-                    top: "45px",
-                    left: "-300px",
+                    top: "35px",
+                    left: "-220px",
                     backgroundColor: "#ffffff",
                     border: "1px solid #ddd",
                     borderRadius: "5px",
@@ -226,8 +241,8 @@ const NavBar = () => {
                     style={{
                       display: "grid",
                       gridTemplateColumns:
-                        "repeat(auto-fill, minmax(120px, 1fr))",
-                      gap: "10px",
+                        "repeat(auto-fill, minmax(70px, 1fr))",
+                      gap: "1px",
                     }}
                   >
                     {filteredCountries.map((country, index) => (
@@ -264,7 +279,7 @@ const NavBar = () => {
                             whiteSpace: "nowrap",
                             overflow: "hidden",
                             textOverflow: "ellipsis",
-                            maxWidth: "100px",
+                            maxWidth: "70px",
                           }}
                         >
                           {country.name.common}
@@ -277,6 +292,7 @@ const NavBar = () => {
             </div>
 
             {/* World Icon */}
+
             <i
               className="fas fa-globe d-none d-lg-block"
               style={{ color: "white" }}
@@ -293,16 +309,15 @@ const NavBar = () => {
               className="fas fa-broadcast-tower d-none d-lg-block"
               style={{ color: "white" }}
             ></i>
-
             {/* Search Input */}
-            <div className="d-none d-lg-block " style={{ width: "200px" }}>
+            <div className="d-none d-lg-block " style={{ width: "250px" }}>
               {/* Smaller width for input */}
               <input
                 type="text"
                 placeholder="Search..."
                 style={{
                   width: "100%",
-                  padding: "8px 15px",
+                  padding: "2px 15px",
                   fontSize: "1rem",
                   border: "1px solid #ccc",
                   borderRadius: "20px",
@@ -435,7 +450,7 @@ const NavBar = () => {
                         color: "#333",
                         fontSize: "0.9rem",
                       }}
-                      onClick={() => console.log("Logout clicked")}
+                      onClick={handleLogout}
                     >
                       Logout
                     </a>
@@ -493,7 +508,7 @@ const NavBar = () => {
             className="d-lg-none bg-light d-flex justify-content-around fixed-top"
             style={{
               borderTop: "1px solid #ddd",
-              marginTop: "48px",
+              marginTop: "45px",
             }}
           >
             <a href="/dashboard" className="text-dark text-center">
@@ -606,7 +621,129 @@ const NavBar = () => {
           </div>
         </div>
       </nav>
-    </div>
+      <div className="d-flex justify-content-between mt-5">
+        <LeftSidebar
+          news={[
+            {
+              image: p1,
+              title: "Polities News",
+              description: "Short summary of the news",
+              longDescription:
+                "A more detailed description of the news that spans multiple lines.",
+            },
+            {
+              image: p2,
+              title: "Sports News",
+              description: "Short summary of the news",
+              longDescription:
+                "A more detailed description of the news that spans multiple lines.",
+            },
+            {
+              image: p3,
+              title: "Business News",
+              description: "Short summary of the news",
+              longDescription:
+                "A more detailed description of the news that spans multiple lines.",
+            },
+            {
+              image: user1,
+              title: "Health News",
+              description: "Short summary of the news",
+              longDescription:
+                "A more detailed description of the news that spans multiple lines.",
+            },
+          ]}
+          photos={[
+            {
+              image: user1,
+              title: "Amazing Photo",
+              description: "Short summary of the photo",
+              longDescription:
+                "A more detailed explanation or story behind the photo.",
+            },
+            {
+              image: user3,
+              title: "Amazing Photo",
+              description: "Short summary of the photo",
+              longDescription:
+                "A more detailed explanation or story behind the photo.",
+            },
+          ]}
+          videos={[
+            {
+              image: user2,
+              title: "Amazing Photo",
+              description: "Short summary of the photo",
+              longDescription:
+                "A more detailed explanation or story behind the photo.",
+            },
+            {
+              image: user1,
+              title: "Amazing Photo",
+              description: "Short summary of the photo",
+              longDescription:
+                "A more detailed explanation or story behind the photo.",
+            },
+          ]}
+        />
+        {/* <div
+            className="col-3 bg-light position-fixed d-none d-md-block mt-4"
+            style={{
+              top: "60px", // Height of the topbar
+              left: "0",
+            }}
+          >
+            <div className="card">
+              <div className="card-header bg-primary text-white">
+                <h5>Friends</h5>
+              </div>
+              <ul className="list-group list-group-flush">
+                {friends.map((friend) => (
+                  <li
+                    key={friend.id}
+                    className={`list-group-item ${
+                      selectedFriend?.id === friend.id ? "active" : ""
+                    }`}
+                    onClick={() => setSelectedFriend(friend)}
+                    style={{ cursor: "pointer" }}
+                  >
+                    <div className="d-flex align-items-center">
+                      <img
+                        src={friend.image}
+                        alt={friend.name}
+                        className="rounded-circle me-2"
+                        style={{
+                          width: "40px",
+                          height: "40px",
+                          objectFit: "cover",
+                        }}
+                      />
+                      <span>{friend.name}</span>
+                    </div>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          </div> */}
+
+        {/* Chat Window */}
+        {/* <>
+            {selectedFriend ? (
+              <ChatWindow
+                selectedFriend={selectedFriend}
+                onSendMessage={(newMessage) =>
+                  handleSendMessage(selectedFriend.id, newMessage)
+                }
+              />
+            ) : (
+              <Feed />
+            )}
+          </> */}
+        <Feed />
+        <RightSidebar />
+        <Footer />
+      </div>
+    </>
   );
 };
 
