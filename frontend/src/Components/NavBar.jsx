@@ -621,7 +621,7 @@ const NavBar = () => {
           </div>
         </div>
       </nav>
-      <div className="d-flex justify-content-between mt-5">
+      <div className="d-flex justify-content-between">
         <LeftSidebar
           news={[
             {

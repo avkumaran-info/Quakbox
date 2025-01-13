@@ -7,7 +7,7 @@ import ForgetPassword from "./Components/ForgetPassword";
 import Home from "./Components/Dashboard/Home";
 import ChatPage from "./Components/ChatPage";
 import NavBar from "./Components/NavBar";
-import GoogleAuth from './Components/socialLogin/GoogleAuth';
+import GoogleAuth from "./Components/socialLogin/GoogleAuth";
 
 const App = () => {
   return (
@@ -18,7 +18,7 @@ const App = () => {
         <Route path="/signup" element={<Signup />} />
         <Route path="/forgetpassword" element={<ForgetPassword />} />
         <Route path="/dashboard" element={<Home />} />
-        <Route path="/dashboard/test" element={<NavBar />} />
+        <Route path="/test" element={<NavBar />} />
       </Routes>
     </Router>
   );
