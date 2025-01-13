@@ -5,12 +5,12 @@ const LeftSidebar = ({ news, photos, videos }) => {
     <div
       className="col-3 bg-light position-fixed d-none d-md-block"
       style={{
-        top: "65px", // Height of the navbar
-        bottom: "55px", // Height of the footer
+        top: "56px", // Height of the navbar
+        bottom: "0",
         left: "0",
         display: "flex",
         flexDirection: "column",
-        overflow: "hidden",
+        overflowY: "auto", // Allows scrolling if content overflows
       }}
     >
       <div className="card bg-light h-100 d-flex justify-content-center flex-column">
@@ -24,7 +24,12 @@ const LeftSidebar = ({ news, photos, videos }) => {
             {/* Centered Header */}
             <h5
               className="text-light text-center h-100"
-              style={{ backgroundColor: "blue" }}
+              style={{
+                background: "linear-gradient(to right, #1e90ff, #87cefa)", // Static gradient
+                color: "white",
+                padding: "8px", // Optional padding for better spacing
+                margin: 0, // Ensure no unwanted margins
+              }}
             >
               QB News
             </h5>
@@ -108,7 +113,12 @@ const LeftSidebar = ({ news, photos, videos }) => {
             {/* Centered Header */}
             <h5
               className="text-light text-center h-100"
-              style={{ backgroundColor: "blue" }}
+              style={{
+                background: "linear-gradient(to right, #1e90ff, #87cefa)", // Static gradient
+                color: "white",
+                padding: "8px", // Optional padding for better spacing
+                margin: 0, // Ensure no unwanted margins
+              }}
             >
               Popular Photos and Videos
             </h5>

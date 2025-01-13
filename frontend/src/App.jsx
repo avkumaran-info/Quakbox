@@ -7,7 +7,6 @@ import ForgetPassword from "./Components/ForgetPassword";
 import Home from "./Components/Dashboard/Home";
 import ChatPage from "./Components/ChatPage";
 import NavBar from "./Components/NavBar";
-
 const App = () => {
   return (
     <Router>
@@ -17,8 +16,7 @@ const App = () => {
         <Route path="/signup" element={<Signup />} />
         <Route path="/forgetpassword" element={<ForgetPassword />} />
         <Route path="/dashboard" element={<Home />} />
-        <Route path="/chatroom" element={<ChatPage />} />
-        <Route path="/test" element={<NavBar/>}/>
+        <Route path="/dashboard/test" element={<NavBar />} />
       </Routes>
     </Router>
   );
