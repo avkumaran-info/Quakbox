@@ -1,5 +1,6 @@
 import React, { useState, useRef, useEffect } from "react";
 import Webcam from "react-webcam";
+import { useNavigate } from "react-router-dom";
 import {
   Box,
   Button,
@@ -55,7 +56,7 @@ const GoLiveTwo = () => {
   const [viewersCount, setViewersCount] = useState(1542); // Viewers count
   const commentsContainerRef = useRef(null);
   const isUserScrolling = useRef(false);
-
+  const navigate = useNavigate(); // For navigation
   // User data
   const users = [
     { name: "Alice", avatar: womenProfilePic },
@@ -69,7 +70,16 @@ const GoLiveTwo = () => {
     name: "John Doe",
     avatar: menProfilePic,
   };
-
+  // Helper to validate session
+  const checkUserSession = () => {
+    const userToken = localStorage.getItem("api_token"); // Replace with your session key
+    if (!userToken) {
+      navigate("/"); // Redirect to login if no session
+    }
+  };
+  useEffect(() => {
+    checkUserSession(); // Validate session on mount
+  }, []);
   // Handlers for live stream state
   const handleGoLive = () => setIsLive(true);
   const handleEndLive = () => {
@@ -190,11 +200,23 @@ const GoLiveTwo = () => {
           elevation={20}
           sx={{
             position: "relative",
-            width: "90%",
-            maxWidth: 400,
-            aspectRatio: "9 / 16",
+            width: {
+              xs: "100%", // Full width for mobile screens
+              md: "70%", // 70% width for medium and larger screens
+            },
+            height: {
+              xs: "100%", // Full height for mobile screens
+              md: "90vh", // 90% viewport height for medium and larger screens
+            },
+            aspectRatio: {
+              xs: "9 / 16", // Preserve aspect ratio on mobile
+              md: "16 / 9", // Wide aspect ratio for desktop
+            },
+            // maxWidth: 400,
+            // aspectRatio: "9 / 16",
             overflow: "hidden",
             borderRadius: 2,
+            mx: "auto",
           }}
         >
           {/* Video Section */}
