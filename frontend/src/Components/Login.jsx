@@ -7,14 +7,14 @@ import { useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import i18n from "../i18n.js";
 import axios from "axios";
-import GoogleAuth from './socialLogin/GoogleAuth';
-
+import GoogleAuth from "./socialLogin/GoogleAuth";
 
 const Login = () => {
   const navigate = useNavigate();
   const { t } = useTranslation();
   const [userField, setUserField] = useState({
     email: "",
+    password: "",
   });
 
   const changeLanguage = (lng) => {
@@ -30,7 +30,8 @@ const Login = () => {
   };
 
   const validateForm = () => {
-    const emailRegex = /^[a-zA-Z0-9._-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$|^[a-zA-Z0-9_-]{3,20}$/;
+    const emailRegex =
+      /^[a-zA-Z0-9._-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$|^[a-zA-Z0-9_-]{3,20}$/;
     if (!userField.email) {
       // alert("Email is required");
 
@@ -74,12 +75,11 @@ const Login = () => {
       // Store the token (optional)
       localStorage.setItem("api_token", token);
       toast.success("Login successful!", { transition: Bounce });
-      if(flag == 1) {
+      if (flag == 1) {
         navigate("/dashboard", {});
       } else if (flag == 2) {
         navigate("/test", {});
       }
-      
     } catch (error) {
       // Handle errors
       if (error.response) {
@@ -328,7 +328,10 @@ const Login = () => {
 
                 <GoogleAuth />
 
-                <button type="button" className="btn btn-outline-primary mt-3 w-100">
+                <button
+                  type="button"
+                  className="btn btn-outline-primary mt-3 w-100"
+                >
                   <i className="fab fa-facebook me-2"></i>Sign in with Facebook
                 </button>
               </form>
