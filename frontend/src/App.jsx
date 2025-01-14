@@ -7,21 +7,19 @@ import ForgetPassword from "./Components/ForgetPassword";
 import Home from "./Components/Dashboard/Home";
 import ChatPage from "./Components/ChatPage";
 import GoLive from "./Components/GoLive";
-import NavBar from "./Components/NavBar";
-import GoogleAuth from "./Components/socialLogin/GoogleAuth";
+import TestHome from "./Components/Test/TestHome";
 
 const App = () => {
   return (
     <Router>
       <Routes>
         <Route path="/" element={<Login />} />
-        {/* <Route path="/d" element={<Dashboard />} /> */}
         <Route path="/signup" element={<Signup />} />
         <Route path="/forgetpassword" element={<ForgetPassword />} />
         <Route path="/dashboard" element={<Home />} />
         <Route path="/chatroom" element={<ChatPage />} />
         <Route path="/golive" element={<GoLive />} />
-        <Route path="/test" element={<NavBar />} />
+        <Route path="/test" element={<TestHome />} />
       </Routes>
     </Router>
   );

@@ -87,9 +87,9 @@ const NavBar = () => {
         style={{
           backgroundColor: "rgb(122, 129, 135)",
           borderBottom: "3px solid",
-          // borderImage: "linear-gradient(to right, #1e90ff, #87cefa) 1",
           borderColor: "blue",
           height: "54px",
+          padding: "0 1rem",
         }}
       >
         <div className="container-fluid ">
@@ -295,7 +295,11 @@ const NavBar = () => {
             ></i>
 
             {/* Go Live Icon */}
-            <i onClick={(e) => { e.preventDefault(); navigate("/golive"); }}
+            <i
+              onClick={(e) => {
+                e.preventDefault();
+                navigate("/golive");
+              }}
               className="fas fa-broadcast-tower d-none d-lg-block"
               style={{ color: "white" }}
             ></i>
@@ -495,51 +499,59 @@ const NavBar = () => {
           </div>
 
           <div
-            className="d-lg-none bg-light d-flex justify-content-around fixed-top"
+            className="d-lg-none bg-light d-flex align-items-center justify-content-evenly fixed-top"
             style={{
               borderTop: "1px solid #ddd",
-              marginTop: "45px",
+              marginTop: "54px",
+              padding: "10px 0",
             }}
           >
-            <a href="/dashboard" className="text-dark text-center">
+            {/* Home */}
+            <div className="text-dark text-center">
               <i
                 className="fa-solid fa-house"
                 style={{ fontSize: "0.8rem" }}
               ></i>
               <p style={{ fontSize: "0.5rem", margin: 0 }}>Home</p>
-            </a>
-            <a href="#" className="text-dark text-center">
+            </div>
+
+            {/* World */}
+            <div className="text-dark text-center">
               <i
                 className="fa-solid fa-globe"
                 style={{ fontSize: "0.8rem" }}
               ></i>
               <p style={{ fontSize: "0.5rem", margin: 0 }}>World</p>
-            </a>
-            <a href="#" className="text-dark text-center">
+            </div>
+
+            {/* Friends */}
+            <div className="text-dark text-center">
               <i
                 className="fa-solid fa-user-friends"
                 style={{ fontSize: "0.8rem" }}
               ></i>
               <p style={{ fontSize: "0.5rem", margin: 0 }}>Friends</p>
-            </a>
-            <a href="#" className="text-dark text-center">
+            </div>
+
+            {/* Alerts */}
+            <div className="text-dark text-center">
               <i
                 className="fa-solid fa-bell"
                 style={{ fontSize: "0.8rem" }}
               ></i>
               <p style={{ fontSize: "0.5rem", margin: 0 }}>Alerts</p>
-            </a>
+            </div>
 
-            <a href="#" className="text-dark text-center">
-              {/* Profile Image */}
+            {/* Profile */}
+            <div className="text-dark text-center position-relative">
               <div
                 style={{
                   borderRadius: "50%",
                   width: "35px",
                   height: "35px",
                   overflow: "hidden",
-                  marginLeft: "10px",
                   border: "2px solid #ffffff",
+                  cursor: "pointer",
                 }}
                 onClick={() => {
                   setDropdown((prev) => !prev);
@@ -548,29 +560,31 @@ const NavBar = () => {
                 <img
                   src={profileImage}
                   alt="User"
-                  style={{ width: "100%", height: "100%", objectFit: "cover" }}
+                  style={{
+                    width: "100%",
+                    height: "100%",
+                    objectFit: "cover",
+                  }}
                 />
               </div>
               {dropdown && (
                 <div
-                  className="dropdown-menu "
+                  className="dropdown-menu"
                   style={{
                     position: "absolute",
-                    top: "40px",
+                    top: "45px",
                     right: "0",
                     backgroundColor: "#ffffff",
                     boxShadow: "0 4px 6px rgba(0, 0, 0, 0.1)",
                     borderRadius: "5px",
                     zIndex: 1000,
                     width: "150px",
-                    display: "block",
                   }}
                 >
                   <a
                     href="#"
                     className="dropdown-item"
                     style={{
-                      //   padding: "10px 15px",
                       color: "#333",
                       fontSize: "0.8rem",
                     }}
@@ -584,7 +598,6 @@ const NavBar = () => {
                     href="#"
                     className="dropdown-item"
                     style={{
-                      //   padding: "10px 15px",
                       color: "#333",
                       fontSize: "0.8rem",
                     }}
@@ -597,7 +610,6 @@ const NavBar = () => {
                     href="#"
                     className="dropdown-item"
                     style={{
-                      //   padding: "10px 15px",
                       color: "#333",
                       fontSize: "0.8rem",
                     }}
@@ -607,7 +619,7 @@ const NavBar = () => {
                   </a>
                 </div>
               )}
-            </a>
+            </div>
           </div>
         </div>
       </nav>
