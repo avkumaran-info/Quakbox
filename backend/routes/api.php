@@ -3,6 +3,7 @@
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\ForgotPasswordController;
+use App\Http\Controllers\CountryController;
 
 //facebook
 use Laravel\Socialite\Facades\Socialite;
@@ -56,3 +57,8 @@ Route::get('/auth/facebook/callback', function () {
 });
 
 Route::middleware('auth:api')->get('user', [AuthController::class, 'user']);
+
+Route::middleware('auth:api')->get('favourite_country/{member_id}', [CountryController::class, 'favouriteCountryByMemberId']);
+Route::middleware('auth:api')->post('set_favourite_country', [CountryController::class, 'storeFavouriteCountry']);
+Route::middleware('auth:api')->post('put_favourite_country', [CountryController::class, 'updateFavouriteCountry']);
+Route::middleware('auth:api')->post('del_favourite_country', [CountryController::class, 'deleteFavouriteCountry']);
