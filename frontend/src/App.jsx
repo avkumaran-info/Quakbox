@@ -9,6 +9,7 @@ import ChatPage from "./Components/ChatPage";
 import GoLive from "./Components/GoLive";
 import NavBar from "./Components/NavBar";
 import GoogleAuth from "./Components/socialLogin/GoogleAuth";
+import FanCountriesComponent from "./Components/FanCountriesComponent";
 
 const App = () => {
   return (
@@ -22,6 +23,8 @@ const App = () => {
         <Route path="/chatroom" element={<ChatPage />} />
         <Route path="/golive" element={<GoLive />} />
         <Route path="/test" element={<NavBar />} />
+        <Route path="/favouriteCountires" element={<FanCountriesComponent />} />
+        {/* favouriteCountires */}
       </Routes>
     </Router>
   );
