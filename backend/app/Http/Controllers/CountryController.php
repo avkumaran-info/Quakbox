@@ -66,48 +66,64 @@ class CountryController extends Controller
                 'error' => $e->getMessage()
             ], 500);
         }
-
-
-
-
-
-
-
-
-
-
-        $request->validate([
-            'favourite_country_id' => 'required|numeric',
-            'code' => 'required|string',
-            'favourite_country' => 'required|numeric',
-        ]);
-
-        $country = FavouriteCountry::create($request->all());
-
-        return response()->json(['success' => true, 'data' => $country, 'message' => 'Country added successfully']);
     }
 
     // Update a favorite country
-    public function update(Request $request, $id)
+    public function updateFavouriteCountry(Request $request)
     {
-        $request->validate([
-            'member_id' => 'required|numeric',
-            'code' => 'required|string|max:100',
-            'favourite_country' => 'required|string|max:200',
+
+        // Validation Rules
+        $validator = Validator::make($request->all(), [
+            'countries' => 'required|array',
+            'countries.*.favourite_country_id' => 'required|numeric',
+            'countries.*.code' => 'required|string',
+            'countries.*.favourite_country' => 'required|in:0,1',
         ]);
 
-        $country = FavouriteCountry::findOrFail($id);
-        $country->update($request->all());
+        // If validation fails
+        if ($validator->fails()) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Validation error',
+                'errors' => $validator->errors()
+            ], 400);
+        }
 
-        return response()->json(['success' => true, 'data' => $country, 'message' => 'Country updated successfully']);
+        // Extracting the countries array from the validated request
+        $countries = $request->input('countries');
+
+        // Custom insert query
+        try {
+            // Insert data using a custom insert query
+            foreach ($countries as $country) {
+                DB::table('favourite_country')
+                    ->where('member_id', $request->user()->id)
+                    ->where('code', $country['code'])
+                    ->update([
+                        'favourite_country' => $country['favourite_country'],
+                    ]);
+            }
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Countries updated successfully'
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Error inserting data',
+                'error' => $e->getMessage()
+            ], 500);
+        }
     }
 
     // Delete a favorite country
-    public function delete($id)
+    public function deleteFavouriteCountry(Request $request)
     {
-        $country = FavouriteCountry::findOrFail($id);
-        $country->delete();
+        $delete = DB::table('favourite_country')
+        ->where('member_id', $request->user()->id)
+        ->delete();
 
-        return response()->json(['success' => true, 'message' => 'Country deleted successfully']);
+        return response()->json(['success' => true, 'message' => 'Countries reseted successfully']);
     }
 }
