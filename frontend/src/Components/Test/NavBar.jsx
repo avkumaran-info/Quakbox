@@ -1,18 +1,8 @@
 import React, { useEffect, useRef, useState } from "react";
-import logo from "../assets/logo/logo.png";
-import profileImage from "../assets/images/vector-users-icon.jpg";
+import logo from "../../assets/logo/logo.png";
+import profileImage from "../../assets/images/vector-users-icon.jpg";
 import axios from "axios";
 import { useNavigate } from "react-router-dom";
-import Feed from "./Dashboard/Feed";
-import RightSidebar from "./Dashboard/RigthSideBar";
-import Footer from "./Dashboard/Footer";
-import LeftSidebar from "./Dashboard/LeftSideBar";
-import user1 from "../assets/images/user1.png";
-import user2 from "../assets/images/user2.jpg";
-import user3 from "../assets/images/vector-users-icon.jpg";
-import p1 from "../assets/images/images (1).jpeg";
-import p2 from "../assets/images/images.jpeg";
-import p3 from "../assets/images/images1.jpeg";
 
 const NavBar = () => {
   const navigate = useNavigate();
@@ -91,18 +81,18 @@ const NavBar = () => {
     .sort((a, b) => a.name.common.localeCompare(b.name.common)); // Sort A-Z
 
   return (
-    <>
+    <div>
       <nav
         className="fixed-top d-flex align-items-center justify-content-start"
         style={{
           backgroundColor: "rgb(122, 129, 135)",
           borderBottom: "3px solid",
-          // borderImage: "linear-gradient(to right, #1e90ff, #87cefa) 1",
           borderColor: "blue",
           height: "54px",
+          padding: "0 1rem",
         }}
       >
-        <div className="container-fluid p-">
+        <div className="container-fluid ">
           <div
             className="navbar-brand d-flex align-items-center"
             style={{
@@ -306,26 +296,13 @@ const NavBar = () => {
 
             {/* Go Live Icon */}
             <i
+              onClick={(e) => {
+                e.preventDefault();
+                navigate("/golive");
+              }}
               className="fas fa-broadcast-tower d-none d-lg-block"
               style={{ color: "white" }}
             ></i>
-            {/* Search Input */}
-            <div className="d-none d-lg-block " style={{ width: "250px" }}>
-              {/* Smaller width for input */}
-              <input
-                type="text"
-                placeholder="Search..."
-                style={{
-                  width: "100%",
-                  padding: "2px 15px",
-                  fontSize: "1rem",
-                  border: "1px solid #ccc",
-                  borderRadius: "20px",
-                }}
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-              />
-            </div>
 
             {/* Friends Icon */}
             <i
@@ -356,6 +333,23 @@ const NavBar = () => {
               className="fas fa-heart d-none d-lg-block"
               style={{ color: "white" }}
             ></i>
+            {/* Search Input */}
+            <div className="d-none d-lg-block " style={{ width: "250px" }}>
+              {/* Smaller width for input */}
+              <input
+                type="text"
+                placeholder="Search..."
+                style={{
+                  width: "100%",
+                  padding: "2px 15px",
+                  fontSize: "1rem",
+                  border: "1px solid #ccc",
+                  borderRadius: "20px",
+                }}
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+              />
+            </div>
 
             {/* Profile Section */}
             <div
@@ -505,51 +499,59 @@ const NavBar = () => {
           </div>
 
           <div
-            className="d-lg-none bg-light d-flex justify-content-around fixed-top"
+            className="d-lg-none bg-light d-flex align-items-center justify-content-evenly fixed-top"
             style={{
               borderTop: "1px solid #ddd",
-              marginTop: "45px",
+              marginTop: "54px",
+              padding: "10px 0",
             }}
           >
-            <a href="/dashboard" className="text-dark text-center">
+            {/* Home */}
+            <div className="text-dark text-center">
               <i
                 className="fa-solid fa-house"
                 style={{ fontSize: "0.8rem" }}
               ></i>
               <p style={{ fontSize: "0.5rem", margin: 0 }}>Home</p>
-            </a>
-            <a href="#" className="text-dark text-center">
+            </div>
+
+            {/* World */}
+            <div className="text-dark text-center">
               <i
                 className="fa-solid fa-globe"
                 style={{ fontSize: "0.8rem" }}
               ></i>
               <p style={{ fontSize: "0.5rem", margin: 0 }}>World</p>
-            </a>
-            <a href="#" className="text-dark text-center">
+            </div>
+
+            {/* Friends */}
+            <div className="text-dark text-center">
               <i
                 className="fa-solid fa-user-friends"
                 style={{ fontSize: "0.8rem" }}
               ></i>
               <p style={{ fontSize: "0.5rem", margin: 0 }}>Friends</p>
-            </a>
-            <a href="#" className="text-dark text-center">
+            </div>
+
+            {/* Alerts */}
+            <div className="text-dark text-center">
               <i
                 className="fa-solid fa-bell"
                 style={{ fontSize: "0.8rem" }}
               ></i>
               <p style={{ fontSize: "0.5rem", margin: 0 }}>Alerts</p>
-            </a>
+            </div>
 
-            <a href="#" className="text-dark text-center">
-              {/* Profile Image */}
+            {/* Profile */}
+            <div className="text-dark text-center position-relative">
               <div
                 style={{
                   borderRadius: "50%",
                   width: "35px",
                   height: "35px",
                   overflow: "hidden",
-                  marginLeft: "10px",
                   border: "2px solid #ffffff",
+                  cursor: "pointer",
                 }}
                 onClick={() => {
                   setDropdown((prev) => !prev);
@@ -558,29 +560,31 @@ const NavBar = () => {
                 <img
                   src={profileImage}
                   alt="User"
-                  style={{ width: "100%", height: "100%", objectFit: "cover" }}
+                  style={{
+                    width: "100%",
+                    height: "100%",
+                    objectFit: "cover",
+                  }}
                 />
               </div>
               {dropdown && (
                 <div
-                  className="dropdown-menu "
+                  className="dropdown-menu"
                   style={{
                     position: "absolute",
-                    top: "40px",
+                    top: "45px",
                     right: "0",
                     backgroundColor: "#ffffff",
                     boxShadow: "0 4px 6px rgba(0, 0, 0, 0.1)",
                     borderRadius: "5px",
                     zIndex: 1000,
                     width: "150px",
-                    display: "block",
                   }}
                 >
                   <a
                     href="#"
                     className="dropdown-item"
                     style={{
-                      //   padding: "10px 15px",
                       color: "#333",
                       fontSize: "0.8rem",
                     }}
@@ -594,7 +598,6 @@ const NavBar = () => {
                     href="#"
                     className="dropdown-item"
                     style={{
-                      //   padding: "10px 15px",
                       color: "#333",
                       fontSize: "0.8rem",
                     }}
@@ -607,7 +610,6 @@ const NavBar = () => {
                     href="#"
                     className="dropdown-item"
                     style={{
-                      //   padding: "10px 15px",
                       color: "#333",
                       fontSize: "0.8rem",
                     }}
@@ -617,133 +619,11 @@ const NavBar = () => {
                   </a>
                 </div>
               )}
-            </a>
+            </div>
           </div>
         </div>
       </nav>
-      <div className="d-flex justify-content-between">
-        <LeftSidebar
-          news={[
-            {
-              image: p1,
-              title: "Polities News",
-              description: "Short summary of the news",
-              longDescription:
-                "A more detailed description of the news that spans multiple lines.",
-            },
-            {
-              image: p2,
-              title: "Sports News",
-              description: "Short summary of the news",
-              longDescription:
-                "A more detailed description of the news that spans multiple lines.",
-            },
-            {
-              image: p3,
-              title: "Business News",
-              description: "Short summary of the news",
-              longDescription:
-                "A more detailed description of the news that spans multiple lines.",
-            },
-            {
-              image: user1,
-              title: "Health News",
-              description: "Short summary of the news",
-              longDescription:
-                "A more detailed description of the news that spans multiple lines.",
-            },
-          ]}
-          photos={[
-            {
-              image: user1,
-              title: "Amazing Photo",
-              description: "Short summary of the photo",
-              longDescription:
-                "A more detailed explanation or story behind the photo.",
-            },
-            {
-              image: user3,
-              title: "Amazing Photo",
-              description: "Short summary of the photo",
-              longDescription:
-                "A more detailed explanation or story behind the photo.",
-            },
-          ]}
-          videos={[
-            {
-              image: user2,
-              title: "Amazing Photo",
-              description: "Short summary of the photo",
-              longDescription:
-                "A more detailed explanation or story behind the photo.",
-            },
-            {
-              image: user1,
-              title: "Amazing Photo",
-              description: "Short summary of the photo",
-              longDescription:
-                "A more detailed explanation or story behind the photo.",
-            },
-          ]}
-        />
-        {/* <div
-            className="col-3 bg-light position-fixed d-none d-md-block mt-4"
-            style={{
-              top: "60px", // Height of the topbar
-              left: "0",
-            }}
-          >
-            <div className="card">
-              <div className="card-header bg-primary text-white">
-                <h5>Friends</h5>
-              </div>
-              <ul className="list-group list-group-flush">
-                {friends.map((friend) => (
-                  <li
-                    key={friend.id}
-                    className={`list-group-item ${
-                      selectedFriend?.id === friend.id ? "active" : ""
-                    }`}
-                    onClick={() => setSelectedFriend(friend)}
-                    style={{ cursor: "pointer" }}
-                  >
-                    <div className="d-flex align-items-center">
-                      <img
-                        src={friend.image}
-                        alt={friend.name}
-                        className="rounded-circle me-2"
-                        style={{
-                          width: "40px",
-                          height: "40px",
-                          objectFit: "cover",
-                        }}
-                      />
-                      <span>{friend.name}</span>
-                    </div>
-                  </li>
-                ))}
-              </ul>
-            </div>
-          </div> */}
-
-        {/* Chat Window */}
-        {/* <>
-            {selectedFriend ? (
-              <ChatWindow
-                selectedFriend={selectedFriend}
-                onSendMessage={(newMessage) =>
-                  handleSendMessage(selectedFriend.id, newMessage)
-                }
-              />
-            ) : (
-              <Feed />
-            )}
-          </> */}
-        <Feed />
-        <RightSidebar />
-        <Footer />
-      </div>
-    </>
+    </div>
   );
 };
 

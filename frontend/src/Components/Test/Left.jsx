@@ -1,9 +1,9 @@
 import React from "react";
 
-const LeftSidebar = ({ news, photos, videos }) => {
+const Left = ({ news, photos, videos }) => {
   return (
     <div
-      className="col-md-3 d-none d-md-block bg-light position-fixed mb-5"
+      className="col-md-3 d-none d-md-block bg-light position-fixed"
       style={{
         top: "55px", // Height of the navbar
         bottom: "60px", // Space reserved for the footer
@@ -11,9 +11,9 @@ const LeftSidebar = ({ news, photos, videos }) => {
         display: "flex",
         flexDirection: "column",
         height: "calc(100vh - 105px)", // Adjust height for navbar and footer
+        // padding: "10px",
         overflow: "hidden", // Prevent scrolling
         boxSizing: "border-box", // Ensure padding doesn't overflow
-        marginBottom: "105px",
       }}
     >
       {/* QB News Section */}
@@ -21,7 +21,7 @@ const LeftSidebar = ({ news, photos, videos }) => {
         <div
           className="d-flex align-items-center text-light p-1"
           style={{
-            background: "linear-gradient(to right, #1e90ff, #87cefa)",
+            background: "linear-gradient(to right, #c0c0c0, #c0c0c0)",
             color: "white",
             padding: "8px 15px",
             fontSize: "16px",
@@ -32,7 +32,8 @@ const LeftSidebar = ({ news, photos, videos }) => {
             <h5
               className=" text-center"
               style={{
-                color: "white",
+                background: "linear-gradient(to right, #c0c0c0, #c0c0c0)",
+                color: "blue",
                 padding: "8px",
                 margin: 0,
                 fontSize: "13px",
@@ -59,7 +60,9 @@ const LeftSidebar = ({ news, photos, videos }) => {
                     <h5
                       className=" text-center"
                       style={{
-                        color: "white ",
+                        background:
+                          "linear-gradient(to right, #c0c0c0, #c0c0c0)",
+                        color: "blue",
                         padding: "8px",
                         margin: 0,
                         fontSize: "13px",
@@ -75,7 +78,9 @@ const LeftSidebar = ({ news, photos, videos }) => {
                     <h5
                       className=" text-center"
                       style={{
-                        color: "white",
+                        background:
+                          "linear-gradient(to right, #c0c0c0, #c0c0c0)",
+                        color: "blue",
                         padding: "8px",
                         margin: 0,
                         fontSize: "13px",
@@ -91,7 +96,9 @@ const LeftSidebar = ({ news, photos, videos }) => {
                     <h5
                       className=" text-center"
                       style={{
-                        color: "white",
+                        background:
+                          "linear-gradient(to right, #c0c0c0, #c0c0c0)",
+                        color: "blue",
                         padding: "8px",
                         margin: 0,
                         fontSize: "13px",
@@ -107,7 +114,9 @@ const LeftSidebar = ({ news, photos, videos }) => {
                     <h5
                       className=" text-center"
                       style={{
-                        color: "white",
+                        background:
+                          "linear-gradient(to right, #c0c0c0, #c0c0c0)",
+                        color: "blue",
                         padding: "8px",
                         margin: 0,
                         fontSize: "13px",
@@ -199,10 +208,10 @@ const LeftSidebar = ({ news, photos, videos }) => {
       {/* Popular Photos and Videos Section */}
       <div className="card mb-4" style={{ flex: 1 }}>
         <h5
-          className="text-light text-center"
+          className=" text-center"
           style={{
-            background: "linear-gradient(to right, #1e90ff, #87cefa)",
-            color: "white",
+            background: "linear-gradient(to right, #c0c0c0, #c0c0c0)",
+            color: "blue",
             padding: "8px",
             margin: 0,
             fontSize: "16px",
@@ -286,4 +295,4 @@ const LeftSidebar = ({ news, photos, videos }) => {
   );
 };
 
-export default LeftSidebar;
+export default Left;
