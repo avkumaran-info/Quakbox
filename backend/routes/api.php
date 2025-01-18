@@ -4,6 +4,7 @@ use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\ForgotPasswordController;
 use App\Http\Controllers\CountryController;
+use App\Http\Controllers\PostController;
 
 //facebook
 use Laravel\Socialite\Facades\Socialite;
@@ -58,7 +59,19 @@ Route::get('/auth/facebook/callback', function () {
 
 Route::middleware('auth:api')->get('user', [AuthController::class, 'user']);
 
-Route::middleware('auth:api')->get('favourite_country/{member_id}', [CountryController::class, 'favouriteCountryByMemberId']);
+Route::middleware('auth:api')->get('get_favourite_country', [CountryController::class, 'favouriteCountryByMemberId']);
 Route::middleware('auth:api')->post('set_favourite_country', [CountryController::class, 'storeFavouriteCountry']);
 Route::middleware('auth:api')->post('put_favourite_country', [CountryController::class, 'updateFavouriteCountry']);
 Route::middleware('auth:api')->post('del_favourite_country', [CountryController::class, 'deleteFavouriteCountry']);
+
+
+Route::middleware('auth:api')->group(function () {
+    Route::post('set_posts', [PostController::class, 'postStore']); // Create post with media
+    Route::put('put_posts/{id}', [PostController::class, 'postUpdate']); // Update post
+    Route::delete('del_posts/{id}', [PostController::class, 'postDestroy']); // Delete post
+    Route::get('get_posts/{cc}', [PostController::class, 'getAllPosts']); // Get all posts
+
+    Route::post('set_posts_like/{id}/like', [PostController::class, 'postLike']); // Like/Dislike post
+    Route::post('set_posts_comment/{id}/comment', [PostController::class, 'postComment']); // Comment on post
+    Route::post('set_posts_share/{id}/share', [PostController::class, 'postShare']); // Share post
+});

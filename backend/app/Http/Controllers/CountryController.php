@@ -16,9 +16,20 @@ use App\Models\FavouriteCountry;
 class CountryController extends Controller
 {
     // Get favorite country details by member_id
-    public function favouriteCountryByMemberId($memberId)
+    public function favouriteCountryByMemberId(Request $request)
     {
-        $countries = FavouriteCountry::where('member_id', $memberId)->get();
+        if (!$request && !$request->user()) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Authorization error'
+            ], 400);
+        }
+        $countries = FavouriteCountry::where('member_id', $request->user()->id)->get();
+
+        return response()->json([
+            'success' => true,
+            'favourite_country' => $countries
+        ]);
         return response()->json($countries);
     }
 
