@@ -154,7 +154,12 @@ const NavBar = () => {
                     }}
                     onClick={() => {
                       const countryCode = country.cca2.toLowerCase();
-                      window.location.href = `/d/${countryCode}`;
+                      console.log("countryCode", countryCode);
+                      window.history.pushState(
+                        {},
+                        "",
+                        `/country/${countryCode}`
+                      );
                     }}
                   >
                     <img
@@ -332,6 +337,10 @@ const NavBar = () => {
             <i
               className="fas fa-heart d-none d-lg-block"
               style={{ color: "white" }}
+              onClick={(e) => {
+                e.preventDefault();
+                navigate("/favouriteCountires");
+              }}
             ></i>
             {/* Search Input */}
             <div className="d-none d-lg-block " style={{ width: "250px" }}>

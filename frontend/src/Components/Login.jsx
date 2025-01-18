@@ -14,6 +14,7 @@ const Login = () => {
   const { t } = useTranslation();
   const [userField, setUserField] = useState({
     email: "",
+    password: "",
   });
 
   const changeLanguage = (lng) => {
