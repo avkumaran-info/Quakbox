@@ -7,7 +7,7 @@ import ForgetPassword from "./Components/ForgetPassword";
 import Home from "./Components/Dashboard/Home";
 import ChatPage from "./Components/ChatPage";
 import GoLive from "./Components/GoLive";
-import NavBar from "./Components/NavBar";
+// import NavBar from "./Components/NavBar";
 import GoogleAuth from "./Components/socialLogin/GoogleAuth";
 import FanCountriesComponent from "./Components/FanCountriesComponent";
 import TestHome from "./Components/Test/TestHome";
@@ -22,7 +22,7 @@ const App = () => {
         <Route path="/dashboard" element={<Home />} />
         <Route path="/chatroom" element={<ChatPage />} />
         <Route path="/golive" element={<GoLive />} />
-        <Route path="/test" element={<NavBar />} />
+        {/* <Route path="/test" element={<NavBar />} /> */}
         <Route path="/favouriteCountires" element={<FanCountriesComponent />} />
         {/* favouriteCountires */}
         <Route path="/test" element={<TestHome />} />
