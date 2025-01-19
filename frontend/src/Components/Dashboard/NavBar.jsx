@@ -7,11 +7,36 @@ import { useNavigate } from "react-router-dom";
 const NavBar = () => {
   const navigate = useNavigate();
   const [countries, setCountries] = useState([]);
+  const [userName, setUserName] = useState("");
+
   const dropdownRef = useRef(null);
   const [showDropdown, setShowDropdown] = useState(false);
   const [dropdown, setDropdown] = useState(false);
   const [showAllFlags, setShowAllFlags] = useState(false);
   const [searchQuery, setSearchQuery] = useState(""); // State for search input
+
+  const userData = async () => {
+    const token = localStorage.getItem("api_token");
+    if (!token) {
+      return;
+    }
+    try {
+      const res = await axios.get(
+        "https://develop.quakbox.com/admin/api/user",
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+      // console.log(res.data);
+      // console.log("User Data found:", res.data.users);
+      setUserName(res.data.users.username);
+      // console.log(userName);
+    } catch (error) {
+      console.log(error);
+    }
+  };
 
   const handleLogout = async () => {
     const token = localStorage.getItem("api_token");
@@ -58,6 +83,7 @@ const NavBar = () => {
     };
 
     fetchCountries();
+    userData();
   }, []);
 
   useEffect(() => {
@@ -410,6 +436,22 @@ const NavBar = () => {
                       width: "200px",
                     }}
                   >
+                    <a
+                      href="#"
+                      style={{
+                        display: "block",
+                        padding: "10px 15px",
+                        textDecoration: "none",
+                        color: "#333",
+                        fontSize: "0.9rem",
+                      }}
+                      onClick={() =>
+                        console.log("Change Profile Picture clicked")
+                      }
+                    >
+                      {userName}
+                    </a>
+
                     <a
                       href="#"
                       style={{
