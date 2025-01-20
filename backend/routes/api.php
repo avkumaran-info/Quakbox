@@ -78,7 +78,7 @@ Route::middleware('auth:api')->group(function () {
 });
 
 Route::get('images/uploads/posts/{filename}', function ($filename) {
-    $path = storage_path('app/public/' . $filename);
+    $path = storage_path('app/public/uploads/posts/' . $filename);
     if (!file_exists($path)) {
         abort(404);
     }
