@@ -1,90 +1,155 @@
 import React, { useEffect, useState } from "react";
 import defaultUserImage from "../../assets/images/vector-users-icon.jpg";
 import userImage from "../../assets/images/vector-users-icon.jpg";
+import axios from "axios";
 
 const Feed = () => {
   const [navbarHeight, setNavbarHeight] = useState(52);
-
+  const [likedPosts, setLikedPosts] = useState([]);
   const [isPopupOpen, setIsPopupOpen] = useState(false);
-
+  const [data, setData] = useState({ posts: [] });
   // Functions to handle popup visibility
   const openPopup = () => setIsPopupOpen(true);
   const closePopup = () => setIsPopupOpen(false);
 
-  const jsonData = {
-    posts: [
-      {
-        id: "1",
-        created_time: "2025-01-17T10:30:00+0000",
-        message: "Check out this amazing view from my vacation! 🌴☀️",
-        from: {
-          name: "John Doe",
-          profile_image:
-            "https://media.istockphoto.com/id/1437816897/photo/business-woman-manager-or-human-resources-portrait-for-career-success-company-we-are-hiring.jpg?s=612x612&w=0&k=20&c=tyLvtzutRh22j9GqSGI33Z4HpIwv9vL_MZw_xOE19NQ=",
-        },
-        attachments: {
-          data: [
-            {
-              type: "photo",
-              media: [
-                {
-                  url: "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcReE4_46HUmsn2e1Ey-lckv36GLUlaKsx-XpQ&s",
-                  alt_text: "Vacation view",
-                },
-              ],
-            },
-          ],
-        },
-        likes: { count: 350 },
-        comments: { count: 25 },
-      },
-      {
-        id: "2",
-        created_time: "2025-01-16T15:00:00+0000",
-        message: "Check out this video I recorded! 📹",
-        from: {
-          name: "Jane Smith",
-          profile_image:
-            "https://media.istockphoto.com/id/1682296067/photo/happy-studio-portrait-or-professional-man-real-estate-agent-or-asian-businessman-smile-for.jpg?s=612x612&w=0&k=20&c=9zbG2-9fl741fbTWw5fNgcEEe4ll-JegrGlQQ6m54rg=",
-        },
-        attachments: {
-          data: [
-            {
-              type: "video",
-              media: [
-                {
-                  url: "https://www.youtube.com/watch?v=yj0njH4K4ZU",
-                  alt_text: "YouTube video",
-                },
-              ],
-            },
-          ],
-        },
-        likes: { count: 150 },
-        comments: { count: 12 },
-      },
-      {
-        id: "3",
-        created_time: "2025-01-15T08:00:00+0000",
-        message: "Check out this interesting article!",
-        from: { name: "Emily White", profile_image: null },
-        attachments: {
-          data: [
-            {
-              type: "link",
-              url: "https://example.com/article",
-              title: "An Interesting Article",
-              description: "Learn more about the latest trends in tech.",
-            },
-          ],
-        },
-        likes: { count: 200 },
-        comments: { count: 35 },
-      },
-    ],
+  // Handle Like Click
+  const handleLikeClick = async (postId) => {
+    const token = localStorage.getItem("api_token");
+
+    try {
+      const res = await axios.post(
+        `https://develop.quakbox.com/admin/api/set_posts_like/${postId}/like`,
+        {},
+        {
+          headers: { Authorization: `Bearer ${token}` },
+        }
+      );
+
+      if (res.status === 200) {
+        // Update like count and set post as liked
+        setData((prevData) =>
+          Array.isArray(prevData) // Ensure prevData is an array before mapping
+            ? prevData.map((post) =>
+                post.id === postId
+                  ? {
+                      ...post,
+                      likes: {
+                        count: (post.likes?.count || 0) + 1,
+                      },
+                    }
+                  : post
+              )
+            : prevData
+        );
+        setLikedPosts((prevLikedPosts) => [...prevLikedPosts, postId]); // Mark as liked
+      }
+    } catch (error) {
+      console.error("Error liking the post:", error);
+    }
   };
 
+  const getPost = async () => {
+    const token = localStorage.getItem("api_token");
+    // console.log(token);
+
+    if (!token) {
+      console.log("No token found, user may not be logged in.");
+      return;
+    }
+    try {
+      const res = await axios.get(
+        "https://develop.quakbox.com/admin/api/get_posts/in",
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+      console.log(res.data.posts);
+      setData(res.data);
+      // console.log(jsonData);
+
+      // console.log(data);
+    } catch (error) {
+      console.log(error);
+    }
+  };
+
+  // const jsonData = {
+  //   posts: [
+  //     {
+  //       id: "1",
+  //       created_time: "2025-01-17T10:30:00+0000",
+  //       message: "Check out this amazing view from my vacation! 🌴☀️",
+  //       from: {
+  //         name: "John Doe",
+  //         profile_image:
+  //           "https://media.istockphoto.com/id/1437816897/photo/business-woman-manager-or-human-resources-portrait-for-career-success-company-we-are-hiring.jpg?s=612x612&w=0&k=20&c=tyLvtzutRh22j9GqSGI33Z4HpIwv9vL_MZw_xOE19NQ=",
+  //       },
+  //       attachments: {
+  //         data: [
+  //           {
+  //             type: "photo",
+  //             media: [
+  //               {
+  //                 url: "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcReE4_46HUmsn2e1Ey-lckv36GLUlaKsx-XpQ&s",
+  //                 alt_text: "Vacation view",
+  //               },
+  //             ],
+  //           },
+  //         ],
+  //       },
+  //       likes: { count: 350 },
+  //       comments: { count: 25 },
+  //     },
+  //     {
+  //       id: "2",
+  //       created_time: "2025-01-16T15:00:00+0000",
+  //       message: "Check out this video I recorded! 📹",
+  //       from: {
+  //         name: "Jane Smith",
+  //         profile_image:
+  //           "https://media.istockphoto.com/id/1682296067/photo/happy-studio-portrait-or-professional-man-real-estate-agent-or-asian-businessman-smile-for.jpg?s=612x612&w=0&k=20&c=9zbG2-9fl741fbTWw5fNgcEEe4ll-JegrGlQQ6m54rg=",
+  //       },
+  //       attachments: {
+  //         data: [
+  //           {
+  //             type: "video",
+  //             media: [
+  //               {
+  //                 url: "https://www.youtube.com/watch?v=yj0njH4K4ZU",
+  //                 alt_text: "YouTube video",
+  //               },
+  //             ],
+  //           },
+  //         ],
+  //       },
+  //       likes: { count: 150 },
+  //       comments: { count: 12 },
+  //     },
+  //     {
+  //       id: "3",
+  //       created_time: "2025-01-15T08:00:00+0000",
+  //       message: "Check out this interesting article!",
+  //       from: { name: "Emily White", profile_image: null },
+  //       attachments: {
+  //         data: [
+  //           {
+  //             type: "link",
+  //             url: "https://example.com/article",
+  //             title: "An Interesting Article",
+  //             description: "Learn more about the latest trends in tech.",
+  //           },
+  //         ],
+  //       },
+  //       likes: { count: 200 },
+  //       comments: { count: 35 },
+  //     },
+  //   ],
+  // };
+
   useEffect(() => {
+    getPost();
     const updateNavbarHeight = () => {
       setNavbarHeight(window.innerWidth <= 768 ? 90 : 48);
     };
@@ -168,7 +233,7 @@ const Feed = () => {
                           src={userImage}
                           alt="User"
                           className="rounded-circle me-2"
-                          style={{width:"40px"}}
+                          style={{ width: "40px" }}
                         />
                         <div>
                           <h6 className="mb-0">John Doe</h6>
@@ -234,97 +299,120 @@ const Feed = () => {
 
         {/* Dynamically Render Posts */}
         <div className="text-white p-0 rounded">
-          {jsonData.posts.map((post) => (
-            <div className="card mb-4" key={post.id}>
-              {/* Post Header */}
-              <div className="card-header d-flex align-items-center bg-white border-0">
-                <img
-                  src={post.from.profile_image || defaultUserImage}
-                  alt={`${post.from.name}'s Avatar`}
-                  className="rounded-circle me-2"
-                  style={{ width: "40px", height: "40px" }}
-                />
-                <div>
-                  <h6 className="mb-0">{post.from.name}</h6>
-                  <small className="text-muted">
-                    {new Date(post.created_time).toLocaleString()} · 🌎
-                  </small>
+          {data &&
+            data.posts &&
+            Array.isArray(data.posts) &&
+            data.posts.map((post) => (
+              <div className="card mb-4" key={post.id}>
+                {/* Post Header */}
+                <div className="card-header d-flex align-items-center bg-white border-0">
+                  <img
+                    src={post.from.profile_image || defaultUserImage}
+                    alt={`${post.from.name}'s Avatar`}
+                    className="rounded-circle me-2"
+                    style={{ width: "40px", height: "40px" }}
+                  />
+                  <div>
+                    <h6 className="mb-0">{post.from.name}</h6>
+                    <small className="text-muted">
+                      {new Date(post.created_time).toLocaleString()} · 🌎
+                    </small>
+                  </div>
                 </div>
-              </div>
 
-              {/* Post Content */}
-              <div className="card-body p-0">
-                {post.message && <p className="p-3">{post.message}</p>}
+                {/* Post Content */}
+                <div className="card-body p-0">
+                  {post.message && <p className="p-3">{post.message}</p>}
 
-                {post.attachments &&
-                  post.attachments.data.map((attachment, index) => {
-                    if (attachment.type === "photo") {
-                      return (
-                        <img
-                          key={index}
-                          src={attachment.media[0].url}
-                          alt={attachment.media[0].alt_text}
-                          className="img-fluid w-100"
-                        />
-                      );
-                    }
-                    if (attachment.type === "video") {
-                      return (
-                        <video
-                          key={index}
-                          controls
-                          className="w-100"
-                          style={{ maxHeight: "400px" }}
-                        >
-                          <source
+                  {post.attachments &&
+                    post.attachments.data.map((attachment, index) => {
+                      if (attachment.type === "photo") {
+                        return (
+                          <img
+                            key={index}
                             src={attachment.media[0].url}
-                            type="video/mp4"
+                            alt={attachment.media[0].alt_text}
+                            className="img-fluid w-100"
                           />
-                          Your browser does not support the video tag.
-                        </video>
-                      );
-                    }
-                    if (attachment.type === "link") {
-                      return (
-                        <div key={index} className="p-3">
-                          <a
-                            href={attachment.url}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="text-decoration-none"
+                        );
+                      }
+                      if (attachment.type === "video") {
+                        return (
+                          <video
+                            key={index}
+                            controls
+                            className="w-100"
+                            style={{ maxHeight: "400px" }}
                           >
-                            <div className="border p-2 rounded">
-                              <h6>{attachment.title}</h6>
-                              <p className="text-muted">
-                                {attachment.description}
-                              </p>
-                            </div>
-                          </a>
-                        </div>
-                      );
-                    }
-                    return null;
-                  })}
-              </div>
+                            <source
+                              src={attachment.media[0].url}
+                              type="video/mp4"
+                            />
+                            Your browser does not support the video tag.
+                          </video>
+                        );
+                      }
+                      if (attachment.type === "link") {
+                        return (
+                          <div key={index} className="p-3">
+                            <a
+                              href={attachment.url}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="text-decoration-none"
+                            >
+                              <div className="border p-2 rounded">
+                                <h6>{attachment.title}</h6>
+                                <p className="text-muted">
+                                  {attachment.description}
+                                </p>
+                              </div>
+                            </a>
+                          </div>
+                        );
+                      }
+                      return null;
+                    })}
+                </div>
 
-              {/* Post Footer */}
-              <div className="card-footer bg-white d-flex justify-content-between align-items-center border-0">
-                <span className="text-muted">{post.likes.count} likes</span>
-                <div className="d-flex">
-                  <button className="btn btn-light btn-sm me-2">
-                    <i className="bi bi-hand-thumbs-up"></i> Like
-                  </button>
-                  <button className="btn btn-light btn-sm me-2">
-                    <i className="bi bi-chat"></i> Comment{" "}
-                    <span className="text-muted">{post.comments.count} </span>
-                  </button>
-                  <button className="btn btn-light btn-sm">
-                    <i className="bi bi-share"></i> Share
-                  </button>
+                {/* Post Footer */}
+                <div className="card-footer bg-white d-flex justify-content-between align-items-center border-0">
+                  <span className="text-muted">
+                    {post.likes && post.likes.count !== undefined
+                      ? `${post.likes.count} likes`
+                      : "0 likes"}
+                  </span>
+                  <div className="d-flex">
+                    <button
+                      className={`btn btn-sm me-2 ${
+                        likedPosts.includes(post.id)
+                          ? "btn-primary text-white"
+                          : "btn-light"
+                      }`}
+                      onClick={() => handleLikeClick(post.id)}
+                    >
+                      <i
+                        className={`bi ${
+                          likedPosts.includes(post.id)
+                            ? "bi-hand-thumbs-up-fill"
+                            : "bi-hand-thumbs-up"
+                        }`}
+                      ></i>{" "}
+                      Like
+                    </button>
+                    <button className="btn btn-light btn-sm me-2">
+                      <i className="bi bi-chat"></i> Comment{" "}
+                      <span className="text-muted">
+                        {post.comments && post.comments.count}
+                      </span>
+                    </button>
+                    <button className="btn btn-light btn-sm">
+                      <i className="bi bi-share"></i> Share
+                    </button>
+                  </div>
                 </div>
               </div>
-            </div>
-          ))}
+            ))}
         </div>
       </div>
     </div>
