@@ -130,7 +130,7 @@ const NavBar = () => {
             {/* Logo */}
             <div
               className="d-flex align-items-center g-1"
-              style={{ position: "relative" }}
+              style={{ position: "relative", cursor: "pointer" }}
             >
               <img
                 className="d-none d-lg-block"
@@ -316,13 +316,13 @@ const NavBar = () => {
 
             <i
               className="fas fa-globe d-none d-lg-block"
-              style={{ color: "white" }}
+              style={{ color: "white", cursor: "pointer" }}
             ></i>
 
             {/* Video Icon */}
             <i
               className="fas fa-video d-none d-lg-block"
-              style={{ color: "white" }}
+              style={{ color: "white", cursor: "pointer" }}
             ></i>
 
             {/* Go Live Icon */}
@@ -332,37 +332,37 @@ const NavBar = () => {
                 navigate("/golive");
               }}
               className="fas fa-broadcast-tower d-none d-lg-block"
-              style={{ color: "white" }}
+              style={{ color: "white", cursor: "pointer" }}
             ></i>
 
             {/* Friends Icon */}
             <i
               className="fas fa-user-friends d-none d-lg-block"
-              style={{ color: "white" }}
+              style={{ color: "white", cursor: "pointer" }}
             ></i>
 
             {/* Notification Icon */}
             <i
               className="fas fa-bell d-none d-lg-block"
-              style={{ color: "white" }}
+              style={{ color: "white", cursor: "pointer" }}
             ></i>
 
             {/* Message Icon */}
             <i
               className="fas fa-envelope d-none d-lg-block"
-              style={{ color: "white" }}
+              style={{ color: "white", cursor: "pointer" }}
             ></i>
 
             {/* Mail Icon */}
             <i
               className="fas fa-inbox d-none d-lg-block"
-              style={{ color: "white" }}
+              style={{ color: "white", cursor: "pointer" }}
             ></i>
 
             {/* Heart Icon */}
             <i
               className="fas fa-heart d-none d-lg-block"
-              style={{ color: "white" }}
+              style={{ color: "white", cursor: "pointer" }}
               onClick={(e) => {
                 e.preventDefault();
                 navigate("/favouriteCountires");
