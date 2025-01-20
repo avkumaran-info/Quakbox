@@ -1,3 +1,17 @@
-#form{
+#form {
   box-shadow: rgba(0, 0, 0, 0.25) 0px 14px 28px, rgba(0, 0, 0, 0.22) 0px 10px 10px;
+}
+
+/* Optional custom styles for modal overlay */
+.modal.fade.show {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Adjust textarea appearance if needed */
+textarea.form-control {
+  resize: none;
+  /* Prevent resizing */
+  border-radius: 4px;
 }
