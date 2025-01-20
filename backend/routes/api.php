@@ -1,6 +1,7 @@
 <?php
 
 use Illuminate\Support\Facades\Route;
+use Illuminate\Support\Facades\Storage;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\ForgotPasswordController;
 use App\Http\Controllers\CountryController;
@@ -74,4 +75,12 @@ Route::middleware('auth:api')->group(function () {
     Route::post('set_posts_like/{id}/like', [PostController::class, 'postLike']); // Like/Dislike post
     Route::post('set_posts_comment/{id}/comment', [PostController::class, 'postComment']); // Comment on post
     Route::post('set_posts_share/{id}/share', [PostController::class, 'postShare']); // Share post
+});
+
+Route::get('images/uploads/posts/{filename}', function ($filename) {
+    $path = storage_path('app/public/' . $filename);
+    if (!file_exists($path)) {
+        abort(404);
+    }
+    return response()->file($path);
 });

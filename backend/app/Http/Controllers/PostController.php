@@ -53,7 +53,7 @@ class PostController extends Controller
             return [[
                 'type' => $post->media_type,
                 'media' => [[
-                    'url' => Storage::url($post->media_path),
+                    'url' => env('APP_URL') . '/api/images/' . $post->media_path,
                     'alt_text' => $post->media_type === 'image' ? 'Post image' : 'Post video',
                 ]],
             ]];
