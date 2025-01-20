@@ -2,15 +2,97 @@ import React, { useEffect, useState } from "react";
 import defaultUserImage from "../../assets/images/vector-users-icon.jpg";
 import userImage from "../../assets/images/vector-users-icon.jpg";
 import axios from "axios";
+import { Navigate } from "react-router-dom";
 
 const Feed = () => {
   const [navbarHeight, setNavbarHeight] = useState(52);
   const [likedPosts, setLikedPosts] = useState([]);
   const [isPopupOpen, setIsPopupOpen] = useState(false);
   const [data, setData] = useState({ posts: [] });
+  const [message, setMessage] = useState("");
+  const [countryCode, setCountryCode] = useState("in");
+  const [mediaFile, setMediaFile] = useState(null);
+  const [mediaPreview, setMediaPreview] = useState(null);
+  const [userName, setUserName] = useState("");
+
   // Functions to handle popup visibility
   const openPopup = () => setIsPopupOpen(true);
   const closePopup = () => setIsPopupOpen(false);
+
+  const handleMessageChange = (event) => {
+    setMessage(event.target.value);
+  };
+
+  const handleFileChange = (event) => {
+    const file = event.target.files[0];
+    setMediaFile(file);
+    if (file) {
+      const previewURL = URL.createObjectURL(file);
+      setMediaPreview(previewURL);
+    }
+  };
+
+  const userData = async () => {
+    const token = localStorage.getItem("api_token");
+    if (!token) {
+      return;
+    }
+    try {
+      const res = await axios.get(
+        "https://develop.quakbox.com/admin/api/user",
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+      // console.log(res.data);
+      // console.log("User Data found:", res.data.users);
+      setUserName(res.data.users);
+      // console.log(userName);
+    } catch (error) {
+      console.log(error);
+    }
+  };
+
+  const handleSubmit = async () => {
+    const token = localStorage.getItem("api_token");
+    // console.log(token);
+
+    const formData = new FormData();
+    formData.append("message", message);
+    formData.append("country_code", countryCode);
+    if (mediaFile) {
+      formData.append("media", mediaFile);
+    }
+
+    try {
+      const response = await axios.post(
+        "https://develop.quakbox.com/admin/api/set_posts",
+        formData,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+            ContentType: "multipart/form-data",
+          },
+        }
+      );
+      // console.log(response);
+
+      if (response.status === 201) {
+        // Handle success
+        // alert("Post created successfully!");
+        closePopup(); // Close the modal
+        setMediaPreview(null);
+      } else {
+        // Handle server error
+        alert("Failed to create post");
+      }
+    } catch (error) {
+      console.error("Error creating post:", error);
+      alert("An error occurred while creating the post");
+    }
+  };
 
   // Handle Like Click
   const handleLikeClick = async (postId) => {
@@ -62,11 +144,14 @@ const Feed = () => {
         {
           headers: {
             Authorization: `Bearer ${token}`,
+            ContentType: "contentType",
           },
         }
       );
-      console.log(res.data.posts);
+      // console.log(res.data.posts);
       setData(res.data);
+      // console.log(res.data.posts[0].attachments.data[0].media[0].url);
+
       // console.log(jsonData);
 
       // console.log(data);
@@ -74,6 +159,15 @@ const Feed = () => {
       console.log(error);
     }
   };
+
+  useEffect(() => {
+    // Cleanup the preview URL to avoid memory leaks
+    return () => {
+      if (mediaPreview) {
+        URL.revokeObjectURL(mediaPreview);
+      }
+    };
+  }, [mediaPreview]);
 
   // const jsonData = {
   //   posts: [
@@ -149,6 +243,7 @@ const Feed = () => {
   // };
 
   useEffect(() => {
+    userData();
     getPost();
     const updateNavbarHeight = () => {
       setNavbarHeight(window.innerWidth <= 768 ? 90 : 48);
@@ -214,79 +309,114 @@ const Feed = () => {
                   style={{ maxWidth: "600px" }}
                 >
                   <div className="modal-content">
-                    {/* Header */}
                     <div className="modal-header">
                       <h5 className="modal-title">Create Post</h5>
+
                       <button
                         type="button"
                         className="btn-close"
                         aria-label="Close"
-                        onClick={closePopup}
+                        onClick={() => {
+                          closePopup();
+                          setMediaPreview(null); // Clear preview when popup is closed
+                        }}
                       ></button>
                     </div>
 
-                    {/* Body */}
                     <div className="modal-body">
+                      {/* User Info at the Top */}
                       <div className="d-flex align-items-center mb-3">
-                        {/* User Profile */}
                         <img
-                          src={userImage}
-                          alt="User"
+                          src={userImage || defaultUserImage} // Use userImage or a default image
+                          alt="User Avatar"
                           className="rounded-circle me-2"
-                          style={{ width: "40px" }}
+                          style={{ width: "40px", height: "40px" }}
                         />
-                        <div>
-                          <h6 className="mb-0">John Doe</h6>
-                          <select className="form-select form-select-sm w-auto">
-                            <option value="friends">Friends</option>
-                            <option value="public">Public</option>
-                            <option value="private">Only Me</option>
-                          </select>
-                        </div>
+                        <span style={{ fontWeight: "bold", fontSize: "16px" }}>
+                          {userName.username}
+                        </span>{" "}
+                        {/* Replace with dynamic user name */}
                       </div>
-
-                      {/* Input for Post */}
                       <textarea
                         className="form-control"
                         rows="4"
                         placeholder="What's on your mind?"
                         style={{ resize: "none" }}
+                        value={message}
+                        onChange={handleMessageChange}
                       ></textarea>
 
-                      {/* Add Photos/Videos Section */}
                       <div className="border rounded mt-3 p-3 text-center">
-                        <div className="d-flex align-items-center justify-content-center">
-                          <i className="fas fa-photo-video fs-2 me-2"></i>
-                          <span>Add photos/videos</span>
-                        </div>
-                        <p className="small text-muted">or drag and drop</p>
-                        <button className="btn btn-outline-secondary btn-sm">
-                          Add
-                        </button>
-                      </div>
+                        {/* Default prompt when no file is uploaded */}
+                        {!mediaPreview ? (
+                          <div
+                            className="d-flex align-items-center justify-content-center"
+                            onClick={() =>
+                              document.getElementById("hiddenFileInput").click()
+                            }
+                            style={{ cursor: "pointer" }}
+                          >
+                            <i className="fas fa-photo-video fs-2 me-2"></i>
+                            <span>Add photos/videos</span>
+                          </div>
+                        ) : (
+                          // Show the preview when a file is uploaded
+                          <div className="position-relative">
+                            {mediaFile.type.startsWith("image/") ? (
+                              <img
+                                src={mediaPreview}
+                                alt="Preview"
+                                className="img-fluid rounded"
+                                style={{ maxHeight: "400px" }}
+                              />
+                            ) : mediaFile.type.startsWith("video/") ? (
+                              <video
+                                controls
+                                className="w-100"
+                                style={{ maxHeight: "400px" }}
+                              >
+                                <source
+                                  src={mediaPreview}
+                                  type={mediaFile.type}
+                                />
+                                Your browser does not support the video tag.
+                              </video>
+                            ) : null}
 
-                      {/* Additional Options */}
-                      <div className="d-flex justify-content-between align-items-center mt-3">
-                        <div>
-                          <button className="btn btn-outline-secondary me-2">
-                            <i className="fas fa-images"></i>
-                          </button>
-                          <button className="btn btn-outline-secondary me-2">
-                            <i className="fas fa-smile"></i>
-                          </button>
-                          <button className="btn btn-outline-secondary">
-                            <i className="fas fa-gift"></i>
-                          </button>
-                        </div>
-                        <button className="btn btn-outline-secondary btn-sm">
-                          GIF
-                        </button>
+                            {/* Close button */}
+                            <button
+                              className="btn btn-close position-absolute top-0 end-0"
+                              style={{
+                                backgroundColor: "white",
+                                borderRadius: "50%",
+                                padding: "5px",
+                              }}
+                              onClick={() => {
+                                setMediaPreview(null);
+                                setMediaFile(null); // Reset the media file
+                              }}
+                              aria-label="Close"
+                            ></button>
+                          </div>
+                        )}
+
+                        {/* Hidden file input */}
+                        <input
+                          id="hiddenFileInput"
+                          type="file"
+                          style={{ display: "none" }}
+                          onChange={handleFileChange}
+                          accept="image/*,video/*"
+                        />
                       </div>
                     </div>
 
-                    {/* Footer */}
                     <div className="modal-footer">
-                      <button type="button" className="btn btn-primary w-100">
+                      <button
+                        type="button"
+                        className="btn btn-primary w-100"
+                        onClick={handleSubmit}
+                      >
                         Post
                       </button>
                     </div>
@@ -307,15 +437,18 @@ const Feed = () => {
                 {/* Post Header */}
                 <div className="card-header d-flex align-items-center bg-white border-0">
                   <img
-                    src={post.from.profile_image || defaultUserImage}
-                    alt={`${post.from.name}'s Avatar`}
+                    src={post.from?.profile_image || defaultUserImage} // Fallback to defaultUserImage
+                    alt={`${post.from?.name || "Unknown User"}'s Avatar`} // Fallback to "Unknown User"
                     className="rounded-circle me-2"
                     style={{ width: "40px", height: "40px" }}
                   />
                   <div>
-                    <h6 className="mb-0">{post.from.name}</h6>
+                    <h6 className="mb-0">
+                      {post.from?.name || "Unknown User"}
+                    </h6>{" "}
+                    {/* Fallback to "Unknown User" */}
                     <small className="text-muted">
-                      {new Date(post.created_time).toLocaleString()} · 🌎
+                      {new Date(post.created_time).toLocaleString()}
                     </small>
                   </div>
                 </div>
@@ -326,14 +459,16 @@ const Feed = () => {
 
                   {post.attachments &&
                     post.attachments.data.map((attachment, index) => {
-                      if (attachment.type === "photo") {
+                      if (attachment.type === "image") {
                         return (
-                          <img
-                            key={index}
-                            src={attachment.media[0].url}
-                            alt={attachment.media[0].alt_text}
-                            className="img-fluid w-100"
-                          />
+                          <>
+                            <img
+                              key={index}
+                              src={attachment.media[0].url}
+                              alt={attachment.media[0].alt_text || "Post image"}
+                              className="img-fluid w-100"
+                            />
+                          </>
                         );
                       }
                       if (attachment.type === "video") {
