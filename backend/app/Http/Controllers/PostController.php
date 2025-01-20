@@ -1,4 +1,4 @@
-<?
+<?php
 namespace App\Http\Controllers;
 
 use Illuminate\Support\Facades\Auth;
@@ -14,32 +14,36 @@ class PostController extends Controller
 	// Controller Method to Fetch Posts
     public function getAllPosts($cc)
     {
-        $posts = Post::with(['user', 'likes', 'comments'])
-            ->latest()
-            ->where('country_code', $cc)
-            ->get()
-            ->map(function ($post) {
-                return [
-                    'id' => $post->id,
-                    'created_time' => $post->created_at->toIso8601String(),
-                    'message' => $post->message,
-                    'from' => [
-                        'name' => $post->user->username,
-                        'profile_image' => $post->user->profile_image,
-                    ],
-                    'attachments' => [
-                        'data' => $this->getPostAttachments($post),
-                    ],
-                    'likes' => [
-                        'count' => $post->likes->count(),
-                    ],
-                    'comments' => [
-                        'count' => $post->comments->count(),
-                    ],
-                ];
-            });
+        try {
+            $posts = Post::with(['user', 'likes', 'comments'])
+                ->latest()
+                ->where('country_code', $cc)
+                ->get()
+                ->map(function ($post) {
+                    return [
+                        'id' => $post->id,
+                        'created_time' => $post->created_at->toIso8601String(),
+                        'message' => $post->message,
+                        'from' => [
+                            'name' => $post->user->username,
+                            'profile_image' => $post->user->profile_image,
+                        ],
+                        'attachments' => [
+                            'data' => $this->getPostAttachments($post),
+                        ],
+                        'likes' => [
+                            'count' => $post->likes->count(),
+                        ],
+                        'comments' => [
+                            'count' => $post->comments->count(),
+                        ],
+                    ];
+                });
 
-        return response()->json(['posts' => $posts], 200);
+            return response()->json(["status" => true, 'posts' => $posts], 200);
+        } catch (\Exception $e) {
+            return response()->json(["status" => false, 'error' => $e->getMessage()], 500);
+        }
     }
 
     // Helper Method to Fetch Post Attachments
@@ -49,7 +53,7 @@ class PostController extends Controller
             return [[
                 'type' => $post->media_type,
                 'media' => [[
-                    'url' => asset($post->media_path),
+                    'url' => Storage::url($post->media_path),
                     'alt_text' => $post->media_type === 'image' ? 'Post image' : 'Post video',
                 ]],
             ]];
@@ -83,7 +87,7 @@ class PostController extends Controller
             'media_type' => $mediaType,
         ]);
 
-        return response()->json(['message' => 'Post created successfully', 'post' => $post], 201);
+        return response()->json(["status" => true, 'message' => 'Post created successfully', 'post' => $post], 201);
     }
 
     // Update a post
@@ -113,7 +117,7 @@ class PostController extends Controller
             $post->update(['message' => $request->message]);
         }
 
-        return response()->json(['message' => 'Post updated successfully', 'post' => $post]);
+        return response()->json(["status" => true, 'message' => 'Post updated successfully', 'post' => $post]);
     }
 
     // Delete a post
@@ -128,7 +132,7 @@ class PostController extends Controller
 
         $post->delete();
 
-        return response()->json(['message' => 'Post deleted successfully']);
+        return response()->json(["status" => true, 'message' => 'Post deleted successfully']);
     }
 
     // Like/Dislike a post
@@ -143,7 +147,7 @@ class PostController extends Controller
             ['is_like' => $isLike]
         );
 
-        return response()->json(['message' => $isLike ? 'Liked' : 'Disliked', 'like' => $like]);
+        return response()->json(["status" => true, 'message' => $isLike ? 'Liked' : 'Disliked', 'like' => $like]);
     }
 
     // Comment on a post
@@ -159,7 +163,7 @@ class PostController extends Controller
             'comment' => $request->comment,
         ]);
 
-        return response()->json(['message' => 'Comment added successfully', 'comment' => $comment]);
+        return response()->json(["status" => true, 'message' => 'Comment added successfully', 'comment' => $comment]);
     }
 
     // Share a post
@@ -172,6 +176,6 @@ class PostController extends Controller
             'post_id' => $id,
         ]);
 
-        return response()->json(['message' => 'Post shared successfully', 'share' => $share]);
+        return response()->json(["status" => true, 'message' => 'Post shared successfully', 'share' => $share]);
     }
 }
