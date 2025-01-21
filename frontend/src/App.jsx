@@ -24,7 +24,6 @@ const App = () => {
         <Route path="/golive" element={<GoLive />} />
         <Route path="/test" element={<NavBar />} />
         <Route path="/favouriteCountires" element={<FanCountriesComponent />} />
-        {/* favouriteCountires */}
       </Routes>
     </Router>
   );
