@@ -1,269 +1,563 @@
-import React, { useState } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import {
-  Box,
-  Grid2,
   Card,
-  CardContent,
-  Typography,
-  Button,
   Checkbox,
-  FormControlLabel,
+  Button,
+  Grid,
+  Typography,
+  CircularProgress,
 } from "@mui/material";
-import NavBar from "./Dashboard/NavBar";
-const countries = [
-  { name: "United States", flag: "🇺🇸" },
-  { name: "Canada", flag: "🇨🇦" },
-  { name: "Germany", flag: "🇩🇪" },
-  { name: "Japan", flag: "🇯🇵" },
-  { name: "Brazil", flag: "🇧🇷" },
-  { name: "Australia", flag: "🇦🇺" },
-  { name: "United Kingdom", flag: "🇬🇧" },
-  { name: "France", flag: "🇫🇷" },
-  { name: "India", flag: "🇮🇳" },
-  { name: "Mexico", flag: "🇲🇽" },
-  { name: "Italy", flag: "🇮🇹" },
-  { name: "South Korea", flag: "🇰🇷" },
-  { name: "China", flag: "🇨🇳" },
-  { name: "Russia", flag: "🇷🇺" },
-  { name: "Spain", flag: "🇪🇸" },
-];
+import axios from "axios";
+import { CustomSnackbar, Loader } from "./LoaderAndSnackbar";
+
+const countriesApi = "https://restcountries.com/v3.1/all";
+const GET_API_URL =
+  "https://develop.quakbox.com/admin/api/get_favourite_country";
+const POST_API_URL =
+  "https://develop.quakbox.com/admin/api/set_favourite_country";
+const PUT_API_URL =
+  "https://develop.quakbox.com/admin/api/put_favourite_country";
+const RESET_API_URL =
+  "https://develop.quakbox.com/admin/api/del_favourite_country";
+const API_TOKEN = localStorage.getItem("api_token");
+
+const cardStyle = {
+  padding: "6px",
+  display: "flex",
+  flexDirection: "column",
+  justifyContent: "space-between",
+  height: "97%",
+  width: "97%",
+  boxShadow: "0 2px 10px rgba(0,0,0,0.2)",
+};
+
+const imgStyle = {
+  width: "100px",
+  height: "60px",
+  marginBottom: "8px",
+  boxShadow: "0 2px 5px rgba(0,0,0,0.5)",
+};
+
+const typographyStyle = {
+  fontSize: "20px",
+  fontWeight: "bold",
+  color: "#333333",
+};
+
+const fanColorStyle = {
+  color: "#FFC107",
+};
+
+const favouriteColorStyle = {
+  color: "#1877F2",
+};
+
+const disabledCheckboxStyle = {
+  color: "#9E9E9E",
+  opacity: 0.5,
+  cursor: "not-allowed",
+};
+
+const enabledCheckboxStyle = {
+  color: "#1877F2",
+};
 
 const FanCountriesComponent = () => {
-  const [fanStatus, setFanStatus] = useState(
-    countries.reduce((acc, country) => ({ ...acc, [country.name]: false }), {})
+  const [countries, setCountries] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [errorMessage, setErrorMessage] = useState(null);
+  const [resetLoading, setResetLoading] = useState(false);
+  const [successMessage, setSuccessMessage] = useState(null);
+
+  const checkUserSession = () => {
+    const userToken = localStorage.getItem("api_token");
+    if (!userToken) {
+      navigate("/");
+    }
+  };
+
+  const fetchAllCountries = async () => {
+    try {
+      const response = await axios.get(countriesApi);
+      console.log("fetchAllCountries response");
+      console.log(response);
+      const data = response.data.map((country) => ({
+        name: country.name.common,
+        flag: country.flags.png,
+        isFan: false,
+        isFavourite: false,
+      }));
+      setCountries(data);
+      fetchFavouriteCountries(data);
+    } catch (error) {
+      handleError("Error fetching all countries");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    checkUserSession();
+    setLoading(true);
+    fetchAllCountries()
+      .then(() => handleSuccess("Countries loaded successfully"))
+      .catch(() => handleError("Error loading countries"))
+      .finally(() => setLoading(false));
+  }, []);
+
+  const fanCountries = useMemo(
+    () => countries.filter((country) => country.isFan),
+    [countries]
   );
-  const [favouriteStatus, setFavouriteStatus] = useState(
-    countries.reduce((acc, country) => ({ ...acc, [country.name]: false }), {})
+
+  const favouriteCountries = useMemo(
+    () => countries.filter((country) => country.isFavourite),
+    [countries]
   );
 
-  const [fanCountries, setFanCountries] = useState([]);
-  const [favouriteCountries, setFavouriteCountries] = useState([]);
-
-  // Handle toggling Fan checkbox
-  const handleFanChange = (countryName) => {
-    setFanStatus((prevStatus) => ({
-      ...prevStatus,
-      [countryName]: !prevStatus[countryName],
-    }));
-  };
-
-  // Handle toggling Favourite checkbox
-  const handleFavouriteChange = (countryName) => {
-    setFavouriteStatus((prevStatus) => ({
-      ...prevStatus,
-      [countryName]: !prevStatus[countryName],
-    }));
-  };
-
-  // Add countries to Fan and Favourite based on "All Countries" section checkboxes
-  const updateFanAndFavourite = () => {
-    const newFanCountries = countries.filter(
-      (country) => fanStatus[country.name]
-    );
-    const newFavouriteCountries = countries.filter(
-      (country) => favouriteStatus[country.name] && fanStatus[country.name] // Only add as favourite if the country is also a fan
-    );
-
-    setFanCountries(newFanCountries);
-    setFavouriteCountries(newFavouriteCountries);
-  };
-
-  // Directly add/remove countries from "Fan Subsection" and "Favourite Subsection"
-  const handleDirectAddRemoveFan = (countryName) => {
-    setFanCountries((prev) => {
-      // Remove country from Fan Subsection
-      const updatedFanCountries = prev.some(
-        (country) => country.name === countryName
-      )
-        ? prev.filter((country) => country.name !== countryName)
-        : [...prev, countries.find((country) => country.name === countryName)];
-
-      // Also remove from Favourite Subsection if it exists
-      setFavouriteCountries((prevFavouriteCountries) =>
-        prevFavouriteCountries.filter((country) => country.name !== countryName)
+  const fetchFavouriteCountries = async (initialCountries) => {
+    try {
+      const response = await axios.get(GET_API_URL, {
+        headers: { Authorization: `Bearer ${API_TOKEN}` },
+      });
+      const uniqueCountries = response.data.favourite_country.map(
+        (country) => ({
+          code: country.code.toLowerCase(),
+          isFan: true,
+          isFavourite: country.favourite_country === "1",
+          favourite_country_id: country.favourite_country_id,
+          originalState: {
+            isFan: true,
+            isFavourite: country.favourite_country === "1",
+          },
+        })
       );
 
-      // Update FavouriteStatus for consistency in "All Countries"
-      setFavouriteStatus((prevStatus) => ({
-        ...prevStatus,
-        [countryName]: false,
-      }));
+      const combined = initialCountries.map((country) => {
+        const match = uniqueCountries.find(
+          (fav) => fav.code === country.name.toLowerCase()
+        );
+        return match ? { ...country, ...match } : country;
+      });
 
-      return updatedFanCountries;
-    });
-
-    // Ensure FanStatus is updated as well
-    setFanStatus((prevStatus) => ({
-      ...prevStatus,
-      [countryName]: false,
-    }));
+      setCountries(combined);
+    } catch (error) {
+      handleError("Error fetching favourite countries");
+    }
   };
 
-  const handleDirectAddRemoveFavourite = (countryName) => {
-    setFavouriteCountries((prev) =>
-      prev.some((country) => country.name === countryName)
-        ? prev.filter((country) => country.name !== countryName)
-        : [...prev, countries.find((country) => country.name === countryName)]
+  const handleCheckboxChange = (name, type, checked) => {
+    setCountries((prev) =>
+      prev.map((country) =>
+        country.name === name
+          ? {
+              ...country,
+              isFan: type === "Fan" ? checked : country.isFan,
+              isFavourite:
+                type === "Favourite"
+                  ? checked
+                  : checked
+                  ? country.isFavourite
+                  : false,
+            }
+          : country
+      )
     );
-    // Ensure that when you toggle the Favourite status, the checkbox is reflected correctly
-    setFavouriteStatus((prevStatus) => ({
-      ...prevStatus,
-      [countryName]: !prevStatus[countryName], // Toggle Favourite status
-    }));
+  };
+
+  const handlePost = async () => {
+    try {
+      const postPayload = countries
+        .filter(
+          (country) =>
+            !country.favourite_country_id &&
+            (country.isFan || country.isFavourite)
+        )
+        .map((country) => ({
+          code: country.name,
+          favourite_country: country.isFavourite ? "1" : "0",
+        }));
+
+      if (postPayload.length === 0) {
+        handleError("No new countries to add.");
+        return;
+      }
+
+      await axios.post(
+        POST_API_URL,
+        { countries: postPayload },
+        {
+          headers: { Authorization: `Bearer ${API_TOKEN}` },
+        }
+      );
+      fetchFavouriteCountries(countries);
+    } catch (error) {
+      handleError("Error posting new countries");
+    }
+  };
+
+  const handleUpdate = async () => {
+    try {
+      const putPayload = countries
+        .filter((country) => country.favourite_country_id)
+        .filter((country) => {
+          const original = country.originalState || {};
+          return (
+            country.isFan !== original.isFan ||
+            country.isFavourite !== original.isFavourite
+          );
+        })
+        .map((country) => ({
+          favourite_country_id: country.favourite_country_id,
+          code: country.name,
+          favourite_country: country.isFavourite ? "1" : "0",
+        }));
+
+      if (putPayload.length === 0) {
+        handleError("No existing countries to update.");
+        return;
+      }
+
+      await axios.post(
+        PUT_API_URL,
+        { countries: putPayload },
+        { headers: { Authorization: `Bearer ${API_TOKEN}` } }
+      );
+      fetchFavouriteCountries(countries);
+    } catch (error) {
+      handleError("Error updating countries");
+    }
+  };
+
+  const handleReset = async () => {
+    setResetLoading(true);
+    try {
+      await axios.post(
+        RESET_API_URL,
+        {},
+        {
+          headers: { Authorization: `Bearer ${API_TOKEN}` },
+        }
+      );
+      const resetCountries = countries.map((country) => ({
+        ...country,
+        isFan: false,
+        isFavourite: false,
+        favourite_country_id: null,
+        originalState: { isFan: false, isFavourite: false },
+      }));
+
+      setCountries(resetCountries);
+    } catch (error) {
+      handleError("Error resetting countries");
+    } finally {
+      setResetLoading(false);
+    }
+  };
+
+  const handleError = (message) => {
+    setErrorMessage(message);
+  };
+
+  const handleSuccess = (message) => {
+    setSuccessMessage(message);
+  };
+
+  const renderCountryCard = (country, handleCheckboxChange) => {
+    return (
+      <Card key={country.name} style={cardStyle}>
+        <div
+          style={{
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            flexDirection: "column",
+          }}
+        >
+          <img
+            src={country.flag}
+            alt={`${country.name} Flag`}
+            style={imgStyle}
+          />
+          <Typography variant="h6" style={typographyStyle}>
+            {country.name}
+          </Typography>
+        </div>
+        <div style={{ display: "flex", justifyContent: "space-around" }}>
+          <div>
+            <Checkbox
+              checked={country.isFan}
+              style={fanColorStyle}
+              onChange={(e) =>
+                handleCheckboxChange(country.name, "Fan", e.target.checked)
+              }
+            />
+            <Typography style={fanColorStyle}>Fan</Typography>
+          </div>
+          <div>
+            <Checkbox
+              checked={country.isFavourite}
+              disabled={!country.isFan}
+              style={
+                country.isFan
+                  ? enabledCheckboxStyle
+                  : { ...disabledCheckboxStyle, ...favouriteColorStyle }
+              }
+              onChange={(e) =>
+                handleCheckboxChange(
+                  country.name,
+                  "Favourite",
+                  e.target.checked
+                )
+              }
+            />
+            <Typography
+              style={
+                country.isFan ? favouriteColorStyle : disabledCheckboxStyle
+              }
+            >
+              Favourite
+            </Typography>
+          </div>
+        </div>
+      </Card>
+    );
   };
 
   return (
-    <>
-      <NavBar />
-      <Box sx={{ paddingTop: 8 }}>
-        {/* Fixed "Update" button */}
-        <Box
-          sx={{
+    <div>
+      <Loader loading={loading || resetLoading} message="Loading data..." />
+
+      <CustomSnackbar
+        open={!!successMessage}
+        message={successMessage}
+        onClose={() => setSuccessMessage(null)}
+        severity="success"
+      />
+
+      <CustomSnackbar
+        open={!!errorMessage}
+        message={errorMessage}
+        onClose={() => setErrorMessage(null)}
+        severity="error"
+      />
+      <div
+        style={{
+          position: "sticky",
+          top: "16px",
+          zIndex: 2,
+        }}
+      >
+        <Button
+          variant="contained"
+          color="default"
+          onClick={handleReset}
+          style={{
             position: "fixed",
-            // top: 40,
-            right: 10,
-            zIndex: 999,
-            backgroundColor: "white",
-            padding: 2,
-            boxShadow: "0 2px 5px rgba(0, 0, 0, 0.1)",
+            top: "34px",
+            right: "16px",
+            zIndex: 2,
+          }}
+          disabled={resetLoading}
+          sx={{
+            backgroundColor: "black",
+            color: "white",
+            "&:hover": {
+              backgroundColor: "grey",
+            },
           }}
         >
+          {resetLoading ? <CircularProgress size={24} /> : "Reset"}
+        </Button>
+      </div>
+      {/* First Section: Favourite and Fan Countries */}
+      <div style={{ padding: "20px" }}>
+        {/* "My Countries" section */}
+        <div
+          style={{
+            display: "flex",
+            justifyContent: "space-between",
+            alignItems: "center",
+            marginBottom: "16px",
+            position: "sticky",
+            width: "94%",
+            top: 0,
+            backgroundColor: "#fff",
+            zIndex: 2,
+            padding: "10px",
+            boxShadow: "0 2px 5px rgba(0,0,0,0.1)",
+          }}
+        >
+          <Typography variant="h4" style={{ margin: 0 }}>
+            My Countries
+          </Typography>
+          <Button
+            variant="contained"
+            color="secondary"
+            onClick={handleUpdate}
+            style={{ position: "relative", zIndex: 2 }}
+          >
+            Update Existing Countries
+          </Button>
+        </div>
+        <div
+          style={{
+            backgroundColor: "#f1f1f1",
+            padding: "16px",
+            borderRadius: "8px",
+            marginBottom: "16px",
+            display: "flex",
+            justifyContent: "center",
+            alignItems: "center",
+            flexDirection: "column",
+            border: "1px solid red",
+          }}
+        >
+          <Typography variant="h5" style={{ marginBottom: "16px" }}>
+            Favourite Countries
+          </Typography>
+
+          <Grid container spacing={1} justifyContent="center">
+            {favouriteCountries.length > 0 ? (
+              favouriteCountries.map((country) => (
+                <Grid
+                  item
+                  xs={6}
+                  sm={3}
+                  md={3}
+                  lg={2}
+                  key={country.name}
+                  style={{
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                  }}
+                >
+                  {renderCountryCard(country, handleCheckboxChange)}
+                </Grid>
+              ))
+            ) : (
+              <Typography style={{ marginLeft: "16px", marginTop: "2px" }}>
+                No Favourite Countries
+              </Typography>
+            )}
+          </Grid>
+        </div>
+
+        <div
+          style={{
+            backgroundColor: "#eaeaea",
+            padding: "16px",
+            borderRadius: "8px",
+            display: "flex",
+            justifyContent: "center",
+            alignItems: "center",
+            flexDirection: "column",
+            border: "1px solid red",
+          }}
+        >
+          <Typography variant="h5" style={{ marginBottom: "16px" }}>
+            Fan Countries
+          </Typography>
+          <Grid container spacing={1} justifyContent="center">
+            {fanCountries.length > 0 ? (
+              fanCountries.map((country) => (
+                <Grid
+                  item
+                  xs={6}
+                  sm={3}
+                  md={3}
+                  lg={2}
+                  key={country.name}
+                  style={{
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                  }}
+                >
+                  {renderCountryCard(country, handleCheckboxChange)}
+                </Grid>
+              ))
+            ) : (
+              <Typography style={{ marginLeft: "16px", marginTop: "2px" }}>
+                No Fan Countries
+              </Typography>
+            )}
+          </Grid>
+        </div>
+      </div>
+      {/* Second Section: All Countries */}
+      <div style={{ padding: "20px" }}>
+        {/* "My Countries" section */}
+        <div
+          style={{
+            display: "flex",
+            justifyContent: "space-between",
+            alignItems: "center",
+            marginBottom: "16px",
+            position: "sticky",
+            top: 0,
+            width: "94%",
+            backgroundColor: "#fff",
+            zIndex: 2,
+            padding: "30px 10px",
+            boxShadow: "0 2px 5px rgba(0,0,0,0.1)",
+          }}
+        >
+          <Typography variant="h4" style={{ marginBottom: "0" }}>
+            All Countries
+          </Typography>
           <Button
             variant="contained"
             color="primary"
-            onClick={updateFanAndFavourite}
-            fullWidth
+            onClick={handlePost}
+            style={{
+              position: "relative",
+              zIndex: 2,
+            }}
           >
-            Update
+            Add New Countries
           </Button>
-        </Box>
-
-        {/* Fan Countries Section */}
-        <Box mb={4} sx={{ paddingTop: "0px" }}>
-          <Typography variant="h5" gutterBottom>
-            Fan Countries
-          </Typography>
-
-          <Typography variant="h6" gutterBottom mt={2}>
-            Favourite Subsection
-          </Typography>
-          <Grid2 container spacing={3}>
-            {favouriteCountries.map((country, index) => (
-              <Grid2 item xs={12} sm={6} md={4} key={index}>
-                <Card>
-                  <CardContent>
-                    <Typography variant="h6" gutterBottom>
-                      {country.flag} {country.name}
-                    </Typography>
-                    <Box display="flex" flexDirection="column" gap={1}>
-                      <Button
-                        color="error"
-                        variant="outlined"
-                        onClick={() =>
-                          handleDirectAddRemoveFavourite(country.name)
-                        }
-                      >
-                        Remove
-                      </Button>
-                    </Box>
-                  </CardContent>
-                </Card>
-              </Grid2>
-            ))}
-          </Grid2>
-
-          <Typography variant="h6" gutterBottom>
-            Fan Subsection
-          </Typography>
-          <Grid2 container spacing={3}>
-            {fanCountries.map((country, index) => (
-              <Grid2 item xs={12} sm={6} md={4} key={index}>
-                <Card>
-                  <CardContent>
-                    <Typography variant="h6" gutterBottom>
-                      {country.flag} {country.name}
-                    </Typography>
-                    <Box display="flex" flexDirection="column" gap={1}>
-                      <FormControlLabel
-                        control={
-                          <Checkbox
-                            color="secondary"
-                            checked={favouriteStatus[country.name]} // Should reflect the Favourite status
-                            disabled={!fanStatus[country.name]} // Disabled if not a fan
-                            onChange={() =>
-                              handleDirectAddRemoveFavourite(country.name)
-                            }
-                          />
-                        }
-                        label="Favourite"
-                      />
-                      <FormControlLabel
-                        control={
-                          <Button
-                            color="error"
-                            variant="outlined"
-                            onClick={() =>
-                              handleDirectAddRemoveFan(country.name)
-                            }
-                          >
-                            Remove
-                          </Button>
-                        }
-                        label=""
-                      />
-                    </Box>
-                  </CardContent>
-                </Card>
-              </Grid2>
-            ))}
-          </Grid2>
-        </Box>
-
-        {/* All Countries Section */}
-        <Box>
-          <Typography variant="h5" gutterBottom>
-            All Countries
-          </Typography>
-
-          <Grid2 container spacing={3}>
-            {countries.map((country, index) => (
-              <Grid2 item xs={12} sm={6} md={4} key={index}>
-                <Card>
-                  <CardContent>
-                    <Typography variant="h6" gutterBottom>
-                      {country.flag} {country.name}
-                    </Typography>
-                    <Box display="flex" flexDirection="column" gap={1}>
-                      <FormControlLabel
-                        control={
-                          <Checkbox
-                            color="primary"
-                            checked={fanStatus[country.name]}
-                            onChange={() => handleFanChange(country.name)}
-                          />
-                        }
-                        label="Fan"
-                      />
-                      <FormControlLabel
-                        control={
-                          <Checkbox
-                            color="secondary"
-                            checked={favouriteStatus[country.name]}
-                            disabled={!fanStatus[country.name]} // Disabled if not a fan
-                            onChange={() => handleFavouriteChange(country.name)}
-                          />
-                        }
-                        label="Favourite"
-                      />
-                    </Box>
-                  </CardContent>
-                </Card>
-              </Grid2>
-            ))}
-          </Grid2>
-        </Box>
-      </Box>
-    </>
+        </div>
+        <div
+          style={{
+            backgroundColor: "#f1f1f1",
+            padding: "16px",
+            borderRadius: "8px",
+            marginBottom: "16px",
+            display: "flex",
+            justifyContent: "center",
+            alignItems: "center",
+            flexDirection: "column",
+            border: "1px solid red",
+          }}
+        >
+          <Grid container spacing={1} justifyContent="center">
+            {countries.length > 0 ? (
+              countries.map((country) => (
+                <Grid
+                  item
+                  xs={6}
+                  sm={3}
+                  md={3}
+                  lg={2}
+                  key={country.name}
+                  style={{
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                  }}
+                >
+                  {renderCountryCard(country, handleCheckboxChange)}
+                </Grid>
+              ))
+            ) : (
+              <Typography>No Countries Available</Typography>
+            )}
+          </Grid>
+        </div>
+      </div>
+    </div>
   );
 };
 
