@@ -68,18 +68,18 @@ const Login = () => {
         "https://develop.quakbox.com/admin/api/login",
         userField
       );
-
       // Handle successful login
       console.log("Login Successful:", response.data);
-      const token = response.data.token;
-      // Store the token (optional)
-      localStorage.setItem("api_token", token);
-      toast.success("Login successful!", { transition: Bounce });
-      if (flag == 1) {
-        navigate("/dashboard", {});
-      } else if (flag == 2) {
-        navigate("/test", {});
+      if(response.data.result) {
+        // Store the token (optional)
+        localStorage.setItem("api_token", response.data.token);
+        if (flag == 1) {
+          navigate("/dashboard", {});
+        } else if (flag == 2) {
+          navigate("/test", {});
+        }
       }
+      toast.error("Login Unsuccessful! Please Provide Correct Credentials", { transition: Bounce });
     } catch (error) {
       // Handle errors
       if (error.response) {
@@ -315,7 +315,7 @@ const Login = () => {
                     className="btn btn-primary mb-3"
                     onClick={() => mailLogin(2)}
                   >
-                    Quakin_search_center
+                    Quakin_for_Gray
                   </button>
 
                   <button type="button" className="btn btn-secondary mb-3">

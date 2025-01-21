@@ -8,9 +8,8 @@ import video from "../../assets/images/Rigth side property/video.png";
 import event from "../../assets/images/Rigth side property/event-accepted.png";
 import adduser from "../../assets/images/Rigth side property/add-user-male.png";
 import worldmap from "../../assets/images/Rigth side property/world-map.png";
-// import worldmap from "../../assets/images/Rigth side property/world-map.png";
 
-const RightSidebar = () => {
+const Rigth = () => {
   return (
     <div
       className="col-md-3 d-none d-md-block bg-light position-fixed"
@@ -41,18 +40,18 @@ const RightSidebar = () => {
 
           {/* Activities Section */}
           <div className="bg-light py-3">
-            <h5
-              className="text-light text-center"
+            <h6
+              className=" text-center"
               style={{
-                background: "linear-gradient(to right, #1e90ff, #87cefa)",
-                color: "white",
+                background: "linear-gradient(to right, #c0c0c0, #c0c0c0)",
+                color: "blue",
                 padding: "8px",
                 margin: 0,
                 fontSize: "16px",
               }}
             >
               Activities
-            </h5>
+            </h6>
             <ul className="list-unstyled px-3 mt-1">
               <li className="mb-1 d-flex align-items-center">
                 <img
@@ -197,4 +196,4 @@ const RightSidebar = () => {
   );
 };
 
-export default RightSidebar;
+export default Rigth;
