@@ -107,12 +107,19 @@ class CountryController extends Controller
         try {
             // Insert data using a custom insert query
             foreach ($countries as $country) {
-                DB::table('favourite_country')
-                    ->where('member_id', $request->user()->id)
-                    ->where('code', $country['code'])
-                    ->update([
-                        'favourite_country' => $country['favourite_country'],
-                    ]);
+                if ($country['favourite_country'] == "3") {
+                    DB::table('favourite_country')
+                        ->where('member_id', $request->user()->id)
+                        ->where('code', $country['code'])
+                        ->delete();
+                } else {
+                    DB::table('favourite_country')
+                        ->where('member_id', $request->user()->id)
+                        ->where('code', $country['code'])
+                        ->update([
+                            'favourite_country' => $country['favourite_country'],
+                        ]);    
+                }
             }
 
             return response()->json([

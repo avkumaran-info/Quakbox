@@ -61,7 +61,7 @@ const Login = () => {
     }
     return true;
   };
-  const mailLogin = async (flag) => {
+  const mailLogin = async () => {
     if (!validateForm()) return;
     try {
       const response = await axios.post(
@@ -70,16 +70,14 @@ const Login = () => {
       );
       // Handle successful login
       console.log("Login Successful:", response.data);
-      if(response.data.result) {
+      if (response.data.result) {
         // Store the token (optional)
         localStorage.setItem("api_token", response.data.token);
-        if (flag == 1) {
-          navigate("/dashboard", {});
-        } else if (flag == 2) {
-          navigate("/test", {});
-        }
+        navigate("/dashboard", {});
       }
-      toast.error("Login Unsuccessful! Please Provide Correct Credentials", { transition: Bounce });
+      toast.error("Login Unsuccessful! Please Provide Correct Credentials", {
+        transition: Bounce,
+      });
     } catch (error) {
       // Handle errors
       if (error.response) {
@@ -305,17 +303,9 @@ const Login = () => {
                   <button
                     type="button"
                     className="btn btn-primary mb-3"
-                    onClick={() => mailLogin(1)}
+                    onClick={() => mailLogin()}
                   >
                     Quakin
-                  </button>
-
-                  <button
-                    type="button"
-                    className="btn btn-primary mb-3"
-                    onClick={() => mailLogin(2)}
-                  >
-                    Quakin_for_Gray
                   </button>
 
                   <button type="button" className="btn btn-secondary mb-3">
