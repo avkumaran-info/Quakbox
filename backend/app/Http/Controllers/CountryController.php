@@ -40,7 +40,7 @@ class CountryController extends Controller
         $validator = Validator::make($request->all(), [
             'countries' => 'required|array',
             'countries.*.code' => 'required|string|max:100',
-            'countries.*.favourite_country' => 'required|in:0,1',
+            'countries.*.favourite_country' => 'required|in:0,1,2,3',
         ]);
 
         // If validation fails
@@ -88,7 +88,7 @@ class CountryController extends Controller
             'countries' => 'required|array',
             'countries.*.favourite_country_id' => 'required|numeric',
             'countries.*.code' => 'required|string',
-            'countries.*.favourite_country' => 'required|in:0,1',
+            'countries.*.favourite_country' => 'required|in:0,1,2,3',
         ]);
 
         // If validation fails
