@@ -54,18 +54,16 @@ const Feed = () => {
       console.log(error);
     }
   };
-
   const handleSubmit = async () => {
     const token = localStorage.getItem("api_token");
-    // console.log(token);
-
+  
     const formData = new FormData();
     formData.append("message", message);
     formData.append("country_code", countryCode);
     if (mediaFile) {
       formData.append("media", mediaFile);
     }
-
+  
     try {
       const response = await axios.post(
         "https://develop.quakbox.com/admin/api/set_posts",
@@ -77,15 +75,49 @@ const Feed = () => {
           },
         }
       );
-      // console.log(response);
-
+  
       if (response.status === 201) {
-        // Handle success
-        // alert("Post created successfully!");
-        closePopup(); // Close the modal
+        // Add the new post to the feed
+        const newPost = {
+          id: response.data.id, // Use the post ID returned from the server
+          message: message,
+          created_time: new Date().toISOString(),
+          from: {
+            name: userName.username,
+            profile_image: userImage, // Use the current user's image
+          },
+          attachments: mediaFile
+            ? {
+                data: [
+                  {
+                    type: mediaFile.type.startsWith("image/")
+                      ? "image"
+                      : "video",
+                    media: [
+                      {
+                        url: mediaPreview, // Use the preview URL for now
+                        alt_text: "Uploaded media",
+                      },
+                    ],
+                  },
+                ],
+              }
+            : null,
+          likes: { count: 0 },
+          comments: { count: 0 },
+        };
+  
+        setData((prevData) => ({
+          ...prevData,
+          posts: [newPost, ...prevData.posts],
+        }));
+  
+        // Clear inputs and close the popup
+        setMessage("");
+        setMediaFile(null);
         setMediaPreview(null);
+        closePopup();
       } else {
-        // Handle server error
         alert("Failed to create post");
       }
     } catch (error) {
@@ -93,6 +125,8 @@ const Feed = () => {
       alert("An error occurred while creating the post");
     }
   };
+  
+  
 
   // Handle Like Click
   const handleLikeClick = async (postId) => {
