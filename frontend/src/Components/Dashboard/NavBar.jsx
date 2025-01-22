@@ -7,11 +7,36 @@ import { useNavigate } from "react-router-dom";
 const NavBar = () => {
   const navigate = useNavigate();
   const [countries, setCountries] = useState([]);
+  const [userName, setUserName] = useState("");
+
   const dropdownRef = useRef(null);
   const [showDropdown, setShowDropdown] = useState(false);
   const [dropdown, setDropdown] = useState(false);
   const [showAllFlags, setShowAllFlags] = useState(false);
   const [searchQuery, setSearchQuery] = useState(""); // State for search input
+
+  const userData = async () => {
+    const token = localStorage.getItem("api_token");
+    if (!token) {
+      return;
+    }
+    try {
+      const res = await axios.get(
+        "https://develop.quakbox.com/admin/api/user",
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+      // console.log(res.data);
+      // console.log("User Data found:", res.data.users);
+      setUserName(res.data.users.username);
+      // console.log(userName);
+    } catch (error) {
+      console.log(error);
+    }
+  };
 
   const handleLogout = async () => {
     const token = localStorage.getItem("api_token");
@@ -59,6 +84,7 @@ const NavBar = () => {
     };
 
     fetchCountries();
+    userData();
   }, []);
 
   useEffect(() => {
@@ -105,7 +131,7 @@ const NavBar = () => {
             {/* Logo */}
             <div
               className="d-flex align-items-center g-1"
-              style={{ position: "relative" }}
+              style={{ position: "relative", cursor: "pointer" }}
             >
               <img
                 className="d-none d-lg-block"
@@ -291,13 +317,13 @@ const NavBar = () => {
 
             <i
               className="fas fa-globe d-none d-lg-block"
-              style={{ color: "white" }}
+              style={{ color: "white", cursor: "pointer" }}
             ></i>
 
             {/* Video Icon */}
             <i
               className="fas fa-video d-none d-lg-block"
-              style={{ color: "white" }}
+              style={{ color: "white", cursor: "pointer" }}
             ></i>
 
             {/* Go Live Icon */}
@@ -307,37 +333,37 @@ const NavBar = () => {
                 navigate("/golive");
               }}
               className="fas fa-broadcast-tower d-none d-lg-block"
-              style={{ color: "white" }}
+              style={{ color: "white", cursor: "pointer" }}
             ></i>
 
             {/* Friends Icon */}
             <i
               className="fas fa-user-friends d-none d-lg-block"
-              style={{ color: "white" }}
+              style={{ color: "white", cursor: "pointer" }}
             ></i>
 
             {/* Notification Icon */}
             <i
               className="fas fa-bell d-none d-lg-block"
-              style={{ color: "white" }}
+              style={{ color: "white", cursor: "pointer" }}
             ></i>
 
             {/* Message Icon */}
             <i
               className="fas fa-envelope d-none d-lg-block"
-              style={{ color: "white" }}
+              style={{ color: "white", cursor: "pointer" }}
             ></i>
 
             {/* Mail Icon */}
             <i
               className="fas fa-inbox d-none d-lg-block"
-              style={{ color: "white" }}
+              style={{ color: "white", cursor: "pointer" }}
             ></i>
 
             {/* Heart Icon */}
             <i
               className="fas fa-heart d-none d-lg-block"
-              style={{ color: "white" }}
+              style={{ color: "white", cursor: "pointer" }}
               onClick={(e) => {
                 e.preventDefault();
                 navigate("/favouriteCountires");
@@ -411,6 +437,22 @@ const NavBar = () => {
                       width: "200px",
                     }}
                   >
+                    <a
+                      href="#"
+                      style={{
+                        display: "block",
+                        padding: "10px 15px",
+                        textDecoration: "none",
+                        color: "#333",
+                        fontSize: "0.9rem",
+                      }}
+                      onClick={() =>
+                        console.log("Change Profile Picture clicked")
+                      }
+                    >
+                      {userName}
+                    </a>
+
                     <a
                       href="#"
                       style={{
