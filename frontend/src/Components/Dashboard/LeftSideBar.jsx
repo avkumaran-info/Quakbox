@@ -40,7 +40,8 @@ const LeftSidebar = () => {
   const handleArrowClick = (direction) => {
     let newIndex = currentVideoIndex;
     if (direction === "up") {
-      newIndex = currentVideoIndex > 0 ? currentVideoIndex - 1 : videos.length - 1;
+      newIndex =
+        currentVideoIndex > 0 ? currentVideoIndex - 1 : videos.length - 1;
     } else if (direction === "down") {
       newIndex = (currentVideoIndex + 1) % videos.length;
     }
@@ -118,20 +119,31 @@ const LeftSidebar = () => {
                     top: "10px",
                     left: "50%",
                     transform: "translateX(-50%)",
-                    backgroundColor: "rgba(0, 0, 0, 0.8)",
-                    color: "white",
-                    fontSize: "20px",
-                    fontWeight: "bold",
-                    border: "2px solid white",
-                    padding: "10px 15px",
-                    borderRadius: "50%",
+                    backgroundColor: "rgba(0, 0, 0, 0.7)", // Sleek semi-black background
+                    color: "#FFFFFF", // Pure white text
+                    fontSize: "24px", // Slightly larger font for emphasis
+                    fontWeight: "bold", // Keeps the arrow bold
+                    padding: "12px 16px", // Balanced padding
+                    borderRadius: "50%", // Still keeps circular design
                     cursor: "pointer",
+                    boxShadow: "0 4px 8px rgba(0, 0, 0, 0.4)", // Adds depth with shadow
+                    transition: "all 0.3s ease-in-out", // Smooth hover effect
+                    border: "none", // Removes white circle
                   }}
+                  onMouseOver={
+                    (e) =>
+                      (e.target.style.backgroundColor = "rgba(0, 0, 0, 0.9)") // Darkens on hover
+                  }
+                  onMouseOut={
+                    (e) =>
+                      (e.target.style.backgroundColor = "rgba(0, 0, 0, 0.7)") // Resets background on mouse out
+                  }
                   onClick={() => handleArrowClick("up")}
                 >
                   ↑
                 </button>
               )}
+
               {/* Down Arrow */}
               {isHovered && (
                 <button
@@ -140,20 +152,31 @@ const LeftSidebar = () => {
                     bottom: "10px",
                     left: "50%",
                     transform: "translateX(-50%)",
-                    backgroundColor: "rgba(0, 0, 0, 0.8)",
-                    color: "white",
-                    fontSize: "20px",
-                    fontWeight: "bold",
-                    border: "2px solid white",
-                    padding: "10px 15px",
-                    borderRadius: "50%",
+                    backgroundColor: "rgba(0, 0, 0, 0.7)", // Sleek semi-black background
+                    color: "#FFFFFF", // Pure white text
+                    fontSize: "24px", // Slightly larger font for emphasis
+                    fontWeight: "bold", // Keeps the arrow bold
+                    padding: "12px 16px", // Balanced padding
+                    borderRadius: "50%", // Still keeps circular design
                     cursor: "pointer",
+                    boxShadow: "0 4px 8px rgba(0, 0, 0, 0.4)", // Adds depth with shadow
+                    transition: "all 0.3s ease-in-out", // Smooth hover effect
+                    border: "none", // Removes white circle
                   }}
+                  onMouseOver={
+                    (e) =>
+                      (e.target.style.backgroundColor = "rgba(0, 0, 0, 0.9)") // Darkens on hover
+                  }
+                  onMouseOut={
+                    (e) =>
+                      (e.target.style.backgroundColor = "rgba(0, 0, 0, 0.7)") // Resets background on mouse out
+                  }
                   onClick={() => handleArrowClick("down")}
                 >
                   ↓
                 </button>
               )}
+
               {/* Interaction Icons */}
               {isHovered && (
                 <div

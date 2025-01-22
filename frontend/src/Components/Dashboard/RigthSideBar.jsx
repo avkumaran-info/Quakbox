@@ -1,19 +1,57 @@
 import React from "react";
 import India from "../../assets/images/Rigth side property/Flag_of_India.svg.webp";
 import banner from "../../assets/images/Rigth side property/banner.jpeg";
-import add from "../../assets/images/Rigth side property/4.png";
+import user1 from "../../assets/images/Rigth side property/user.jpg";
+import user3 from "../../assets/images/Rigth side property/user3.jpg";
+import user2 from "../../assets/images/Rigth side property/user2.jpeg";
 import photo from "../../assets/images/Rigth side property/2.png";
 import feed from "../../assets/images/Rigth side property/1.png";
 import user from "../../assets/images/Rigth side property/user.png";
-
 import news from "../../assets/images/Rigth side property/Lnews.png";
-
 import event from "../../assets/images/Rigth side property/7.png";
 import group from "../../assets/images/Rigth side property/group.png";
 import notification from "../../assets/images/Rigth side property/not.png";
-
 import set from "../../assets/images/Rigth side property/set.webp";
+
 const RightSidebar = () => {
+  const updates = [
+    {
+      id: 1,
+      name: "John",
+      message: "posted an update",
+      avatar: user, // Replace with actual image URL
+      time: "a year ago",
+    },
+    {
+      id: 2,
+      name: "Adele",
+      message: "posted an update",
+      avatar: user1, // Replace with actual image URL
+      time: "a year ago",
+    },
+    {
+      id: 3,
+      name: "John",
+      message: "posted an update",
+      avatar: user2, // Replace with actual image URL
+      time: "2 years ago",
+    },
+    {
+      id: 4,
+      name: "John",
+      message: "posted an update in the group ☕ Coffee Addicts",
+      avatar: user3, // Replace with actual image URL
+      time: "2 years ago",
+    },
+    {
+      id: 5,
+      name: "John",
+      message: "posted an update",
+      avatar: user, // Replace with actual image URL
+      time: "2 years ago",
+    },
+  ];
+
   return (
     <div
       className="col-md-3 d-none d-md-block bg-light position-fixed"
@@ -42,7 +80,7 @@ const RightSidebar = () => {
             <h5 className="mt-1 mb-0 text-secondary">INDIA</h5>
           </div>
           {/* ProfileCompletion */}
-          <div className="container mt-2" style={{ maxWidth: "400px" }}>
+          <div className="container mt-2 mb-1" style={{ maxWidth: "400px" }}>
             <div
               className="card shadow-sm p-1 d-flex flex-column align-items-center"
               style={{ borderRadius: "10px", border: "none" }}
@@ -142,300 +180,213 @@ const RightSidebar = () => {
               </ul>
             </div>
           </div>
-
-          {/* Activities Section */}
-          {/* <div className="bg-light py-5 mb-5">
-            <h5
-              className="text-light text-center"
+          {/* Profile */}
+          <div className="container mt-1" style={{ maxWidth: "400px" }}>
+            <div
+              className="card shadow-sm p-3"
               style={{
-                background: "linear-gradient(to right, #1e90ff, #87cefa)",
-                color: "white",
-                padding: "8px",
-                margin: 0,
-                fontSize: "16px",
+                backgroundColor: "#ffffff", // White background
               }}
             >
-              Activities
-            </h5>
-            <ul className="list-unstyled px-3 mt-1">
-              <li className="mb-1 d-flex align-items-center">
+              <div className="card-header p-0">
                 <img
-                  src={news}
-                  alt="News"
-                  className="me-2"
-                  style={{ width: "20px", height: "20px" }} // Reduced image size
-                />
-                <a
-                  href="#"
-                  className="text-decoration-none text-dark"
-                  style={{ fontSize: "12px" }}
-                >
-                  News
-                </a>
-              </li>
-             <li className="mb-1 d-flex align-items-center">
-                <img
-                  src={add}
-                  alt="Add News"
-                  className="me-2"
-                  style={{ width: "20px", height: "20px" }} // Reduced image size
-                />
-                <a
-                  href="#"
-                  className="text-decoration-none text-dark"
-                  style={{ fontSize: "12px" }}
-                >
-                  Add News
-                </a>
-              </li> 
-              <li className="mb-1 d-flex align-items-center">
-                <img
-                  src={groups}
-                  alt="Groups"
-                  className="me-2"
-                  style={{ width: "20px", height: "20px" }} // Reduced image size
-                />
-                <a
-                  href="#"
-                  className="text-decoration-none text-dark "
-                  style={{ fontSize: "12px" }}
-                >
-                  Groups
-                </a>
-              </li>
-              <li className="mb-1 d-flex align-items-center">
-                <img
-                  src={photo}
-                  alt="Photos"
-                  className="me-2"
-                  style={{ width: "20px", height: "20px" }} // Reduced image size
-                />
-                <a
-                  href="#"
-                  className="text-decoration-none text-dark"
-                  style={{ fontSize: "12px" }}
-                >
-                  Photos
-                </a>
-              </li>
-              <li className="mb-1 d-flex align-items-center">
-                <img
-                  src={video}
-                  alt="Videos"
-                  className="me-2"
-                  style={{ width: "20px", height: "20px" }} // Reduced image size
-                />
-                <a
-                  href="#"
-                  className="text-decoration-none text-dark"
-                  style={{ fontSize: "12px" }}
-                >
-                  Videos
-                </a>
-              </li>
-              <li className="mb-1 d-flex align-items-center">
-                <img
-                  src={event}
-                  alt="Events"
-                  className="me-2"
-                  style={{ width: "20px", height: "20px" }} // Reduced image size
-                />
-                <a
-                  href="#"
-                  className="text-decoration-none text-dark"
-                  style={{ fontSize: "12px" }}
-                >
-                  Events
-                </a>
-              </li>
-              <li className="mb-1 d-flex align-items-center">
-                <img
-                  src={adduser}
-                  alt="Invite Friends"
-                  className="me-2"
-                  style={{ width: "20px", height: "20px" }} // Reduced image size
-                />
-                <a
-                  href="#"
-                  className="text-decoration-none text-dark"
-                  style={{ fontSize: "12px" }}
-                >
-                  Invite Friends
-                </a>
-              </li>
-              <li className="mb-1 d-flex align-items-center">
-                <img
-                  src={worldmap}
-                  alt="Add Country Member"
-                  className="me-2"
-                  style={{ width: "20px", height: "20px" }} // Reduced image size
-                />
-                <a
-                  href="#"
-                  className="text-decoration-none text-dark"
-                  style={{ fontSize: "12px" }}
-                >
-                  Add Country Member
-                </a>
-              </li>
-              <li className="d-flex align-items-center">
-                <img
-                  src={star}
-                  alt="Add Favourite Country"
-                  className="me-2"
-                  style={{ width: "20px", height: "20px" }} // Reduced image size
-                />
-                <a
-                  href="#"
-                  className="text-decoration-none text-dark"
-                  style={{ fontSize: "12px" }}
-                >
-                  Add Favourite Country
-                </a>
-              </li>
-            </ul>
-          </div> */}
-
-          <div
-            className="shadow-sm mb-5" 
-            style={{
-              backgroundColor: "#ffffff", // White background
-            }}
-          >
-            <div className="card-header p-0">
-              <img
-                src={banner} // Replace with a proper banner URL
-                className="img-fluid"
-                alt="Banner"
-                style={{
-                  width: "100%",
-                  height: "80px",
-                }}
-              />
-            </div>
-            <div className="card-body text-center">
-              <div
-                className="rounded-circle border border-2 mx-auto mb-2"
-                style={{
-                  width: "80px",
-                  height: "80px",
-                  overflow: "hidden",
-                  marginTop: "-50px",
-                }}
-              >
-                <img
-                  src={photo} // Replace with a proper profile image URL
+                  src={banner} // Replace with a proper banner URL
                   className="img-fluid"
-                  alt="Profile"
+                  alt="Banner"
+                  style={{
+                    width: "100%",
+                    height: "80px",
+                  }}
                 />
               </div>
-              <h5 className="card-title mb-0" style={{ fontSize: "1rem" }}>
-                Sam Lanson
-              </h5>
-              <p className="text-muted mb-0" style={{ fontSize: "0.85rem" }}>
-                Web Developer at Webestica
-              </p>
-              <p className="card-text mb-1" style={{ fontSize: "0.85rem" }}>
-                I'd love to change the world, but they won’t give me the source
-                code.
-              </p>
-              <div className="d-flex justify-content-center mb-1">
-                <div className="me-4 text-center">
-                  <h6 className="mb-0" style={{ fontSize: "0.9rem" }}>
-                    256
-                  </h6>
-                  <small className="text-muted" style={{ fontSize: "0.75rem" }}>
-                    Post
-                  </small>
+              <div className="card-body text-center">
+                <div
+                  className="rounded-circle border border-2 mx-auto mb-2"
+                  style={{
+                    width: "80px",
+                    height: "80px",
+                    overflow: "hidden",
+                    marginTop: "-50px",
+                  }}
+                >
+                  <img
+                    src={photo} // Replace with a proper profile image URL
+                    className="img-fluid"
+                    alt="Profile"
+                  />
                 </div>
-                <div className="me-4 text-center">
-                  <h6 className="mb-0" style={{ fontSize: "0.9rem" }}>
-                    2.5K
-                  </h6>
-                  <small className="text-muted" style={{ fontSize: "0.75rem" }}>
-                    Followers
-                  </small>
+                <h5 className="card-title mb-0" style={{ fontSize: "1rem" }}>
+                  Sam Lanson
+                </h5>
+                <p className="text-muted mb-0" style={{ fontSize: "0.85rem" }}>
+                  Web Developer at Webestica
+                </p>
+                <p className="card-text mb-1" style={{ fontSize: "0.85rem" }}>
+                  I'd love to change the world, but they won’t give me the
+                  source code.
+                </p>
+                <div className="d-flex justify-content-center mb-1">
+                  <div className="me-4 text-center">
+                    <h6 className="mb-0" style={{ fontSize: "0.9rem" }}>
+                      256
+                    </h6>
+                    <small
+                      className="text-muted"
+                      style={{ fontSize: "0.75rem" }}
+                    >
+                      Post
+                    </small>
+                  </div>
+                  <div className="me-4 text-center">
+                    <h6 className="mb-0" style={{ fontSize: "0.9rem" }}>
+                      2.5K
+                    </h6>
+                    <small
+                      className="text-muted"
+                      style={{ fontSize: "0.75rem" }}
+                    >
+                      Followers
+                    </small>
+                  </div>
+                  <div className="text-center">
+                    <h6 className="mb-0" style={{ fontSize: "0.9rem" }}>
+                      365
+                    </h6>
+                    <small
+                      className="text-muted"
+                      style={{ fontSize: "0.75rem" }}
+                    >
+                      Following
+                    </small>
+                  </div>
                 </div>
-                <div className="text-center">
-                  <h6 className="mb-0" style={{ fontSize: "0.9rem" }}>
-                    365
-                  </h6>
-                  <small className="text-muted" style={{ fontSize: "0.75rem" }}>
-                    Following
-                  </small>
-                </div>
+                <ul className="list-group list-group-flush text-start">
+                  <li
+                    className="list-group-item"
+                    style={{ fontSize: "0.85rem" }}
+                  >
+                    <img
+                      src={feed}
+                      alt="Add News"
+                      className="me-2"
+                      style={{ width: "20px", height: "20px" }}
+                    />
+                    Feed
+                  </li>
+                  <li
+                    className="list-group-item"
+                    style={{ fontSize: "0.85rem" }}
+                  >
+                    <img
+                      src={user}
+                      alt="Add News"
+                      className="me-2"
+                      style={{ width: "20px", height: "20px" }}
+                    />
+                    Connections
+                  </li>
+                  <li
+                    className="list-group-item"
+                    style={{ fontSize: "0.85rem" }}
+                  >
+                    <img
+                      src={news}
+                      alt="Add News"
+                      className="me-2"
+                      style={{ width: "20px", height: "20px" }}
+                    />
+                    Latest News
+                  </li>
+                  <li
+                    className="list-group-item"
+                    style={{ fontSize: "0.85rem" }}
+                  >
+                    <img
+                      src={event}
+                      alt="Add News"
+                      className="me-2"
+                      style={{ width: "20px", height: "20px" }}
+                    />
+                    Events
+                  </li>
+                  <li
+                    className="list-group-item"
+                    style={{ fontSize: "0.85rem" }}
+                  >
+                    <img
+                      src={group}
+                      alt="Add News"
+                      className="me-2"
+                      style={{ width: "20px", height: "20px" }}
+                    />
+                    Groups
+                  </li>
+                  <li
+                    className="list-group-item"
+                    style={{ fontSize: "0.85rem" }}
+                  >
+                    <img
+                      src={notification}
+                      alt="Add News"
+                      className="me-2"
+                      style={{ width: "20px", height: "20px" }}
+                    />
+                    Notifications
+                  </li>
+                  <li
+                    className="list-group-item"
+                    style={{ fontSize: "0.85rem" }}
+                  >
+                    <img
+                      src={set}
+                      alt="Add News"
+                      className="me-2"
+                      style={{ width: "20px", height: "20px" }}
+                    />
+                    Settings
+                  </li>
+                </ul>
+                <button
+                  className="btn btn-primary mt-1 w-100"
+                  style={{ fontSize: "0.85rem" }}
+                >
+                  View Profile
+                </button>
               </div>
-              <ul className="list-group list-group-flush text-start">
-                <li className="list-group-item" style={{ fontSize: "0.85rem" }}>
-                  <img
-                    src={feed}
-                    alt="Add News"
-                    className="me-2"
-                    style={{ width: "20px", height: "20px" }}
-                  />
-                  Feed
-                </li>
-                <li className="list-group-item" style={{ fontSize: "0.85rem" }}>
-                  <img
-                    src={user}
-                    alt="Add News"
-                    className="me-2"
-                    style={{ width: "20px", height: "20px" }}
-                  />
-                  Connections
-                </li>
-                <li className="list-group-item" style={{ fontSize: "0.85rem" }}>
-                  <img
-                    src={news}
-                    alt="Add News"
-                    className="me-2"
-                    style={{ width: "20px", height: "20px" }}
-                  />
-                  Latest News
-                </li>
-                <li className="list-group-item" style={{ fontSize: "0.85rem" }}>
-                  <img
-                    src={event}
-                    alt="Add News"
-                    className="me-2"
-                    style={{ width: "20px", height: "20px" }}
-                  />
-                  Events
-                </li>
-                <li className="list-group-item" style={{ fontSize: "0.85rem" }}>
-                  <img
-                    src={group}
-                    alt="Add News"
-                    className="me-2"
-                    style={{ width: "20px", height: "20px" }}
-                  />
-                  Groups
-                </li>
-                <li className="list-group-item" style={{ fontSize: "0.85rem" }}>
-                  <img
-                    src={notification}
-                    alt="Add News"
-                    className="me-2"
-                    style={{ width: "20px", height: "20px" }}
-                  />
-                  Notifications
-                </li>
-                <li className="list-group-item" style={{ fontSize: "0.85rem" }}>
-                  <img
-                    src={set}
-                    alt="Add News"
-                    className="me-2"
-                    style={{ width: "20px", height: "20px" }}
-                  />
-                  Settings
-                </li>
+            </div>
+          </div>
+          {/* Latest updates */}
+          <div
+            className="container mt-1"
+            style={{ maxWidth: "400px", marginBottom: "110px" }}
+          >
+            <div
+              className="card shadow-sm p-3"
+              style={{ borderRadius: "10px" }}
+            >
+              <h5 className="mb-4">Latest updates</h5>
+              <ul className="list-unstyled">
+                {updates.map((update) => (
+                  <li
+                    key={update.id}
+                    className="d-flex align-items-start mb-3"
+                    style={{ gap: "10px" }}
+                  >
+                    <img
+                      src={update.avatar}
+                      alt={update.name}
+                      className="rounded-circle"
+                      style={{ width: "40px", height: "40px" }}
+                    />
+                    <div>
+                      <p className="mb-1" style={{ fontSize: "0.9rem" }}>
+                        <strong>{update.name}</strong> {update.message}
+                      </p>
+                      <small className="text-muted">{update.time}</small>
+                    </div>
+                  </li>
+                ))}
               </ul>
-              <button
-                className="btn btn-primary mt-1 w-100"
-                style={{ fontSize: "0.85rem" }}
-              >
-                View Profile
-              </button>
             </div>
           </div>
         </div>
