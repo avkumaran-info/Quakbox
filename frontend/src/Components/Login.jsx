@@ -70,7 +70,7 @@ const Login = () => {
       );
       // Handle successful login
       console.log("Login Successful:", response.data);
-      if(response.data.result) {
+      if (response.data.result) {
         // Store the token (optional)
         localStorage.setItem("api_token", response.data.token);
         if (flag == 1) {
@@ -79,7 +79,9 @@ const Login = () => {
           navigate("/test", {});
         }
       }
-      toast.error("Login Unsuccessful! Please Provide Correct Credentials", { transition: Bounce });
+      toast.error("Login Unsuccessful! Please Provide Correct Credentials", {
+        transition: Bounce,
+      });
     } catch (error) {
       // Handle errors
       if (error.response) {
