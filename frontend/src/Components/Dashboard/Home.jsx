@@ -50,7 +50,7 @@ const Home = () => {
     <>
       <div className="app">
         <NavBar />
-        <div className="d-flex justify-content-between">
+        <div className="container-fluid mt-4">
           <LeftSidebar
             news={[
               {
@@ -115,63 +115,10 @@ const Home = () => {
               },
             ]}
           />
-          {/* <div
-            className="col-3 bg-light position-fixed d-none d-md-block mt-4"
-            style={{
-              top: "60px", // Height of the topbar
-              left: "0",
-            }}
-          >
-            <div className="card">
-              <div className="card-header bg-primary text-white">
-                <h5>Friends</h5>
-              </div>
-              <ul className="list-group list-group-flush">
-                {friends.map((friend) => (
-                  <li
-                    key={friend.id}
-                    className={`list-group-item ${
-                      selectedFriend?.id === friend.id ? "active" : ""
-                    }`}
-                    onClick={() => setSelectedFriend(friend)}
-                    style={{ cursor: "pointer" }}
-                  >
-                    <div className="d-flex align-items-center">
-                      <img
-                        src={friend.image}
-                        alt={friend.name}
-                        className="rounded-circle me-2"
-                        style={{
-                          width: "40px",
-                          height: "40px",
-                          objectFit: "cover",
-                        }}
-                      />
-                      <span>{friend.name}</span>
-                    </div>
-                  </li>
-                ))}
-              </ul>
-            </div>
-          </div> */}
-
-          {/* Chat Window */}
-          {/* <>
-            {selectedFriend ? (
-              <ChatWindow
-                selectedFriend={selectedFriend}
-                onSendMessage={(newMessage) =>
-                  handleSendMessage(selectedFriend.id, newMessage)
-                }
-              />
-            ) : (
-              <Feed />
-            )}
-          </> */}
           <Feed />
           <RigthSideBar />
-          <Footer />
         </div>
+        <Footer />
       </div>
     </>
   );

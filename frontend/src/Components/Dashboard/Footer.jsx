@@ -4,56 +4,132 @@ const Footer = () => {
   return (
     <>
       <footer
-        className="bg-dark text-white fixed-bottom"
+        className="bg-dark text-white fixed-bottom d-flex justify-content-center align-items-center"
         style={{
           background: "linear-gradient(90deg, #1e90ff, #87cefa)",
-          padding: "0.4rem 0.5rem", // Compact padding
-          fontSize: "0.8rem", // Smaller font size
+          padding: "0.2rem 0.2rem", // Minimal padding for compactness
+          fontSize: "0.6rem", // Even smaller font size
+          height: "auto", // Auto height to fit content
         }}
       >
         <div className="container-fluid">
           <div className="row text-center py-1 d-flex justify-content-center flex-wrap">
             {/* Icons with Labels */}
             <div className="col-auto d-flex flex-column justify-content-center align-items-center">
-              <i className="fa-solid fa-globe"></i>
-              <span className="d-none d-sm-block">Home</span>{" "}
-              {/* Hide text on small screens */}
+              <i className="fa-solid fa-globe" style={{ fontSize: "1rem" }}></i>
+              <span
+                className="d-none d-sm-block"
+                style={{ fontSize: "0.6rem" }}
+              >
+                Home
+              </span>
             </div>
             <div className="col-auto d-flex flex-column justify-content-center align-items-center">
-              <i className="fa-solid fa-arrow-right"></i>
-              <span className="d-none d-sm-block">Chat Room</span>
+              <i
+                className="fa-solid fa-arrow-right"
+                style={{ fontSize: "1rem" }}
+              ></i>
+              <span
+                className="d-none d-sm-block"
+                style={{ fontSize: "0.6rem" }}
+              >
+                Chat Room
+              </span>
             </div>
             <div className="col-auto d-flex flex-column justify-content-center align-items-center">
-              <i className="fa fa-language" aria-hidden="true"></i>
-              <span className="d-none d-sm-block">Translate</span>
+              <i
+                className="fa fa-language"
+                aria-hidden="true"
+                style={{ fontSize: "1rem" }}
+              ></i>
+              <span
+                className="d-none d-sm-block"
+                style={{ fontSize: "0.6rem" }}
+              >
+                Translate
+              </span>
             </div>
             <div className="col-auto d-flex flex-column justify-content-center align-items-center">
-              <i className="fas fa-stop-circle"></i>
-              <span className="d-none d-sm-block">Translate page</span>
+              <i
+                className="fas fa-stop-circle"
+                style={{ fontSize: "1rem" }}
+              ></i>
+              <span
+                className="d-none d-sm-block"
+                style={{ fontSize: "0.6rem" }}
+              >
+                Translate page
+              </span>
             </div>
             <div className="col-auto d-flex flex-column justify-content-center align-items-center">
-              <i className="fa-solid fa-gamepad"></i>
-              <span className="d-none d-sm-block">Single Player Games</span>
+              <i
+                className="fa-solid fa-gamepad"
+                style={{ fontSize: "1rem" }}
+              ></i>
+              <span
+                className="d-none d-sm-block"
+                style={{ fontSize: "0.6rem" }}
+              >
+                Games
+              </span>
             </div>
             <div className="col-auto d-flex flex-column justify-content-center align-items-center">
-              <i className="fa fa-bullhorn" aria-hidden="true"></i>
-              <span className="d-none d-sm-block">Announcement</span>
+              <i
+                className="fa fa-bullhorn"
+                aria-hidden="true"
+                style={{ fontSize: "1rem" }}
+              ></i>
+              <span
+                className="d-none d-sm-block"
+                style={{ fontSize: "0.6rem" }}
+              >
+                Announcement
+              </span>
             </div>
             <div className="col-auto d-flex flex-column justify-content-center align-items-center">
-              <i className="fa-solid fa-share"></i>
-              <span className="d-none d-sm-block">Share</span>
+              <i className="fa-solid fa-share" style={{ fontSize: "1rem" }}></i>
+              <span
+                className="d-none d-sm-block"
+                style={{ fontSize: "0.6rem" }}
+              >
+                Share
+              </span>
             </div>
             <div className="col-auto d-flex flex-column justify-content-center align-items-center">
-              <i className="fa-solid fa-arrow-up"></i>
-              <span className="d-none d-sm-block">Scroll to Top</span>
+              <i
+                className="fa-solid fa-arrow-up"
+                style={{ fontSize: "1rem" }}
+              ></i>
+              <span
+                className="d-none d-sm-block"
+                style={{ fontSize: "0.6rem" }}
+              >
+                Scroll
+              </span>
             </div>
             <div className="col-auto d-flex flex-column justify-content-center align-items-center">
-              <i className="fas fa-broadcast-tower"></i>
-              <span className="d-none d-sm-block">Broadcast</span>
+              <i
+                className="fas fa-broadcast-tower"
+                style={{ fontSize: "1rem" }}
+              ></i>
+              <span
+                className="d-none d-sm-block"
+                style={{ fontSize: "0.6rem" }}
+              >
+                Broadcast
+              </span>
             </div>
             <div className="col-auto d-flex flex-column justify-content-center align-items-center d-none d-sm-block">
-              <i className="fa-brands fa-facebook-f"></i>
-              <span className="d-none d-sm-block">Facebook</span>
+              <i
+                className="fa-brands fa-facebook-f"
+                style={{ fontSize: "1rem" }}
+              ></i>
+              <span
+                className="d-none d-sm-block"
+                style={{ fontSize: "0.6rem" }}
+              >
+                Facebook
+              </span>
             </div>
           </div>
         </div>

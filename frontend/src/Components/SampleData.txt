@@ -1,0 +1,71 @@
+// const handlePost = async () => {
+POST Method
+// const POST_API_URL = "https://develop.quakbox.com/admin/api/set_favourite_country";
+Payload = 
+{
+  "countries": [
+    {
+      "code": "Republic of the Congo",
+      "favourite_country": "0"
+    },
+     {
+      "code": "Kyrgyzstan",
+      "favourite_country": "1"
+    }
+  ]
+}
+//
+await axios.post(POST_API_URL, payload, {headers: { Authorization: `Bearer ${API_TOKEN}`},});
+//
+///////////////////////////////////////////////////////////////////////////////
+POST method
+const PUT_API_URL = "https://develop.quakbox.com/admin/api/put_favourite_country";
+Payload = 
+{
+  "countries": [
+    {
+        "favourite_country_id": "1979",
+              "code": "Grenada", // Country code
+              "favourite_country": "0"
+    }
+              ]
+}
+//
+await axios.post(PUT_API_URL, payload,{headers:{Authorization: `Bearer ${API_TOKEN}`},});
+//
+////////////////////////////////////////////////////////////////////
+GET Method
+const GET_API_URL = "https://develop.quakbox.com/admin/api/get_favourite_country";
+get response = 
+{
+    "success": true,
+    "favourite_country": [
+        {
+            "favourite_country_id": 2737,
+            "member_id": 4,
+            "code": "Anguilla",
+            "favourite_country": "0"
+        },
+        {
+            "favourite_country_id": 2742,
+            "member_id": 4,
+            "code": "Nicaragua",
+            "favourite_country": "1"
+        },
+    ]
+}
+//
+const response = await axios.get(GET_API_URL, {headers: { Authorization: `Bearer ${API_TOKEN}` },});
+//
+//////////////////////////////////////////////////////////////
+RESET Method
+const RESET_API_URL = "https://develop.quakbox.com/admin/api/del_favourite_country";
+//
+await axios.post(
+        RESET_API_URL,
+        {},
+        {
+          headers: { Authorization: `Bearer ${API_TOKEN}` },
+        }
+      );
+//
