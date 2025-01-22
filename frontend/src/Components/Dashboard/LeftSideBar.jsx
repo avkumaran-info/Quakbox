@@ -1,285 +1,243 @@
-import React from "react";
+import React, { useEffect, useRef, useState } from "react";
+import { FaThumbsUp, FaThumbsDown, FaComment, FaShare } from "react-icons/fa";
+import video1 from "../../assets/images/leftside videos/v1.mp4";
+import video2 from "../../assets/images/leftside videos/v2.mp4";
+import video3 from "../../assets/images/leftside videos/v3.mp4";
+import video4 from "../../assets/images/leftside videos/v4.mp4";
 
-const LeftSidebar = ({ news, photos, videos }) => {
+const LeftSidebar = () => {
+  const videos = [video4, video1, video2, video3];
+  const videoRefs = useRef([]);
+  const [currentVideoIndex, setCurrentVideoIndex] = useState(0);
+  const [isHovered, setIsHovered] = useState(false);
+
+  const handleVideoClick = (index) => {
+    const currentVideo = videoRefs.current[index];
+    if (currentVideo.paused) {
+      playSingleVideo(index);
+    } else {
+      currentVideo.pause();
+    }
+  };
+
+  const playSingleVideo = (index) => {
+    videoRefs.current.forEach((video, idx) => {
+      if (video) {
+        if (idx === index) {
+          video.play();
+          video.scrollIntoView({
+            behavior: "smooth",
+            block: "center",
+          });
+        } else {
+          video.pause();
+        }
+      }
+    });
+    setCurrentVideoIndex(index);
+  };
+
+  const handleArrowClick = (direction) => {
+    let newIndex = currentVideoIndex;
+    if (direction === "up") {
+      newIndex =
+        currentVideoIndex > 0 ? currentVideoIndex - 1 : videos.length - 1;
+    } else if (direction === "down") {
+      newIndex = (currentVideoIndex + 1) % videos.length;
+    }
+    playSingleVideo(newIndex);
+  };
+
+  useEffect(() => {
+    const currentVideo = videoRefs.current[currentVideoIndex];
+    if (currentVideo) {
+      playSingleVideo(currentVideoIndex);
+    }
+  }, [currentVideoIndex]);
+
   return (
     <div
-      className="col-md-3 d-none d-md-block bg-light position-fixed mb-5"
+      className="col-md-3 d-none d-md-block bg-light position-fixed mb-5 h-100"
       style={{
-        top: "55px", // Height of the navbar
-        bottom: "60px", // Space reserved for the footer
+        top: "55px",
         left: "0",
-        display: "flex",
-        flexDirection: "column",
-        height: "calc(100vh - 105px)", // Adjust height for navbar and footer
-        overflow: "hidden", // Prevent scrolling
-        boxSizing: "border-box", // Ensure padding doesn't overflow
-        marginBottom: "105px",
+        boxSizing: "border-box",
+        paddingBottom: "100px",
       }}
     >
-      {/* QB News Section */}
-      <div className="card mb-1" style={{ flex: 1 }}>
+      <div className="card mb-5">
         <div
           className="d-flex align-items-center text-light p-1"
           style={{
             background: "linear-gradient(to right, #1e90ff, #87cefa)",
             color: "white",
-            padding: "8px 15px",
-            fontSize: "16px",
           }}
         >
-          <div className="d-flex  align-items-center">
-            {/* QBNews Logo */}
-            <h5
-              className=" text-center"
+          <h5 className="text-center mb-0" style={{ fontSize: "15px" }}>
+            Shorts Video Player
+          </h5>
+        </div>
+
+        <div
+          className="scroll-container"
+          style={{ textAlign: "center", maxHeight: "calc(100vh - 125px)" }}
+        >
+          {videos.map((video, index) => (
+            <div
+              key={index}
               style={{
-                color: "white",
-                padding: "8px",
-                margin: 0,
-                fontSize: "13px",
+                marginBottom: "5px",
+                width: "100%",
+                maxWidth: "400px",
+                margin: "0 auto",
+                position: "relative",
               }}
+              onMouseEnter={() => setIsHovered(true)}
+              onMouseLeave={() => setIsHovered(false)}
             >
-              QBNews
-            </h5>
-
-            {/* Navigation */}
-            <nav style={{ flex: 1 }}>
-              <ul
-                className="list-unstyled d-flex mb-0"
+              <video
+                ref={(el) => (videoRefs.current[index] = el)}
+                src={video}
+                width="100%"
+                height="500px"
+                controls={false}
+                muted={false}
+                loop={false}
                 style={{
-                  padding: "0",
-                  margin: "0",
-                  listStyleType: "none",
-                  display: "flex",
-                  //   gap: "1px",
+                  border: "1px solid #ccc",
+                  backgroundColor: "#000",
+                  left: "0",
+                  borderRadius: "25px",
                 }}
-              >
-                <li>
-                  <a href="#" style={{ textDecoration: "none" }}>
-                    {" "}
-                    <h5
-                      className=" text-center"
-                      style={{
-                        color: "white ",
-                        padding: "8px",
-                        margin: 0,
-                        fontSize: "13px",
-                      }}
-                    >
-                      {" "}
-                      News
-                    </h5>
-                  </a>
-                </li>
-                <li>
-                  <a href="#" style={{ textDecoration: "none" }}>
-                    <h5
-                      className=" text-center"
-                      style={{
-                        color: "white",
-                        padding: "8px",
-                        margin: 0,
-                        fontSize: "13px",
-                      }}
-                    >
-                      {" "}
-                      Entertainment
-                    </h5>
-                  </a>
-                </li>
-                <li>
-                  <a href="#" style={{ textDecoration: "none" }}>
-                    <h5
-                      className=" text-center"
-                      style={{
-                        color: "white",
-                        padding: "8px",
-                        margin: 0,
-                        fontSize: "13px",
-                      }}
-                    >
-                      {" "}
-                      Sports
-                    </h5>
-                  </a>
-                </li>
-                <li>
-                  <a href="#" style={{ textDecoration: "none" }}>
-                    <h5
-                      className=" text-center"
-                      style={{
-                        color: "white",
-                        padding: "8px",
-                        margin: 0,
-                        fontSize: "13px",
-                      }}
-                    >
-                      {" "}
-                      More
-                    </h5>
-                  </a>
-                </li>
-              </ul>
-            </nav>
-          </div>
-        </div>
+                onClick={() => handleVideoClick(index)}
+              />
+              {/* Up Arrow */}
+              {isHovered && (
+                <button
+                  style={{
+                    position: "absolute",
+                    top: "10px",
+                    left: "50%",
+                    transform: "translateX(-50%)",
+                    backgroundColor: "rgba(0, 0, 0, 0.7)", // Sleek semi-black background
+                    color: "#FFFFFF", // Pure white text
+                    fontSize: "24px", // Slightly larger font for emphasis
+                    fontWeight: "bold", // Keeps the arrow bold
+                    padding: "12px 16px", // Balanced padding
+                    borderRadius: "50%", // Still keeps circular design
+                    cursor: "pointer",
+                    boxShadow: "0 4px 8px rgba(0, 0, 0, 0.4)", // Adds depth with shadow
+                    transition: "all 0.3s ease-in-out", // Smooth hover effect
+                    border: "none", // Removes white circle
+                  }}
+                  onMouseOver={
+                    (e) =>
+                      (e.target.style.backgroundColor = "rgba(0, 0, 0, 0.9)") // Darkens on hover
+                  }
+                  onMouseOut={
+                    (e) =>
+                      (e.target.style.backgroundColor = "rgba(0, 0, 0, 0.7)") // Resets background on mouse out
+                  }
+                  onClick={() => handleArrowClick("up")}
+                >
+                  ↑
+                </button>
+              )}
 
-        <div
-          id="newsCarousel"
-          className="carousel slide"
-          data-bs-ride="carousel"
-        >
-          <div className="carousel-inner">
-            {news.slice(0, 3).map((item, index) => (
-              <div
-                key={index}
-                className={`carousel-item ${index === 0 ? "active" : ""}`}
-              >
-                <div className="text-center">
-                  <img
-                    src={item.image}
-                    alt={item.title}
-                    style={{
-                      width: "100%", // Ensure image fills the width
-                      height: "120px", // Set height
-                      objectFit: "fill", // Image fits within the container
-                      borderRadius: "0", // Optional: Remove rounding for a box shape
-                      border: "1px solid #ccc", // Optional: Add border for a box look
-                    }}
-                    className="mb-3"
-                  />
-                  <h6
-                    className="fw-bold text-truncate"
-                    style={{ fontSize: "14px", maxWidth: "100%" }}
-                  >
-                    {item.title}
-                  </h6>
-                  <p
-                    className="text-muted text-truncate"
-                    style={{ fontSize: "12px", maxWidth: "100%" }}
-                  >
-                    {item.description}
-                  </p>
-                  <p
-                    className="small text-dark text-truncate"
-                    style={{ maxWidth: "100%" }}
-                  >
-                    {item.longDescription}
-                  </p>
-                </div>
-              </div>
-            ))}
-          </div>
-          <button
-            className="carousel-control-prev"
-            type="button"
-            data-bs-target="#newsCarousel"
-            data-bs-slide="prev"
-          >
-            <span
-              className="carousel-control-prev-icon"
-              aria-hidden="true"
-            ></span>
-            <span className="visually-hidden">Previous</span>
-          </button>
-          <button
-            className="carousel-control-next"
-            type="button"
-            data-bs-target="#newsCarousel"
-            data-bs-slide="next"
-          >
-            <span
-              className="carousel-control-next-icon"
-              aria-hidden="true"
-            ></span>
-            <span className="visually-hidden">Next</span>
-          </button>
-        </div>
-      </div>
+              {/* Down Arrow */}
+              {isHovered && (
+                <button
+                  style={{
+                    position: "absolute",
+                    bottom: "10px",
+                    left: "50%",
+                    transform: "translateX(-50%)",
+                    backgroundColor: "rgba(0, 0, 0, 0.7)", // Sleek semi-black background
+                    color: "#FFFFFF", // Pure white text
+                    fontSize: "24px", // Slightly larger font for emphasis
+                    fontWeight: "bold", // Keeps the arrow bold
+                    padding: "12px 16px", // Balanced padding
+                    borderRadius: "50%", // Still keeps circular design
+                    cursor: "pointer",
+                    boxShadow: "0 4px 8px rgba(0, 0, 0, 0.4)", // Adds depth with shadow
+                    transition: "all 0.3s ease-in-out", // Smooth hover effect
+                    border: "none", // Removes white circle
+                  }}
+                  onMouseOver={
+                    (e) =>
+                      (e.target.style.backgroundColor = "rgba(0, 0, 0, 0.9)") // Darkens on hover
+                  }
+                  onMouseOut={
+                    (e) =>
+                      (e.target.style.backgroundColor = "rgba(0, 0, 0, 0.7)") // Resets background on mouse out
+                  }
+                  onClick={() => handleArrowClick("down")}
+                >
+                  ↓
+                </button>
+              )}
 
-      {/* Popular Photos and Videos Section */}
-      <div className="card mb-4" style={{ flex: 1 }}>
-        <h5
-          className="text-light text-center"
-          style={{
-            background: "linear-gradient(to right, #1e90ff, #87cefa)",
-            color: "white",
-            padding: "8px",
-            margin: 0,
-            fontSize: "16px",
-          }}
-        >
-          Popular Photos and Videos
-        </h5>
-        <div
-          id="mediaCarousel"
-          className="carousel slide"
-          data-bs-ride="carousel"
-        >
-          <div className="carousel-inner">
-            {[...photos, ...videos].slice(0, 3).map((item, index) => (
-              <div
-                key={index}
-                className={`carousel-item ${index === 0 ? "active" : ""}`}
-              >
-                <div className="text-center">
-                  <img
-                    src={item.image}
-                    alt={item.title}
-                    style={{
-                      width: "100%", // Ensure image fills the width
-                      height: "120px", // Set height
-                      objectFit: "fill", // Image fits within the container
-                      borderRadius: "0", // Optional: Remove rounding for a box shape
-                      border: "1px solid #ccc", // Optional: Add border for a box look
-                    }}
-                    className="mb-3"
-                  />
-                  <h6
-                    className="fw-bold text-truncate"
-                    style={{ fontSize: "14px", maxWidth: "100%" }}
-                  >
-                    {item.title}
-                  </h6>
-                  <p
-                    className="text-muted text-truncate"
-                    style={{ fontSize: "12px", maxWidth: "100%" }}
-                  >
-                    {item.description}
-                  </p>
-                  <p
-                    className="small text-dark text-truncate"
-                    style={{ maxWidth: "100%" }}
-                  >
-                    {item.longDescription}
-                  </p>
+              {/* Interaction Icons */}
+              {isHovered && (
+                <div
+                  style={{
+                    position: "absolute",
+                    bottom: "60px",
+                    right: "10px",
+                    display: "flex",
+                    flexDirection: "column",
+                    alignItems: "center",
+                    gap: "10px",
+                  }}
+                >
+                  <div style={{ textAlign: "center" }}>
+                    <FaThumbsUp
+                      style={{
+                        color: "white",
+                        fontSize: "24px",
+                        cursor: "pointer",
+                      }}
+                      title="Like"
+                    />
+                    <p style={{ color: "white", margin: "5px 0" }}>7.5K</p>
+                  </div>
+                  <div style={{ textAlign: "center" }}>
+                    <FaThumbsDown
+                      style={{
+                        color: "white",
+                        fontSize: "24px",
+                        cursor: "pointer",
+                      }}
+                      title="Dislike"
+                    />
+                    <p style={{ color: "white", margin: "5px 0" }}>Dislike</p>
+                  </div>
+                  <div style={{ textAlign: "center" }}>
+                    <FaComment
+                      style={{
+                        color: "white",
+                        fontSize: "24px",
+                        cursor: "pointer",
+                      }}
+                      title="Comment"
+                    />
+                    <p style={{ color: "white", margin: "5px 0" }}>18K</p>
+                  </div>
+                  <div style={{ textAlign: "center" }}>
+                    <FaShare
+                      style={{
+                        color: "white",
+                        fontSize: "24px",
+                        cursor: "pointer",
+                      }}
+                      title="Share"
+                    />
+                    <p style={{ color: "white", margin: "5px 0" }}>Share</p>
+                  </div>
                 </div>
-              </div>
-            ))}
-          </div>
-          <button
-            className="carousel-control-prev"
-            type="button"
-            data-bs-target="#mediaCarousel"
-            data-bs-slide="prev"
-          >
-            <span
-              className="carousel-control-prev-icon"
-              aria-hidden="true"
-            ></span>
-            <span className="visually-hidden">Previous</span>
-          </button>
-          <button
-            className="carousel-control-next"
-            type="button"
-            data-bs-target="#mediaCarousel"
-            data-bs-slide="next"
-          >
-            <span
-              className="carousel-control-next-icon"
-              aria-hidden="true"
-            ></span>
-            <span className="visually-hidden">Next</span>
-          </button>
+              )}
+            </div>
+          ))}
         </div>
       </div>
     </div>

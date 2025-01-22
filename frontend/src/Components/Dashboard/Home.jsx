@@ -117,8 +117,8 @@ const Home = () => {
           />
           <Feed />
           <RigthSideBar />
-          <Footer />
         </div>
+        <Footer />
       </div>
     </>
   );
