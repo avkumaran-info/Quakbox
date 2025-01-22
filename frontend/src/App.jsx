@@ -6,6 +6,8 @@ import ForgetPassword from "./Components/ForgetPassword";
 import Home from "./Components/Dashboard/Home";
 import ChatPage from "./Components/ChatPage";
 import GoLive from "./Components/GoLive";
+import NavBar from "./Components/Dashboard/NavBar";
+import GoogleAuth from "./Components/socialLogin/GoogleAuth";
 import FanCountriesComponent from "./Components/FanCountriesComponent";
 
 const App = () => {

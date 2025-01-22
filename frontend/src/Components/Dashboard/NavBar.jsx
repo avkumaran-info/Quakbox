@@ -40,6 +40,7 @@ const NavBar = () => {
 
   const handleLogout = async () => {
     const token = localStorage.getItem("api_token");
+    console.log("handleLogout : ", token);
 
     if (!token) {
       console.log("No token found, user may not be logged in.");
