@@ -5,6 +5,10 @@ import video2 from "../../assets/images/leftside videos/v2.mp4";
 import video3 from "../../assets/images/leftside videos/v3.mp4";
 import video4 from "../../assets/images/leftside videos/v4.mp4";
 
+// Polyfill for smooth scrolling in older browsers
+import smoothscroll from "smoothscroll-polyfill";
+smoothscroll.polyfill();
+
 const LeftSidebar = () => {
   const videos = [video4, video1, video2, video3];
   const videoRefs = useRef([]);
@@ -24,7 +28,11 @@ const LeftSidebar = () => {
     videoRefs.current.forEach((video, idx) => {
       if (video) {
         if (idx === index) {
-          video.play();
+          if (video.readyState >= 3) {
+            video.play();
+          } else {
+            video.addEventListener("canplay", () => video.play(), { once: true });
+          }
           video.scrollIntoView({
             behavior: "smooth",
             block: "center",
@@ -49,8 +57,7 @@ const LeftSidebar = () => {
   };
 
   useEffect(() => {
-    const currentVideo = videoRefs.current[currentVideoIndex];
-    if (currentVideo) {
+    if (videoRefs.current[currentVideoIndex]) {
       playSingleVideo(currentVideoIndex);
     }
   }, [currentVideoIndex]);
@@ -80,7 +87,7 @@ const LeftSidebar = () => {
 
         <div
           className="scroll-container"
-          style={{ textAlign: "center", maxHeight: "calc(100vh - 125px)" }}
+          style={{ textAlign: "center", maxHeight: "calc(100vh - 125px)", overflowY: "auto" }}
         >
           {videos.map((video, index) => (
             <div
@@ -102,7 +109,7 @@ const LeftSidebar = () => {
                 height="500px"
                 controls={false}
                 muted={false}
-                loop={false}
+                loop={true}
                 style={{
                   border: "1px solid #ccc",
                   backgroundColor: "#000",
@@ -111,73 +118,67 @@ const LeftSidebar = () => {
                 }}
                 onClick={() => handleVideoClick(index)}
               />
-              {/* Up Arrow */}
+
               {isHovered && (
-                <button
-                  style={{
-                    position: "absolute",
-                    top: "10px",
-                    left: "50%",
-                    transform: "translateX(-50%)",
-                    backgroundColor: "rgba(0, 0, 0, 0.7)", // Sleek semi-black background
-                    color: "#FFFFFF", // Pure white text
-                    fontSize: "24px", // Slightly larger font for emphasis
-                    fontWeight: "bold", // Keeps the arrow bold
-                    padding: "12px 16px", // Balanced padding
-                    borderRadius: "50%", // Still keeps circular design
-                    cursor: "pointer",
-                    boxShadow: "0 4px 8px rgba(0, 0, 0, 0.4)", // Adds depth with shadow
-                    transition: "all 0.3s ease-in-out", // Smooth hover effect
-                    border: "none", // Removes white circle
-                  }}
-                  onMouseOver={
-                    (e) =>
-                      (e.target.style.backgroundColor = "rgba(0, 0, 0, 0.9)") // Darkens on hover
-                  }
-                  onMouseOut={
-                    (e) =>
-                      (e.target.style.backgroundColor = "rgba(0, 0, 0, 0.7)") // Resets background on mouse out
-                  }
-                  onClick={() => handleArrowClick("up")}
-                >
-                  ↑
-                </button>
+                <>
+                  <button
+                    style={{
+                      position: "absolute",
+                      top: "10px",
+                      left: "50%",
+                      transform: "translateX(-50%)",
+                      backgroundColor: "rgba(0, 0, 0, 0.7)",
+                      color: "#FFFFFF",
+                      fontSize: "24px",
+                      fontWeight: "bold",
+                      padding: "12px 16px",
+                      borderRadius: "50%",
+                      cursor: "pointer",
+                      boxShadow: "0 4px 8px rgba(0, 0, 0, 0.4)",
+                      transition: "all 0.3s ease-in-out",
+                      border: "none",
+                    }}
+                    onMouseOver={(e) =>
+                      (e.target.style.backgroundColor = "rgba(0, 0, 0, 0.9)")
+                    }
+                    onMouseOut={(e) =>
+                      (e.target.style.backgroundColor = "rgba(0, 0, 0, 0.7)")
+                    }
+                    onClick={() => handleArrowClick("up")}
+                  >
+                    ↑
+                  </button>
+
+                  <button
+                    style={{
+                      position: "absolute",
+                      bottom: "10px",
+                      left: "50%",
+                      transform: "translateX(-50%)",
+                      backgroundColor: "rgba(0, 0, 0, 0.7)",
+                      color: "#FFFFFF",
+                      fontSize: "24px",
+                      fontWeight: "bold",
+                      padding: "12px 16px",
+                      borderRadius: "50%",
+                      cursor: "pointer",
+                      boxShadow: "0 4px 8px rgba(0, 0, 0, 0.4)",
+                      transition: "all 0.3s ease-in-out",
+                      border: "none",
+                    }}
+                    onMouseOver={(e) =>
+                      (e.target.style.backgroundColor = "rgba(0, 0, 0, 0.9)")
+                    }
+                    onMouseOut={(e) =>
+                      (e.target.style.backgroundColor = "rgba(0, 0, 0, 0.7)")
+                    }
+                    onClick={() => handleArrowClick("down")}
+                  >
+                    ↓
+                  </button>
+                </>
               )}
 
-              {/* Down Arrow */}
-              {isHovered && (
-                <button
-                  style={{
-                    position: "absolute",
-                    bottom: "10px",
-                    left: "50%",
-                    transform: "translateX(-50%)",
-                    backgroundColor: "rgba(0, 0, 0, 0.7)", // Sleek semi-black background
-                    color: "#FFFFFF", // Pure white text
-                    fontSize: "24px", // Slightly larger font for emphasis
-                    fontWeight: "bold", // Keeps the arrow bold
-                    padding: "12px 16px", // Balanced padding
-                    borderRadius: "50%", // Still keeps circular design
-                    cursor: "pointer",
-                    boxShadow: "0 4px 8px rgba(0, 0, 0, 0.4)", // Adds depth with shadow
-                    transition: "all 0.3s ease-in-out", // Smooth hover effect
-                    border: "none", // Removes white circle
-                  }}
-                  onMouseOver={
-                    (e) =>
-                      (e.target.style.backgroundColor = "rgba(0, 0, 0, 0.9)") // Darkens on hover
-                  }
-                  onMouseOut={
-                    (e) =>
-                      (e.target.style.backgroundColor = "rgba(0, 0, 0, 0.7)") // Resets background on mouse out
-                  }
-                  onClick={() => handleArrowClick("down")}
-                >
-                  ↓
-                </button>
-              )}
-
-              {/* Interaction Icons */}
               {isHovered && (
                 <div
                   style={{
@@ -190,50 +191,29 @@ const LeftSidebar = () => {
                     gap: "10px",
                   }}
                 >
-                  <div style={{ textAlign: "center" }}>
-                    <FaThumbsUp
-                      style={{
-                        color: "white",
-                        fontSize: "24px",
-                        cursor: "pointer",
-                      }}
-                      title="Like"
-                    />
-                    <p style={{ color: "white", margin: "5px 0" }}>7.5K</p>
-                  </div>
-                  <div style={{ textAlign: "center" }}>
-                    <FaThumbsDown
-                      style={{
-                        color: "white",
-                        fontSize: "24px",
-                        cursor: "pointer",
-                      }}
-                      title="Dislike"
-                    />
-                    <p style={{ color: "white", margin: "5px 0" }}>Dislike</p>
-                  </div>
-                  <div style={{ textAlign: "center" }}>
-                    <FaComment
-                      style={{
-                        color: "white",
-                        fontSize: "24px",
-                        cursor: "pointer",
-                      }}
-                      title="Comment"
-                    />
-                    <p style={{ color: "white", margin: "5px 0" }}>18K</p>
-                  </div>
-                  <div style={{ textAlign: "center" }}>
-                    <FaShare
-                      style={{
-                        color: "white",
-                        fontSize: "24px",
-                        cursor: "pointer",
-                      }}
-                      title="Share"
-                    />
-                    <p style={{ color: "white", margin: "5px 0" }}>Share</p>
-                  </div>
+                  <FaThumbsUp
+                    style={{ color: "white", fontSize: "24px", cursor: "pointer" }}
+                    title="Like"
+                  />
+                  <p style={{ color: "white", margin: "5px 0" }}>7.5K</p>
+
+                  <FaThumbsDown
+                    style={{ color: "white", fontSize: "24px", cursor: "pointer" }}
+                    title="Dislike"
+                  />
+                  <p style={{ color: "white", margin: "5px 0" }}>Dislike</p>
+
+                  <FaComment
+                    style={{ color: "white", fontSize: "24px", cursor: "pointer" }}
+                    title="Comment"
+                  />
+                  <p style={{ color: "white", margin: "5px 0" }}>18K</p>
+
+                  <FaShare
+                    style={{ color: "white", fontSize: "24px", cursor: "pointer" }}
+                    title="Share"
+                  />
+                  <p style={{ color: "white", margin: "5px 0" }}>Share</p>
                 </div>
               )}
             </div>
