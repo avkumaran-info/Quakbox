@@ -314,7 +314,9 @@ const Feed = () => {
               className="form-control"
               placeholder="What's on your mind?"
               onClick={openPopup}
-              style={{ fontSize: "16px" }}
+              style={{ fontSize: "16px",
+                 cursor: "pointer"
+               }}
             />
           </div>
           <div className="d-flex justify-content-between flex-wrap mt-3">
