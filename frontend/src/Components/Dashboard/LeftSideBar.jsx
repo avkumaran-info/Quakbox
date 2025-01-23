@@ -89,6 +89,7 @@ const LeftSidebar = () => {
       style={{
         top: "55px",
         left: "0",
+        height: "550px !important",
         boxSizing: "border-box",
         paddingBottom: "100px",
         overflowY: "auto", // Make the entire sidebar scrollable
@@ -96,24 +97,12 @@ const LeftSidebar = () => {
     >
       <div className="card mb-5">
         <div
-          className="d-flex align-items-center text-light p-2"
-          style={{
-            background: "linear-gradient(to right, #1e90ff, #87cefa)",
-            color: "white",
-          }}
-        >
-          <h5 className="text-center mb-0" style={{ fontSize: "15px" }}>
-            Shorts Video Player
-          </h5>
-        </div>
-
-        <div
           className="video-container"
           style={{
             textAlign: "center",
             maxHeight: "calc(100vh - 125px)",
             position: "relative",
-            marginBottom: "10px", // Space between video and groups
+            marginBottom: "28px", // Space between video and groups
           }}
         >
           <div
@@ -131,7 +120,7 @@ const LeftSidebar = () => {
               ref={videoRef}
               src={videos[currentVideoIndex]}
               width="100%"
-              height="500px"
+              height="545px"
               controls={false}
               muted={false}
               loop={true}
@@ -142,8 +131,8 @@ const LeftSidebar = () => {
                 left: "0",
                 borderTopLeftRadius: "0px", // No border radius for top left corner
                 borderTopRightRadius: "0px", // No border radius for top right corner
-                borderBottomLeftRadius: "25px", // Rounded bottom left corner
-                borderBottomRightRadius: "25px", // Rounded bottom right corner
+                borderBottomLeftRadius: "15px", // Rounded bottom left corner
+                borderBottomRightRadius: "15px", // Rounded bottom right corner
                 position: "sticky", // Keep the video sticky at the top
                 top: "0", // Fix the video at the top of the sidebar
                 zIndex: "1", // Ensure it's on top of other content
