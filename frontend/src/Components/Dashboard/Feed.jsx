@@ -4,14 +4,13 @@ import userImage from "../../assets/images/vector-users-icon.jpg";
 import axios from "axios";
 import { Navigate } from "react-router-dom";
 
-const Feed = () => {
+const Feed = ({ countryCode, flag, countryName }) => {
   const [navbarHeight, setNavbarHeight] = useState(52);
   const [likedPosts, setLikedPosts] = useState([]);
   const [dislikedPosts, setDislikedPosts] = useState([]);
   const [isPopupOpen, setIsPopupOpen] = useState(false);
   const [data, setData] = useState({ posts: [] });
   const [message, setMessage] = useState("");
-  const [countryCode, setCountryCode] = useState("in");
   const [mediaFile, setMediaFile] = useState(null);
   const [mediaPreview, setMediaPreview] = useState(null);
   const [userName, setUserName] = useState("");
@@ -131,7 +130,34 @@ const Feed = () => {
   const handleLikeClick = async (postId) => {
     const token = localStorage.getItem("api_token");
 
+    // Check if the post is already liked
+    if (likedPosts.includes(postId)) {
+      console.log("Post already liked!");
+      return; // Exit early to prevent double count
+    }
+
+    // Optimistically update the UI
+    setData((prevData) =>
+      Array.isArray(prevData.posts)
+        ? {
+            ...prevData,
+            posts: prevData.posts.map((post) =>
+              post.id === postId
+                ? {
+                    ...post,
+                    likes: {
+                      count: (post.likes?.count || 0) + 1,
+                    },
+                  }
+                : post
+            ),
+          }
+        : prevData
+    );
+    setLikedPosts((prevLikedPosts) => [...prevLikedPosts, postId]);
+
     try {
+      // Make the API call to save the like in the database
       const res = await axios.post(
         `https://develop.quakbox.com/admin/api/set_posts_like/${postId}/like`,
         {},
@@ -140,27 +166,39 @@ const Feed = () => {
         }
       );
 
-      if (res.status === 200) {
-        // Update like count and set post as liked
-        setData((prevData) =>
-          Array.isArray(prevData) // Ensure prevData is an array before mapping
-            ? prevData.map((post) =>
-                post.id === postId
-                  ? {
-                      ...post,
-                      likes: {
-                        count: (post.likes?.count || 0) + 1,
-                      },
-                    }
-                  : post
-              )
-            : prevData
-        );
-        setLikedPosts((prevLikedPosts) => [...prevLikedPosts, postId]); // Mark as liked
+      if (res.status !== 200) {
+        // If the API call fails, revert the optimistic update
+        console.error("Failed to save the like in the database.");
+        revertLike(postId); // Revert UI and likedPosts state
       }
     } catch (error) {
       console.error("Error liking the post:", error);
+      revertLike(postId); // Revert UI and likedPosts state in case of an error
     }
+  };
+
+  // Helper function to revert the like action
+  const revertLike = (postId) => {
+    setData((prevData) =>
+      Array.isArray(prevData.posts)
+        ? {
+            ...prevData,
+            posts: prevData.posts.map((post) =>
+              post.id === postId
+                ? {
+                    ...post,
+                    likes: {
+                      count: Math.max((post.likes?.count || 0) - 1, 0), // Revert like count
+                    },
+                  }
+                : post
+            ),
+          }
+        : prevData
+    );
+    setLikedPosts((prevLikedPosts) =>
+      prevLikedPosts.filter((id) => id !== postId)
+    );
   };
 
   // Handle dislike Click
@@ -182,7 +220,6 @@ const Feed = () => {
 
   const getPost = async () => {
     const token = localStorage.getItem("api_token");
-    // console.log(token);
 
     if (!token) {
       console.log("No token found, user may not be logged in.");
@@ -190,7 +227,7 @@ const Feed = () => {
     }
     try {
       const res = await axios.get(
-        "https://develop.quakbox.com/admin/api/get_posts/in",
+        `https://develop.quakbox.com/admin/api/get_posts/${countryCode}`,
         {
           headers: {
             Authorization: `Bearer ${token}`,
@@ -198,13 +235,7 @@ const Feed = () => {
           },
         }
       );
-      // console.log(res.data.posts);
       setData(res.data);
-      // console.log(res.data.posts[0].attachments.data[0].media[0].url);
-
-      // console.log(jsonData);
-
-      // console.log(data);
     } catch (error) {
       console.log(error);
     }
@@ -218,79 +249,6 @@ const Feed = () => {
       }
     };
   }, [mediaPreview]);
-
-  // const jsonData = {
-  //   posts: [
-  //     {
-  //       id: "1",
-  //       created_time: "2025-01-17T10:30:00+0000",
-  //       message: "Check out this amazing view from my vacation! 🌴☀️",
-  //       from: {
-  //         name: "John Doe",
-  //         profile_image:
-  //           "https://media.istockphoto.com/id/1437816897/photo/business-woman-manager-or-human-resources-portrait-for-career-success-company-we-are-hiring.jpg?s=612x612&w=0&k=20&c=tyLvtzutRh22j9GqSGI33Z4HpIwv9vL_MZw_xOE19NQ=",
-  //       },
-  //       attachments: {
-  //         data: [
-  //           {
-  //             type: "photo",
-  //             media: [
-  //               {
-  //                 url: "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcReE4_46HUmsn2e1Ey-lckv36GLUlaKsx-XpQ&s",
-  //                 alt_text: "Vacation view",
-  //               },
-  //             ],
-  //           },
-  //         ],
-  //       },
-  //       likes: { count: 350 },
-  //       comments: { count: 25 },
-  //     },
-  //     {
-  //       id: "2",
-  //       created_time: "2025-01-16T15:00:00+0000",
-  //       message: "Check out this video I recorded! 📹",
-  //       from: {
-  //         name: "Jane Smith",
-  //         profile_image:
-  //           "https://media.istockphoto.com/id/1682296067/photo/happy-studio-portrait-or-professional-man-real-estate-agent-or-asian-businessman-smile-for.jpg?s=612x612&w=0&k=20&c=9zbG2-9fl741fbTWw5fNgcEEe4ll-JegrGlQQ6m54rg=",
-  //       },
-  //       attachments: {
-  //         data: [
-  //           {
-  //             type: "video",
-  //             media: [
-  //               {
-  //                 url: "https://www.youtube.com/watch?v=yj0njH4K4ZU",
-  //                 alt_text: "YouTube video",
-  //               },
-  //             ],
-  //           },
-  //         ],
-  //       },
-  //       likes: { count: 150 },
-  //       comments: { count: 12 },
-  //     },
-  //     {
-  //       id: "3",
-  //       created_time: "2025-01-15T08:00:00+0000",
-  //       message: "Check out this interesting article!",
-  //       from: { name: "Emily White", profile_image: null },
-  //       attachments: {
-  //         data: [
-  //           {
-  //             type: "link",
-  //             url: "https://example.com/article",
-  //             title: "An Interesting Article",
-  //             description: "Learn more about the latest trends in tech.",
-  //           },
-  //         ],
-  //       },
-  //       likes: { count: 200 },
-  //       comments: { count: 35 },
-  //     },
-  //   ],
-  // };
 
   useEffect(() => {
     userData();

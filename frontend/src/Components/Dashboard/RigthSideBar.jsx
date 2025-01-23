@@ -13,7 +13,7 @@ import group from "../../assets/images/Rigth side property/group.png";
 import notification from "../../assets/images/Rigth side property/not.png";
 import set from "../../assets/images/Rigth side property/set.webp";
 
-const RightSidebar = () => {
+const RightSidebar = ({ countryCode, flag, countryName }) => {
   const updates = [
     {
       id: 1,
@@ -68,8 +68,8 @@ const RightSidebar = () => {
           {/* Country Flag */}
           <div className="bg-light text-center border-bottom">
             <img
-              src={India}
-              alt="India Flag"
+              src={flag}
+              alt={countryName}
               className="img-fluid"
               style={{
                 width: "100%", // Makes the image fit the div width
@@ -77,7 +77,7 @@ const RightSidebar = () => {
                 objectFit: "cover", // Ensures image covers the space without distortion
               }}
             />
-            <h5 className="mt-2 mb-2 text-secondary">INDIA</h5>
+            <h5 className="mt-2 mb-2 text-secondary">{countryName}</h5>
           </div>
           {/* ProfileCompletion */}
           {/*<div className="container mt-2 mb-1" style={{ maxWidth: "400px" }}>
