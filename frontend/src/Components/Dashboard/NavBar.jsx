@@ -2,7 +2,7 @@ import React, { useEffect, useRef, useState } from "react";
 import logo from "../../assets/logo/logo.png";
 import profileImage from "../../assets/images/vector-users-icon.jpg";
 import axios from "axios";
-import { useNavigate } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 
 const NavBar = () => {
   const navigate = useNavigate();
@@ -14,6 +14,16 @@ const NavBar = () => {
   const [dropdown, setDropdown] = useState(false);
   const [showAllFlags, setShowAllFlags] = useState(false);
   const [searchQuery, setSearchQuery] = useState(""); // State for search input
+
+  const handleLogoClick = () => {
+    navigate("/dashboard"); // Navigate to /dashboard
+  };
+
+  const handleFlagClick = (countryCode, flag, countryName) => {
+    navigate(`/country/${countryCode.toLowerCase()}`, {
+      state: { flag, countryName },
+    }); // Pass the flag image with navigate
+  };
 
   const userData = async () => {
     const token = localStorage.getItem("api_token");
@@ -78,6 +88,7 @@ const NavBar = () => {
       try {
         const res = await axios.get("https://restcountries.com/v3.1/all");
         setCountries(res.data);
+        console.log(res.data);
       } catch (error) {
         console.error("Error fetching countries:", error);
       }
@@ -132,6 +143,7 @@ const NavBar = () => {
             <div
               className="d-flex align-items-center g-1"
               style={{ position: "relative", cursor: "pointer" }}
+              onClick={handleLogoClick}
             >
               <img
                 className="d-none d-lg-block"
@@ -179,15 +191,13 @@ const NavBar = () => {
                       alignItems: "center",
                       cursor: "pointer",
                     }}
-                    onClick={() => {
-                      const countryCode = country.cca2.toLowerCase();
-                      console.log("countryCode", countryCode);
-                      window.history.pushState(
-                        {},
-                        "",
-                        `/country/${countryCode}`
-                      );
-                    }}
+                    onClick={() =>
+                      handleFlagClick(
+                        country.cca2,
+                        country.flags.png,
+                        country.name.common
+                      )
+                    }
                   >
                     <img
                       src={country.flags.png}
@@ -276,10 +286,13 @@ const NavBar = () => {
                           alignItems: "center",
                           cursor: "pointer",
                         }}
-                        onClick={() => {
-                          const countryCode = country.cca2.toLowerCase();
-                          window.location.href = `/${countryCode}`;
-                        }}
+                        onClick={() =>
+                          handleFlagClick(
+                            country.cca2,
+                            country.flags.png,
+                            country.name.common
+                          )
+                        }
                       >
                         <img
                           src={country.flags.png}

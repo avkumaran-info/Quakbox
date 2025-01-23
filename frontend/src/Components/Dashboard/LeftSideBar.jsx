@@ -16,7 +16,7 @@ import user3 from "../../assets/images/Rigth side property/user3.jpg";
 import user2 from "../../assets/images/Rigth side property/user2.jpeg";
 import user from "../../assets/images/Rigth side property/user.png";
 
-const LeftSidebar = () => {
+const LeftSidebar = ({ countryCode, flag, countryName }) => {
   const videos = [video4, video1, video2, video3];
   const [currentVideoIndex, setCurrentVideoIndex] = useState(0);
   const [isHovered, setIsHovered] = useState(false);
