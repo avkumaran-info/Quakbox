@@ -275,7 +275,7 @@ const Feed = ({ countryCode, flag, countryName }) => {
     >
       <div className="text-white p-0 rounded">
         {/* Post Input Section */}
-        <div className="card p-1 mb-4">
+        <div className="card p-1 mb-1">
           <div className="d-flex align-items-center">
             <img
               src={userImage}
