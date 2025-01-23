@@ -183,12 +183,12 @@ const RightSidebar = () => {
           {/* Profile */}
           <div className="container mt-1" style={{ maxWidth: "400px" }}>
             <div
-              className="card shadow-sm p-3"
+              className="card shadow-sm"
               style={{
                 backgroundColor: "#ffffff", // White background
               }}
             >
-              <div className="card-header p-0">
+              {/* <div className="card-header p-0">
                 <img
                   src={banner} // Replace with a proper banner URL
                   className="img-fluid"
@@ -198,9 +198,9 @@ const RightSidebar = () => {
                     height: "80px",
                   }}
                 />
-              </div>
+              </div> */}
               <div className="card-body text-center">
-                <div
+                {/* <div
                   className="rounded-circle border border-2 mx-auto mb-2"
                   style={{
                     width: "80px",
@@ -259,7 +259,7 @@ const RightSidebar = () => {
                       Following
                     </small>
                   </div>
-                </div>
+                </div> */}
                 <ul className="list-group list-group-flush text-start">
                   <li
                     className="list-group-item"
@@ -346,12 +346,12 @@ const RightSidebar = () => {
                     Settings
                   </li>
                 </ul>
-                <button
+                {/* <button
                   className="btn btn-primary mt-1 w-100"
                   style={{ fontSize: "0.85rem" }}
                 >
                   View Profile
-                </button>
+                </button> */}
               </div>
             </div>
           </div>

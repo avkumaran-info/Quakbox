@@ -7,6 +7,7 @@ import { Navigate } from "react-router-dom";
 const Feed = () => {
   const [navbarHeight, setNavbarHeight] = useState(52);
   const [likedPosts, setLikedPosts] = useState([]);
+  const [dislikedPosts, setDislikedPosts] = useState([]);
   const [isPopupOpen, setIsPopupOpen] = useState(false);
   const [data, setData] = useState({ posts: [] });
   const [message, setMessage] = useState("");
@@ -56,14 +57,14 @@ const Feed = () => {
   };
   const handleSubmit = async () => {
     const token = localStorage.getItem("api_token");
-  
+
     const formData = new FormData();
     formData.append("message", message);
     formData.append("country_code", countryCode);
     if (mediaFile) {
       formData.append("media", mediaFile);
     }
-  
+
     try {
       const response = await axios.post(
         "https://develop.quakbox.com/admin/api/set_posts",
@@ -75,7 +76,7 @@ const Feed = () => {
           },
         }
       );
-  
+
       if (response.status === 201) {
         // Add the new post to the feed
         const newPost = {
@@ -106,12 +107,12 @@ const Feed = () => {
           likes: { count: 0 },
           comments: { count: 0 },
         };
-  
+
         setData((prevData) => ({
           ...prevData,
           posts: [newPost, ...prevData.posts],
         }));
-  
+
         // Clear inputs and close the popup
         setMessage("");
         setMediaFile(null);
@@ -125,8 +126,6 @@ const Feed = () => {
       alert("An error occurred while creating the post");
     }
   };
-  
-  
 
   // Handle Like Click
   const handleLikeClick = async (postId) => {
@@ -161,6 +160,23 @@ const Feed = () => {
       }
     } catch (error) {
       console.error("Error liking the post:", error);
+    }
+  };
+
+  // Handle dislike Click
+
+  const handleDislikeClick = (postId) => {
+    if (dislikedPosts.includes(postId)) {
+      // Remove from dislikedPosts if already disliked
+      setDislikedPosts(dislikedPosts.filter((id) => id !== postId));
+    } else {
+      // Add to dislikedPosts
+      setDislikedPosts([...dislikedPosts, postId]);
+
+      // Optional: Remove from likedPosts if it's there
+      if (likedPosts.includes(postId)) {
+        setLikedPosts(likedPosts.filter((id) => id !== postId));
+      }
     }
   };
 
@@ -301,12 +317,12 @@ const Feed = () => {
     >
       <div className="text-white p-0 rounded">
         {/* Post Input Section */}
-        <div className="card p-3 mb-4">
+        <div className="card p-1 mb-4">
           <div className="d-flex align-items-center">
             <img
               src={userImage}
               alt="Profile"
-              className="rounded-circle me-2"
+              className="rounded-circle"
               style={{ width: "40px", height: "40px" }}
             />
             <input
@@ -314,12 +330,10 @@ const Feed = () => {
               className="form-control"
               placeholder="What's on your mind?"
               onClick={openPopup}
-              style={{ fontSize: "16px",
-                 cursor: "pointer"
-               }}
+              style={{ fontSize: "16px", cursor: "pointer" }}
             />
           </div>
-          <div className="d-flex justify-content-between flex-wrap mt-3">
+          <div className="d-flex justify-content-between flex-wrap">
             <button className="btn btn-light d-flex align-items-center flex-grow-1 m-1">
               <i className="fa fa-video me-2 text-danger"></i> Live video
             </button>
@@ -491,7 +505,7 @@ const Feed = () => {
 
                 {/* Post Content */}
                 <div className="card-body p-0">
-                  {post.message && <p className="p-3">{post.message}</p>}
+                  {post.message && <p className="px-3">{post.message}</p>}
 
                   {post.attachments &&
                     post.attachments.data.map((attachment, index) => {
@@ -502,7 +516,14 @@ const Feed = () => {
                               key={index}
                               src={attachment.media[0].url}
                               alt={attachment.media[0].alt_text || "Post image"}
-                              className="img-fluid w-100"
+                              className="img-fluid"
+                              style={{
+                                maxHeight: "362.5px",
+                                objectFit: "contain",
+                                backgroundColor: "white", // Or 'white' depending on your preference
+                                display: "block", // Centers the image within the container
+                                margin: "auto", // Centers horizontally and vertically
+                              }}
                             />
                           </>
                         );
@@ -513,7 +534,14 @@ const Feed = () => {
                             key={index}
                             controls
                             className="w-100"
-                            style={{ maxHeight: "400px" }}
+                            style={{
+                              maxWidth: "2133px",
+                              maxHeight: "362.5px",
+                              objectFit: "contain",
+                              backgroundColor: "black", // Or 'white' for video as well
+                              display: "block", // Centers the image within the container
+                              margin: "auto", // Centers horizontally and vertically
+                            }}
                           >
                             <source
                               src={attachment.media[0].url}
@@ -570,6 +598,23 @@ const Feed = () => {
                         }`}
                       ></i>{" "}
                       Like
+                    </button>
+                    <button
+                      className={`btn btn-sm me-2 ${
+                        dislikedPosts.includes(post.id)
+                          ? "btn-danger text-white"
+                          : "btn-light"
+                      }`}
+                      onClick={() => handleDislikeClick(post.id)}
+                    >
+                      <i
+                        className={`bi ${
+                          dislikedPosts.includes(post.id)
+                            ? "bi-hand-thumbs-down-fill"
+                            : "bi-hand-thumbs-down"
+                        }`}
+                      ></i>{" "}
+                      Dislike
                     </button>
                     <button className="btn btn-light btn-sm me-2">
                       <i className="bi bi-chat"></i> Comment{" "}
