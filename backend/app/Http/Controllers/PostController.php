@@ -15,9 +15,15 @@ class PostController extends Controller
     public function getAllPosts($cc)
     {
         try {
+
             $posts = Post::with(['user', 'likes', 'comments'])
                 ->latest()
-                ->where('country_code', $cc)
+                ->when($cc != 99, function ($query) use ($cc) {
+                    $query->where(function ($subQuery) use ($cc) {
+                        $subQuery->where('country_code', $cc)
+                                    ->orWhere('country_code', 99);
+                    });
+                })
                 ->get()
                 ->map(function ($post) {
                     return [
@@ -33,6 +39,12 @@ class PostController extends Controller
                         ],
                         'likes' => [
                             'count' => $post->likes->count(),
+                            'liked_users' => $post->likes->map(function ($like) {
+                                return [
+                                    'id' => $like->user->id,
+                                    'name' => $like->user->username,
+                                ];
+                            }),
                         ],
                         'comments' => [
                             'count' => $post->comments->count(),

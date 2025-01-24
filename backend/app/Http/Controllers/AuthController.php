@@ -15,6 +15,7 @@ use Illuminate\Validation\ValidationException;
 use Illuminate\Support\Str;
 use Illuminate\Auth\Events\Registered;
 use Laravel\Socialite\Facades\Socialite;
+use Illuminate\Support\Facades\DB;
 
 use App\Models\User;
 use App\Models\Members;
@@ -169,10 +170,18 @@ class AuthController extends Controller
     }
     public function user(Request $request)
     {
+
+        $userId = $request->user()->id;
+
+        $memberData = DB::table('members')
+            ->where('member_id', $userId)
+            ->first();
+
         return response()->json([
             'result' => true,
             'message' => 'User Details',
-            'users' => $request->user()
+            'users' => $request->user(),
+            'user_details' => $memberData
         ]);
     }
 }

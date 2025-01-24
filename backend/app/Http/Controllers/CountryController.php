@@ -63,7 +63,7 @@ class CountryController extends Controller
         return response()->json([
             'success' => true,
             'geo_countries' => $geoCountryList
-        ], 400);
+        ], 200);
     }
 
     // Get favorite country details by member_id
