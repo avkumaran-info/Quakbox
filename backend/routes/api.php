@@ -60,6 +60,7 @@ Route::get('/auth/facebook/callback', function () {
 
 Route::middleware('auth:api')->get('user', [AuthController::class, 'user']);
 
+Route::get('get_geo_country', [CountryController::class, 'getGeoCountry']);
 Route::middleware('auth:api')->get('get_favourite_country', [CountryController::class, 'favouriteCountryByMemberId']);
 Route::middleware('auth:api')->post('set_favourite_country', [CountryController::class, 'storeFavouriteCountry']);
 Route::middleware('auth:api')->post('put_favourite_country', [CountryController::class, 'updateFavouriteCountry']);
@@ -79,6 +80,13 @@ Route::middleware('auth:api')->group(function () {
 
 Route::get('images/uploads/posts/{filename}', function ($filename) {
     $path = storage_path('app/public/uploads/posts/' . $filename);
+    if (!file_exists($path)) {
+        abort(404);
+    }
+    return response()->file($path);
+});
+Route::get('images/flags/{filename}', function ($filename) {
+    $path = storage_path('app/public/flags/' . $filename);
     if (!file_exists($path)) {
         abort(404);
     }

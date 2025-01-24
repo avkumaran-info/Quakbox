@@ -4,16 +4,17 @@ import userImage from "../../assets/images/vector-users-icon.jpg";
 import axios from "axios";
 import { Navigate } from "react-router-dom";
 
-const Feed = () => {
-  const [navbarHeight, setNavbarHeight] = useState(52);
+const Feed = ({ countryCode, flag, countryName }) => {
+  const [navbarHeight, setNavbarHeight] = useState(56);
   const [likedPosts, setLikedPosts] = useState([]);
+  const [dislikedPosts, setDislikedPosts] = useState([]);
   const [isPopupOpen, setIsPopupOpen] = useState(false);
   const [data, setData] = useState({ posts: [] });
   const [message, setMessage] = useState("");
-  const [countryCode, setCountryCode] = useState("in");
   const [mediaFile, setMediaFile] = useState(null);
   const [mediaPreview, setMediaPreview] = useState(null);
   const [userName, setUserName] = useState("");
+  const [deData, setDeData] = useState("");
 
   // Functions to handle popup visibility
   const openPopup = () => setIsPopupOpen(true);
@@ -46,18 +47,14 @@ const Feed = () => {
           },
         }
       );
-      // console.log(res.data);
-      // console.log("User Data found:", res.data.users);
+      console.log(res.data.user_details.country);
       setUserName(res.data.users);
-      // console.log(userName);
     } catch (error) {
       console.log(error);
     }
   };
-
   const handleSubmit = async () => {
     const token = localStorage.getItem("api_token");
-    // console.log(token);
 
     const formData = new FormData();
     formData.append("message", message);
@@ -77,15 +74,49 @@ const Feed = () => {
           },
         }
       );
-      // console.log(response);
 
       if (response.status === 201) {
-        // Handle success
-        // alert("Post created successfully!");
-        closePopup(); // Close the modal
+        // Add the new post to the feed
+        const newPost = {
+          id: response.data.id, // Use the post ID returned from the server
+          message: message,
+          created_time: new Date().toISOString(),
+          from: {
+            name: userName.username,
+            profile_image: userImage, // Use the current user's image
+          },
+          attachments: mediaFile
+            ? {
+                data: [
+                  {
+                    type: mediaFile.type.startsWith("image/")
+                      ? "image"
+                      : "video",
+                    media: [
+                      {
+                        url: mediaPreview, // Use the preview URL for now
+                        alt_text: "Uploaded media",
+                      },
+                    ],
+                  },
+                ],
+              }
+            : null,
+          likes: { count: 0 },
+          comments: { count: 0 },
+        };
+
+        setData((prevData) => ({
+          ...prevData,
+          posts: [newPost, ...prevData.posts],
+        }));
+
+        // Clear inputs and close the popup
+        setMessage("");
+        setMediaFile(null);
         setMediaPreview(null);
+        closePopup();
       } else {
-        // Handle server error
         alert("Failed to create post");
       }
     } catch (error) {
@@ -98,7 +129,34 @@ const Feed = () => {
   const handleLikeClick = async (postId) => {
     const token = localStorage.getItem("api_token");
 
+    // Check if the post is already liked
+    if (likedPosts.includes(postId)) {
+      console.log("Post already liked!");
+      return; // Exit early to prevent double count
+    }
+
+    // Optimistically update the UI
+    setData((prevData) =>
+      Array.isArray(prevData.posts)
+        ? {
+            ...prevData,
+            posts: prevData.posts.map((post) =>
+              post.id === postId
+                ? {
+                    ...post,
+                    likes: {
+                      count: (post.likes?.count || 0) + 1,
+                    },
+                  }
+                : post
+            ),
+          }
+        : prevData
+    );
+    setLikedPosts((prevLikedPosts) => [...prevLikedPosts, postId]);
+
     try {
+      // Make the API call to save the like in the database
       const res = await axios.post(
         `https://develop.quakbox.com/admin/api/set_posts_like/${postId}/like`,
         {},
@@ -107,32 +165,60 @@ const Feed = () => {
         }
       );
 
-      if (res.status === 200) {
-        // Update like count and set post as liked
-        setData((prevData) =>
-          Array.isArray(prevData) // Ensure prevData is an array before mapping
-            ? prevData.map((post) =>
-                post.id === postId
-                  ? {
-                      ...post,
-                      likes: {
-                        count: (post.likes?.count || 0) + 1,
-                      },
-                    }
-                  : post
-              )
-            : prevData
-        );
-        setLikedPosts((prevLikedPosts) => [...prevLikedPosts, postId]); // Mark as liked
+      if (res.status !== 200) {
+        // If the API call fails, revert the optimistic update
+        console.error("Failed to save the like in the database.");
+        revertLike(postId); // Revert UI and likedPosts state
       }
     } catch (error) {
       console.error("Error liking the post:", error);
+      revertLike(postId); // Revert UI and likedPosts state in case of an error
+    }
+  };
+
+  // Helper function to revert the like action
+  const revertLike = (postId) => {
+    setData((prevData) =>
+      Array.isArray(prevData.posts)
+        ? {
+            ...prevData,
+            posts: prevData.posts.map((post) =>
+              post.id === postId
+                ? {
+                    ...post,
+                    likes: {
+                      count: Math.max((post.likes?.count || 0) - 1, 0), // Revert like count
+                    },
+                  }
+                : post
+            ),
+          }
+        : prevData
+    );
+    setLikedPosts((prevLikedPosts) =>
+      prevLikedPosts.filter((id) => id !== postId)
+    );
+  };
+
+  // Handle dislike Click
+
+  const handleDislikeClick = (postId) => {
+    if (dislikedPosts.includes(postId)) {
+      // Remove from dislikedPosts if already disliked
+      setDislikedPosts(dislikedPosts.filter((id) => id !== postId));
+    } else {
+      // Add to dislikedPosts
+      setDislikedPosts([...dislikedPosts, postId]);
+
+      // Optional: Remove from likedPosts if it's there
+      if (likedPosts.includes(postId)) {
+        setLikedPosts(likedPosts.filter((id) => id !== postId));
+      }
     }
   };
 
   const getPost = async () => {
     const token = localStorage.getItem("api_token");
-    // console.log(token);
 
     if (!token) {
       console.log("No token found, user may not be logged in.");
@@ -140,7 +226,7 @@ const Feed = () => {
     }
     try {
       const res = await axios.get(
-        "https://develop.quakbox.com/admin/api/get_posts/in",
+        `https://develop.quakbox.com/admin/api/get_posts/${countryCode}`,
         {
           headers: {
             Authorization: `Bearer ${token}`,
@@ -148,13 +234,7 @@ const Feed = () => {
           },
         }
       );
-      // console.log(res.data.posts);
       setData(res.data);
-      // console.log(res.data.posts[0].attachments.data[0].media[0].url);
-
-      // console.log(jsonData);
-
-      // console.log(data);
     } catch (error) {
       console.log(error);
     }
@@ -169,84 +249,11 @@ const Feed = () => {
     };
   }, [mediaPreview]);
 
-  // const jsonData = {
-  //   posts: [
-  //     {
-  //       id: "1",
-  //       created_time: "2025-01-17T10:30:00+0000",
-  //       message: "Check out this amazing view from my vacation! 🌴☀️",
-  //       from: {
-  //         name: "John Doe",
-  //         profile_image:
-  //           "https://media.istockphoto.com/id/1437816897/photo/business-woman-manager-or-human-resources-portrait-for-career-success-company-we-are-hiring.jpg?s=612x612&w=0&k=20&c=tyLvtzutRh22j9GqSGI33Z4HpIwv9vL_MZw_xOE19NQ=",
-  //       },
-  //       attachments: {
-  //         data: [
-  //           {
-  //             type: "photo",
-  //             media: [
-  //               {
-  //                 url: "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcReE4_46HUmsn2e1Ey-lckv36GLUlaKsx-XpQ&s",
-  //                 alt_text: "Vacation view",
-  //               },
-  //             ],
-  //           },
-  //         ],
-  //       },
-  //       likes: { count: 350 },
-  //       comments: { count: 25 },
-  //     },
-  //     {
-  //       id: "2",
-  //       created_time: "2025-01-16T15:00:00+0000",
-  //       message: "Check out this video I recorded! 📹",
-  //       from: {
-  //         name: "Jane Smith",
-  //         profile_image:
-  //           "https://media.istockphoto.com/id/1682296067/photo/happy-studio-portrait-or-professional-man-real-estate-agent-or-asian-businessman-smile-for.jpg?s=612x612&w=0&k=20&c=9zbG2-9fl741fbTWw5fNgcEEe4ll-JegrGlQQ6m54rg=",
-  //       },
-  //       attachments: {
-  //         data: [
-  //           {
-  //             type: "video",
-  //             media: [
-  //               {
-  //                 url: "https://www.youtube.com/watch?v=yj0njH4K4ZU",
-  //                 alt_text: "YouTube video",
-  //               },
-  //             ],
-  //           },
-  //         ],
-  //       },
-  //       likes: { count: 150 },
-  //       comments: { count: 12 },
-  //     },
-  //     {
-  //       id: "3",
-  //       created_time: "2025-01-15T08:00:00+0000",
-  //       message: "Check out this interesting article!",
-  //       from: { name: "Emily White", profile_image: null },
-  //       attachments: {
-  //         data: [
-  //           {
-  //             type: "link",
-  //             url: "https://example.com/article",
-  //             title: "An Interesting Article",
-  //             description: "Learn more about the latest trends in tech.",
-  //           },
-  //         ],
-  //       },
-  //       likes: { count: 200 },
-  //       comments: { count: 35 },
-  //     },
-  //   ],
-  // };
-
   useEffect(() => {
     userData();
     getPost();
     const updateNavbarHeight = () => {
-      setNavbarHeight(window.innerWidth <= 768 ? 90 : 48);
+      setNavbarHeight(window.innerWidth <= 768 ? 90 : 56);
     };
 
     updateNavbarHeight();
@@ -259,7 +266,7 @@ const Feed = () => {
 
   return (
     <div
-      className="col-12 col-md-6 offset-md-3 p-2"
+      className="col-12 col-md-6 offset-md-3 p-0"
       style={{
         marginTop: `${navbarHeight}px`,
         marginBottom: "60px",
@@ -267,12 +274,12 @@ const Feed = () => {
     >
       <div className="text-white p-0 rounded">
         {/* Post Input Section */}
-        <div className="card p-3 mb-4">
+        <div className="card p-1 mb-1">
           <div className="d-flex align-items-center">
             <img
               src={userImage}
               alt="Profile"
-              className="rounded-circle me-2"
+              className="rounded-circle"
               style={{ width: "40px", height: "40px" }}
             />
             <input
@@ -280,10 +287,10 @@ const Feed = () => {
               className="form-control"
               placeholder="What's on your mind?"
               onClick={openPopup}
-              style={{ fontSize: "16px" }}
+              style={{ fontSize: "16px", cursor: "pointer" }}
             />
           </div>
-          <div className="d-flex justify-content-between flex-wrap mt-3">
+          <div className="d-flex justify-content-between flex-wrap">
             <button className="btn btn-light d-flex align-items-center flex-grow-1 m-1">
               <i className="fa fa-video me-2 text-danger"></i> Live video
             </button>
@@ -455,7 +462,7 @@ const Feed = () => {
 
                 {/* Post Content */}
                 <div className="card-body p-0">
-                  {post.message && <p className="p-3">{post.message}</p>}
+                  {post.message && <p className="px-3">{post.message}</p>}
 
                   {post.attachments &&
                     post.attachments.data.map((attachment, index) => {
@@ -466,7 +473,14 @@ const Feed = () => {
                               key={index}
                               src={attachment.media[0].url}
                               alt={attachment.media[0].alt_text || "Post image"}
-                              className="img-fluid w-100"
+                              className="img-fluid"
+                              style={{
+                                maxHeight: "362.5px",
+                                objectFit: "contain",
+                                backgroundColor: "white", // Or 'white' depending on your preference
+                                display: "block", // Centers the image within the container
+                                margin: "auto", // Centers horizontally and vertically
+                              }}
                             />
                           </>
                         );
@@ -477,7 +491,14 @@ const Feed = () => {
                             key={index}
                             controls
                             className="w-100"
-                            style={{ maxHeight: "400px" }}
+                            style={{
+                              maxWidth: "2133px",
+                              maxHeight: "362.5px",
+                              objectFit: "contain",
+                              backgroundColor: "black", // Or 'white' for video as well
+                              display: "block", // Centers the image within the container
+                              margin: "auto", // Centers horizontally and vertically
+                            }}
                           >
                             <source
                               src={attachment.media[0].url}
@@ -534,6 +555,23 @@ const Feed = () => {
                         }`}
                       ></i>{" "}
                       Like
+                    </button>
+                    <button
+                      className={`btn btn-sm me-2 ${
+                        dislikedPosts.includes(post.id)
+                          ? "btn-danger text-white"
+                          : "btn-light"
+                      }`}
+                      onClick={() => handleDislikeClick(post.id)}
+                    >
+                      <i
+                        className={`bi ${
+                          dislikedPosts.includes(post.id)
+                            ? "bi-hand-thumbs-down-fill"
+                            : "bi-hand-thumbs-down"
+                        }`}
+                      ></i>{" "}
+                      Dislike
                     </button>
                     <button className="btn btn-light btn-sm me-2">
                       <i className="bi bi-chat"></i> Comment{" "}

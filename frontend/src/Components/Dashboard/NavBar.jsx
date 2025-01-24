@@ -2,22 +2,39 @@ import React, { useEffect, useRef, useState } from "react";
 import logo from "../../assets/logo/logo.png";
 import profileImage from "../../assets/images/vector-users-icon.jpg";
 import axios from "axios";
+
 import { useNavigate } from "react-router-dom";
 import { useSelector, useDispatch } from "react-redux";
-import { selectFavouriteCountries } from "../redux/favouriteCountriesSlice";
+
+import { Link, useNavigate } from "react-router-dom";
+
 
 const NavBar = () => {
   const navigate = useNavigate();
   const [countries, setCountries] = useState([]);
   const [userName, setUserName] = useState("");
+
   const favouriteCountries = useSelector(selectFavouriteCountries);
   console.log("favouriteCountries");
   console.log(favouriteCountries);
+
+
   const dropdownRef = useRef(null);
   const [showDropdown, setShowDropdown] = useState(false);
   const [dropdown, setDropdown] = useState(false);
   const [showAllFlags, setShowAllFlags] = useState(false);
   const [searchQuery, setSearchQuery] = useState(""); // State for search input
+
+  const handleLogoClick = () => {
+    navigate("/dashboard"); // Navigate to /dashboard
+  };
+
+  const handleFlagClick = (countryCode, flag, countryName) => {
+    navigate(`/country/${countryCode.toLowerCase()}`, {
+      state: { flag, countryName },
+    }); // Pass the flag image with navigate
+    window.location.reload();
+  };
 
   const userData = async () => {
     const token = localStorage.getItem("api_token");
@@ -33,9 +50,25 @@ const NavBar = () => {
           },
         }
       );
-      // console.log(res.data);
-      // console.log("User Data found:", res.data.users);
+
+      console.log(res.data);
       setUserName(res.data.users.username);
+      console.log(userName);
+
+      // countries.map((e, i) => {
+      //   console.log(e);
+
+      //   if (e.cca2 === res.data.user_details.country) {
+      //     const flag = e.flags.png;
+      //     const countryName = e.name.common;
+      //     console.log(flag);
+      //     navigate(`/dashboard`, {
+      //       state: { flag, countryName },
+      //     }); // Pass the flag image with navigate
+      //     window.location.reload();
+      //   }
+      // });
+
       // console.log(userName);
     } catch (error) {
       console.log(error);
@@ -82,13 +115,13 @@ const NavBar = () => {
       try {
         const res = await axios.get("https://restcountries.com/v3.1/all");
         setCountries(res.data);
+        console.log(res.data);
       } catch (error) {
         console.error("Error fetching countries:", error);
       }
     };
-
-    fetchCountries();
     userData();
+    fetchCountries();
   }, []);
 
   useEffect(() => {
@@ -136,6 +169,7 @@ const NavBar = () => {
             <div
               className="d-flex align-items-center g-1"
               style={{ position: "relative", cursor: "pointer" }}
+              onClick={handleLogoClick}
             >
               <img
                 className="d-none d-lg-block"
@@ -184,13 +218,12 @@ const NavBar = () => {
                       cursor: "pointer",
                     }}
                     onClick={() => {
-                      const countryCode = country.cca2.toLowerCase();
-                      console.log("countryCode", countryCode);
-                      window.history.pushState(
-                        {},
-                        "",
-                        `/country/${countryCode}`
+                      handleFlagClick(
+                        country.cca2,
+                        country.flags.png,
+                        country.name.common
                       );
+                      setShowAllFlags(false);
                     }}
                   >
                     <img
@@ -250,6 +283,7 @@ const NavBar = () => {
                       type="text"
                       placeholder="Search countries..."
                       value={searchQuery}
+                      name="country"
                       onChange={(e) => setSearchQuery(e.target.value)}
                       style={{
                         width: "95%",
@@ -281,8 +315,12 @@ const NavBar = () => {
                           cursor: "pointer",
                         }}
                         onClick={() => {
-                          const countryCode = country.cca2.toLowerCase();
-                          window.location.href = `/${countryCode}`;
+                          handleFlagClick(
+                            country.cca2,
+                            country.flags.png,
+                            country.name.common
+                          );
+                          setShowAllFlags(false);
                         }}
                       >
                         <img
@@ -386,7 +424,6 @@ const NavBar = () => {
                   border: "1px solid #ccc",
                   borderRadius: "20px",
                 }}
-                value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
               />
             </div>
