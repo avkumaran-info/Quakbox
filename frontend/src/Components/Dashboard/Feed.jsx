@@ -4,7 +4,7 @@ import userImage from "../../assets/images/vector-users-icon.jpg";
 import axios from "axios";
 import { Navigate } from "react-router-dom";
 
-const Feed = ({ countryCode, flag, countryName }) => {
+const Feed = ({ countryCode, flag, countryName, handleCountryChange }) => {
   const [navbarHeight, setNavbarHeight] = useState(56);
   const [likedPosts, setLikedPosts] = useState([]);
   const [dislikedPosts, setDislikedPosts] = useState([]);
@@ -14,7 +14,7 @@ const Feed = ({ countryCode, flag, countryName }) => {
   const [mediaFile, setMediaFile] = useState(null);
   const [mediaPreview, setMediaPreview] = useState(null);
   const [userName, setUserName] = useState("");
-  const [deData, setDeData] = useState("");
+  const [currentUserId, setCurrentUserId] = useState(null);
 
   // Functions to handle popup visibility
   const openPopup = () => setIsPopupOpen(true);
@@ -42,17 +42,16 @@ const Feed = ({ countryCode, flag, countryName }) => {
       const res = await axios.get(
         "https://develop.quakbox.com/admin/api/user",
         {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
+          headers: { Authorization: `Bearer ${token}` },
         }
       );
-      console.log(res.data.user_details.country);
       setUserName(res.data.users);
+      setCurrentUserId(res.data.users.id);
     } catch (error) {
       console.log(error);
     }
   };
+
   const handleSubmit = async () => {
     const token = localStorage.getItem("api_token");
 
@@ -76,14 +75,13 @@ const Feed = ({ countryCode, flag, countryName }) => {
       );
 
       if (response.status === 201) {
-        // Add the new post to the feed
         const newPost = {
-          id: response.data.id, // Use the post ID returned from the server
+          id: response.data.id,
           message: message,
           created_time: new Date().toISOString(),
           from: {
             name: userName.username,
-            profile_image: userImage, // Use the current user's image
+            profile_image: userImage,
           },
           attachments: mediaFile
             ? {
@@ -94,7 +92,7 @@ const Feed = ({ countryCode, flag, countryName }) => {
                       : "video",
                     media: [
                       {
-                        url: mediaPreview, // Use the preview URL for now
+                        url: mediaPreview,
                         alt_text: "Uploaded media",
                       },
                     ],
@@ -103,7 +101,10 @@ const Feed = ({ countryCode, flag, countryName }) => {
               }
             : null,
           likes: { count: 0 },
+          liked_users: [],
+          dislikes: { count: 0 },
           comments: { count: 0 },
+          shares: { count: 0 },
         };
 
         setData((prevData) => ({
@@ -111,7 +112,6 @@ const Feed = ({ countryCode, flag, countryName }) => {
           posts: [newPost, ...prevData.posts],
         }));
 
-        // Clear inputs and close the popup
         setMessage("");
         setMediaFile(null);
         setMediaPreview(null);
@@ -129,13 +129,11 @@ const Feed = ({ countryCode, flag, countryName }) => {
   const handleLikeClick = async (postId) => {
     const token = localStorage.getItem("api_token");
 
-    // Check if the post is already liked
-    if (likedPosts.includes(postId)) {
-      console.log("Post already liked!");
-      return; // Exit early to prevent double count
-    }
+    const currentUser = {
+      id: currentUserId,
+      name: userName.username || "Unknown User",
+    };
 
-    // Optimistically update the UI
     setData((prevData) =>
       Array.isArray(prevData.posts)
         ? {
@@ -147,16 +145,15 @@ const Feed = ({ countryCode, flag, countryName }) => {
                     likes: {
                       count: (post.likes?.count || 0) + 1,
                     },
+                    liked_users: [...(post.liked_users || []), currentUser],
                   }
                 : post
             ),
           }
         : prevData
     );
-    setLikedPosts((prevLikedPosts) => [...prevLikedPosts, postId]);
 
     try {
-      // Make the API call to save the like in the database
       const res = await axios.post(
         `https://develop.quakbox.com/admin/api/set_posts_like/${postId}/like`,
         {},
@@ -166,13 +163,12 @@ const Feed = ({ countryCode, flag, countryName }) => {
       );
 
       if (res.status !== 200) {
-        // If the API call fails, revert the optimistic update
         console.error("Failed to save the like in the database.");
-        revertLike(postId); // Revert UI and likedPosts state
+        revertLike(postId);
       }
     } catch (error) {
       console.error("Error liking the post:", error);
-      revertLike(postId); // Revert UI and likedPosts state in case of an error
+      revertLike(postId);
     }
   };
 
@@ -187,16 +183,16 @@ const Feed = ({ countryCode, flag, countryName }) => {
                 ? {
                     ...post,
                     likes: {
-                      count: Math.max((post.likes?.count || 0) - 1, 0), // Revert like count
+                      count: Math.max((post.likes?.count || 0) - 1, 0),
                     },
+                    liked_users: (post.liked_users || []).filter(
+                      (user) => user.id !== currentUserId
+                    ),
                   }
                 : post
             ),
           }
         : prevData
-    );
-    setLikedPosts((prevLikedPosts) =>
-      prevLikedPosts.filter((id) => id !== postId)
     );
   };
 
@@ -262,7 +258,7 @@ const Feed = ({ countryCode, flag, countryName }) => {
     return () => {
       window.removeEventListener("resize", updateNavbarHeight);
     };
-  }, []);
+  }, [countryCode]);
 
   return (
     <div
@@ -441,6 +437,8 @@ const Feed = ({ countryCode, flag, countryName }) => {
             Array.isArray(data.posts) &&
             data.posts.map((post) => (
               <div className="card mb-4" key={post.id}>
+                {" "}
+                {/* Add key here */}
                 {/* Post Header */}
                 <div className="card-header d-flex align-items-center bg-white border-0">
                   <img
@@ -452,14 +450,13 @@ const Feed = ({ countryCode, flag, countryName }) => {
                   <div>
                     <h6 className="mb-0">
                       {post.from?.name || "Unknown User"}
-                    </h6>{" "}
+                    </h6>
                     {/* Fallback to "Unknown User" */}
                     <small className="text-muted">
                       {new Date(post.created_time).toLocaleString()}
                     </small>
                   </div>
                 </div>
-
                 {/* Post Content */}
                 <div className="card-body p-0">
                   {post.message && <p className="px-3">{post.message}</p>}
@@ -468,36 +465,34 @@ const Feed = ({ countryCode, flag, countryName }) => {
                     post.attachments.data.map((attachment, index) => {
                       if (attachment.type === "image") {
                         return (
-                          <>
-                            <img
-                              key={index}
-                              src={attachment.media[0].url}
-                              alt={attachment.media[0].alt_text || "Post image"}
-                              className="img-fluid"
-                              style={{
-                                maxHeight: "362.5px",
-                                objectFit: "contain",
-                                backgroundColor: "white", // Or 'white' depending on your preference
-                                display: "block", // Centers the image within the container
-                                margin: "auto", // Centers horizontally and vertically
-                              }}
-                            />
-                          </>
+                          <img
+                            key={index} // This key is for attachments, index is fine for these
+                            src={attachment.media[0].url}
+                            alt={attachment.media[0].alt_text || "Post image"}
+                            className="img-fluid"
+                            style={{
+                              maxHeight: "362.5px",
+                              objectFit: "contain",
+                              backgroundColor: "white",
+                              display: "block",
+                              margin: "auto",
+                            }}
+                          />
                         );
                       }
                       if (attachment.type === "video") {
                         return (
                           <video
-                            key={index}
+                            key={index} // This key is for attachments, index is fine for these
                             controls
                             className="w-100"
                             style={{
                               maxWidth: "2133px",
                               maxHeight: "362.5px",
                               objectFit: "contain",
-                              backgroundColor: "black", // Or 'white' for video as well
-                              display: "block", // Centers the image within the container
-                              margin: "auto", // Centers horizontally and vertically
+                              backgroundColor: "black",
+                              display: "block",
+                              margin: "auto",
                             }}
                           >
                             <source
@@ -508,29 +503,9 @@ const Feed = ({ countryCode, flag, countryName }) => {
                           </video>
                         );
                       }
-                      if (attachment.type === "link") {
-                        return (
-                          <div key={index} className="p-3">
-                            <a
-                              href={attachment.url}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              className="text-decoration-none"
-                            >
-                              <div className="border p-2 rounded">
-                                <h6>{attachment.title}</h6>
-                                <p className="text-muted">
-                                  {attachment.description}
-                                </p>
-                              </div>
-                            </a>
-                          </div>
-                        );
-                      }
                       return null;
                     })}
                 </div>
-
                 {/* Post Footer */}
                 <div className="card-footer bg-white d-flex justify-content-between align-items-center border-0">
                   <span className="text-muted">
@@ -541,7 +516,9 @@ const Feed = ({ countryCode, flag, countryName }) => {
                   <div className="d-flex">
                     <button
                       className={`btn btn-sm me-2 ${
-                        likedPosts.includes(post.id)
+                        post.liked_users?.some(
+                          (user) => user.id === currentUserId
+                        )
                           ? "btn-primary text-white"
                           : "btn-light"
                       }`}
@@ -549,29 +526,14 @@ const Feed = ({ countryCode, flag, countryName }) => {
                     >
                       <i
                         className={`bi ${
-                          likedPosts.includes(post.id)
+                          post.liked_users?.some(
+                            (user) => user.id === currentUserId
+                          )
                             ? "bi-hand-thumbs-up-fill"
                             : "bi-hand-thumbs-up"
                         }`}
                       ></i>{" "}
                       Like
-                    </button>
-                    <button
-                      className={`btn btn-sm me-2 ${
-                        dislikedPosts.includes(post.id)
-                          ? "btn-danger text-white"
-                          : "btn-light"
-                      }`}
-                      onClick={() => handleDislikeClick(post.id)}
-                    >
-                      <i
-                        className={`bi ${
-                          dislikedPosts.includes(post.id)
-                            ? "bi-hand-thumbs-down-fill"
-                            : "bi-hand-thumbs-down"
-                        }`}
-                      ></i>{" "}
-                      Dislike
                     </button>
                     <button className="btn btn-light btn-sm me-2">
                       <i className="bi bi-chat"></i> Comment{" "}

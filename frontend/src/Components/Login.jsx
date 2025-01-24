@@ -26,7 +26,7 @@ const Login = () => {
       ...userField,
       [e.target.name]: e.target.value,
     });
-    console.log(userField);
+    // console.log(userField);
   };
 
   const validateForm = () => {
@@ -69,7 +69,7 @@ const Login = () => {
         userField
       );
       // Handle successful login
-      console.log("Login Successful:", response.data);
+      // console.log("Login Successful:", response.data);
       if (response.data.result) {
         // Store the token (optional)
         localStorage.setItem("api_token", response.data.token);
@@ -207,7 +207,7 @@ const Login = () => {
                         key={lang.code}
                         onClick={() => {
                           changeLanguage(lang.code);
-                          console.log(lang.code);
+                          // console.log(lang.code);
                         }}
                         className="btn btn-link text-white p-0 small"
                       >
