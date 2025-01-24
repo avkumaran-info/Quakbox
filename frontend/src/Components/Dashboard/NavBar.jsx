@@ -3,12 +3,16 @@ import logo from "../../assets/logo/logo.png";
 import profileImage from "../../assets/images/vector-users-icon.jpg";
 import axios from "axios";
 import { useNavigate } from "react-router-dom";
+import { useSelector, useDispatch } from "react-redux";
+import { selectFavouriteCountries } from "../redux/favouriteCountriesSlice";
 
 const NavBar = () => {
   const navigate = useNavigate();
   const [countries, setCountries] = useState([]);
   const [userName, setUserName] = useState("");
-
+  const favouriteCountries = useSelector(selectFavouriteCountries);
+  console.log("favouriteCountries");
+  console.log(favouriteCountries);
   const dropdownRef = useRef(null);
   const [showDropdown, setShowDropdown] = useState(false);
   const [dropdown, setDropdown] = useState(false);
@@ -385,6 +389,29 @@ const NavBar = () => {
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
               />
+            </div>
+            {/* Favourite countries section */}
+            <div className="favourite-countries">
+              {favouriteCountries.length > 0 && (
+                <div className="favourite-countries-list">
+                  {favouriteCountries.map((country) => (
+                    <img
+                      style={{
+                        width: "65px",
+                        height: "40px",
+                        objectFit: "cover",
+                        border: "1px solid black",
+                        borderRadius: "3px",
+                      }}
+                      key={country.favourite_country_id}
+                      src={country.flag}
+                      alt={country.name}
+                      title={country.name}
+                      className="flag-icon"
+                    />
+                  ))}
+                </div>
+              )}
             </div>
 
             {/* Profile Section */}
