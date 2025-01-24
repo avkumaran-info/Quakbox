@@ -80,7 +80,7 @@ const RightSidebar = ({ countryCode, flag, countryName }) => {
             <h5 className="mt-2 mb-2 text-secondary">{countryName}</h5>
           </div>
           {/* ProfileCompletion */}
-          {/*<div className="container mt-2 mb-1" style={{ maxWidth: "400px" }}>
+          <div className="container mt-2 mb-1" style={{ maxWidth: "400px" }}>
             <div
               className="card shadow-sm p-1 d-flex flex-column align-items-center"
               style={{ borderRadius: "10px", border: "none" }}
@@ -179,20 +179,20 @@ const RightSidebar = ({ countryCode, flag, countryName }) => {
                 </li>
               </ul>
             </div>
-          </div>*/}
+          </div>
           {/* Profile */}
           <div className="container mt-1" style={{ maxWidth: "400px" }}>
             <div
-            className="d-flex align-items-center text-light p-2"
-            style={{
-              background: "linear-gradient(to right, #1e90ff, #87cefa)",
-              color: "white",
-            }}
-          >
-            <h5 className="text-center mb-0" style={{ fontSize: "15px" }}>
-              Activities
-            </h5>
-          </div>
+              className="d-flex align-items-center text-light p-2"
+              style={{
+                background: "linear-gradient(to right, #1e90ff, #87cefa)",
+                color: "white",
+              }}
+            >
+              <h5 className="text-center mb-0" style={{ fontSize: "15px" }}>
+                Activities
+              </h5>
+            </div>
             <div
               className="card shadow-sm"
               style={{
@@ -367,7 +367,7 @@ const RightSidebar = ({ countryCode, flag, countryName }) => {
             </div>
           </div>
           {/* Latest updates */}
-          {/*<div
+          <div
             className="container mt-1"
             style={{ maxWidth: "400px", marginBottom: "110px" }}
           >
@@ -399,7 +399,7 @@ const RightSidebar = ({ countryCode, flag, countryName }) => {
                 ))}
               </ul>
             </div>
-          </div>*/}
+          </div>
         </div>
       </div>
     </div>

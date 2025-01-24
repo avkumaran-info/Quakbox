@@ -5,7 +5,7 @@ import axios from "axios";
 import { Navigate } from "react-router-dom";
 
 const Feed = ({ countryCode, flag, countryName }) => {
-  const [navbarHeight, setNavbarHeight] = useState(52);
+  const [navbarHeight, setNavbarHeight] = useState(56);
   const [likedPosts, setLikedPosts] = useState([]);
   const [dislikedPosts, setDislikedPosts] = useState([]);
   const [isPopupOpen, setIsPopupOpen] = useState(false);
@@ -14,6 +14,7 @@ const Feed = ({ countryCode, flag, countryName }) => {
   const [mediaFile, setMediaFile] = useState(null);
   const [mediaPreview, setMediaPreview] = useState(null);
   const [userName, setUserName] = useState("");
+  const [deData, setDeData] = useState("");
 
   // Functions to handle popup visibility
   const openPopup = () => setIsPopupOpen(true);
@@ -46,10 +47,8 @@ const Feed = ({ countryCode, flag, countryName }) => {
           },
         }
       );
-      // console.log(res.data);
-      // console.log("User Data found:", res.data.users);
+      console.log(res.data.user_details.country);
       setUserName(res.data.users);
-      // console.log(userName);
     } catch (error) {
       console.log(error);
     }
@@ -254,7 +253,7 @@ const Feed = ({ countryCode, flag, countryName }) => {
     userData();
     getPost();
     const updateNavbarHeight = () => {
-      setNavbarHeight(window.innerWidth <= 768 ? 90 : 48);
+      setNavbarHeight(window.innerWidth <= 768 ? 90 : 56);
     };
 
     updateNavbarHeight();
@@ -267,7 +266,7 @@ const Feed = ({ countryCode, flag, countryName }) => {
 
   return (
     <div
-      className="col-12 col-md-6 offset-md-3 p-2"
+      className="col-12 col-md-6 offset-md-3 p-0"
       style={{
         marginTop: `${navbarHeight}px`,
         marginBottom: "60px",
