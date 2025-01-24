@@ -20,9 +20,10 @@ const App = () => {
           <Route path="/signup" element={<Signup />} />
           <Route path="/forgetpassword" element={<ForgetPassword />} />
           <Route path="/dashboard" element={<Home />} />
+          <Route path="/country/:countryCode" element={<Home />} />
+          <Route path="/world" element={<Home />} />
           <Route path="/chatroom" element={<ChatPage />} />
           <Route path="/golive" element={<GoLive />} />
-          {/* <Route path="/test" element={<NavBar />} /> */}
           <Route
             path="/favouriteCountires"
             element={<FanCountriesComponent />}
