@@ -17,9 +17,9 @@ const NavBar = ({
   const [countries, setCountries] = useState([]);
   const [userName, setUserName] = useState("");
 
-  const favouriteCountries = useSelector(selectFavouriteCountries);
-  console.log("favouriteCountries");
-  console.log(favouriteCountries);
+  // const favouriteCountries = useSelector(selectFavouriteCountries);
+  // console.log("favouriteCountries");
+  // console.log(favouriteCountries);
 
   const dropdownRef = useRef(null);
   const [showDropdown, setShowDropdown] = useState(false);
@@ -439,7 +439,7 @@ const NavBar = ({
               />
             </div>
             {/* Favourite countries section */}
-            <div className="favourite-countries">
+            {/* <div className="favourite-countries">
               {favouriteCountries.length > 0 && (
                 <div className="favourite-countries-list">
                   {favouriteCountries.map((country) => (
@@ -460,7 +460,7 @@ const NavBar = ({
                   ))}
                 </div>
               )}
-            </div>
+            </div> */}
 
             {/* Profile Section */}
             <div
