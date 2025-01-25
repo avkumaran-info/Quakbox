@@ -24,6 +24,45 @@ use GuzzleHttp\Client;
 
 class AuthController extends Controller
 {
+    public function handleFacebookAccessToken(Request $request)
+    {
+        $accessToken = $request->input('accessToken');
+
+        // Validate the token with Facebook
+        $facebookResponse = Http::get("https://graph.facebook.com/me", [
+            'fields' => 'id,name,email',
+            'access_token' => $accessToken,
+        ]);
+
+        if ($facebookResponse->failed()) {
+            return response()->json([
+                'result' => false,
+                'message' => 'Login Unsuccessful'
+            ], 400);
+        }
+
+        $facebookUser = $facebookResponse->json();
+
+        // Find or create a user in the database
+        $user = User::firstOrCreate(
+            ['email' => $facebookUser['email']],
+            [
+                'username' => $facebookUser['name'],
+                'facebook_id' => $facebookUser['id'],
+            ]
+        );
+
+        // Generate an API token using Passport or Sanctum
+        $authToken = $user->createToken('AuthToken')->accessToken;
+
+        // Return the user data and token
+        return response()->json([
+            'result' => true,
+            'message' => 'Login successful',
+            'token' => $authToken
+        ], 200);
+    }
+
     // Handle Google login using the token passed from frontend
     public function loginWithGoogle(Request $request)
     {
@@ -54,12 +93,17 @@ class AuthController extends Controller
 
             // Return the user data and token
             return response()->json([
+                'result' => true,
+                'message' => 'Login successful',
                 'token' => $authToken
-            ]);
+            ], 200);
             
         } else {
             // If the response is not successful
-            return response()->json(['error' => 'Invalid Token'], 400);
+            return response()->json([
+                'result' => false,
+                'message' => 'Login Unsuccessful'
+            ], 400);
         }
     }
     public function login(Request $request)

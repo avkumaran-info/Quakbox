@@ -8,6 +8,7 @@ import { useTranslation } from "react-i18next";
 import i18n from "../i18n.js";
 import axios from "axios";
 import GoogleAuth from "./socialLogin/GoogleAuth";
+import FacebookSignIn from "./socialLogin/FacebookAuth";
 
 const Login = () => {
   const navigate = useNavigate();
@@ -318,12 +319,7 @@ const Login = () => {
 
                 <GoogleAuth />
 
-                <button
-                  type="button"
-                  className="btn btn-outline-primary mt-3 w-100"
-                >
-                  <i className="fab fa-facebook me-2"></i>Sign in with Facebook
-                </button>
+                <FacebookSignIn />
               </form>
               <p className="text-center mt-3 text-sm">
                 Don't have an account?{" "}
