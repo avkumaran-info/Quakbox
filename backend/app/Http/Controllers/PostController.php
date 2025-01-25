@@ -18,12 +18,7 @@ class PostController extends Controller
 
             $posts = Post::with(['user', 'likes', 'comments'])
                 ->latest()
-                ->when($cc != 99, function ($query) use ($cc) {
-                    $query->where(function ($subQuery) use ($cc) {
-                        $subQuery->where('country_code', $cc)
-                                    ->orWhere('country_code', 99);
-                    });
-                })
+                ->where('country_code', $cc)
                 ->get()
                 ->map(function ($post) {
                     return [
