@@ -1,17 +1,17 @@
 import React from "react";
-import India from "../../assets/images/Rigth side property/Flag_of_India.svg.webp";
-import banner from "../../assets/images/Rigth side property/banner.jpeg";
-import user1 from "../../assets/images/Rigth side property/user.jpg";
-import user3 from "../../assets/images/Rigth side property/user3.jpg";
-import user2 from "../../assets/images/Rigth side property/user2.jpeg";
-import photo from "../../assets/images/Rigth side property/2.png";
-import feed from "../../assets/images/Rigth side property/1.png";
-import user from "../../assets/images/Rigth side property/user.png";
-import news from "../../assets/images/Rigth side property/Lnews.png";
-import event from "../../assets/images/Rigth side property/7.png";
-import group from "../../assets/images/Rigth side property/group.png";
-import notification from "../../assets/images/Rigth side property/not.png";
-import set from "../../assets/images/Rigth side property/set.webp";
+import { FaThumbsUp, FaThumbsDown, FaComment, FaShare } from "react-icons/fa"; // Import FontAwesome icons
+import India from "../../assets/images/Rigth side property/Flag_of_India.svg.webp"; // Your flag image
+import banner from "../../assets/images/Rigth side property/banner.jpeg"; // Banner image
+import user1 from "../../assets/images/Rigth side property/user.jpg"; // User image 1
+import user2 from "../../assets/images/Rigth side property/user2.jpeg"; // User image 2
+import user3 from "../../assets/images/Rigth side property/user3.jpg"; // User image 3
+import user from "../../assets/images/Rigth side property/user.png"; // Profile avatar image
+import feed from "../../assets/images/Rigth side property/1.png"; // Feed icon
+import news from "../../assets/images/Rigth side property/Lnews.png"; // News icon
+import event from "../../assets/images/Rigth side property/7.png"; // Event icon
+import group from "../../assets/images/Rigth side property/group.png"; // Group icon
+import notification from "../../assets/images/Rigth side property/not.png"; // Notification icon
+import set from "../../assets/images/Rigth side property/set.webp"; // Settings icon
 
 const RightSidebar = ({
   countryCode,
@@ -57,8 +57,7 @@ const RightSidebar = ({
     },
   ];
 
-  const isWorld = location.pathname === "/world";
-  // console.log(isWorld);
+  const isWorld = location.pathname === "/world"; // Determines if we're in the "world" section
 
   return (
     <div
@@ -67,14 +66,22 @@ const RightSidebar = ({
         height: "100vh",
         top: "56px", // Height of the topbar
         right: "0",
-        // bottom: "60px",
         overflowY: "auto",
       }}
     >
-      <div className="card bg-light" style={{ bottom: "100px", top: "0px" }}>
+      <div className="card" style={{ height: "100%" }}>
         <div className="container p-0">
-          {/* Country Flag */}
-          <div className="bg-light text-center border-bottom">
+          {/* Part 1: Flag, Country Name, and Icons */}
+          <div
+            className="bg-light text-center border-bottom sticky-top"
+            style={{
+              top: "0",
+              zIndex: "10",
+              backgroundColor: "#fff",
+              padding: "10px",
+              position: "sticky",
+            }}
+          >
             <img
               src={flag}
               alt={countryName}
@@ -86,111 +93,37 @@ const RightSidebar = ({
               }}
             />
             <h5 className="mt-2 mb-2 text-secondary">{countryName}</h5>
-          </div>
-          {/* ProfileCompletion */}
-
-          {/* <div className="container mt-2 mb-1" style={{ maxWidth: "400px" }}>
-            <div
-              className="card shadow-sm p-1 d-flex flex-column align-items-center"
-              style={{ borderRadius: "10px", border: "none" }}
-            >
-              <h5 className="text-center">Complete Your Profile</h5>
-              <div
-                className="d-flex justify-content-center align-items-center"
+            {/* Like, Dislike, Comment, Share Icons */}
+            <div className="d-flex justify-content-around ">
+              <FaThumbsUp
                 style={{
-                  position: "relative",
-                  width: "100%",
-                  height: "120px",
-                  display: "flex", // Ensure it's a flex container
-                  justifyContent: "center", // Horizontally center
-                  alignItems: "center", // Vertically center
+                  fontSize: "20px",
+                  cursor: "pointer",
+                  marginRight: "10px",
                 }}
-              >
-                <svg
-                  width="100"
-                  height="100"
-                  viewBox="0 0 36 36"
-                  style={{ transform: "rotate(-90deg)" }}
-                >
-                  <path
-                    d="M18 2.0845
-            a 15.9155 15.9155 0 0 1 0 31.831
-            a 15.9155 15.9155 0 0 1 0 -31.831"
-                    fill="none"
-                    stroke="#eee"
-                    strokeWidth="3.8"
-                  />
-                  <path
-                    d="M18 2.0845
-            a 15.9155 15.9155 0 0 1 0 31.831
-            a 15.9155 15.9155 0 0 1 0 -31.831"
-                    fill="none"
-                    stroke="#28a745"
-                    strokeWidth="3.8"
-                    strokeDasharray="73, 100" // Adjust the percentage dynamically here
-                    strokeLinecap="round"
-                    style={{
-                      transition: "stroke-dasharray 1s ease-out",
-                    }}
-                  />
-                </svg>
-                <div
-                  style={{
-                    position: "absolute",
-                    top: "50%",
-                    left: "50%",
-                    transform: "translate(-50%, -50%)",
-                    fontWeight: "bold",
-                    fontSize: "1.2rem",
-                  }}
-                >
-                  73%
-                </div>
-              </div>
-
-              <ul className="list-unstyled">
-                <li className="mb-2">
-                  <div className="d-flex align-items-center">
-                    <input
-                      className="form-check-input me-2"
-                      type="checkbox"
-                      checked
-                      readOnly
-                      style={{ width: "18px", height: "18px" }}
-                    />
-                    <span>Profile Photo</span>
-                    <span className="ms-auto text-success fw-bold">1/1</span>
-                  </div>
-                </li>
-                <li className="mb-2">
-                  <div className="d-flex align-items-center">
-                    <input
-                      className="form-check-input me-2"
-                      type="checkbox"
-                      checked
-                      readOnly
-                      style={{ width: "18px", height: "18px" }}
-                    />
-                    <span>Cover Photo</span>
-                    <span className="ms-auto text-success fw-bold">1/1</span>
-                  </div>
-                </li>
-                <li className="mb-2">
-                  <div className="d-flex align-items-center">
-                    <input
-                      className="form-check-input me-2"
-                      type="checkbox"
-                      style={{ width: "18px", height: "18px" }}
-                    />
-                    <span>General Information</span>
-                    <span className="ms-auto text-muted">5/6</span>
-                  </div>
-                </li>
-              </ul>
+              />
+              <FaThumbsDown
+                style={{
+                  fontSize: "20px",
+                  cursor: "pointer",
+                  marginRight: "10px",
+                }}
+              />
+              <FaComment
+                style={{
+                  fontSize: "20px",
+                  cursor: "pointer",
+                  marginRight: "10px",
+                }}
+              />
+              <FaShare style={{ fontSize: "20px", cursor: "pointer" }} />
             </div>
-          </div> */}
+          </div>
 
-          {/* Profile */}
+          {/* Space between Flag Section and Activity Section */}
+          {!isWorld && <div style={{ marginBottom: "20px" }}></div>}
+
+          {/* Part 2: Activity Section */}
           {!isWorld && (
             <div
               className="container mt-1"
@@ -209,82 +142,9 @@ const RightSidebar = ({
               </div>
               <div
                 className="card shadow-sm"
-                style={{
-                  backgroundColor: "#ffffff", // White background
-                }}
+                style={{ backgroundColor: "#ffffff" }}
               >
-                {/* <div className="card-header p-0">
-                <img
-                  src={banner} // Replace with a proper banner URL
-                  className="img-fluid"
-                  alt="Banner"
-                  style={{
-                    width: "100%",
-                    height: "80px",
-                  }}
-                />
-              </div> */}
                 <div className="card-body text-center">
-                  {/* <div
-                  className="rounded-circle border border-2 mx-auto mb-2"
-                  style={{
-                    width: "80px",
-                    height: "80px",
-                    overflow: "hidden",
-                    marginTop: "-50px",
-                  }}
-                >
-                  <img
-                    src={photo} // Replace with a proper profile image URL
-                    className="img-fluid"
-                    alt="Profile"
-                  />
-                </div>
-                <h5 className="card-title mb-0" style={{ fontSize: "1rem" }}>
-                  Sam Lanson
-                </h5>
-                <p className="text-muted mb-0" style={{ fontSize: "0.85rem" }}>
-                  Web Developer at Webestica
-                </p>
-                <p className="card-text mb-1" style={{ fontSize: "0.85rem" }}>
-                  I'd love to change the world, but they won’t give me the
-                  source code.
-                </p>
-                <div className="d-flex justify-content-center mb-1">
-                  <div className="me-4 text-center">
-                    <h6 className="mb-0" style={{ fontSize: "0.9rem" }}>
-                      256
-                    </h6>
-                    <small
-                      className="text-muted"
-                      style={{ fontSize: "0.75rem" }}
-                    >
-                      Post
-                    </small>
-                  </div>
-                  <div className="me-4 text-center">
-                    <h6 className="mb-0" style={{ fontSize: "0.9rem" }}>
-                      2.5K
-                    </h6>
-                    <small
-                      className="text-muted"
-                      style={{ fontSize: "0.75rem" }}
-                    >
-                      Followers
-                    </small>
-                  </div>
-                  <div className="text-center">
-                    <h6 className="mb-0" style={{ fontSize: "0.9rem" }}>
-                      365
-                    </h6>
-                    <small
-                      className="text-muted"
-                      style={{ fontSize: "0.75rem" }}
-                    >
-                      Following
-                    </small>
-                  </div>
-                </div> */}
                   <ul className="list-group list-group-flush text-start">
                     <li
                       className="list-group-item"
@@ -356,7 +216,7 @@ const RightSidebar = ({
                         className="me-2"
                         style={{ width: "20px", height: "20px" }}
                       />
-                      Notifications
+                      Videos
                     </li>
                     <li
                       className="list-group-item"
@@ -368,20 +228,15 @@ const RightSidebar = ({
                         className="me-2"
                         style={{ width: "20px", height: "20px" }}
                       />
-                      Settings
+                      Photos
                     </li>
                   </ul>
-                  {/* <button
-                  className="btn btn-primary mt-1 w-100"
-                  style={{ fontSize: "0.85rem" }}
-                >
-                  View Profile
-                </button> */}
                 </div>
               </div>
             </div>
           )}
-          {/* Latest updates */}
+
+          {/* Part 3: Latest Updates Section (Only for World URL) */}
           {isWorld && (
             <div
               className="container mt-1"
