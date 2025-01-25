@@ -110,7 +110,7 @@ const LeftSidebar = ({
       }}
     >
       <div className="card mb-5">
-        <div
+        {/*<div
           className="d-flex align-items-center text-light p-2"
           style={{
             background: "linear-gradient(to right, #1e90ff, #87cefa)",
@@ -120,7 +120,7 @@ const LeftSidebar = ({
           <h5 className="text-center mb-0" style={{ fontSize: "15px" }}>
             Shorts Video Player
           </h5>
-        </div>
+        </div>*/}
 
         <div
           className="video-container"

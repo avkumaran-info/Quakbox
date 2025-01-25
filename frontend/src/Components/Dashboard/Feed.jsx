@@ -281,24 +281,27 @@ const Feed = ({ countryCode, flag, countryName, handleCountryChange }) => {
             <input
               type="text"
               className="form-control"
-              placeholder="What's on your mind?"
+              placeholder="Trend the Quakpost"
               onClick={openPopup}
               style={{ fontSize: "16px", cursor: "pointer" }}
             />
+            <button className="btn btn-light d-flex align-items-center flex-grow-1 m-1">
+              <i className="fa fa-video text-danger"></i>
+            </button>
           </div>
           <div className="d-flex justify-content-between flex-wrap">
-            <button className="btn btn-light d-flex align-items-center flex-grow-1 m-1">
+            {/*<button className="btn btn-light d-flex align-items-center flex-grow-1 m-1">
               <i className="fa fa-video me-2 text-danger"></i> Live video
-            </button>
+            </button>*/}
 
             {/* Button to trigger the popup */}
 
-            <button
+            {/*<button
               className="btn btn-light d-flex align-items-center flex-grow-1 m-1"
               onClick={openPopup}
             >
               <i className="fa fa-image me-2 text-success"></i> Photo/video
-            </button>
+            </button>*/}
 
             {/* Popup Modal */}
             {isPopupOpen && (
