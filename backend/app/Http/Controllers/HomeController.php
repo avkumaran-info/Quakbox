@@ -12,4 +12,8 @@ class HomeController extends Controller
     {
         return view('home');  // Return the home view
     }
+    public function dashboard()
+    {
+        return view('dashboard'); // View for the "dashboard" route
+    }
 }

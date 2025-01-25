@@ -16,7 +16,7 @@ class LoginController extends Controller
     {
         $request->validate([
             'email' => 'required|email',
-            'password' => 'required|min:6',
+            'password' => 'required',
         ]);
 
         $credentials = $request->only('email', 'password');
@@ -27,4 +27,9 @@ class LoginController extends Controller
 
         return back()->withErrors(['email' => 'Invalid credentials'])->withInput();
     }
+    public function logout()
+    {
+        Auth::logout(); // Log out the user
+        return redirect()->route('login'); // Redirect to the login page
+    }        
 }
