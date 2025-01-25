@@ -6,6 +6,9 @@ import {
   FaShare,
   FaPlay,
   FaPause,
+  FaVolumeUp, // Volume icon
+  FaVolumeMute,
+  FaVolumeDown,
 } from "react-icons/fa";
 import video1 from "../../assets/images/leftside videos/v1.mp4";
 import video2 from "../../assets/images/leftside videos/v2.mp4";
@@ -26,6 +29,8 @@ const LeftSidebar = ({
   const [currentVideoIndex, setCurrentVideoIndex] = useState(0);
   const [isHovered, setIsHovered] = useState(false);
   const [isPlaying, setIsPlaying] = useState(false);
+  const [volume, setVolume] = useState(1); // Default volume is 100%
+
   const videoRef = useRef(null);
 
   const updates = [
@@ -67,11 +72,11 @@ const LeftSidebar = ({
   ];
 
   const handleArrowClick = (direction) => {
-    if (direction === "up") {
+    if (direction === "left") {
       setCurrentVideoIndex(
         currentVideoIndex > 0 ? currentVideoIndex - 1 : videos.length - 1
       );
-    } else if (direction === "down") {
+    } else if (direction === "right") {
       setCurrentVideoIndex((currentVideoIndex + 1) % videos.length);
     }
     setIsPlaying(true); // Automatically play the next video
@@ -85,6 +90,16 @@ const LeftSidebar = ({
         videoRef.current.play();
       }
       setIsPlaying(!isPlaying);
+    }
+  };
+
+  const handleVolumeChange = (e) => {
+    const newVolume = e.target.value;
+    setVolume(newVolume);
+    // console.log(newVolume);
+
+    if (videoRef.current) {
+      videoRef.current.volume = newVolume; // Set the volume of the video
     }
   };
 
@@ -110,7 +125,7 @@ const LeftSidebar = ({
         height: "calc(100vh - 55px - 50px)", // Adjusted height for the sidebar
       }}
     >
-      <div className="card mb-5">
+      <div className="card mb-1">
         <div
           className="video-container"
           style={{
@@ -145,7 +160,6 @@ const LeftSidebar = ({
                 border: "1px solid #ccc",
                 backgroundColor: "#000",
                 left: "0",
-
                 position: "sticky",
                 top: "0",
                 zIndex: "1",
@@ -188,9 +202,9 @@ const LeftSidebar = ({
                 <button
                   style={{
                     position: "absolute",
-                    top: "10px",
-                    left: "50%",
-                    transform: "translateX(-50%)",
+                    bottom: "45px", // Position the arrow at the bottom
+                    left: "10px", // Left side
+                    transform: "translateY(0)", // No need for vertical centering
                     backgroundColor: "rgba(0, 0, 0, 0.7)",
                     color: "#FFFFFF",
                     fontSize: "24px",
@@ -201,7 +215,7 @@ const LeftSidebar = ({
                     boxShadow: "0 4px 8px rgba(0, 0, 0, 0.4)",
                     transition: "all 0.3s ease-in-out",
                     border: "none",
-                    zIndex: "10",
+                    zIndex: "5", // Lower zIndex so the icons stay on top
                   }}
                   onMouseOver={(e) =>
                     (e.target.style.backgroundColor = "rgba(0, 0, 0, 0.9)")
@@ -209,17 +223,17 @@ const LeftSidebar = ({
                   onMouseOut={(e) =>
                     (e.target.style.backgroundColor = "rgba(0, 0, 0, 0.7)")
                   }
-                  onClick={() => handleArrowClick("up")}
+                  onClick={() => handleArrowClick("left")}
                 >
-                  ↑
+                  ← {/* Left Arrow */}
                 </button>
 
                 <button
                   style={{
                     position: "absolute",
-                    bottom: "10px",
-                    left: "50%",
-                    transform: "translateX(-50%)",
+                    bottom: "45px", // Position the arrow at the bottom
+                    right: "10px", // Right side
+                    transform: "translateY(0)", // No need for vertical centering
                     backgroundColor: "rgba(0, 0, 0, 0.7)",
                     color: "#FFFFFF",
                     fontSize: "24px",
@@ -230,7 +244,7 @@ const LeftSidebar = ({
                     boxShadow: "0 4px 8px rgba(0, 0, 0, 0.4)",
                     transition: "all 0.3s ease-in-out",
                     border: "none",
-                    zIndex: "10",
+                    zIndex: "5", // Lower zIndex so the icons stay on top
                   }}
                   onMouseOver={(e) =>
                     (e.target.style.backgroundColor = "rgba(0, 0, 0, 0.9)")
@@ -238,9 +252,9 @@ const LeftSidebar = ({
                   onMouseOut={(e) =>
                     (e.target.style.backgroundColor = "rgba(0, 0, 0, 0.7)")
                   }
-                  onClick={() => handleArrowClick("down")}
+                  onClick={() => handleArrowClick("right")}
                 >
-                  ↓
+                  → {/* Right Arrow */}
                 </button>
               </>
             )}
@@ -250,12 +264,12 @@ const LeftSidebar = ({
               <div
                 style={{
                   position: "absolute",
-                  bottom: "60px",
-                  right: "10px",
+                  bottom: "120px", // Adjust to set the position a little higher from the bottom
+                  right: "10px", // Aligns the icons to the right end
                   display: "flex",
                   flexDirection: "column",
-                  alignItems: "center",
-                  gap: "10px",
+                  alignItems: "flex-end", // Aligns icons to the right end
+                  gap: "10px", // Space between each icon
                   zIndex: "10",
                 }}
               >
@@ -267,7 +281,11 @@ const LeftSidebar = ({
                   }}
                   title="Like"
                 />
-                <p style={{ color: "white", margin: "5px 0" }}>7.5K</p>
+                <p
+                  style={{ color: "white", margin: "5px 0", fontSize: "14px" }}
+                >
+                  7.5K
+                </p>
 
                 <FaThumbsDown
                   style={{
@@ -277,7 +295,11 @@ const LeftSidebar = ({
                   }}
                   title="Dislike"
                 />
-                <p style={{ color: "white", margin: "5px 0" }}>Dislike</p>
+                <p
+                  style={{ color: "white", margin: "5px 0", fontSize: "14px" }}
+                >
+                  Dislike
+                </p>
 
                 <FaComment
                   style={{
@@ -287,7 +309,11 @@ const LeftSidebar = ({
                   }}
                   title="Comment"
                 />
-                <p style={{ color: "white", margin: "5px 0" }}>18K</p>
+                <p
+                  style={{ color: "white", margin: "5px 0", fontSize: "14px" }}
+                >
+                  18K
+                </p>
 
                 <FaShare
                   style={{
@@ -297,13 +323,70 @@ const LeftSidebar = ({
                   }}
                   title="Share"
                 />
-                <p style={{ color: "white", margin: "5px 0" }}>Share</p>
+                <p
+                  style={{ color: "white", margin: "5px 0", fontSize: "14px" }}
+                >
+                  Share
+                </p>
+
+                {/* Volume control - volume icon and input */}
+                <div
+                  style={{ display: "flex", alignItems: "center", gap: "8px" }}
+                >
+                  {/* Volume Icon */}
+                  {volume === 0 ? (
+                    <FaVolumeMute
+                      style={{
+                        color: "white",
+                        fontSize: "24px",
+                        cursor: "pointer",
+                      }}
+                      title="Mute"
+                    />
+                  ) : volume < 0.5 ? (
+                    <FaVolumeDown
+                      style={{
+                        color: "white",
+                        fontSize: "24px",
+                        cursor: "pointer",
+                      }}
+                      title="Low Volume"
+                    />
+                  ) : (
+                    <FaVolumeUp
+                      style={{
+                        color: "white",
+                        fontSize: "24px",
+                        cursor: "pointer",
+                      }}
+                      title="Volume"
+                    />
+                  )}
+
+                  {/* Volume Input */}
+                  <input
+                    type="range"
+                    min="0"
+                    max="1"
+                    step="0.01"
+                    value={volume}
+                    onChange={handleVolumeChange}
+                    style={{
+                      width: "80px", // Adjusted width for better positioning
+                      height: "5px",
+                      backgroundColor: "rgba(255, 255, 255, 0.5)",
+                      borderRadius: "5px",
+                      cursor: "pointer",
+                    }}
+                    aria-label="Volume control"
+                  />
+                </div>
               </div>
             )}
           </div>
         </div>
         {/* Second Topic: Groups */}
-        <div className="card">
+        <div className="card mt-4">
           <div
             className="d-flex align-items-center text-light p-2"
             style={{
@@ -315,32 +398,31 @@ const LeftSidebar = ({
               Groups
             </h5>
           </div>
-
-          <div className="card shadow-sm p-3">
-            <ul className="list-unstyled">
-              {updates.map((update) => (
-                <li
-                  key={update.id}
-                  className="d-flex align-items-start mb-3"
-                  style={{ gap: "10px" }}
-                >
-                  <img
-                    src={update.avatar}
-                    alt={update.name}
-                    className="rounded-circle"
-                    style={{ width: "40px", height: "40px" }}
-                  />
-                  <div>
-                    <p className="mb-1" style={{ fontSize: "0.9rem" }}>
-                      <strong>{update.name}</strong> {update.message}
-                    </p>
-                    <small className="text-muted">{update.time}</small>
-                  </div>
-                </li>
-              ))}
-            </ul>
-          </div>
         </div>
+      </div>
+      <div className=" p-1">
+        <ul className="list-unstyled">
+          {updates.map((update) => (
+            <li
+              key={update.id}
+              className="d-flex align-items-start mb-3"
+              style={{ gap: "10px" }}
+            >
+              <img
+                src={update.avatar}
+                alt={update.name}
+                className="rounded-circle"
+                style={{ width: "40px", height: "40px" }}
+              />
+              <div>
+                <p className="mb-1" style={{ fontSize: "0.9rem" }}>
+                  <strong>{update.name}</strong> {update.message}
+                </p>
+                <small className="text-muted">{update.time}</small>
+              </div>
+            </li>
+          ))}
+        </ul>
       </div>
     </div>
   );
