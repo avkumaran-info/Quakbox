@@ -25,7 +25,7 @@ const LeftSidebar = ({
   const videos = [video4, video1, video2, video3];
   const [currentVideoIndex, setCurrentVideoIndex] = useState(0);
   const [isHovered, setIsHovered] = useState(false);
-  const [isPlaying, setIsPlaying] = useState(false); // Start with video paused
+  const [isPlaying, setIsPlaying] = useState(false);
   const videoRef = useRef(null);
 
   const updates = [
@@ -100,35 +100,25 @@ const LeftSidebar = ({
 
   return (
     <div
-      className="col-md-3 d-none d-md-block bg-light position-fixed mb-5 h-100"
+      className="col-md-3 d-none d-md-block bg-light position-fixed mb-5"
       style={{
         top: "55px",
         left: "0",
         boxSizing: "border-box",
         paddingBottom: "100px",
         overflowY: "auto",
+        height: "calc(100vh - 55px - 50px)", // Adjusted height for the sidebar
       }}
     >
       <div className="card mb-5">
-        {/*<div
-          className="d-flex align-items-center text-light p-2"
-          style={{
-            background: "linear-gradient(to right, #1e90ff, #87cefa)",
-            color: "white",
-          }}
-        >
-          <h5 className="text-center mb-0" style={{ fontSize: "15px" }}>
-            Shorts Video Player
-          </h5>
-        </div>*/}
-
         <div
           className="video-container"
           style={{
             textAlign: "center",
-            maxHeight: "calc(100vh - 125px)",
+            maxHeight: "calc(100vh - 55px - 50px)", // Space between navbar and footer
             position: "relative",
-            marginBottom: "10px",
+            marginBottom: "clamp(8px, 2vh, 16px)", // Ensures a scalable gap
+            paddingBottom: "1rem", // Space for icons
           }}
         >
           <div
@@ -146,7 +136,7 @@ const LeftSidebar = ({
               ref={videoRef}
               src={videos[currentVideoIndex]}
               width="100%"
-              height="500px"
+              height="100%"
               controls={false}
               muted={false}
               loop={true}
@@ -155,10 +145,7 @@ const LeftSidebar = ({
                 border: "1px solid #ccc",
                 backgroundColor: "#000",
                 left: "0",
-                borderTopLeftRadius: "0px",
-                borderTopRightRadius: "0px",
-                borderBottomLeftRadius: "25px",
-                borderBottomRightRadius: "25px",
+
                 position: "sticky",
                 top: "0",
                 zIndex: "1",
@@ -194,7 +181,8 @@ const LeftSidebar = ({
                 {isPlaying ? <FaPause /> : <FaPlay />}
               </button>
             )}
-            {/* Up and Down Arrow Buttons */}
+
+            {/* Arrow buttons */}
             {isHovered && (
               <>
                 <button
@@ -256,7 +244,8 @@ const LeftSidebar = ({
                 </button>
               </>
             )}
-            {/* All icons appear on hover */}
+
+            {/* Icons section */}
             {isHovered && (
               <div
                 style={{

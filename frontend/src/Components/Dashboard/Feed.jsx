@@ -439,7 +439,7 @@ const Feed = ({ countryCode, flag, countryName, handleCountryChange }) => {
             data.posts &&
             Array.isArray(data.posts) &&
             data.posts.map((post) => (
-              <div className="card mb-4" key={post.id}>
+              <div className="card mb-1" key={post.id}>
                 {" "}
                 {/* Add key here */}
                 {/* Post Header */}
@@ -461,7 +461,7 @@ const Feed = ({ countryCode, flag, countryName, handleCountryChange }) => {
                   </div>
                 </div>
                 {/* Post Content */}
-                <div className="card-body p-0">
+                <div className="card-body p-0 w-100">
                   {post.message && <p className="px-3">{post.message}</p>}
 
                   {post.attachments &&
@@ -469,16 +469,17 @@ const Feed = ({ countryCode, flag, countryName, handleCountryChange }) => {
                       if (attachment.type === "image") {
                         return (
                           <img
-                            key={index} // This key is for attachments, index is fine for these
+                            key={index} // This key is for attachments; index is fine for these
                             src={attachment.media[0].url}
                             alt={attachment.media[0].alt_text || "Post image"}
                             className="img-fluid"
                             style={{
-                              maxHeight: "362.5px",
                               objectFit: "contain",
                               backgroundColor: "white",
                               display: "block",
                               margin: "auto",
+                              maxHeight: "70vh", // Restricts the image to 80% of the viewport height
+                              maxWidth: "100%", // Ensures it doesn't exceed the container width
                             }}
                           />
                         );
