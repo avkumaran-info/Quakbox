@@ -6,7 +6,7 @@ import {
   FaShare,
   FaPlay,
   FaPause,
-  FaVolumeUp, // Volume icon
+  FaVolumeUp,
   FaVolumeMute,
   FaVolumeDown,
 } from "react-icons/fa";
@@ -30,6 +30,7 @@ const LeftSidebar = ({
   const [isHovered, setIsHovered] = useState(false);
   const [isPlaying, setIsPlaying] = useState(false);
   const [volume, setVolume] = useState(1); // Default volume is 100%
+  const [isLoading, setIsLoading] = useState(true); // Loading state for video
 
   const videoRef = useRef(null);
 
@@ -93,14 +94,20 @@ const LeftSidebar = ({
     }
   };
 
-  const handleVolumeChange = (e) => {
-    const newVolume = e.target.value;
-    setVolume(newVolume);
-    // console.log(newVolume);
+  const handleVolumeToggle = () => {
+    if (volume === 0) {
+      setVolume(1); // Unmute the video (volume 100%)
+    } else {
+      setVolume(0); // Mute the video (volume 0)
+    }
 
     if (videoRef.current) {
-      videoRef.current.volume = newVolume; // Set the volume of the video
+      videoRef.current.volume = volume === 0 ? 1 : 0; // Set video volume
     }
+  };
+
+  const handleLoadedData = () => {
+    setIsLoading(false); // Set loading to false when the video is ready
   };
 
   useEffect(() => {
@@ -123,6 +130,7 @@ const LeftSidebar = ({
         paddingBottom: "100px",
         overflowY: "auto",
         height: "calc(100vh - 55px - 50px)", // Adjusted height for the sidebar
+        position: "relative", // Ensure it holds the position of elements within it
       }}
     >
       <div className="card mb-1">
@@ -130,10 +138,9 @@ const LeftSidebar = ({
           className="video-container"
           style={{
             textAlign: "center",
-            maxHeight: "calc(100vh - 55px - 50px)", // Space between navbar and footer
             position: "relative",
-            marginBottom: "clamp(8px, 2vh, 16px)", // Ensures a scalable gap
-            paddingBottom: "1rem", // Space for icons
+            marginBottom: "clamp(8px, 2vh, 16px)",
+            paddingBottom: "1rem",
           }}
         >
           <div
@@ -143,6 +150,7 @@ const LeftSidebar = ({
               maxWidth: "400px",
               margin: "0 auto",
               position: "relative",
+              minHeight: "220px", // Ensure the video section has a minimum height, so the group section stays in place
             }}
             onMouseEnter={() => setIsHovered(true)}
             onMouseLeave={() => setIsHovered(false)}
@@ -155,7 +163,7 @@ const LeftSidebar = ({
               controls={false}
               muted={false}
               loop={true}
-              autoPlay={false} // Start with video paused
+              autoPlay={false}
               style={{
                 border: "1px solid #ccc",
                 backgroundColor: "#000",
@@ -164,47 +172,109 @@ const LeftSidebar = ({
                 top: "0",
                 zIndex: "1",
               }}
+              onLoadedData={handleLoadedData}
             />
 
-            {isHovered && (
-              <button
-                onClick={togglePlayPause}
+            {/* Show loading screen when the video is loading */}
+            {isLoading && (
+              <div
                 style={{
                   position: "absolute",
-                  top: "10px",
-                  left: "10px",
-                  backgroundColor: "rgba(0, 0, 0, 0.7)",
-                  color: "white",
-                  border: "none",
-                  borderRadius: "50%",
-                  padding: "10px",
-                  cursor: "pointer",
-                  fontSize: "18px",
+                  top: "0",
+                  left: "0",
+                  width: "100%",
+                  height: videoRef.current
+                    ? videoRef.current.clientHeight
+                    : "100%", // Match spinner height to video height
+                  backgroundColor: "rgba(0, 0, 0, 0.6)",
                   display: "flex",
-                  alignItems: "center",
                   justifyContent: "center",
-                  zIndex: "10",
+                  alignItems: "center",
+                  zIndex: "5",
                 }}
-                onMouseOver={(e) =>
-                  (e.target.style.backgroundColor = "rgba(0, 0, 0, 0.9)")
-                }
-                onMouseOut={(e) =>
-                  (e.target.style.backgroundColor = "rgba(0, 0, 0, 0.7)")
-                }
               >
-                {isPlaying ? <FaPause /> : <FaPlay />}
-              </button>
+                {/* Loading Spinner */}
+                <div
+                  style={{
+                    border:
+                      "6px solid #f3f3f3" /* Light background color for the spinner */,
+                    borderTop: "6px solid #3498db" /* Spinner color */,
+                    borderRadius: "50%",
+                    width: "50px" /* Size of the spinner */,
+                    height: "50px" /* Size of the spinner */,
+                    animation:
+                      "spin 2s linear infinite" /* Spinner animation */,
+                  }}
+                ></div>
+              </div>
             )}
 
-            {/* Arrow buttons */}
             {isHovered && (
               <>
                 <button
+                  onClick={togglePlayPause}
                   style={{
                     position: "absolute",
-                    bottom: "45px", // Position the arrow at the bottom
-                    left: "10px", // Left side
-                    transform: "translateY(0)", // No need for vertical centering
+                    top: "10px",
+                    left: "10px",
+                    backgroundColor: "rgba(0, 0, 0, 0.7)",
+                    color: "white",
+                    border: "none",
+                    borderRadius: "50%",
+                    padding: "10px",
+                    cursor: "pointer",
+                    fontSize: "18px",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    zIndex: "10",
+                  }}
+                  onMouseOver={(e) =>
+                    (e.target.style.backgroundColor = "rgba(0, 0, 0, 0.9)")
+                  }
+                  onMouseOut={(e) =>
+                    (e.target.style.backgroundColor = "rgba(0, 0, 0, 0.7)")
+                  }
+                >
+                  {isPlaying ? <FaPause /> : <FaPlay />}
+                </button>
+
+                {/* Mute button positioned on top right */}
+                <button
+                  onClick={handleVolumeToggle}
+                  style={{
+                    position: "absolute",
+                    top: "10px",
+                    right: "10px", // Positioned to the top-right corner
+                    backgroundColor: "rgba(0, 0, 0, 0.7)",
+                    color: "white",
+                    border: "none",
+                    borderRadius: "50%",
+                    padding: "10px",
+                    cursor: "pointer",
+                    fontSize: "18px",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    zIndex: "10",
+                  }}
+                  onMouseOver={(e) =>
+                    (e.target.style.backgroundColor = "rgba(0, 0, 0, 0.9)")
+                  }
+                  onMouseOut={(e) =>
+                    (e.target.style.backgroundColor = "rgba(0, 0, 0, 0.7)")
+                  }
+                >
+                  {volume === 0 ? <FaVolumeMute /> : <FaVolumeUp />}
+                </button>
+
+                {/* Arrow buttons */}
+                <button
+                  style={{
+                    position: "absolute",
+                    bottom: "45px",
+                    left: "10px",
+                    transform: "translateY(0)",
                     backgroundColor: "rgba(0, 0, 0, 0.7)",
                     color: "#FFFFFF",
                     fontSize: "24px",
@@ -215,14 +285,8 @@ const LeftSidebar = ({
                     boxShadow: "0 4px 8px rgba(0, 0, 0, 0.4)",
                     transition: "all 0.3s ease-in-out",
                     border: "none",
-                    zIndex: "5", // Lower zIndex so the icons stay on top
+                    zIndex: "5",
                   }}
-                  onMouseOver={(e) =>
-                    (e.target.style.backgroundColor = "rgba(0, 0, 0, 0.9)")
-                  }
-                  onMouseOut={(e) =>
-                    (e.target.style.backgroundColor = "rgba(0, 0, 0, 0.7)")
-                  }
                   onClick={() => handleArrowClick("left")}
                 >
                   ← {/* Left Arrow */}
@@ -231,9 +295,9 @@ const LeftSidebar = ({
                 <button
                   style={{
                     position: "absolute",
-                    bottom: "45px", // Position the arrow at the bottom
-                    right: "10px", // Right side
-                    transform: "translateY(0)", // No need for vertical centering
+                    bottom: "45px",
+                    right: "10px",
+                    transform: "translateY(0)",
                     backgroundColor: "rgba(0, 0, 0, 0.7)",
                     color: "#FFFFFF",
                     fontSize: "24px",
@@ -244,14 +308,59 @@ const LeftSidebar = ({
                     boxShadow: "0 4px 8px rgba(0, 0, 0, 0.4)",
                     transition: "all 0.3s ease-in-out",
                     border: "none",
-                    zIndex: "5", // Lower zIndex so the icons stay on top
+                    zIndex: "5",
                   }}
-                  onMouseOver={(e) =>
-                    (e.target.style.backgroundColor = "rgba(0, 0, 0, 0.9)")
-                  }
-                  onMouseOut={(e) =>
-                    (e.target.style.backgroundColor = "rgba(0, 0, 0, 0.7)")
-                  }
+                  onClick={() => handleArrowClick("right")}
+                >
+                  → {/* Right Arrow */}
+                </button>
+              </>
+            )}
+
+            {/* Arrow buttons */}
+            {isHovered && (
+              <>
+                <button
+                  style={{
+                    position: "absolute",
+                    bottom: "45px",
+                    left: "10px",
+                    transform: "translateY(0)",
+                    backgroundColor: "rgba(0, 0, 0, 0.7)",
+                    color: "#FFFFFF",
+                    fontSize: "24px",
+                    fontWeight: "bold",
+                    padding: "12px 16px",
+                    borderRadius: "50%",
+                    cursor: "pointer",
+                    boxShadow: "0 4px 8px rgba(0, 0, 0, 0.4)",
+                    transition: "all 0.3s ease-in-out",
+                    border: "none",
+                    zIndex: "5",
+                  }}
+                  onClick={() => handleArrowClick("left")}
+                >
+                  ← {/* Left Arrow */}
+                </button>
+
+                <button
+                  style={{
+                    position: "absolute",
+                    bottom: "45px",
+                    right: "10px",
+                    transform: "translateY(0)",
+                    backgroundColor: "rgba(0, 0, 0, 0.7)",
+                    color: "#FFFFFF",
+                    fontSize: "24px",
+                    fontWeight: "bold",
+                    padding: "12px 16px",
+                    borderRadius: "50%",
+                    cursor: "pointer",
+                    boxShadow: "0 4px 8px rgba(0, 0, 0, 0.4)",
+                    transition: "all 0.3s ease-in-out",
+                    border: "none",
+                    zIndex: "5",
+                  }}
                   onClick={() => handleArrowClick("right")}
                 >
                   → {/* Right Arrow */}
@@ -264,12 +373,12 @@ const LeftSidebar = ({
               <div
                 style={{
                   position: "absolute",
-                  bottom: "120px", // Adjust to set the position a little higher from the bottom
-                  right: "10px", // Aligns the icons to the right end
+                  bottom: "120px",
+                  right: "10px",
                   display: "flex",
                   flexDirection: "column",
-                  alignItems: "flex-end", // Aligns icons to the right end
-                  gap: "10px", // Space between each icon
+                  alignItems: "flex-end",
+                  gap: "10px",
                   zIndex: "10",
                 }}
               >
@@ -328,65 +437,13 @@ const LeftSidebar = ({
                 >
                   Share
                 </p>
-
-                {/* Volume control - volume icon and input */}
-                <div
-                  style={{ display: "flex", alignItems: "center", gap: "8px" }}
-                >
-                  {/* Volume Icon */}
-                  {volume === 0 ? (
-                    <FaVolumeMute
-                      style={{
-                        color: "white",
-                        fontSize: "24px",
-                        cursor: "pointer",
-                      }}
-                      title="Mute"
-                    />
-                  ) : volume < 0.5 ? (
-                    <FaVolumeDown
-                      style={{
-                        color: "white",
-                        fontSize: "24px",
-                        cursor: "pointer",
-                      }}
-                      title="Low Volume"
-                    />
-                  ) : (
-                    <FaVolumeUp
-                      style={{
-                        color: "white",
-                        fontSize: "24px",
-                        cursor: "pointer",
-                      }}
-                      title="Volume"
-                    />
-                  )}
-
-                  {/* Volume Input */}
-                  <input
-                    type="range"
-                    min="0"
-                    max="1"
-                    step="0.01"
-                    value={volume}
-                    onChange={handleVolumeChange}
-                    style={{
-                      width: "80px", // Adjusted width for better positioning
-                      height: "5px",
-                      backgroundColor: "rgba(255, 255, 255, 0.5)",
-                      borderRadius: "5px",
-                      cursor: "pointer",
-                    }}
-                    aria-label="Volume control"
-                  />
-                </div>
               </div>
             )}
           </div>
         </div>
+
         {/* Second Topic: Groups */}
-        <div className="card mt-4">
+        <div className="card mt-4" style={{ zIndex: 1 }}>
           <div
             className="d-flex align-items-center text-light p-2"
             style={{
@@ -400,7 +457,7 @@ const LeftSidebar = ({
           </div>
         </div>
       </div>
-      <div className=" p-1">
+      <div className="p-1">
         <ul className="list-unstyled">
           {updates.map((update) => (
             <li
