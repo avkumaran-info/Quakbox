@@ -12,7 +12,7 @@ import NavBar from "./Components/Dashboard/NavBar";
 import GoogleAuth from "./Components/socialLogin/GoogleAuth";
 import FanCountriesComponent from "./Components/FanCountriesComponent";
 import store from "./Components/redux/store";
-
+import VidoeHome from "./Components/CreateUpload/pages/VidoeHome";
 const App = () => {
   return (
     <Provider store={store}>
@@ -24,6 +24,7 @@ const App = () => {
           <Route path="/dashboard" element={<Home />} />
           <Route path="/chatroom" element={<ChatPage />} />
           <Route path="/golive" element={<GoLive />} />
+          <Route path="/goVideo/*" element={<VidoeHome />} />
           {/* <Route path="/test" element={<NavBar />} /> */}
           <Route
             path="/favouriteCountires"
