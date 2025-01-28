@@ -10,6 +10,7 @@ import ChatPage from "./Components/ChatPage";
 import GoLive from "./Components/GoLive";
 import FanCountriesComponent from "./Components/FanCountriesComponent";
 import store from "./Components/redux/store";
+import FanCountry from "./Components/FanCountry";
 
 const App = () => {
   return (
@@ -29,6 +30,7 @@ const App = () => {
             element={<FanCountriesComponent />}
           />
           {/* favouriteCountires */}
+          <Route path="test" element={<FanCountry />} />
         </Routes>
       </Router>
     </Provider>
