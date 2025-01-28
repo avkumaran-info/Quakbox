@@ -2,6 +2,7 @@ import { useState } from "react";
 import Button from "@mui/material/Button";
 import Popover from "@mui/material/Popover";
 import List from "@mui/material/List";
+import "./HamburgerMenu.css";
 import ListItemButton from "@mui/material/ListItemButton";
 import ListItemIcon from "@mui/material/ListItemIcon";
 import ListItemText from "@mui/material/ListItemText";
@@ -26,9 +27,8 @@ const HamburgerMenu = () => {
   const id = open ? "create-menu-popover" : undefined;
 
   return (
-    <div
-      style={{ display: "flex", justifyContent: "flex-end", padding: "10px" }}
-    >
+    <div className="hamburgerMenuLinkContainer">
+      {/* <div></div> */}
       <div style={{ display: "flex", alignItems: "center" }}>
         <Link
           to="/goVideo"

@@ -21,6 +21,7 @@ const TakePhoto = () => {
     };
     addContent("photos", photoData);
     alert("Photo saved!");
+    setPhoto(null);
   };
 
   return (

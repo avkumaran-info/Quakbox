@@ -38,6 +38,7 @@ const CreateVideo = () => {
     };
     addContent("videos", videoData);
     alert("Video saved!");
+    setVideoBlob(null);
   };
 
   return (

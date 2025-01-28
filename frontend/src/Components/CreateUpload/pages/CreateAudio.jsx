@@ -73,6 +73,7 @@ const CreateAudio = () => {
     };
     addContent("audios", audioData);
     alert("Audio saved!");
+    setAudioBlob(null);
   };
 
   return (
