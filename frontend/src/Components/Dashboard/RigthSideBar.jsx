@@ -18,6 +18,26 @@ import comment from "../../assets/images/Rigth side property/comment.png";
 import share from "../../assets/images/Rigth side property/share.webp";
 import followers from "../../assets/images/Rigth side property/followers.png";
 import fans from "../../assets/images/Rigth side property/fans.png";
+import ThumbUpOffAltIcon from "@mui/icons-material/ThumbUpOffAlt";
+import ThumbDownOffAltIcon from "@mui/icons-material/ThumbDownOffAlt";
+import CommentIcon from "@mui/icons-material/Comment";
+import ThumbUpIcon from "@mui/icons-material/ThumbUp";
+import ThumbDownIcon from "@mui/icons-material/ThumbDown";
+import PersonAddIcon from "@mui/icons-material/PersonAdd";
+import PersonIcon from "@mui/icons-material/Person";
+import AddCircleIcon from "@mui/icons-material/AddCircle";
+import FavoriteBorderIcon from "@mui/icons-material/FavoriteBorder";
+import FavoriteSharpIcon from "@mui/icons-material/FavoriteSharp";
+import StarBorderIcon from "@mui/icons-material/StarBorder";
+import SportsBaseballIcon from "@mui/icons-material/SportsBaseball";
+import SportsSoccerIcon from "@mui/icons-material/SportsSoccer";
+import SportsFootballIcon from "@mui/icons-material/SportsFootball";
+import StarIcon from "@mui/icons-material/Star";
+import GroupIcon from "@mui/icons-material/Group";
+import SendIcon from "@mui/icons-material/Send";
+import ShareIcon from "@mui/icons-material/Share";
+import ScreenShareIcon from "@mui/icons-material/ScreenShare";
+import { Tooltip } from "@mui/material";
 
 const RightSidebar = ({
   countryCode,
@@ -101,7 +121,7 @@ const RightSidebar = ({
             <h5 className="mt-2 mb-2 text-secondary">{countryName}</h5>
             {/* Like, Dislike, Comment, Share Icons */}
             <div className="d-flex justify-content-around">
-              <img
+              {/* <img
                 src={like}
                 alt="Like"
                 style={{
@@ -110,8 +130,111 @@ const RightSidebar = ({
                   cursor: "pointer",
                   marginRight: "10px",
                 }}
-              />
-              <img
+              /> */}
+              <Tooltip title="Like" arrow disableInteractive>
+                <ThumbUpIcon
+                  sx={{
+                    fontSize: 30,
+                    color: "#263238",
+                    "&:hover": {
+                      //color: "red",
+                      transform: "scale(1.2)",
+                    },
+                    transition: "all 0.3s ease",
+                    fontWeight: "bold",
+                    opacity: 0.8,
+                    cursor: "pointer",
+                  }}
+                  onClick={() => console.log("Icon clicked")}
+                />
+              </Tooltip>
+              <Tooltip title="Dislike" arrow disableInteractive>
+                <ThumbDownIcon
+                  sx={{
+                    fontSize: 30,
+                    color: "#263238",
+                    "&:hover": {
+                      //color: "red",
+                      transform: "scale(1.2)",
+                    },
+                    transition: "all 0.3s ease",
+                    fontWeight: "bold",
+                    opacity: 0.8,
+                    cursor: "pointer",
+                  }}
+                  onClick={() => console.log("Icon clicked")}
+                />
+              </Tooltip>
+
+              <Tooltip title="Comment" arrow disableInteractive>
+                <CommentIcon
+                  sx={{
+                    fontSize: 30,
+                    color: "#263238",
+                    "&:hover": {
+                      //color: "red",
+                      transform: "scale(1.2)",
+                    },
+                    transition: "all 0.3s ease",
+                    fontWeight: "bold",
+                    opacity: 0.8,
+                    cursor: "pointer",
+                  }}
+                  onClick={() => console.log("Icon clicked")}
+                />
+              </Tooltip>
+              <Tooltip title="Follow" arrow disableInteractive>
+                <FavoriteSharpIcon
+                  sx={{
+                    fontSize: 30,
+                    color: "#263238",
+                    "&:hover": {
+                      //color: "red",
+                      transform: "scale(1.2)",
+                    },
+                    transition: "all 0.3s ease",
+                    fontWeight: "bold",
+                    opacity: 0.8,
+                    cursor: "pointer",
+                  }}
+                  onClick={() => console.log("Icon clicked")}
+                />
+              </Tooltip>
+              <Tooltip title="Fans" arrow disableInteractive>
+                <GroupIcon
+                  sx={{
+                    fontSize: 30,
+                    color: "#263238",
+                    "&:hover": {
+                      //color: "red",
+                      transform: "scale(1.2)",
+                    },
+                    transition: "all 0.3s ease",
+                    fontWeight: "bold",
+                    opacity: 0.8,
+                    cursor: "pointer",
+                  }}
+                  onClick={() => console.log("Icon clicked")}
+                />
+              </Tooltip>
+              <Tooltip title="Share" arrow disableInteractive>
+                <ScreenShareIcon
+                  sx={{
+                    fontSize: 30,
+                    color: "#263238",
+                    "&:hover": {
+                      //color: "red",
+                      transform: "scale(1.2)",
+                    },
+                    transition: "all 0.3s ease",
+                    fontWeight: "bold",
+                    opacity: 0.8,
+                    cursor: "pointer",
+                  }}
+                  onClick={() => console.log("Icon clicked")}
+                />
+              </Tooltip>
+              {/* <img
                 src={dislike}
                 alt="Dislike"
                 style={{
@@ -120,8 +243,8 @@ const RightSidebar = ({
                   cursor: "pointer",
                   marginRight: "10px",
                 }}
-              />
-              <img
+              /> */}
+              {/* <img
                 src={comment}
                 alt="Comment"
                 style={{
@@ -130,8 +253,8 @@ const RightSidebar = ({
                   cursor: "pointer",
                   marginRight: "10px",
                 }}
-              />
-              <img
+              /> */}
+              {/* <img
                 src={followers}
                 alt="Comment"
                 style={{
@@ -140,8 +263,8 @@ const RightSidebar = ({
                   cursor: "pointer",
                   marginRight: "10px",
                 }}
-              />
-              <img
+              /> */}
+              {/* <img
                 src={fans}
                 alt="Comment"
                 style={{
@@ -150,8 +273,8 @@ const RightSidebar = ({
                   cursor: "pointer",
                   marginRight: "10px",
                 }}
-              />
-              <img
+              /> */}
+              {/* <img
                 src={share}
                 alt="Share"
                 style={{
@@ -159,10 +282,9 @@ const RightSidebar = ({
                   height: "25px",
                   cursor: "pointer",
                 }}
-              />
+              /> */}
             </div>
           </div>
-
           {/* Part 2 & 3: Scrollable Section */}
           <div
             style={{
