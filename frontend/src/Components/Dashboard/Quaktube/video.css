@@ -1,0 +1,50 @@
+/* Global Body Styling */
+body {
+    margin: 0;
+    padding: 0;
+    font-family: Arial, sans-serif; /* Use your preferred font */
+}
+
+/* Main Content Wrapper Styling */
+.main-content {
+    flex-grow: 1; /* Ensures it takes up remaining space */
+    margin-top: 100px; /* Navbar height */
+    position:absolute;
+    right:0%;
+    left:0%;
+    transition: margin-left 0.3s ease /* Smooth transition */
+  }
+/* When Sidebar is Expanded */
+.main-content.content-expanded {
+    margin-left: 270px; /* Adjust this value to match the expanded sidebar width */
+    margin-right: 30px; /* Gives space for right-side content */
+    width: calc(100% - 270px);
+}
+
+/* When Sidebar is Collapsed */
+.main-contents.content-collapsed {
+    position: absolute;
+    right:0%;
+    left:0%;
+}
+
+/* Sidebar Styling */
+.sidebar {
+    position: fixed;
+    top: 100px; /* Adjust based on your header height */
+    left: 0;
+    width: 270px; /* Sidebar default width */
+    height: calc(100vh - 100px); /* Adjust height to fit viewport */
+    background: linear-gradient(to bottom, #0028d8, #4400b1);
+    padding-top: 15px;
+    z-index: 900;
+    overflow: visible;
+    box-shadow: 2px 0 5px rgba(0, 0, 0, 0.1);
+    transition: width 0.3s ease, padding-top 0.3s ease;
+}
+
+/* Sidebar Collapsed State */
+.sidebar.toggled {
+    width: 80px; /* Adjust for collapsed state */
+    right: 0%;
+}

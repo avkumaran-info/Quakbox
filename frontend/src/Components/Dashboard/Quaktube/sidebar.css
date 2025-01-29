@@ -18,10 +18,6 @@
   transition: width 0.3s ease, padding-top 0.3s ease;
 }
 
-/* Sidebar collapsed state */
-.sidebar.toggled {
-  width: 80px; /* Adjust to show only icons */
-}
 
 /* When sidebar is visible, ensure full width */
 .sidebar.sidebar-visible {

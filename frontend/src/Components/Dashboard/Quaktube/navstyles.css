@@ -21,6 +21,7 @@
     font-weight: bold; /* Equivalent to the inline style fontWeight: "bold" */
     background: linear-gradient(to bottom, #0028d8, #4400b1); /* Gradient background */
     -webkit-background-clip: text; /* Makes the background clip to the text */
+    background-clip: text; /* Standard property for compatibility */
     color: transparent;
   }
 
@@ -93,7 +94,7 @@ body {
 
 /* Adjust Main Content When Sidebar is Collapsed */
 .sidebar.toggled ~ .main-content {
-    margin-left: 50px; /* Adjust to collapsed sidebar width */
+    margin-left: 80px; /* Adjust to collapsed sidebar width */
 }
 
  .main-content {
@@ -115,6 +116,11 @@ body {
   /* When the sidebar is collapsed */
   .main-content.content-collapsed {
     margin-left: 20px;
-    margin-right: 20px;
-    width: 1200px; /* Fit the remaining area when sidebar is collapsed */
+    width: 1250px; /* Fit the remaining area when sidebar is collapsed */
+  }
+
+  .container-fluid{
+    margin-right: 0%;
+    margin-right: 0%;
+
   }
