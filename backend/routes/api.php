@@ -33,33 +33,12 @@ Route::post('forgot-password/reset', [ForgotPasswordController::class, 'resetPas
 
 // Route to handle the Google login token
 Route::post('auth/google', [AuthController::class, 'loginWithGoogle']);
-
-Route::get('/auth/facebook', function () {
-    return Socialite::driver('facebook')->redirect();
-})->name('facebook.login');
-
-Route::get('/auth/facebook/callback', function () {
-    $facebookUser = Socialite::driver('facebook')->user();
-
-    // Handle the user data 
-    // 'avatar' => $facebookUser->avatar,
-    $user = \App\Models\User::updateOrCreate(
-        ['facebook_id' => $facebookUser->id],
-        [
-            'name' => $facebookUser->name,
-            'email' => $facebookUser->email,
-            'password' => bcrypt(\Illuminate\Support\Str::random(16)),
-        ]
-    );
-
-    // Log in the user
-    Auth::login($user);
-
-    return redirect('/dashboard'); // Redirect to the desired page
-});
+// Route to handle the Facebook Login token
+Route::post('/auth/facebook', [AuthController::class, 'handleFacebookAccessToken']);
 
 Route::middleware('auth:api')->get('user', [AuthController::class, 'user']);
 
+Route::get('get_geo_country', [CountryController::class, 'getGeoCountry']);
 Route::middleware('auth:api')->get('get_favourite_country', [CountryController::class, 'favouriteCountryByMemberId']);
 Route::middleware('auth:api')->post('set_favourite_country', [CountryController::class, 'storeFavouriteCountry']);
 Route::middleware('auth:api')->post('put_favourite_country', [CountryController::class, 'updateFavouriteCountry']);
@@ -79,6 +58,13 @@ Route::middleware('auth:api')->group(function () {
 
 Route::get('images/uploads/posts/{filename}', function ($filename) {
     $path = storage_path('app/public/uploads/posts/' . $filename);
+    if (!file_exists($path)) {
+        abort(404);
+    }
+    return response()->file($path);
+});
+Route::get('images/flags/{filename}', function ($filename) {
+    $path = storage_path('app/public/flags/' . $filename);
     if (!file_exists($path)) {
         abort(404);
     }

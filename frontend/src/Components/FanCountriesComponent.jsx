@@ -121,8 +121,12 @@ const FanCountriesComponent = () => {
         isFan: false,
         isFavourite: false,
       }));
-      setCountries(data); // Initialize countries
-      fetchFavouriteCountries(data); // Fetch favourite data
+
+      // Sort countries alphabetically by name
+      const sortedCountries = data.sort((a, b) => a.name.localeCompare(b.name));
+
+      setCountries(sortedCountries); // Initialize countries with sorted data
+      fetchFavouriteCountries(sortedCountries); // Fetch favourite data
     } catch (error) {
       handleError("Error fetching all countries");
     } finally {

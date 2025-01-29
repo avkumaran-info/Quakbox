@@ -7,7 +7,6 @@ html, body{
   padding: 0;
 }
 
-=======
 /* Optional custom styles for modal overlay */
 .modal.fade.show {
   display: flex;
@@ -22,3 +21,22 @@ textarea.form-control {
   border-radius: 4px;
 }
 
+
+/* Hide the scrollbar but keep scrolling functionality */
+.scroll-container {
+  overflow-y: scroll;
+  /* Enable scrolling */
+  scrollbar-width: none;
+  /* For Firefox */
+}
+
+.scroll-container::-webkit-scrollbar {
+  display: none;
+  /* Hide scrollbar in webkit-based browsers (Chrome, Safari, etc.) */
+}
+
+/* Add this CSS to your global styles */
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}

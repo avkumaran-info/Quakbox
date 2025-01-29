@@ -15,6 +15,7 @@ class PostController extends Controller
     public function getAllPosts($cc)
     {
         try {
+
             $posts = Post::with(['user', 'likes', 'comments'])
                 ->latest()
                 ->where('country_code', $cc)
@@ -33,6 +34,12 @@ class PostController extends Controller
                         ],
                         'likes' => [
                             'count' => $post->likes->count(),
+                            'liked_users' => $post->likes->map(function ($like) {
+                                return [
+                                    'id' => $like->user->id,
+                                    'name' => $like->user->username,
+                                ];
+                            }),
                         ],
                         'comments' => [
                             'count' => $post->comments->count(),

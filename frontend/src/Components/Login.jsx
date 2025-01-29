@@ -8,6 +8,7 @@ import { useTranslation } from "react-i18next";
 import i18n from "../i18n.js";
 import axios from "axios";
 import GoogleAuth from "./socialLogin/GoogleAuth";
+import FacebookSignIn from "./socialLogin/FacebookAuth";
 
 const Login = () => {
   const navigate = useNavigate();
@@ -26,7 +27,7 @@ const Login = () => {
       ...userField,
       [e.target.name]: e.target.value,
     });
-    console.log(userField);
+    // console.log(userField);
   };
 
   const validateForm = () => {
@@ -69,7 +70,7 @@ const Login = () => {
         userField
       );
       // Handle successful login
-      console.log("Login Successful:", response.data);
+      // console.log("Login Successful:", response.data);
       if (response.data.result) {
         // Store the token (optional)
         localStorage.setItem("api_token", response.data.token);
@@ -207,7 +208,7 @@ const Login = () => {
                         key={lang.code}
                         onClick={() => {
                           changeLanguage(lang.code);
-                          console.log(lang.code);
+                          // console.log(lang.code);
                         }}
                         className="btn btn-link text-white p-0 small"
                       >
@@ -318,12 +319,7 @@ const Login = () => {
 
                 <GoogleAuth />
 
-                <button
-                  type="button"
-                  className="btn btn-outline-primary mt-3 w-100"
-                >
-                  <i className="fab fa-facebook me-2"></i>Sign in with Facebook
-                </button>
+                <FacebookSignIn />
               </form>
               <p className="text-center mt-3 text-sm">
                 Don't have an account?{" "}
