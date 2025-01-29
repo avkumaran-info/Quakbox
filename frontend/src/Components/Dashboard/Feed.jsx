@@ -4,16 +4,17 @@ import userImage from "../../assets/images/vector-users-icon.jpg";
 import axios from "axios";
 import { Navigate } from "react-router-dom";
 
-const Feed = () => {
-  const [navbarHeight, setNavbarHeight] = useState(52);
+const Feed = ({ countryCode, flag, countryName, handleCountryChange }) => {
+  const [navbarHeight, setNavbarHeight] = useState(56);
   const [likedPosts, setLikedPosts] = useState([]);
+  const [dislikedPosts, setDislikedPosts] = useState([]);
   const [isPopupOpen, setIsPopupOpen] = useState(false);
   const [data, setData] = useState({ posts: [] });
   const [message, setMessage] = useState("");
-  const [countryCode, setCountryCode] = useState("in");
   const [mediaFile, setMediaFile] = useState(null);
   const [mediaPreview, setMediaPreview] = useState(null);
   const [userName, setUserName] = useState("");
+  const [currentUserId, setCurrentUserId] = useState(null);
 
   // Functions to handle popup visibility
   const openPopup = () => setIsPopupOpen(true);
@@ -41,15 +42,11 @@ const Feed = () => {
       const res = await axios.get(
         "https://develop.quakbox.com/admin/api/user",
         {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
+          headers: { Authorization: `Bearer ${token}` },
         }
       );
-      // console.log(res.data);
-      // console.log("User Data found:", res.data.users);
       setUserName(res.data.users);
-      // console.log(userName);
+      setCurrentUserId(res.data.users.id);
     } catch (error) {
       console.log(error);
     }
@@ -57,7 +54,6 @@ const Feed = () => {
 
   const handleSubmit = async () => {
     const token = localStorage.getItem("api_token");
-    // console.log(token);
 
     const formData = new FormData();
     formData.append("message", message);
@@ -77,15 +73,50 @@ const Feed = () => {
           },
         }
       );
-      // console.log(response);
 
       if (response.status === 201) {
-        // Handle success
-        // alert("Post created successfully!");
-        closePopup(); // Close the modal
+        const newPost = {
+          id: response.data.id,
+          message: message,
+          created_time: new Date().toISOString(),
+          from: {
+            name: userName.username,
+            profile_image: userImage,
+          },
+          attachments: mediaFile
+            ? {
+                data: [
+                  {
+                    type: mediaFile.type.startsWith("image/")
+                      ? "image"
+                      : "video",
+                    media: [
+                      {
+                        url: mediaPreview,
+                        alt_text: "Uploaded media",
+                      },
+                    ],
+                  },
+                ],
+              }
+            : null,
+          likes: { count: 0 },
+          liked_users: [],
+          dislikes: { count: 0 },
+          comments: { count: 0 },
+          shares: { count: 0 },
+        };
+
+        setData((prevData) => ({
+          ...prevData,
+          posts: [newPost, ...prevData.posts],
+        }));
+
+        setMessage("");
+        setMediaFile(null);
         setMediaPreview(null);
+        closePopup();
       } else {
-        // Handle server error
         alert("Failed to create post");
       }
     } catch (error) {
@@ -98,6 +129,30 @@ const Feed = () => {
   const handleLikeClick = async (postId) => {
     const token = localStorage.getItem("api_token");
 
+    const currentUser = {
+      id: currentUserId,
+      name: userName.username || "Unknown User",
+    };
+
+    setData((prevData) =>
+      Array.isArray(prevData.posts)
+        ? {
+            ...prevData,
+            posts: prevData.posts.map((post) =>
+              post.id === postId
+                ? {
+                    ...post,
+                    likes: {
+                      count: (post.likes?.count || 0) + 1,
+                    },
+                    liked_users: [...(post.liked_users || []), currentUser],
+                  }
+                : post
+            ),
+          }
+        : prevData
+    );
+
     try {
       const res = await axios.post(
         `https://develop.quakbox.com/admin/api/set_posts_like/${postId}/like`,
@@ -107,32 +162,59 @@ const Feed = () => {
         }
       );
 
-      if (res.status === 200) {
-        // Update like count and set post as liked
-        setData((prevData) =>
-          Array.isArray(prevData) // Ensure prevData is an array before mapping
-            ? prevData.map((post) =>
-                post.id === postId
-                  ? {
-                      ...post,
-                      likes: {
-                        count: (post.likes?.count || 0) + 1,
-                      },
-                    }
-                  : post
-              )
-            : prevData
-        );
-        setLikedPosts((prevLikedPosts) => [...prevLikedPosts, postId]); // Mark as liked
+      if (res.status !== 200) {
+        console.error("Failed to save the like in the database.");
+        revertLike(postId);
       }
     } catch (error) {
       console.error("Error liking the post:", error);
+      revertLike(postId);
+    }
+  };
+
+  // Helper function to revert the like action
+  const revertLike = (postId) => {
+    setData((prevData) =>
+      Array.isArray(prevData.posts)
+        ? {
+            ...prevData,
+            posts: prevData.posts.map((post) =>
+              post.id === postId
+                ? {
+                    ...post,
+                    likes: {
+                      count: Math.max((post.likes?.count || 0) - 1, 0),
+                    },
+                    liked_users: (post.liked_users || []).filter(
+                      (user) => user.id !== currentUserId
+                    ),
+                  }
+                : post
+            ),
+          }
+        : prevData
+    );
+  };
+
+  // Handle dislike Click
+
+  const handleDislikeClick = (postId) => {
+    if (dislikedPosts.includes(postId)) {
+      // Remove from dislikedPosts if already disliked
+      setDislikedPosts(dislikedPosts.filter((id) => id !== postId));
+    } else {
+      // Add to dislikedPosts
+      setDislikedPosts([...dislikedPosts, postId]);
+
+      // Optional: Remove from likedPosts if it's there
+      if (likedPosts.includes(postId)) {
+        setLikedPosts(likedPosts.filter((id) => id !== postId));
+      }
     }
   };
 
   const getPost = async () => {
     const token = localStorage.getItem("api_token");
-    // console.log(token);
 
     if (!token) {
       console.log("No token found, user may not be logged in.");
@@ -140,7 +222,7 @@ const Feed = () => {
     }
     try {
       const res = await axios.get(
-        "https://develop.quakbox.com/admin/api/get_posts/in",
+        `https://develop.quakbox.com/admin/api/get_posts/${countryCode}`,
         {
           headers: {
             Authorization: `Bearer ${token}`,
@@ -148,13 +230,7 @@ const Feed = () => {
           },
         }
       );
-      // console.log(res.data.posts);
       setData(res.data);
-      // console.log(res.data.posts[0].attachments.data[0].media[0].url);
-
-      // console.log(jsonData);
-
-      // console.log(data);
     } catch (error) {
       console.log(error);
     }
@@ -169,84 +245,11 @@ const Feed = () => {
     };
   }, [mediaPreview]);
 
-  // const jsonData = {
-  //   posts: [
-  //     {
-  //       id: "1",
-  //       created_time: "2025-01-17T10:30:00+0000",
-  //       message: "Check out this amazing view from my vacation! 🌴☀️",
-  //       from: {
-  //         name: "John Doe",
-  //         profile_image:
-  //           "https://media.istockphoto.com/id/1437816897/photo/business-woman-manager-or-human-resources-portrait-for-career-success-company-we-are-hiring.jpg?s=612x612&w=0&k=20&c=tyLvtzutRh22j9GqSGI33Z4HpIwv9vL_MZw_xOE19NQ=",
-  //       },
-  //       attachments: {
-  //         data: [
-  //           {
-  //             type: "photo",
-  //             media: [
-  //               {
-  //                 url: "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcReE4_46HUmsn2e1Ey-lckv36GLUlaKsx-XpQ&s",
-  //                 alt_text: "Vacation view",
-  //               },
-  //             ],
-  //           },
-  //         ],
-  //       },
-  //       likes: { count: 350 },
-  //       comments: { count: 25 },
-  //     },
-  //     {
-  //       id: "2",
-  //       created_time: "2025-01-16T15:00:00+0000",
-  //       message: "Check out this video I recorded! 📹",
-  //       from: {
-  //         name: "Jane Smith",
-  //         profile_image:
-  //           "https://media.istockphoto.com/id/1682296067/photo/happy-studio-portrait-or-professional-man-real-estate-agent-or-asian-businessman-smile-for.jpg?s=612x612&w=0&k=20&c=9zbG2-9fl741fbTWw5fNgcEEe4ll-JegrGlQQ6m54rg=",
-  //       },
-  //       attachments: {
-  //         data: [
-  //           {
-  //             type: "video",
-  //             media: [
-  //               {
-  //                 url: "https://www.youtube.com/watch?v=yj0njH4K4ZU",
-  //                 alt_text: "YouTube video",
-  //               },
-  //             ],
-  //           },
-  //         ],
-  //       },
-  //       likes: { count: 150 },
-  //       comments: { count: 12 },
-  //     },
-  //     {
-  //       id: "3",
-  //       created_time: "2025-01-15T08:00:00+0000",
-  //       message: "Check out this interesting article!",
-  //       from: { name: "Emily White", profile_image: null },
-  //       attachments: {
-  //         data: [
-  //           {
-  //             type: "link",
-  //             url: "https://example.com/article",
-  //             title: "An Interesting Article",
-  //             description: "Learn more about the latest trends in tech.",
-  //           },
-  //         ],
-  //       },
-  //       likes: { count: 200 },
-  //       comments: { count: 35 },
-  //     },
-  //   ],
-  // };
-
   useEffect(() => {
     userData();
     getPost();
     const updateNavbarHeight = () => {
-      setNavbarHeight(window.innerWidth <= 768 ? 90 : 48);
+      setNavbarHeight(window.innerWidth <= 768 ? 90 : 56);
     };
 
     updateNavbarHeight();
@@ -255,11 +258,11 @@ const Feed = () => {
     return () => {
       window.removeEventListener("resize", updateNavbarHeight);
     };
-  }, []);
+  }, [countryCode]);
 
   return (
     <div
-      className="col-12 col-md-6 offset-md-3 p-2"
+      className="col-12 col-md-6 offset-md-3 p-0"
       style={{
         marginTop: `${navbarHeight}px`,
         marginBottom: "60px",
@@ -267,35 +270,38 @@ const Feed = () => {
     >
       <div className="text-white p-0 rounded">
         {/* Post Input Section */}
-        <div className="card p-3 mb-4">
+        <div className="card p-1 mb-1">
           <div className="d-flex align-items-center">
             <img
               src={userImage}
               alt="Profile"
-              className="rounded-circle me-2"
+              className="rounded-circle"
               style={{ width: "40px", height: "40px" }}
             />
             <input
               type="text"
               className="form-control"
-              placeholder="What's on your mind?"
+              placeholder="Trend the Quakpost"
               onClick={openPopup}
-              style={{ fontSize: "16px" }}
+              style={{ fontSize: "16px", cursor: "pointer" }}
             />
-          </div>
-          <div className="d-flex justify-content-between flex-wrap mt-3">
             <button className="btn btn-light d-flex align-items-center flex-grow-1 m-1">
-              <i className="fa fa-video me-2 text-danger"></i> Live video
+              <i className="fa fa-video text-danger"></i>
             </button>
+          </div>
+          <div className="d-flex justify-content-between flex-wrap">
+            {/*<button className="btn btn-light d-flex align-items-center flex-grow-1 m-1">
+              <i className="fa fa-video me-2 text-danger"></i> Live video
+            </button>*/}
 
             {/* Button to trigger the popup */}
 
-            <button
+            {/*<button
               className="btn btn-light d-flex align-items-center flex-grow-1 m-1"
               onClick={openPopup}
             >
               <i className="fa fa-image me-2 text-success"></i> Photo/video
-            </button>
+            </button>*/}
 
             {/* Popup Modal */}
             {isPopupOpen && (
@@ -433,7 +439,9 @@ const Feed = () => {
             data.posts &&
             Array.isArray(data.posts) &&
             data.posts.map((post) => (
-              <div className="card mb-4" key={post.id}>
+              <div className="card mb-1" key={post.id}>
+                {" "}
+                {/* Add key here */}
                 {/* Post Header */}
                 <div className="card-header d-flex align-items-center bg-white border-0">
                   <img
@@ -445,39 +453,51 @@ const Feed = () => {
                   <div>
                     <h6 className="mb-0">
                       {post.from?.name || "Unknown User"}
-                    </h6>{" "}
+                    </h6>
                     {/* Fallback to "Unknown User" */}
                     <small className="text-muted">
                       {new Date(post.created_time).toLocaleString()}
                     </small>
                   </div>
                 </div>
-
                 {/* Post Content */}
-                <div className="card-body p-0">
-                  {post.message && <p className="p-3">{post.message}</p>}
+                <div className="card-body p-0 w-100">
+                  {post.message && <p className="px-3">{post.message}</p>}
 
                   {post.attachments &&
                     post.attachments.data.map((attachment, index) => {
                       if (attachment.type === "image") {
                         return (
-                          <>
-                            <img
-                              key={index}
-                              src={attachment.media[0].url}
-                              alt={attachment.media[0].alt_text || "Post image"}
-                              className="img-fluid w-100"
-                            />
-                          </>
+                          <img
+                            key={index} // This key is for attachments; index is fine for these
+                            src={attachment.media[0].url}
+                            alt={attachment.media[0].alt_text || "Post image"}
+                            className="img-fluid"
+                            style={{
+                              objectFit: "contain",
+                              backgroundColor: "white",
+                              display: "block",
+                              margin: "auto",
+                              maxHeight: "70vh", // Restricts the image to 80% of the viewport height
+                              maxWidth: "100%", // Ensures it doesn't exceed the container width
+                            }}
+                          />
                         );
                       }
                       if (attachment.type === "video") {
                         return (
                           <video
-                            key={index}
+                            key={index} // This key is for attachments, index is fine for these
                             controls
                             className="w-100"
-                            style={{ maxHeight: "400px" }}
+                            style={{
+                              maxWidth: "2133px",
+                              maxHeight: "362.5px",
+                              objectFit: "contain",
+                              backgroundColor: "black",
+                              display: "block",
+                              margin: "auto",
+                            }}
                           >
                             <source
                               src={attachment.media[0].url}
@@ -487,29 +507,9 @@ const Feed = () => {
                           </video>
                         );
                       }
-                      if (attachment.type === "link") {
-                        return (
-                          <div key={index} className="p-3">
-                            <a
-                              href={attachment.url}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              className="text-decoration-none"
-                            >
-                              <div className="border p-2 rounded">
-                                <h6>{attachment.title}</h6>
-                                <p className="text-muted">
-                                  {attachment.description}
-                                </p>
-                              </div>
-                            </a>
-                          </div>
-                        );
-                      }
                       return null;
                     })}
                 </div>
-
                 {/* Post Footer */}
                 <div className="card-footer bg-white d-flex justify-content-between align-items-center border-0">
                   <span className="text-muted">
@@ -520,7 +520,9 @@ const Feed = () => {
                   <div className="d-flex">
                     <button
                       className={`btn btn-sm me-2 ${
-                        likedPosts.includes(post.id)
+                        post.liked_users?.some(
+                          (user) => user.id === currentUserId
+                        )
                           ? "btn-primary text-white"
                           : "btn-light"
                       }`}
@@ -528,7 +530,9 @@ const Feed = () => {
                     >
                       <i
                         className={`bi ${
-                          likedPosts.includes(post.id)
+                          post.liked_users?.some(
+                            (user) => user.id === currentUserId
+                          )
                             ? "bi-hand-thumbs-up-fill"
                             : "bi-hand-thumbs-up"
                         }`}

@@ -2,12 +2,24 @@ import React, { useEffect, useRef, useState } from "react";
 import logo from "../../assets/logo/logo.png";
 import profileImage from "../../assets/images/vector-users-icon.jpg";
 import axios from "axios";
-import { useNavigate } from "react-router-dom";
 
-const NavBar = () => {
+import { Link, useNavigate } from "react-router-dom";
+import { useSelector, useDispatch } from "react-redux";
+
+const NavBar = ({
+  userData,
+  currentCountry,
+  handleLogoClick,
+  handleCountryChange,
+  handleWorldClick,
+}) => {
   const navigate = useNavigate();
   const [countries, setCountries] = useState([]);
   const [userName, setUserName] = useState("");
+
+  // const favouriteCountries = useSelector(selectFavouriteCountries);
+  // console.log("favouriteCountries");
+  // console.log(favouriteCountries);
 
   const dropdownRef = useRef(null);
   const [showDropdown, setShowDropdown] = useState(false);
@@ -15,7 +27,18 @@ const NavBar = () => {
   const [showAllFlags, setShowAllFlags] = useState(false);
   const [searchQuery, setSearchQuery] = useState(""); // State for search input
 
-  const userData = async () => {
+  // const handleLogoClick = () => {
+  //   navigate("/dashboard"); // Navigate to /dashboard
+  // };
+
+  // const handleFlagClick = (countryCode, flag, countryName) => {
+  //   navigate(`/country/${countryCode.toLowerCase()}`, {
+  //     state: { flag, countryName },
+  //   }); // Pass the flag image with navigate
+  //   window.location.reload();
+  // };
+
+  const userDatas = async () => {
     const token = localStorage.getItem("api_token");
     if (!token) {
       return;
@@ -29,9 +52,25 @@ const NavBar = () => {
           },
         }
       );
+
       // console.log(res.data);
-      // console.log("User Data found:", res.data.users);
       setUserName(res.data.users.username);
+      // console.log(userName);
+
+      // countries.map((e, i) => {
+      //   console.log(e);
+
+      //   if (e.cca2 === res.data.user_details.country) {
+      //     const flag = e.flags.png;
+      //     const countryName = e.name.common;
+      //     console.log(flag);
+      //     navigate(`/dashboard`, {
+      //       state: { flag, countryName },
+      //     }); // Pass the flag image with navigate
+      //     window.location.reload();
+      //   }
+      // });
+
       // console.log(userName);
     } catch (error) {
       console.log(error);
@@ -40,7 +79,7 @@ const NavBar = () => {
 
   const handleLogout = async () => {
     const token = localStorage.getItem("api_token");
-    console.log("handleLogout : ", token);
+    // console.log("handleLogout : ", token);
 
     if (!token) {
       console.log("No token found, user may not be logged in.");
@@ -58,7 +97,7 @@ const NavBar = () => {
           },
         }
       );
-      console.log(response);
+      // console.log(response);
 
       // Clear local storage and redirect
       localStorage.clear();
@@ -76,15 +115,18 @@ const NavBar = () => {
   useEffect(() => {
     const fetchCountries = async () => {
       try {
-        const res = await axios.get("https://restcountries.com/v3.1/all");
-        setCountries(res.data);
+        const res = await axios.get(
+          // "https://restcountries.com/v3.1/all"
+          "https://develop.quakbox.com/admin/api/get_geo_country"
+        );
+        setCountries(res.data.geo_countries);
+        // console.log(res);
       } catch (error) {
         console.error("Error fetching countries:", error);
       }
     };
-
+    userDatas();
     fetchCountries();
-    userData();
   }, []);
 
   useEffect(() => {
@@ -102,10 +144,17 @@ const NavBar = () => {
 
   // Filter and sort countries
   const filteredCountries = countries
-    .filter((country) =>
-      country.name.common.toLowerCase().includes(searchQuery.toLowerCase())
+    .filter(
+      (country) =>
+        country.country_name.toLowerCase() !== "earth" && // Exclude "Earth"
+        country.code !== "99" && // Additional safety: exclude code 99
+        country.country_name.toLowerCase().includes(searchQuery.toLowerCase())
     )
-    .sort((a, b) => a.name.common.localeCompare(b.name.common)); // Sort A-Z
+    .sort((a, b) => a.country_name.localeCompare(b.country_name)); // Sort A-Z
+
+    const handleIconClick = () => {
+      navigate('/Thome');  // This will navigate to the Thome.jsx route
+    };
 
   return (
     <div>
@@ -132,6 +181,7 @@ const NavBar = () => {
             <div
               className="d-flex align-items-center g-1"
               style={{ position: "relative", cursor: "pointer" }}
+              onClick={handleLogoClick}
             >
               <img
                 className="d-none d-lg-block"
@@ -170,7 +220,7 @@ const NavBar = () => {
             >
               {/* Display only the first 3 flags */}
               <div style={{ display: "flex", gap: "3px" }}>
-                {countries.slice(0, 3).map((country, index) => (
+                {countries?.slice(0, 3).map((country, index) => (
                   <div
                     key={index}
                     style={{
@@ -180,18 +230,17 @@ const NavBar = () => {
                       cursor: "pointer",
                     }}
                     onClick={() => {
-                      const countryCode = country.cca2.toLowerCase();
-                      console.log("countryCode", countryCode);
-                      window.history.pushState(
-                        {},
-                        "",
-                        `/country/${countryCode}`
+                      handleCountryChange(
+                        country.code,
+                        country.country_image,
+                        country.country_name
                       );
+                      setShowAllFlags(false);
                     }}
                   >
                     <img
-                      src={country.flags.png}
-                      alt={country.name.common}
+                      src={country.country_image}
+                      alt={country.country_name}
                       style={{
                         width: "40px",
                         height: "20px",
@@ -210,7 +259,7 @@ const NavBar = () => {
                         maxWidth: "50px",
                       }}
                     >
-                      {country.name.common}
+                      {country.country_name}
                     </span>
                   </div>
                 ))}
@@ -246,6 +295,7 @@ const NavBar = () => {
                       type="text"
                       placeholder="Search countries..."
                       value={searchQuery}
+                      name="country"
                       onChange={(e) => setSearchQuery(e.target.value)}
                       style={{
                         width: "95%",
@@ -277,13 +327,17 @@ const NavBar = () => {
                           cursor: "pointer",
                         }}
                         onClick={() => {
-                          const countryCode = country.cca2.toLowerCase();
-                          window.location.href = `/${countryCode}`;
+                          handleCountryChange(
+                            country.code,
+                            country.country_image,
+                            country.country_name
+                          );
+                          setShowAllFlags(false);
                         }}
                       >
                         <img
-                          src={country.flags.png}
-                          alt={country.name.common}
+                          src={country.country_image}
+                          alt={country.country_name}
                           style={{
                             width: "65px",
                             height: "40px",
@@ -304,7 +358,7 @@ const NavBar = () => {
                             maxWidth: "70px",
                           }}
                         >
-                          {country.name.common}
+                          {country.country_name}
                         </span>
                       </div>
                     ))}
@@ -318,12 +372,16 @@ const NavBar = () => {
             <i
               className="fas fa-globe d-none d-lg-block"
               style={{ color: "white", cursor: "pointer" }}
+              onClick={() => {
+                handleCountryChange("99");
+              }}
             ></i>
 
             {/* Video Icon */}
             <i
-              className="fas fa-video d-none d-lg-block"
-              style={{ color: "white", cursor: "pointer" }}
+            className="fas fa-video d-none d-lg-block"
+            style={{ color: 'white', cursor: 'pointer' }}
+            onClick={handleIconClick}  // Handle the click event
             ></i>
 
             {/* Go Live Icon */}
@@ -382,10 +440,32 @@ const NavBar = () => {
                   border: "1px solid #ccc",
                   borderRadius: "20px",
                 }}
-                value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
               />
             </div>
+            {/* Favourite countries section */}
+            {/* <div className="favourite-countries">
+              {favouriteCountries.length > 0 && (
+                <div className="favourite-countries-list">
+                  {favouriteCountries.map((country) => (
+                    <img
+                      style={{
+                        width: "65px",
+                        height: "40px",
+                        objectFit: "cover",
+                        border: "1px solid black",
+                        borderRadius: "3px",
+                      }}
+                      key={country.favourite_country_id}
+                      src={country.flag}
+                      alt={country.name}
+                      title={country.name}
+                      className="flag-icon"
+                    />
+                  ))}
+                </div>
+              )}
+            </div> */}
 
             {/* Profile Section */}
             <div

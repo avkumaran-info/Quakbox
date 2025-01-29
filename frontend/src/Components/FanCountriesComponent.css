@@ -1,0 +1,208 @@
+/* CSS */
+.mainContainer{
+  width: 100%;
+  height: 100vh;
+}
+.navbarDiv{
+width: 100%;
+/* height: 10vh; */
+}
+/* Countries - START */
+.countriesMainContainer{
+width: 100% !important;
+height: 100vh !important;
+margin-top: 50px;
+}
+.resetButtonDiv{
+  position: sticky !important;
+  top: 16px !important;
+  z-index: 2;
+}
+.resetButton {
+    position: fixed !important;
+    top: 78px !important;
+    right: 25px !important;
+    z-index: 2 !important;
+    background-color: black !important;
+    color: white !important;
+}
+.resetButton:hover{
+    background-color: #333 !important;
+}
+
+/* My Contries - START */
+.myCountriesContainer{
+  padding: 0px;
+  background-color:  #f5aaaa;
+  /* background-color:#e6e3e3; */
+  padding: 1px 0px !important;
+}
+.MyCountriesTextContainer{
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin: 6px 22px;
+  position: sticky;
+  width: 90%;
+  top: 60px;
+  /* background-color: #fff; */
+  background-color: #f7caca;
+  z-index: 2;
+  padding: 16px;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.5);
+  border-radius: 10px;
+}
+.MyCountriesText{
+  font-size: 2rem !important;
+  font-weight: bold !important;
+  /* font-size: 30px !important; */
+}
+.UpdateExistingCountriesButton{
+  position: relative !important;
+  z-index: 2 !important;
+  font-size: 1rem !important;
+}
+/* My Contries - Favourite Countries - START */
+.favouriteCountriesContainer{
+  /* background-color:  #eaeaea; */
+  padding: 10px;
+  border-radius: 8px;
+  margin: 10px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  flex-direction: column;
+  /* border: 1px solid red; */
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.5);
+  }
+.favouriteCountriesText{
+  margin: 5px !important;
+  font-weight: bold !important;
+}
+.favouriteCountriesGrid{
+display: flex;
+align-items: center;
+justify-content: center;
+}
+.noFavouriteCountriesText{
+margin-left: 16px;
+margin-top: 2px;
+}
+/* My Contries - Favourite Countries - END */
+/* My Contries - Fan Countries - START */
+.fanCountriesContainer{
+  /* background-color: #eaeaea; */
+  padding: 10px;
+  border-radius: 8px;
+  margin: 10px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  flex-direction: column;
+  /* border: 1px solid red; */
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.5);
+}
+.fanCountriesText{ 
+  margin-bottom: 0px !important;
+  font-weight: bold !important;
+}
+.fanCountriesGrid{
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.noFanCountriesText{
+  margin-left: 16px;
+margin-top: 2px;
+}
+/* My Contries - Fan Countries - END */
+/* My Contries - END */
+
+
+/* All Contries - START */
+.allCountriesContainer{
+  padding: 0px;
+  background-color: #f5aaaa;
+  padding: 1px 0px !important;
+}
+.allCountriesTextContainer{
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin: 6px 22px;
+  position: sticky;
+  top: 60px;
+  width: 90%;
+  background-color: #f7caca;
+  z-index: 2;
+  padding: 16px;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.5);
+  border-radius: 10px;
+}
+.AllCountriesText{
+  font-size: 2rem !important;
+  font-weight: bold !important;
+}
+.addNewCountriesButton{
+  position: relative !important;
+  z-index: 2 !important;
+  font-size: 1rem !important;
+}
+.allCountriesGridContainer{
+  /* background-color: #f1f1f1; */
+  padding: 16px;
+  border-radius: 8px;
+  margin: 10px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  flex-direction: column;
+  /* border: 1px solid red; */
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.5);
+}
+.allCountriesGrid{
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.noCountriesAvailableText{
+  margin-left: 16px;
+margin-top: 2px;
+}
+/* All Contries - END */
+/* Countries - END */
+/*  */
+/*  */
+@media (max-width: 600px) {
+  .resetButton {
+    top: 130px !important; /* Adjust top for small screens */
+  }
+}
+@media (max-width: 600px) {
+  .favouriteCountriesContainer {
+    font-size: 0.8rem !important;
+  }
+}
+@media (max-width: 600px) {
+  .MyCountriesText {
+    font-size: 1.1rem !important;
+    font-weight: bold !important;
+  }
+}
+@media (max-width: 600px) {
+  .MyCountriesTextContainer {
+  position: sticky;
+  width: 90%;
+  top: 180px !important;
+  background-color: #fff;
+  z-index: 2;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.5);
+  border-radius: 10px;
+  margin-bottom: 100px;
+  }
+}
+@media (max-width: 600px) {
+  .UpdateExistingCountriesButton {
+    font-size: 0.8rem !important;
+  }
+}

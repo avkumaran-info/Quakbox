@@ -1,243 +1,345 @@
-import React, { useEffect, useRef, useState } from "react";
-import { FaThumbsUp, FaThumbsDown, FaComment, FaShare } from "react-icons/fa";
+import React, { useState, useRef, useEffect } from "react";
+import {
+  FaThumbsUp,
+  FaThumbsDown,
+  FaComment,
+  FaShare,
+  FaPlay,
+  FaPause,
+} from "react-icons/fa";
 import video1 from "../../assets/images/leftside videos/v1.mp4";
 import video2 from "../../assets/images/leftside videos/v2.mp4";
 import video3 from "../../assets/images/leftside videos/v3.mp4";
 import video4 from "../../assets/images/leftside videos/v4.mp4";
+import user1 from "../../assets/images/Rigth side property/user.jpg";
+import user3 from "../../assets/images/Rigth side property/user3.jpg";
+import user2 from "../../assets/images/Rigth side property/user2.jpeg";
+import user from "../../assets/images/Rigth side property/user.png";
 
-const LeftSidebar = () => {
+const LeftSidebar = ({
+  countryCode,
+  flag,
+  countryName,
+  handleCountryChange,
+}) => {
   const videos = [video4, video1, video2, video3];
-  const videoRefs = useRef([]);
   const [currentVideoIndex, setCurrentVideoIndex] = useState(0);
   const [isHovered, setIsHovered] = useState(false);
+  const [isPlaying, setIsPlaying] = useState(false);
+  const videoRef = useRef(null);
 
-  const handleVideoClick = (index) => {
-    const currentVideo = videoRefs.current[index];
-    if (currentVideo.paused) {
-      playSingleVideo(index);
-    } else {
-      currentVideo.pause();
-    }
-  };
-
-  const playSingleVideo = (index) => {
-    videoRefs.current.forEach((video, idx) => {
-      if (video) {
-        if (idx === index) {
-          video.play();
-          video.scrollIntoView({
-            behavior: "smooth",
-            block: "center",
-          });
-        } else {
-          video.pause();
-        }
-      }
-    });
-    setCurrentVideoIndex(index);
-  };
+  const updates = [
+    {
+      id: 1,
+      name: "John",
+      message: "posted an update",
+      avatar: user,
+      time: "a year ago",
+    },
+    {
+      id: 2,
+      name: "Adele",
+      message: "posted an update",
+      avatar: user1,
+      time: "a year ago",
+    },
+    {
+      id: 3,
+      name: "John",
+      message: "posted an update",
+      avatar: user2,
+      time: "2 years ago",
+    },
+    {
+      id: 4,
+      name: "John",
+      message: "posted an update in the group ☕ Coffee Addicts",
+      avatar: user3,
+      time: "2 years ago",
+    },
+    {
+      id: 5,
+      name: "John",
+      message: "posted an update",
+      avatar: user,
+      time: "2 years ago",
+    },
+  ];
 
   const handleArrowClick = (direction) => {
-    let newIndex = currentVideoIndex;
     if (direction === "up") {
-      newIndex =
-        currentVideoIndex > 0 ? currentVideoIndex - 1 : videos.length - 1;
+      setCurrentVideoIndex(
+        currentVideoIndex > 0 ? currentVideoIndex - 1 : videos.length - 1
+      );
     } else if (direction === "down") {
-      newIndex = (currentVideoIndex + 1) % videos.length;
+      setCurrentVideoIndex((currentVideoIndex + 1) % videos.length);
     }
-    playSingleVideo(newIndex);
+    setIsPlaying(true); // Automatically play the next video
+  };
+
+  const togglePlayPause = () => {
+    if (videoRef.current) {
+      if (isPlaying) {
+        videoRef.current.pause();
+      } else {
+        videoRef.current.play();
+      }
+      setIsPlaying(!isPlaying);
+    }
   };
 
   useEffect(() => {
-    const currentVideo = videoRefs.current[currentVideoIndex];
-    if (currentVideo) {
-      playSingleVideo(currentVideoIndex);
+    if (videoRef.current) {
+      if (isPlaying) {
+        videoRef.current.play();
+      } else {
+        videoRef.current.pause();
+      }
     }
-  }, [currentVideoIndex]);
+  }, [currentVideoIndex, isPlaying]);
 
   return (
     <div
-      className="col-md-3 d-none d-md-block bg-light position-fixed mb-5 h-100"
+      className="col-md-3 d-none d-md-block bg-light position-fixed mb-5"
       style={{
         top: "55px",
         left: "0",
         boxSizing: "border-box",
         paddingBottom: "100px",
+        overflowY: "auto",
+        height: "calc(100vh - 55px - 50px)", // Adjusted height for the sidebar
       }}
     >
       <div className="card mb-5">
         <div
-          className="d-flex align-items-center text-light p-1"
+          className="video-container"
           style={{
-            background: "linear-gradient(to right, #1e90ff, #87cefa)",
-            color: "white",
+            textAlign: "center",
+            maxHeight: "calc(100vh - 55px - 50px)", // Space between navbar and footer
+            position: "relative",
+            marginBottom: "clamp(8px, 2vh, 16px)", // Ensures a scalable gap
+            paddingBottom: "1rem", // Space for icons
           }}
         >
-          <h5 className="text-center mb-0" style={{ fontSize: "15px" }}>
-            Shorts Video Player
-          </h5>
-        </div>
-
-        <div
-          className="scroll-container"
-          style={{ textAlign: "center", maxHeight: "calc(100vh - 125px)" }}
-        >
-          {videos.map((video, index) => (
-            <div
-              key={index}
+          <div
+            style={{
+              marginBottom: "5px",
+              width: "100%",
+              maxWidth: "400px",
+              margin: "0 auto",
+              position: "relative",
+            }}
+            onMouseEnter={() => setIsHovered(true)}
+            onMouseLeave={() => setIsHovered(false)}
+          >
+            <video
+              ref={videoRef}
+              src={videos[currentVideoIndex]}
+              width="100%"
+              height="100%"
+              controls={false}
+              muted={false}
+              loop={true}
+              autoPlay={false} // Start with video paused
               style={{
-                marginBottom: "5px",
-                width: "100%",
-                maxWidth: "400px",
-                margin: "0 auto",
-                position: "relative",
+                border: "1px solid #ccc",
+                backgroundColor: "#000",
+                left: "0",
+
+                position: "sticky",
+                top: "0",
+                zIndex: "1",
               }}
-              onMouseEnter={() => setIsHovered(true)}
-              onMouseLeave={() => setIsHovered(false)}
-            >
-              <video
-                ref={(el) => (videoRefs.current[index] = el)}
-                src={video}
-                width="100%"
-                height="500px"
-                controls={false}
-                muted={false}
-                loop={false}
+            />
+
+            {isHovered && (
+              <button
+                onClick={togglePlayPause}
                 style={{
-                  border: "1px solid #ccc",
-                  backgroundColor: "#000",
-                  left: "0",
-                  borderRadius: "25px",
+                  position: "absolute",
+                  top: "10px",
+                  left: "10px",
+                  backgroundColor: "rgba(0, 0, 0, 0.7)",
+                  color: "white",
+                  border: "none",
+                  borderRadius: "50%",
+                  padding: "10px",
+                  cursor: "pointer",
+                  fontSize: "18px",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  zIndex: "10",
                 }}
-                onClick={() => handleVideoClick(index)}
-              />
-              {/* Up Arrow */}
-              {isHovered && (
+                onMouseOver={(e) =>
+                  (e.target.style.backgroundColor = "rgba(0, 0, 0, 0.9)")
+                }
+                onMouseOut={(e) =>
+                  (e.target.style.backgroundColor = "rgba(0, 0, 0, 0.7)")
+                }
+              >
+                {isPlaying ? <FaPause /> : <FaPlay />}
+              </button>
+            )}
+
+            {/* Arrow buttons */}
+            {isHovered && (
+              <>
                 <button
                   style={{
                     position: "absolute",
                     top: "10px",
                     left: "50%",
                     transform: "translateX(-50%)",
-                    backgroundColor: "rgba(0, 0, 0, 0.7)", // Sleek semi-black background
-                    color: "#FFFFFF", // Pure white text
-                    fontSize: "24px", // Slightly larger font for emphasis
-                    fontWeight: "bold", // Keeps the arrow bold
-                    padding: "12px 16px", // Balanced padding
-                    borderRadius: "50%", // Still keeps circular design
+                    backgroundColor: "rgba(0, 0, 0, 0.7)",
+                    color: "#FFFFFF",
+                    fontSize: "24px",
+                    fontWeight: "bold",
+                    padding: "12px 16px",
+                    borderRadius: "50%",
                     cursor: "pointer",
-                    boxShadow: "0 4px 8px rgba(0, 0, 0, 0.4)", // Adds depth with shadow
-                    transition: "all 0.3s ease-in-out", // Smooth hover effect
-                    border: "none", // Removes white circle
+                    boxShadow: "0 4px 8px rgba(0, 0, 0, 0.4)",
+                    transition: "all 0.3s ease-in-out",
+                    border: "none",
+                    zIndex: "10",
                   }}
-                  onMouseOver={
-                    (e) =>
-                      (e.target.style.backgroundColor = "rgba(0, 0, 0, 0.9)") // Darkens on hover
+                  onMouseOver={(e) =>
+                    (e.target.style.backgroundColor = "rgba(0, 0, 0, 0.9)")
                   }
-                  onMouseOut={
-                    (e) =>
-                      (e.target.style.backgroundColor = "rgba(0, 0, 0, 0.7)") // Resets background on mouse out
+                  onMouseOut={(e) =>
+                    (e.target.style.backgroundColor = "rgba(0, 0, 0, 0.7)")
                   }
                   onClick={() => handleArrowClick("up")}
                 >
                   ↑
                 </button>
-              )}
 
-              {/* Down Arrow */}
-              {isHovered && (
                 <button
                   style={{
                     position: "absolute",
                     bottom: "10px",
                     left: "50%",
                     transform: "translateX(-50%)",
-                    backgroundColor: "rgba(0, 0, 0, 0.7)", // Sleek semi-black background
-                    color: "#FFFFFF", // Pure white text
-                    fontSize: "24px", // Slightly larger font for emphasis
-                    fontWeight: "bold", // Keeps the arrow bold
-                    padding: "12px 16px", // Balanced padding
-                    borderRadius: "50%", // Still keeps circular design
+                    backgroundColor: "rgba(0, 0, 0, 0.7)",
+                    color: "#FFFFFF",
+                    fontSize: "24px",
+                    fontWeight: "bold",
+                    padding: "12px 16px",
+                    borderRadius: "50%",
                     cursor: "pointer",
-                    boxShadow: "0 4px 8px rgba(0, 0, 0, 0.4)", // Adds depth with shadow
-                    transition: "all 0.3s ease-in-out", // Smooth hover effect
-                    border: "none", // Removes white circle
+                    boxShadow: "0 4px 8px rgba(0, 0, 0, 0.4)",
+                    transition: "all 0.3s ease-in-out",
+                    border: "none",
+                    zIndex: "10",
                   }}
-                  onMouseOver={
-                    (e) =>
-                      (e.target.style.backgroundColor = "rgba(0, 0, 0, 0.9)") // Darkens on hover
+                  onMouseOver={(e) =>
+                    (e.target.style.backgroundColor = "rgba(0, 0, 0, 0.9)")
                   }
-                  onMouseOut={
-                    (e) =>
-                      (e.target.style.backgroundColor = "rgba(0, 0, 0, 0.7)") // Resets background on mouse out
+                  onMouseOut={(e) =>
+                    (e.target.style.backgroundColor = "rgba(0, 0, 0, 0.7)")
                   }
                   onClick={() => handleArrowClick("down")}
                 >
                   ↓
                 </button>
-              )}
+              </>
+            )}
 
-              {/* Interaction Icons */}
-              {isHovered && (
-                <div
+            {/* Icons section */}
+            {isHovered && (
+              <div
+                style={{
+                  position: "absolute",
+                  bottom: "60px",
+                  right: "10px",
+                  display: "flex",
+                  flexDirection: "column",
+                  alignItems: "center",
+                  gap: "10px",
+                  zIndex: "10",
+                }}
+              >
+                <FaThumbsUp
                   style={{
-                    position: "absolute",
-                    bottom: "60px",
-                    right: "10px",
-                    display: "flex",
-                    flexDirection: "column",
-                    alignItems: "center",
-                    gap: "10px",
+                    color: "white",
+                    fontSize: "24px",
+                    cursor: "pointer",
                   }}
+                  title="Like"
+                />
+                <p style={{ color: "white", margin: "5px 0" }}>7.5K</p>
+
+                <FaThumbsDown
+                  style={{
+                    color: "white",
+                    fontSize: "24px",
+                    cursor: "pointer",
+                  }}
+                  title="Dislike"
+                />
+                <p style={{ color: "white", margin: "5px 0" }}>Dislike</p>
+
+                <FaComment
+                  style={{
+                    color: "white",
+                    fontSize: "24px",
+                    cursor: "pointer",
+                  }}
+                  title="Comment"
+                />
+                <p style={{ color: "white", margin: "5px 0" }}>18K</p>
+
+                <FaShare
+                  style={{
+                    color: "white",
+                    fontSize: "24px",
+                    cursor: "pointer",
+                  }}
+                  title="Share"
+                />
+                <p style={{ color: "white", margin: "5px 0" }}>Share</p>
+              </div>
+            )}
+          </div>
+        </div>
+        {/* Second Topic: Groups */}
+        <div className="card">
+          <div
+            className="d-flex align-items-center text-light p-2"
+            style={{
+              background: "linear-gradient(to right, #1e90ff, #87cefa)",
+              color: "white",
+            }}
+          >
+            <h5 className="text-center mb-0" style={{ fontSize: "15px" }}>
+              Groups
+            </h5>
+          </div>
+
+          <div className="card shadow-sm p-3">
+            <ul className="list-unstyled">
+              {updates.map((update) => (
+                <li
+                  key={update.id}
+                  className="d-flex align-items-start mb-3"
+                  style={{ gap: "10px" }}
                 >
-                  <div style={{ textAlign: "center" }}>
-                    <FaThumbsUp
-                      style={{
-                        color: "white",
-                        fontSize: "24px",
-                        cursor: "pointer",
-                      }}
-                      title="Like"
-                    />
-                    <p style={{ color: "white", margin: "5px 0" }}>7.5K</p>
+                  <img
+                    src={update.avatar}
+                    alt={update.name}
+                    className="rounded-circle"
+                    style={{ width: "40px", height: "40px" }}
+                  />
+                  <div>
+                    <p className="mb-1" style={{ fontSize: "0.9rem" }}>
+                      <strong>{update.name}</strong> {update.message}
+                    </p>
+                    <small className="text-muted">{update.time}</small>
                   </div>
-                  <div style={{ textAlign: "center" }}>
-                    <FaThumbsDown
-                      style={{
-                        color: "white",
-                        fontSize: "24px",
-                        cursor: "pointer",
-                      }}
-                      title="Dislike"
-                    />
-                    <p style={{ color: "white", margin: "5px 0" }}>Dislike</p>
-                  </div>
-                  <div style={{ textAlign: "center" }}>
-                    <FaComment
-                      style={{
-                        color: "white",
-                        fontSize: "24px",
-                        cursor: "pointer",
-                      }}
-                      title="Comment"
-                    />
-                    <p style={{ color: "white", margin: "5px 0" }}>18K</p>
-                  </div>
-                  <div style={{ textAlign: "center" }}>
-                    <FaShare
-                      style={{
-                        color: "white",
-                        fontSize: "24px",
-                        cursor: "pointer",
-                      }}
-                      title="Share"
-                    />
-                    <p style={{ color: "white", margin: "5px 0" }}>Share</p>
-                  </div>
-                </div>
-              )}
-            </div>
-          ))}
+                </li>
+              ))}
+            </ul>
+          </div>
         </div>
       </div>
     </div>

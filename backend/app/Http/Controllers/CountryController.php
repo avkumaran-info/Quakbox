@@ -2,19 +2,70 @@
 
 namespace App\Http\Controllers;
 \Log::info(memory_get_usage());
-ini_set('memory_limit', '1G');
+ini_set('memory_limit', '5G');
+set_time_limit(500);
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Validation\ValidationException;
+use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Storage;
 
 use App\Models\User;
 use App\Models\Members;
 use App\Models\FavouriteCountry;
+use App\Models\GeoCountry;
+
+use GuzzleHttp\Client;
 
 class CountryController extends Controller
 {
+    public function getGeoCountry(Request $request) {
+
+        $geoCountryList = GeoCountry::get();
+
+        if ($geoCountryList->isEmpty()) {
+            $response = Http::get('https://restcountries.com/v3.1/all?fields=name,flags,cca2');
+            if ($response->successful()) {
+                $countries = $response->json();
+
+                foreach ($countries as $country) {
+                    // Extract relevant fields
+                    $countryName = $country['name']['common'] ?? null;
+                    $countryCode = $country['cca2'] ?? null;
+                    $countryImage = $country['flags']['png'] ?? null;
+
+                    $imageResponse = Http::get($countryImage);
+                    if ($imageResponse->successful()) {
+                        // Get the image content
+                        $imageContent = $imageResponse->body();
+                        // Define a file name and path
+                        $fileName = $countryCode.'.png';
+                        $filePath = 'flags/' . $fileName;
+                        // Store the file in the 'public' directory
+                        Storage::disk('public')->put($filePath, $imageContent);
+                    }
+                    if ($countryName && $countryCode) {
+                        // Insert or update into the database
+                        GeoCountry::updateOrCreate(
+                            ['code' => $countryCode],
+                            ['country_name' => $countryName,
+                             'country_image' => env('APP_URL') . '/api/images/flags/'.$countryCode.'.png'],
+                        );
+                    }
+                }
+            }
+        }
+
+        $geoCountryList = GeoCountry::orderBy('country_name', 'asc')->get();
+
+        return response()->json([
+            'success' => true,
+            'geo_countries' => $geoCountryList
+        ], 200);
+    }
+
     // Get favorite country details by member_id
     public function favouriteCountryByMemberId(Request $request)
     {
