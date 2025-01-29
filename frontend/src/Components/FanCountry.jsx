@@ -318,7 +318,7 @@ const FanCountry = () => {
     <div className="app">
       <NavBar />
       <div
-        className="container-fluid"
+        className=""
         style={{ marginTop: "54px", marginBottom: "60px" }}
       >
         <Loader loading={loading || resetLoading} message="Loading data..." />

@@ -2,7 +2,6 @@ import React, { useState } from "react";
 import { Provider, useDispatch } from "react-redux";
 import Login from "./Components/Login";
 import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
-
 import Signup from "./Components/Signup";
 import ForgetPassword from "./Components/ForgetPassword";
 import Home from "./Components/Dashboard/Home";
@@ -11,6 +10,12 @@ import GoLive from "./Components/GoLive";
 import FanCountriesComponent from "./Components/FanCountriesComponent";
 import store from "./Components/redux/store";
 import FanCountry from "./Components/FanCountry";
+import Thome from "./Components/Dashboard/Quaktube/Thome";  // Import Thome component
+import Tuploadpage from "./Components/Dashboard/Quaktube/Tuploadpage";
+// import TuploadVideo from "./Components/Dashboard/Quaktube/Tuploadvideo";
+// import Channels from "./Components/Dashboard/Quaktube/Sidebars/Channels";
+// import Singlechannel from "./Components/Dashboard/Quaktube/Sidebars/Singlech/annel";
+// import Videopage from "./Components/Dashboard/Quaktube/Sidebars/Videopage";
 
 const App = () => {
   return (
@@ -25,13 +30,15 @@ const App = () => {
           <Route path="/world" element={<Home />} />
           <Route path="/chatroom" element={<ChatPage />} />
           <Route path="/golive" element={<GoLive />} />
-          <Route
-            path="/favouriteCountires"
-            element={<FanCountriesComponent />}
-          />
-          {/* favouriteCountires */}
-          <Route path="test" element={<FanCountry />} />
-        </Routes>
+          <Route path="/test" element={<FanCountry />} />
+          <Route path="/favouriteCountires" element={<FanCountry />} />
+          <Route path="/thome" element={<Thome />} /> {/* Home route */}
+          {/*<Route path="/channels" element={<Channels/>} />*/}
+          {/*<Route path="/singlechannel" element={<Singlechannel />} />*/}
+          {/*<Route path="/video-page" element={<Videopage />} />*/}
+          <Route path="/uploadpage" element={<Tuploadpage />} />
+          {/*<Route path="/uploadvideo" element={<TuploadVideo />} />*/}
+         </Routes>
       </Router>
     </Provider>
   );
