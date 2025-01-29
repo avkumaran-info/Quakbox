@@ -152,6 +152,10 @@ const NavBar = ({
     )
     .sort((a, b) => a.country_name.localeCompare(b.country_name)); // Sort A-Z
 
+    const handleIconClick = () => {
+      navigate('/Thome');  // This will navigate to the Thome.jsx route
+    };
+
   return (
     <div>
       <nav
@@ -375,8 +379,9 @@ const NavBar = ({
 
             {/* Video Icon */}
             <i
-              className="fas fa-video d-none d-lg-block"
-              style={{ color: "white", cursor: "pointer" }}
+            className="fas fa-video d-none d-lg-block"
+            style={{ color: 'white', cursor: 'pointer' }}
+            onClick={handleIconClick}  // Handle the click event
             ></i>
 
             {/* Go Live Icon */}
