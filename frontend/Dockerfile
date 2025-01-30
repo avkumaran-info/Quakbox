@@ -8,7 +8,7 @@ WORKDIR /react-app
 COPY package.json .
 
 # Install dependencies
-RUN npm install
+RUN npm install --legacy-peer-deps
 
 # Copy all the files in the project working directory
 COPY . .

@@ -10,6 +10,13 @@ use App\Http\Controllers\PostController;
 //facebook
 use Laravel\Socialite\Facades\Socialite;
 
+//video Module
+use App\Http\Controllers\VideoController;
+use App\Http\Controllers\VideoCommentController;
+use App\Http\Controllers\VideoChannelController;
+use App\Http\Controllers\VideoInteractionController;
+use App\Http\Controllers\VideoSubscriptionController;
+
 /*
 |--------------------------------------------------------------------------
 | API Routes
@@ -37,6 +44,8 @@ Route::post('auth/google', [AuthController::class, 'loginWithGoogle']);
 Route::post('/auth/facebook', [AuthController::class, 'handleFacebookAccessToken']);
 
 Route::middleware('auth:api')->get('user', [AuthController::class, 'user']);
+
+Route::middleware('auth:api')->post('/videos/upload', [VideoController::class, 'upload']);
 
 Route::get('get_geo_country', [CountryController::class, 'getGeoCountry']);
 Route::middleware('auth:api')->get('get_favourite_country', [CountryController::class, 'favouriteCountryByMemberId']);
@@ -70,3 +79,60 @@ Route::get('images/flags/{filename}', function ($filename) {
     }
     return response()->file($path);
 });
+
+// Video Management
+Route::middleware('auth:api')->prefix('videos')->group(function () {
+    Route::post('upload', [VideoController::class, 'videoUpload']);
+    // Route::get('/', [VideoController::class, 'index']);
+    // Route::get('{id}', [VideoController::class, 'show']);
+    // Route::delete('{id}', [VideoController::class, 'delete']);
+    // Route::get('search', [VideoController::class, 'search']);
+});
+
+
+// // Video Channel Management
+// Route::middleware('auth:api')->prefix('channel')->group(function () {
+//     Route::post('create', [VideoChannelController::class, 'create']);
+//     Route::get('{id}', [VideoChannelController::class, 'show']);
+//     Route::put('{id}', [VideoChannelController::class, 'update']);
+//     Route::delete('{id}', [VideoChannelController::class, 'delete']);
+//     Route::get('{id}/videos', [VideoChannelController::class, 'getVideos']);
+//     Route::post('{id}/add-video/{videoId}', [VideoChannelController::class, 'addVideo']);
+//     Route::delete('{id}/remove-video/{videoId}', [VideoChannelController::class, 'removeVideo']);
+// });
+
+// // Video Comments Management
+// Route::middleware('auth:api')->group(function () {
+//     // Fetch comments for a specific video
+//     Route::get('/videos/{videoId}/comments', [VideoCommentController::class, 'index']);
+//     // Add a comment to a video
+//     Route::post('/videos/{videoId}/comments', [VideoCommentController::class, 'store']);
+//     // Update a comment
+//     Route::put('/comments/{id}', [VideoCommentController::class, 'update']);
+//     // Delete a comment
+//     Route::delete('/comments/{id}', [VideoCommentController::class, 'destroy']);
+// });
+
+// // Video Interactions Management
+// Route::middleware('auth:api')->group(function () {
+//     Route::post('/videos/{videoId}/like', [VideoInteractionController::class, 'like']);
+//     Route::post('/videos/{videoId}/dislike', [VideoInteractionController::class, 'dislike']);
+//     Route::post('/videos/{videoId}/view', [VideoInteractionController::class, 'view']); // Can be accessed anonymously
+//     Route::get('/videos/{videoId}/stats', [VideoInteractionController::class, 'stats']);
+// });
+
+// // Video Subscriptions Management
+// Route::middleware('auth:api')->group(function () {
+//     // Subscribe to a channel
+//     Route::post('/channels/{channelId}/subscribe', [VideoSubscriptionController::class, 'subscribe']);
+//     // Unsubscribe from a channel
+//     Route::delete('/channels/{channelId}/unsubscribe', [VideoSubscriptionController::class, 'unsubscribe']);
+//     // Get subscriptions of the authenticated user
+//     Route::get('/subscriptions', [VideoSubscriptionController::class, 'mySubscriptions']);
+//     // Get subscribers of a specific channel
+//     Route::get('/channels/{channelId}/subscribers', [VideoSubscriptionController::class, 'channelSubscribers']);
+// });
+
+// // Video Analytics Management
+
+// // Video Moderation Management
