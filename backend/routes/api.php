@@ -83,10 +83,10 @@ Route::get('images/flags/{filename}', function ($filename) {
 // Video Management
 Route::middleware('auth:api')->prefix('videos')->group(function () {
     Route::post('upload', [VideoController::class, 'videoUpload']);
-    // Route::get('/', [VideoController::class, 'index']);
-    // Route::get('{id}', [VideoController::class, 'show']);
-    // Route::delete('{id}', [VideoController::class, 'delete']);
-    // Route::get('search', [VideoController::class, 'search']);
+    Route::get('/', [VideoController::class, 'index']);
+    Route::get('{id}', [VideoController::class, 'show']);
+    Route::delete('{id}', [VideoController::class, 'delete']);
+    Route::get('search/{query}', [VideoController::class, 'search']);
 });
 
 
@@ -136,3 +136,4 @@ Route::middleware('auth:api')->prefix('videos')->group(function () {
 // // Video Analytics Management
 
 // // Video Moderation Management
+
