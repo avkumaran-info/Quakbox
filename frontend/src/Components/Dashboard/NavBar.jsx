@@ -179,9 +179,9 @@ const NavBar = ({
     )
     .sort((a, b) => a.country_name.localeCompare(b.country_name)); // Sort A-Z
 
-    const handleIconClick = () => {
-      navigate('/Thome');  // This will navigate to the Thome.jsx route
-    };
+  const handleIconClick = () => {
+    navigate("/qcast"); // This will navigate to the Thome.jsx route
+  };
 
   return (
     <div>
@@ -208,7 +208,10 @@ const NavBar = ({
             <div
               className="d-flex align-items-center g-1"
               style={{ position: "relative", cursor: "pointer" }}
-              onClick={handleLogoClick}
+              onClick={(e) => {
+                e.preventDefault();
+                navigate("/dashboard");
+              }}
             >
               <img
                 className="d-none d-lg-block"
@@ -406,9 +409,9 @@ const NavBar = ({
 
             {/* Video Icon */}
             <i
-            className="fas fa-video d-none d-lg-block"
-            style={{ color: 'white', cursor: 'pointer' }}
-            onClick={handleIconClick}  // Handle the click event
+              className="fas fa-video d-none d-lg-block"
+              style={{ color: "white", cursor: "pointer" }}
+              onClick={handleIconClick} // Handle the click event
             ></i>
 
             {/* Go Live Icon */}
@@ -481,56 +484,54 @@ const NavBar = ({
               }}
             >
               <div style={{ display: "flex", gap: "7px" }}>
-                {favCountries.length > 0 ? (
-                  favCountries.map((fav, index) => {
-                    // Find the matched country in allCountries based on the name
-                    const matchedCountry = countries.find(
-                      (c) => c.country_name === fav.code
-                    );
-                    // console.log(matchedCountry);
+                {favCountries.length > 0
+                  ? favCountries.map((fav, index) => {
+                      // Find the matched country in allCountries based on the name
+                      const matchedCountry = countries.find(
+                        (c) => c.country_name === fav.code
+                      );
+                      // console.log(matchedCountry);
 
-                    // Only render the country if it's matched (found)
-                    return (
-                      matchedCountry && (
-                        <div
-                          key={index}
-                          style={{
-                            display: "flex",
-                            flexDirection: "column",
-                            alignItems: "center",
-                          }}
-                        >
-                          <img
-                            src={matchedCountry.country_image}
-                            alt={matchedCountry.country_name}
-                            className="card-img-top img-fluid"
+                      // Only render the country if it's matched (found)
+                      return (
+                        matchedCountry && (
+                          <div
+                            key={index}
                             style={{
-                              width: "40px",
-                              height: "20px",
-                              objectFit: "cover",
-                            }}
-                          />
-                          <span
-                            style={{
-                              fontSize: "0.6rem",
-                              color: "#ffffff",
-                              // marginTop: "5px",
-                              textAlign: "center",
-                              whiteSpace: "nowrap",
-                              overflow: "hidden",
-                              textOverflow: "ellipsis",
-                              maxWidth: "50px",
+                              display: "flex",
+                              flexDirection: "column",
+                              alignItems: "center",
                             }}
                           >
-                            {matchedCountry.country_name}
-                          </span>
-                        </div>
-                      )
-                    );
-                  })
-                ) : (
-                 ""
-                )}
+                            <img
+                              src={matchedCountry.country_image}
+                              alt={matchedCountry.country_name}
+                              className="card-img-top img-fluid"
+                              style={{
+                                width: "40px",
+                                height: "20px",
+                                objectFit: "cover",
+                              }}
+                            />
+                            <span
+                              style={{
+                                fontSize: "0.6rem",
+                                color: "#ffffff",
+                                // marginTop: "5px",
+                                textAlign: "center",
+                                whiteSpace: "nowrap",
+                                overflow: "hidden",
+                                textOverflow: "ellipsis",
+                                maxWidth: "50px",
+                              }}
+                            >
+                              {matchedCountry.country_name}
+                            </span>
+                          </div>
+                        )
+                      );
+                    })
+                  : ""}
               </div>
             </div>
 
