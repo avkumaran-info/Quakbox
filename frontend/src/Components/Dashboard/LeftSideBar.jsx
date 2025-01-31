@@ -1,4 +1,5 @@
 import React, { useState, useRef, useEffect } from "react";
+import "./LeftSideBar.css";
 import {
   FaThumbsUp,
   FaThumbsDown,
@@ -14,6 +15,7 @@ import video1 from "../../assets/images/leftside videos/v1.mp4";
 import video2 from "../../assets/images/leftside videos/v2.mp4";
 import video3 from "../../assets/images/leftside videos/v3.mp4";
 import video4 from "../../assets/images/leftside videos/v4.mp4";
+import video5 from "../../assets/images/leftside videos/maroon-5-sugar_video5.mp4";
 import user1 from "../../assets/images/Rigth side property/user.jpg";
 import user3 from "../../assets/images/Rigth side property/user3.jpg";
 import user2 from "../../assets/images/Rigth side property/user2.jpeg";
@@ -26,7 +28,7 @@ const LeftSidebar = ({
   countryName,
   handleCountryChange,
 }) => {
-  const videos = [video4, video1, video2, video3];
+  const videos = [video5, video4, video1, video2, video3];
   const [currentVideoIndex, setCurrentVideoIndex] = useState(0);
   const [isHovered, setIsHovered] = useState(false);
   const [isPlaying, setIsPlaying] = useState(false);
@@ -122,18 +124,38 @@ const LeftSidebar = ({
   }, [currentVideoIndex, isPlaying]);
 
   return (
+    // <Box
+    //   sx={{
+    //     width: "370px",
+    //     position: "fixed",
+    //     height: "85vh",
+    //     backgroundColor: "#f5f5f5",
+    //     display: "flex",
+    //     flexDirection: "column",
+    //     // margin: "10px",
+    //     padding: "2px",
+    //     borderRadius: "10px",
+    //     // border: "1px solid red",
+    //   }}
+    // >
     <Box
       sx={{
-        width: "370px",
+        width: "100%",
+        maxWidth: "23rem",
         position: "fixed",
         height: "85vh",
         backgroundColor: "#f5f5f5",
         display: "flex",
         flexDirection: "column",
-        // margin: "10px",
         padding: "2px",
         borderRadius: "10px",
-        // border: "1px solid red",
+        "@media (max-width: 991px)": {
+          width: "100%",
+          maxWidth: "30rem",
+          height: "100vh",
+          // maxHeight: "10rem",
+          position: "relative",
+        },
       }}
     >
       {/* Video Section */}
@@ -146,6 +168,14 @@ const LeftSidebar = ({
           justifyContent: "center",
           position: "relative", // Ensure hover works
           // border: "1px solid yellow",
+          "@media (max-width: 991px)": {
+            width: "100%",
+            // maxWidth: "30rem",
+            height: "100vh",
+            // maxHeight: "10rem",
+            position: "relative",
+            top: "112px",
+          },
         }}
         onMouseEnter={() => setIsHovered(true)} // Show buttons on hover
         onMouseLeave={() => setIsHovered(false)} // Hide buttons when not hovering
@@ -162,7 +192,7 @@ const LeftSidebar = ({
           style={{
             backgroundColor: "#000",
             border: "1px solid #ccc",
-            zIndex: "0", // Ensure video is behind the buttons
+            zIndex: "0",
           }}
           onLoadedData={handleLoadedData}
         >
@@ -318,25 +348,106 @@ const LeftSidebar = ({
           </div>
         )} */}
         {/* Video Controls end */}
+        {/* Icons section */}
+        {isHovered && (
+          <div
+            style={{
+              position: "absolute",
+              bottom: "65px",
+              right: "20px",
+              display: "flex",
+              flexDirection: "column",
+              alignItems: "flex-end",
+              gap: "5px",
+              zIndex: "10",
+            }}
+          >
+            <FaThumbsUp
+              style={{
+                color: "white",
+                fontSize: "17px",
+                cursor: "pointer",
+              }}
+              title="Like"
+            />
+            <p style={{ color: "white", margin: "5px 0", fontSize: "12px" }}>
+              7.5K
+            </p>
+
+            <FaThumbsDown
+              style={{
+                color: "white",
+                fontSize: "17px",
+                cursor: "pointer",
+              }}
+              title="Dislike"
+            />
+            <p style={{ color: "white", margin: "5px 0", fontSize: "14px" }}>
+              Dislike
+            </p>
+
+            <FaComment
+              style={{
+                color: "white",
+                fontSize: "17px",
+                cursor: "pointer",
+              }}
+              title="Comment"
+            />
+            <p style={{ color: "white", margin: "5px 0", fontSize: "14px" }}>
+              18K
+            </p>
+
+            <FaShare
+              style={{
+                color: "white",
+                fontSize: "17px",
+                cursor: "pointer",
+              }}
+              title="Share"
+            />
+            <p style={{ color: "white", margin: "5px 0", fontSize: "14px" }}>
+              Share
+            </p>
+          </div>
+        )}
         {/* Left Arrow Button */}
+
+        {/* <button
+          style={{
+            position: "absolute",
+            left: "70px",
+            top: "40%", // Center vertically
+            transform: "translateY(-50%)", // Align center
+            // transform: "translateY(0)",
+            // backgroundColor: "rgba(0, 0, 0, 0.7)",
+            // color: "#FFFFFF",
+            fontSize: "40px",
+            // fontWeight: "bold",
+            // padding: "12px 16px",
+            borderRadius: "50%",
+            cursor: "pointer",
+            // boxShadow: "0 4px 8px rgba(0, 0, 0, 0.4)",
+            transition: "all 0.3s ease-in-out",
+            border: "none",
+            zIndex: "5",
+          }}
+          onClick={() => handleArrowClick("left")}
+        >
+          ← 
+        </button> */}
         {isHovered && (
           <button
             style={{
               position: "absolute",
-              left: "10px",
-              top: "40%", // Center vertically
-              transform: "translateY(-50%)", // Align center
-              // transform: "translateY(0)",
-              backgroundColor: "rgba(0, 0, 0, 0.7)",
-              color: "#FFFFFF",
-              fontSize: "24px",
-              fontWeight: "bold",
-              padding: "12px 16px",
-              borderRadius: "50%",
+              left: "70px",
+              top: "40%",
+              transform: "translateY(-50%)",
+              fontSize: "40px",
+              color: "#FFFFFF", // White arrow color
               cursor: "pointer",
-              boxShadow: "0 4px 8px rgba(0, 0, 0, 0.4)",
-              transition: "all 0.3s ease-in-out",
               border: "none",
+              background: "none", // Ensure no background
               zIndex: "5",
             }}
             onClick={() => handleArrowClick("left")}
@@ -346,29 +457,47 @@ const LeftSidebar = ({
         )}
 
         {/* Right Arrow Button */}
+        {/* {isHovered && ( */}
+        {/* <button
+          style={{
+            position: "absolute",
+            right: "70px",
+            top: "40%", // Center vertically
+            transform: "translateY(-50%)", // Align center
+            // transform: "translateY(0)",
+            backgroundColor: "rgba(0, 0, 0, 0.7)",
+            color: "#FFFFFF",
+            fontSize: "24px",
+            fontWeight: "bold",
+            padding: "12px 16px",
+            borderRadius: "50%",
+            cursor: "pointer",
+            boxShadow: "0 4px 8px rgba(0, 0, 0, 0.4)",
+            transition: "all 0.3s ease-in-out",
+            border: "none",
+            zIndex: "5",
+          }}
+          onClick={() => handleArrowClick("right")}
+        >
+          → 
+        </button> */}
         {isHovered && (
           <button
             style={{
               position: "absolute",
-              right: "10px",
-              top: "40%", // Center vertically
-              transform: "translateY(-50%)", // Align center
-              // transform: "translateY(0)",
-              backgroundColor: "rgba(0, 0, 0, 0.7)",
-              color: "#FFFFFF",
-              fontSize: "24px",
-              fontWeight: "bold",
-              padding: "12px 16px",
-              borderRadius: "50%",
+              right: "70px",
+              top: "40%",
+              transform: "translateY(-50%)",
+              fontSize: "40px",
+              color: "#FFFFFF", // White arrow color
               cursor: "pointer",
-              boxShadow: "0 4px 8px rgba(0, 0, 0, 0.4)",
-              transition: "all 0.3s ease-in-out",
               border: "none",
+              background: "none", // Ensure no background
               zIndex: "5",
             }}
-            onClick={() => handleArrowClick("right")}
+            onClick={() => handleArrowClick("left")}
           >
-            → {/* Right Arrow */}
+            →
           </button>
         )}
       </Box>
@@ -384,6 +513,14 @@ const LeftSidebar = ({
           flexDirection: "column",
           margin: "0px",
           padding: "0px",
+          "@media (max-width: 991px)": {
+            width: "100%",
+            // maxWidth: "30rem",
+            height: "100vh",
+            // maxHeight: "10rem",
+            position: "relative",
+            top: "115px",
+          },
         }}
       >
         {/* Groups Heading */}

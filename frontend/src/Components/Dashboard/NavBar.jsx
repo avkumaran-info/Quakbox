@@ -422,7 +422,12 @@ const NavBar = ({
                 margin: "0px 40px",
               }}
             > */}
-            <Tooltip title="Global" arrow disableInteractive>
+            <Tooltip
+              title="Global"
+              arrow
+              disableInteractive
+              className="d-none d-lg-flex"
+            >
               <PublicIcon
                 sx={{
                   fontSize: 25,
@@ -444,7 +449,12 @@ const NavBar = ({
               style={{ color: "white", cursor: "pointer" }}
               onClick={handleIconClick} // Handle the click event
             ></i> */}
-            <Tooltip title="Record Video" arrow disableInteractive>
+            <Tooltip
+              title="Record Video"
+              arrow
+              disableInteractive
+              className="d-none d-lg-flex"
+            >
               <VideocamIcon
                 sx={{
                   fontSize: 25,
@@ -469,7 +479,12 @@ const NavBar = ({
               className="fas fa-broadcast-tower d-none d-lg-block"
               style={{ color: "white", cursor: "pointer" }}
             ></i> */}
-            <Tooltip title="Go Live" arrow disableInteractive>
+            <Tooltip
+              title="Go Live"
+              arrow
+              disableInteractive
+              className="d-none d-lg-flex"
+            >
               <PodcastsIcon
                 sx={{
                   fontSize: 25,
@@ -493,7 +508,12 @@ const NavBar = ({
               className="fas fa-user-friends d-none d-lg-block"
               style={{ color: "white", cursor: "pointer" }}
             ></i> */}
-            <Tooltip title="Friends" arrow disableInteractive>
+            <Tooltip
+              title="Friends"
+              arrow
+              disableInteractive
+              className="d-none d-lg-flex"
+            >
               <GroupIcon
                 sx={{
                   fontSize: 25,
@@ -513,7 +533,12 @@ const NavBar = ({
               className="fas fa-bell d-none d-lg-block"
               style={{ color: "white", cursor: "pointer" }}
             ></i> */}
-            <Tooltip title="Notifications" arrow disableInteractive>
+            <Tooltip
+              title="Notifications"
+              arrow
+              disableInteractive
+              className="d-none d-lg-flex"
+            >
               <NotificationsIcon
                 sx={{
                   fontSize: 25,
@@ -533,7 +558,12 @@ const NavBar = ({
               className="fas fa-envelope d-none d-lg-block"
               style={{ color: "white", cursor: "pointer" }}
             ></i> */}
-            <Tooltip title="Messages" arrow disableInteractive>
+            <Tooltip
+              title="Messages"
+              arrow
+              disableInteractive
+              className="d-none d-lg-flex"
+            >
               <EmailIcon
                 sx={{
                   fontSize: 25,
@@ -553,7 +583,12 @@ const NavBar = ({
               className="fas fa-inbox d-none d-lg-block"
               style={{ color: "white", cursor: "pointer" }}
             ></i> */}
-            <Tooltip title="Inbox" arrow disableInteractive>
+            <Tooltip
+              title="Inbox"
+              arrow
+              disableInteractive
+              className="d-none d-lg-flex"
+            >
               <InboxIcon
                 sx={{
                   fontSize: 25,
@@ -577,7 +612,12 @@ const NavBar = ({
                 navigate("/favouriteCountires");
               }}
             ></i> */}
-            <Tooltip title="Favourite Countries" arrow disableInteractive>
+            <Tooltip
+              title="Favourite Countries"
+              arrow
+              disableInteractive
+              className="d-none d-lg-flex"
+            >
               <FavoriteIcon
                 sx={{
                   fontSize: 25,
