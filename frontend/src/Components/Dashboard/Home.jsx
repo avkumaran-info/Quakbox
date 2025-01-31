@@ -119,16 +119,16 @@ const Home = () => {
     window.location.reload();
   };
 
-  // const handleWorldClick = () => {
-  //   navigate("/world", {
-  //     state: {
-  //       flag: currentCountry.flag,
-  //       countryName: currentCountry.name,
-  //       countryCode: currentCountry.code,
-  //     },
-  //   });
-  //   window.location.reload();
-  // };
+  const handleWorldClick = () => {
+    navigate("/world", {
+      state: {
+        flag: currentCountry.flag,
+        countryName: currentCountry.name,
+        countryCode: currentCountry.code,
+      },
+    });
+    window.location.reload();
+  };
 
   // Handle country change
   const handleCountryChange = async (newCountryCode) => {
@@ -163,7 +163,7 @@ const Home = () => {
         currentCountry={currentCountry}
         handleLogoClick={handleLogoClick} // Pass the function to NavBar
         handleCountryChange={handleCountryChange} // Pass country change handler
-        // handleWorldClick={handleWorldClick}
+        handleWorldClick={handleWorldClick}
       />
       <div className="container-fluid mt-4">
         <LeftSidebar
@@ -171,7 +171,7 @@ const Home = () => {
           flag={currentCountry.flag}
           countryName={currentCountry.name}
           handleCountryChange={handleCountryChange} // Pass to LeftSidebar
-          // handleWorldClick={handleWorldClick}
+          handleWorldClick={handleWorldClick}
         />
         <Feed
           userData={userData}
@@ -179,14 +179,14 @@ const Home = () => {
           flag={currentCountry.flag}
           countryName={currentCountry.name}
           handleCountryChange={handleCountryChange} // Pass to Feed
-          // handleWorldClick={handleWorldClick}
+          handleWorldClick={handleWorldClick}
         />
         <RigthSideBar
           countryCode={currentCountry.code}
           flag={currentCountry.flag}
           countryName={currentCountry.name}
           handleCountryChange={handleCountryChange} // Pass to RigthSideBar
-          // handleWorldClick={handleWorldClick}
+          handleWorldClick={handleWorldClick}
         />
       </div>
       <Footer />
