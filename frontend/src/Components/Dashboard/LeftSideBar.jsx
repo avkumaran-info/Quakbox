@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from "react";
-import "./LeftSideBar.css";
+
 import {
   FaThumbsUp,
   FaThumbsDown,
