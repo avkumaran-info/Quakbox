@@ -18,45 +18,163 @@ class VideoController extends Controller
             'description' => 'required|string|max:255',
             'video_file' => 'required|file|mimes:mp4,mov|max:20480', // 20MB max
         ]);
-
+    
         // If validation fails, return a JSON response with the errors
         if ($validator->fails()) {
             return response()->json([
+                'result' => false,
+                'message' => 'Validation failed',
                 'errors' => $validator->errors()
             ], 422); // 422 Unprocessable Entity
         }
-
+    
         if ($request->hasFile('video_file')) {
             $file = $request->file('video_file');
-            $mediaType = 'video';
             $mediaPath = $file->store('uploads/videos', 'public');
-
+    
             // Generate Thumbnails
-            $videoPath = Storage::disk('public')->path($mediaPath);
+            $videoPath = storage_path('app/public/' . $mediaPath);
             $thumbnails = $this->generateThumbnails($videoPath);
-
+    
+            // Store Video
             $video = M_Videos::create([
                 'title' => $request->title,
                 'description' => $request->description,
-                'file_path' => $mediaPath,
-                'thumbnails' => json_encode($thumbnails),
+                'file_path' => url('storage/' . $mediaPath), // Fixed File Path
+                'thumbnails' => json_encode(array_map(fn($thumb) => url('storage/' . $thumb), $thumbnails)), // Fixed Thumbnails Path
                 'user_id' => $request->user()->id,
             ]);
-            
-            return response()->json($video, 201);
+    
+            return response()->json([
+                'result' => true,
+                'message' => 'Video uploaded successfully',
+                'video_id' => $video->id // Only returning the video ID
+            ], 201);
         }
-
-        return response()->json("error", 422);
+    
+        return response()->json([
+            'result' => false,
+            'message' => 'Video upload failed'
+        ], 422);
     }
-
+    
     public function index()
     {
-        return M_video::all();
+        $videos = M_Videos::all()->map(function ($video) {
+            return [
+                'video_id' => $video->id,
+                'title' => $video->title,
+                'description' => $video->description,
+                'file_path' => url('storage/' . $video->file_path), // Fixed File Path
+                'thumbnails' => array_map(fn($thumb) => url('storage/' . $thumb), json_decode($video->thumbnails, true)), // Fixed Thumbnails Path
+                'user_id' => $video->user_id,
+                'created_at' => $video->created_at,
+                'updated_at' => $video->updated_at,
+            ];
+        });
+    
+        return response()->json([
+            'result' => true,
+            'message' => 'Videos fetched successfully',
+            'data' => $videos
+        ]);
     }
+    
+    
 
     public function show($id)
     {
-        return M_video::findOrFail($id);
+        // Find the video by its ID or fail if not found
+        $video = M_Videos::find($id);
+    
+        if (!$video) {
+            return response()->json([
+                'result' => false,
+                'message' => 'Video not found'
+            ], 404); // 404 Not Found
+        }
+    
+        // Return the video details with proper paths
+        return response()->json([
+            'result' => true,
+            'message' => 'Video fetched successfully',
+            'data' => [
+                'video_id' => $video->id,
+                'title' => $video->title,
+                'description' => $video->description,
+                'file_path' => url('storage/' . $video->file_path), // Fixed File Path
+                'thumbnails' => array_map(fn($thumb) => url('storage/' . $thumb), json_decode($video->thumbnails, true)), // Fixed Thumbnails Path
+                'user_id' => $video->user_id,
+                'created_at' => $video->created_at,
+                'updated_at' => $video->updated_at,
+            ]
+        ]);
+    }
+ 
+    public function delete($id)
+    {
+        // Find the video by ID or return a 404 if not found
+        $video = M_Videos::find($id);
+    
+        if (!$video) {
+            return response()->json([
+                'result' => false,
+                'message' => 'Video not found'
+            ], 404); // 404 Not Found
+        }
+    
+        // Delete the video
+        $video->delete();
+    
+        return response()->json([
+            'result' => true,
+            'message' => 'Video deleted successfully',
+            'video_id' =>$id
+        ]);
+    }
+
+    public function search(Request $request, $query)
+    {
+    // Validate the search query input
+    if (empty($query)) {
+        return response()->json([
+            'result' => false,
+            'message' => 'Search query cannot be empty'
+        ], 400); // 400 Bad Request
+    }
+
+    // Search the videos by title or description (case insensitive)
+    $videos = M_Videos::whereRaw('LOWER(title) LIKE ?', ['%' . strtolower($query) . '%'])
+                      ->orWhereRaw('LOWER(description) LIKE ?', ['%' . strtolower($query) . '%'])
+                      ->get();
+
+    // If no videos are found, return a 404 response
+    if ($videos->isEmpty()) {
+        return response()->json([
+            'result' => false,
+            'message' => 'No videos found matching the search criteria'
+        ], 404); // 404 Not Found
+    }
+
+    // Return the found videos
+    return response()->json([
+        'result' => true,
+        'message' => 'Videos fetched successfully',
+        'query' => $query, // Showing the search query
+        'videos_count' => $videos->count(), // Showing the count of videos found
+        'data' => $videos->map(function ($video) {
+            return [
+                'id' => $video->id,
+                'title' => $video->title,
+                'description' => $video->description,
+                'file_path' => url('storage/' . $video->file_path), // Full URL for file_path
+                'thumbnails' => array_map(fn($thumb) => url('storage/' . $thumb), json_decode($video->thumbnails, true)), // Full URLs for thumbnails
+                'user_id' => $video->user_id,
+                'created_at' => $video->created_at,
+                'updated_at' => $video->updated_at,
+            ];
+        })
+    ]);
     }
 
     public function update(Request $request, $id)
