@@ -414,54 +414,54 @@ const NavBar = ({
                 handleCountryChange("99");
               }}
             ></i> */}
-            <div
+            {/* <div
               style={{
                 display: "flex",
                 justifyContent: "space-between",
                 alignItems: "center",
                 margin: "0px 40px",
               }}
-            >
-              <Tooltip title="Global" arrow disableInteractive>
-                <PublicIcon
-                  sx={{
-                    fontSize: 25,
-                    color: "white",
-                    cursor: "pointer",
-                    margin: "0px 15px",
-                    "&:hover": {
-                      transform: "scale(1.2)",
-                      // color: "#1e90ff",
-                    },
-                    transition: "all 0.3s ease",
-                  }}
-                  onClick={() => handleCountryChange("99")}
-                />
-              </Tooltip>
-              {/* Video Icon */}
-              {/* <i
+            > */}
+            <Tooltip title="Global" arrow disableInteractive>
+              <PublicIcon
+                sx={{
+                  fontSize: 25,
+                  color: "white",
+                  cursor: "pointer",
+                  // margin: "0px 15px",
+                  "&:hover": {
+                    transform: "scale(1.2)",
+                    // color: "#1e90ff",
+                  },
+                  transition: "all 0.3s ease",
+                }}
+                onClick={() => handleCountryChange("99")}
+              />
+            </Tooltip>
+            {/* Video Icon */}
+            {/* <i
               className="fas fa-video d-none d-lg-block"
               style={{ color: "white", cursor: "pointer" }}
               onClick={handleIconClick} // Handle the click event
             ></i> */}
-              <Tooltip title="Record Video" arrow disableInteractive>
-                <VideocamIcon
-                  sx={{
-                    fontSize: 25,
-                    color: "white",
-                    cursor: "pointer",
-                    margin: "0px 15px",
-                    "&:hover": {
-                      transform: "scale(1.2)",
-                      // color: "#1e90ff",
-                    },
-                    transition: "all 0.3s ease",
-                  }}
-                  onClick={handleIconClick} // Handle the click event
-                />
-              </Tooltip>
-              {/* Go Live Icon */}
-              {/* <i
+            <Tooltip title="Record Video" arrow disableInteractive>
+              <VideocamIcon
+                sx={{
+                  fontSize: 25,
+                  color: "white",
+                  cursor: "pointer",
+                  // margin: "0px 15px",
+                  "&:hover": {
+                    transform: "scale(1.2)",
+                    // color: "#1e90ff",
+                  },
+                  transition: "all 0.3s ease",
+                }}
+                onClick={handleIconClick} // Handle the click event
+              />
+            </Tooltip>
+            {/* Go Live Icon */}
+            {/* <i
               onClick={(e) => {
                 e.preventDefault();
                 navigate("/golive");
@@ -469,107 +469,107 @@ const NavBar = ({
               className="fas fa-broadcast-tower d-none d-lg-block"
               style={{ color: "white", cursor: "pointer" }}
             ></i> */}
-              <Tooltip title="Go Live" arrow disableInteractive>
-                <PodcastsIcon
-                  sx={{
-                    fontSize: 25,
-                    color: "white",
-                    cursor: "pointer",
-                    margin: "0px 15px",
-                    "&:hover": {
-                      transform: "scale(1.2)",
-                      // color: "#ff1744",
-                    },
-                    transition: "all 0.3s ease",
-                  }}
-                  onClick={(e) => {
-                    e.preventDefault();
-                    navigate("/golive");
-                  }}
-                />
-              </Tooltip>
-              {/* Friends Icon */}
-              {/* <i
+            <Tooltip title="Go Live" arrow disableInteractive>
+              <PodcastsIcon
+                sx={{
+                  fontSize: 25,
+                  color: "white",
+                  cursor: "pointer",
+                  // margin: "0px 15px",
+                  "&:hover": {
+                    transform: "scale(1.2)",
+                    // color: "#ff1744",
+                  },
+                  transition: "all 0.3s ease",
+                }}
+                onClick={(e) => {
+                  e.preventDefault();
+                  navigate("/golive");
+                }}
+              />
+            </Tooltip>
+            {/* Friends Icon */}
+            {/* <i
               className="fas fa-user-friends d-none d-lg-block"
               style={{ color: "white", cursor: "pointer" }}
             ></i> */}
-              <Tooltip title="Friends" arrow disableInteractive>
-                <GroupIcon
-                  sx={{
-                    fontSize: 25,
-                    color: "white",
-                    cursor: "pointer",
-                    margin: "0px 15px",
-                    "&:hover": {
-                      transform: "scale(1.2)",
-                      // color: "#4caf50",
-                    },
-                    transition: "all 0.3s ease",
-                  }}
-                />
-              </Tooltip>
-              {/* Notification Icon */}
-              {/* <i
+            <Tooltip title="Friends" arrow disableInteractive>
+              <GroupIcon
+                sx={{
+                  fontSize: 25,
+                  color: "white",
+                  cursor: "pointer",
+                  // margin: "0px 15px",
+                  "&:hover": {
+                    transform: "scale(1.2)",
+                    // color: "#4caf50",
+                  },
+                  transition: "all 0.3s ease",
+                }}
+              />
+            </Tooltip>
+            {/* Notification Icon */}
+            {/* <i
               className="fas fa-bell d-none d-lg-block"
               style={{ color: "white", cursor: "pointer" }}
             ></i> */}
-              <Tooltip title="Notifications" arrow disableInteractive>
-                <NotificationsIcon
-                  sx={{
-                    fontSize: 25,
-                    color: "white",
-                    cursor: "pointer",
-                    margin: "0px 15px",
-                    "&:hover": {
-                      transform: "scale(1.2)",
-                      // color: "#ff9800",
-                    },
-                    transition: "all 0.3s ease",
-                  }}
-                />
-              </Tooltip>
-              {/* Message Icon */}
-              {/* <i
+            <Tooltip title="Notifications" arrow disableInteractive>
+              <NotificationsIcon
+                sx={{
+                  fontSize: 25,
+                  color: "white",
+                  cursor: "pointer",
+                  // margin: "0px 15px",
+                  "&:hover": {
+                    transform: "scale(1.2)",
+                    // color: "#ff9800",
+                  },
+                  transition: "all 0.3s ease",
+                }}
+              />
+            </Tooltip>
+            {/* Message Icon */}
+            {/* <i
               className="fas fa-envelope d-none d-lg-block"
               style={{ color: "white", cursor: "pointer" }}
             ></i> */}
-              <Tooltip title="Messages" arrow disableInteractive>
-                <EmailIcon
-                  sx={{
-                    fontSize: 25,
-                    color: "white",
-                    cursor: "pointer",
-                    margin: "0px 15px",
-                    "&:hover": {
-                      transform: "scale(1.2)",
-                      // color: "#4caf50",
-                    },
-                    transition: "all 0.3s ease",
-                  }}
-                />
-              </Tooltip>
-              {/* Mail Icon */}
-              {/* <i
+            <Tooltip title="Messages" arrow disableInteractive>
+              <EmailIcon
+                sx={{
+                  fontSize: 25,
+                  color: "white",
+                  cursor: "pointer",
+                  // margin: "0px 15px",
+                  "&:hover": {
+                    transform: "scale(1.2)",
+                    // color: "#4caf50",
+                  },
+                  transition: "all 0.3s ease",
+                }}
+              />
+            </Tooltip>
+            {/* Mail Icon */}
+            {/* <i
               className="fas fa-inbox d-none d-lg-block"
               style={{ color: "white", cursor: "pointer" }}
             ></i> */}
-              <Tooltip title="Inbox" arrow disableInteractive>
-                <InboxIcon
-                  sx={{
-                    fontSize: 25,
-                    color: "white",
-                    cursor: "pointer",
-                    margin: "0px 15px",
-                    "&:hover": {
-                      transform: "scale(1.2)",
-                      // color: "#4caf50",
-                    },
-                    transition: "all 0.3s ease",
-                  }}
-                />
-              </Tooltip>
-              {/* Heart Icon */}
-              {/* <i
+            <Tooltip title="Inbox" arrow disableInteractive>
+              <InboxIcon
+                sx={{
+                  fontSize: 25,
+                  color: "white",
+                  cursor: "pointer",
+                  // margin: "0px 15px",
+                  "&:hover": {
+                    transform: "scale(1.2)",
+                    // color: "#4caf50",
+                  },
+                  transition: "all 0.3s ease",
+                }}
+              />
+            </Tooltip>
+            {/* Heart Icon */}
+            {/* <i
               className="fas fa-heart d-none d-lg-block"
               style={{ color: "white", cursor: "pointer" }}
               onClick={(e) => {
@@ -577,26 +577,26 @@ const NavBar = ({
                 navigate("/favouriteCountires");
               }}
             ></i> */}
-              <Tooltip title="Favourite Countries" arrow disableInteractive>
-                <FavoriteIcon
-                  sx={{
-                    fontSize: 25,
-                    color: "white",
-                    cursor: "pointer",
-                    margin: "0px 15px",
-                    "&:hover": {
-                      transform: "scale(1.2)",
-                      // color: "#ff4081",
-                    },
-                    transition: "all 0.3s ease",
-                  }}
-                  onClick={(e) => {
-                    e.preventDefault();
-                    navigate("/favouriteCountires"); // Navigate to Favourite Countries page
-                  }}
-                />
-              </Tooltip>
-            </div>
+            <Tooltip title="Favourite Countries" arrow disableInteractive>
+              <FavoriteIcon
+                sx={{
+                  fontSize: 25,
+                  color: "white",
+                  cursor: "pointer",
+                  // margin: "0px 15px",
+                  "&:hover": {
+                    transform: "scale(1.2)",
+                    // color: "#ff4081",
+                  },
+                  transition: "all 0.3s ease",
+                }}
+                onClick={(e) => {
+                  e.preventDefault();
+                  navigate("/favouriteCountires"); // Navigate to Favourite Countries page
+                }}
+              />
+            </Tooltip>
+            {/* </div> */}
             {/* Search Input */}
             <div className="d-none d-lg-block " style={{ width: "250px" }}>
               {/* Smaller width for input */}
