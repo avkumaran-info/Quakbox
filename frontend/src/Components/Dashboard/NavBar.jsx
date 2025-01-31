@@ -1,118 +1,45 @@
-import { useEffect, useRef, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import logo from "../../assets/logo/logo.png";
 import profileImage from "../../assets/images/vector-users-icon.jpg";
 import axios from "axios";
 
-import { useNavigate } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { useSelector, useDispatch } from "react-redux";
-import {
-  setFavouriteCountries,
-  selectFavouriteCountries,
-} from "../redux/favouriteCountriesSlice";
-const countriesApi = "https://restcountries.com/v3.1/all";
-const GET_API_URL =
-  "https://develop.quakbox.com/admin/api/get_favourite_country";
-const NavBar = () => {
-  console.log("NavBar render");
-  const dispatch = useDispatch();
+
+const NavBar = ({
+  userData,
+  currentCountry,
+  handleLogoClick,
+  handleCountryChange,
+  handleWorldClick,
+}) => {
   const navigate = useNavigate();
   const [countries, setCountries] = useState([]);
   const [userName, setUserName] = useState("");
   const [favCountries, setFavCountries] = useState([]);
 
-  const favouriteCountries = useSelector(selectFavouriteCountries);
+  // const favouriteCountries = useSelector(selectFavouriteCountries);
+  // console.log("favouriteCountries");
+  // console.log(favouriteCountries);
 
   const dropdownRef = useRef(null);
   const [showDropdown, setShowDropdown] = useState(false);
   const [dropdown, setDropdown] = useState(false);
   const [showAllFlags, setShowAllFlags] = useState(false);
   const [searchQuery, setSearchQuery] = useState(""); // State for search input
-  ///////////////////////////////////////////////////////////
-  // Function to fetch favourite countries from the API
-  const handleLogoClick = () => {
-    navigate("/dashboard"); // Navigate to /dashboard
-  };
-  const handleFlagClick = (countryCode, flag, countryName) => {
-    navigate(`/country/${countryCode.toLowerCase()}`, {
-      state: { flag, countryName },
-    }); // Pass the flag image with navigate
-    window.location.reload();
-  };
-  const fetchAllCountries = async () => {
-    console.log("fetchAllCountries call from NavBar");
-    // setLoading(true);
-    try {
-      const response = await axios.get(countriesApi);
-      const data = response.data.map((country) => ({
-        name: country.name.common,
-        flag: country.flags.png,
-        isFan: false,
-        isFavourite: false,
-      }));
 
-      console.log("Countries fetched:", data); // Log to verify `data`
-      if (data.length > 0) {
-        fetchFavouriteCountries(data); // Fetch favourite data only if `data` is valid
-      } else {
-        console.error("No countries data available.");
-      }
-    } catch (error) {
-      // handleError("Error fetching all countries");
-    } finally {
-      // setLoading(false);
-    }
-  };
-  /////////////
-  const fetchFavouriteCountries = async (initialCountries) => {
-    console.log("fetchFavouriteCountries call from NavBar");
-    try {
-      const token = localStorage.getItem("api_token");
-      if (!token) {
-        console.error("No token found. Please log in.");
-        return;
-      }
+  // const handleLogoClick = () => {
+  //   navigate("/dashboard"); // Navigate to /dashboard
+  // };
 
-      const response = await axios.get(GET_API_URL, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
+  // const handleFlagClick = (countryCode, flag, countryName) => {
+  //   navigate(`/country/${countryCode.toLowerCase()}`, {
+  //     state: { flag, countryName },
+  //   }); // Pass the flag image with navigate
+  //   window.location.reload();
+  // };
 
-      const uniqueCountries = response.data.favourite_country.map(
-        (country) => ({
-          code: country.code.toLowerCase(),
-          isFan: true,
-          isFavourite: country.favourite_country === "1",
-          favourite_country_id: country.favourite_country_id,
-          originalState: {
-            isFan: true,
-            isFavourite: country.favourite_country === "1",
-          },
-        })
-      );
-
-      const combined = initialCountries.map((country) => {
-        const match = uniqueCountries.find(
-          (fav) => fav.code === country.name.toLowerCase()
-        );
-        return match ? { ...country, ...match } : country;
-      });
-      console.log("fetch navbar favouriteCountries");
-      console.log(response.data);
-      // Update Redux store with favourite countries
-      dispatch(
-        setFavouriteCountries(combined.filter((country) => country.isFavourite))
-      );
-    } catch (error) {
-      console.error("Failed to fetch favourite countries:", error);
-    }
-  };
-
-  // Fetch favorite countries when the component mounts (page refresh)
-  useEffect(() => {
-    fetchAllCountries();
-    // fetchFavouriteCountries();
-  }, []);
-  // ///////////////////////////////////////////////////
-  const userData = async () => {
+  const userDatas = async () => {
     const token = localStorage.getItem("api_token");
     if (!token) {
       return;
@@ -127,9 +54,9 @@ const NavBar = () => {
         }
       );
 
-      console.log(res.data);
+      // console.log(res.data);
       setUserName(res.data.users.username);
-      console.log(userName);
+      // console.log(userName);
 
       // countries.map((e, i) => {
       //   console.log(e);
@@ -153,7 +80,7 @@ const NavBar = () => {
 
   const handleLogout = async () => {
     const token = localStorage.getItem("api_token");
-    console.log("handleLogout : ", token);
+    // console.log("handleLogout : ", token);
 
     if (!token) {
       console.log("No token found, user may not be logged in.");
@@ -171,7 +98,7 @@ const NavBar = () => {
           },
         }
       );
-      console.log(response);
+      // console.log(response);
 
       // Clear local storage and redirect
       localStorage.clear();
@@ -225,7 +152,7 @@ const NavBar = () => {
         console.error("Error fetching countries:", error);
       }
     };
-    userData();
+    userDatas();
     fetchCountries();
   }, []);
 
@@ -244,10 +171,13 @@ const NavBar = () => {
 
   // Filter and sort countries
   const filteredCountries = countries
-    .filter((country) =>
-      country.name.common.toLowerCase().includes(searchQuery.toLowerCase())
+    .filter(
+      (country) =>
+        country.country_name.toLowerCase() !== "earth" && // Exclude "Earth"
+        country.code !== "99" && // Additional safety: exclude code 99
+        country.country_name.toLowerCase().includes(searchQuery.toLowerCase())
     )
-    .sort((a, b) => a.name.common.localeCompare(b.name.common)); // Sort A-Z
+    .sort((a, b) => a.country_name.localeCompare(b.country_name)); // Sort A-Z
 
   const handleIconClick = () => {
     navigate("/qcast"); // This will navigate to the Thome.jsx route
@@ -320,7 +250,7 @@ const NavBar = () => {
             >
               {/* Display only the first 3 flags */}
               <div style={{ display: "flex", gap: "3px" }}>
-                {countries.slice(0, 3).map((country, index) => (
+                {countries?.slice(0, 3).map((country, index) => (
                   <div
                     key={index}
                     style={{
@@ -330,19 +260,17 @@ const NavBar = () => {
                       cursor: "pointer",
                     }}
                     onClick={() => {
-                      const countryCode = country.cca2.toLowerCase();
-                      // console.log("countryCode", countryCode);
-                      window.history.pushState(
-                        {},
-                        "",
-                        `/country/${countryCode}`
+                      handleCountryChange(
+                        country.code,
+                        country.country_image,
+                        country.country_name
                       );
                       setShowAllFlags(false);
                     }}
                   >
                     <img
-                      src={country.flags.png}
-                      alt={country.name.common}
+                      src={country.country_image}
+                      alt={country.country_name}
                       style={{
                         width: "40px",
                         height: "20px",
@@ -361,7 +289,7 @@ const NavBar = () => {
                         maxWidth: "50px",
                       }}
                     >
-                      {country.name.common}
+                      {country.country_name}
                     </span>
                   </div>
                 ))}
@@ -429,17 +357,17 @@ const NavBar = () => {
                           cursor: "pointer",
                         }}
                         onClick={() => {
-                          handleFlagClick(
-                            country.cca2,
-                            country.flags.png,
-                            country.name.common
+                          handleCountryChange(
+                            country.code,
+                            country.country_image,
+                            country.country_name
                           );
                           setShowAllFlags(false);
                         }}
                       >
                         <img
-                          src={country.flags.png}
-                          alt={country.name.common}
+                          src={country.country_image}
+                          alt={country.country_name}
                           style={{
                             width: "65px",
                             height: "40px",
@@ -460,7 +388,7 @@ const NavBar = () => {
                             maxWidth: "70px",
                           }}
                         >
-                          {country.name.common}
+                          {country.country_name}
                         </span>
                       </div>
                     ))}
@@ -474,6 +402,9 @@ const NavBar = () => {
             <i
               className="fas fa-globe d-none d-lg-block"
               style={{ color: "white", cursor: "pointer" }}
+              onClick={() => {
+                handleCountryChange("99");
+              }}
             ></i>
 
             {/* Video Icon */}

@@ -1,6 +1,6 @@
 import React from "react";
 import { useNavigate } from "react-router-dom";
-
+import { FaUpload } from "react-icons/fa";
 const QNavBar = ({ toggleSidebar }) => {
   const navigate = useNavigate();
 
@@ -34,13 +34,16 @@ const QNavBar = ({ toggleSidebar }) => {
 
       {/* Button next to the search box */}
       <button
-        className="btn btn-primary"
+        className="btn btn-outline-primary d-flex align-items-center justify-content-center"
         style={{
           padding: "8px 20px", // Adjust button size
           height: "38px", // Same height as the search box
+          display: "flex",
+          gap: "8px", // Space between icon and text
         }}
         onClick={handleUpload}
       >
+        <FaUpload className="me-1" /> {/* Icon with spacing */}
         Upload Video
       </button>
     </nav>

@@ -56,11 +56,12 @@ const UploadVideo = () => {
   };
 
   // Handle file upload
-  const handleFileUpload = (event) => {
+  const handleFileUpload = () => {
     const file = event.target.files[0];
     if (file) {
       console.log("File uploaded: ", file);
     }
+    navigate("/addvideo");
   };
 
   // Content for each category
@@ -157,10 +158,11 @@ const UploadVideo = () => {
                   className="my-3"
                   style={{
                     width: "100%",
-                    height: "460px", // Fixed height for consistency
+                    height: "350px", // Fixed height for consistency
                     borderRadius: "10px", // Rounded corners
                     overflow: "hidden", // Hide any overflowed parts of the image
                     boxShadow: "0 4px 8px rgba(0, 0, 0, 0.1)", // Add a subtle shadow for better appearance
+                    objectFit: "contain",
                   }}
                 >
                   {/* If webcam is active, show video */}
@@ -180,12 +182,11 @@ const UploadVideo = () => {
                       className="img-fluid hover-zoom"
                       style={{
                         width: "100%",
-                        height: "100%",
-                        objectFit: "cover", // Ensure the image fits without distortion
-                        cursor: "pointer", // Make the image clickable
+                        height: "300px",
+                        objectFit: "contain", // Ensures the whole image is visible without cropping
+                        cursor: "pointer",
                       }}
                       onClick={() => {
-                        // Trigger upload when image is clicked based on selected category
                         fileInputRef.current.click();
                       }}
                     />
@@ -201,7 +202,7 @@ const UploadVideo = () => {
                 <div className="d-flex justify-content-around mt-3">
                   {selectedCategory === "photo" && (
                     <div>
-                      <label className="btn btn-dark">
+                      <label className="btn btn-outline-primary">
                         <FaUpload className="me-2" /> Upload Photo
                         <input
                           type="file"
@@ -216,7 +217,7 @@ const UploadVideo = () => {
 
                   {selectedCategory === "video" && (
                     <div>
-                      <label className="btn btn-dark">
+                      <label className="btn btn-outline-primary">
                         <FaUpload className="me-2" /> Upload Video
                         <input
                           type="file"
@@ -231,7 +232,7 @@ const UploadVideo = () => {
 
                   {selectedCategory === "music" && (
                     <div>
-                      <label className="btn btn-dark">
+                      <label className="btn btn-outline-primary ">
                         <FaUpload className="me-2" /> Upload Music
                         <input
                           type="file"
