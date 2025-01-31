@@ -141,7 +141,7 @@ const LeftSidebar = ({
     <Box
       sx={{
         width: "100%",
-        maxWidth: "23rem",
+        maxWidth: "21rem",
         position: "fixed",
         height: "85vh",
         backgroundColor: "#f5f5f5",
