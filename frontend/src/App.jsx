@@ -7,8 +7,11 @@ import ForgetPassword from "./Components/ForgetPassword";
 import Home from "./Components/Dashboard/Home";
 import ChatPage from "./Components/ChatPage";
 import GoLive from "./Components/GoLive";
+import NavBar from "./Components/Dashboard/NavBar";
+import GoogleAuth from "./Components/socialLogin/GoogleAuth";
 import FanCountriesComponent from "./Components/FanCountriesComponent";
 import store from "./Components/redux/store";
+import VidoeHome from "./Components/CreateUpload/pages/VidoeHome";
 import FanCountry from "./Components/FanCountry";
 import Thome from "./Components/Dashboard/Quaktube/Thome";  // Import Thome component
 import Tuploadpage from "./Components/Dashboard/Quaktube/Tuploadpage";

@@ -279,7 +279,6 @@ const RightSidebar = ({
               /> */}
             </div>
           </div>
-
           {/* Part 2 & 3: Scrollable Section */}
           <div
             style={{

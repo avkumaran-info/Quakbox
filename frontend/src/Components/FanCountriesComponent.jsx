@@ -157,6 +157,8 @@ const FanCountriesComponent = () => {
   );
 
   const fetchFavouriteCountries = async (initialCountries) => {
+    console.log("initialCountries");
+    console.log(initialCountries);
     try {
       const token = getApiToken();
       const response = await axios.get(GET_API_URL, {
@@ -201,24 +203,6 @@ const FanCountriesComponent = () => {
     }
   };
 
-  // const handleCheckboxChange = (name, type, checked) => {
-  //   setCountries((prev) =>
-  //     prev.map((country) =>
-  //       country.name === name
-  //         ? {
-  //             ...country,
-  //             isFan: type === "Fan" ? checked : country.isFan,
-  //             isFavourite:
-  //               type === "Favourite"
-  //                 ? checked
-  //                 : checked
-  //                 ? country.isFavourite
-  //                 : false,
-  //           }
-  //         : country
-  //     )
-  //   );
-  // };
   const handleCheckboxChange = (name, type, checked) => {
     setCountries((prev) =>
       prev.map((country) => {
