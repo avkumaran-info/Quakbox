@@ -12,12 +12,6 @@ import event from "../../assets/images/Rigth side property/7.png"; // Event icon
 import group from "../../assets/images/Rigth side property/group.png"; // Group icon
 import notification from "../../assets/images/Rigth side property/not.png"; // Notification icon
 import set from "../../assets/images/Rigth side property/set.webp"; // Settings icon
-import like from "../../assets/images/Rigth side property/like.png";
-import dislike from "../../assets/images/Rigth side property/dislike.png";
-import comment from "../../assets/images/Rigth side property/comment.png";
-import share from "../../assets/images/Rigth side property/share.webp";
-import followers from "../../assets/images/Rigth side property/followers.png";
-import fans from "../../assets/images/Rigth side property/fans.png";
 import ThumbUpOffAltIcon from "@mui/icons-material/ThumbUpOffAlt";
 import ThumbDownOffAltIcon from "@mui/icons-material/ThumbDownOffAlt";
 import CommentIcon from "@mui/icons-material/Comment";

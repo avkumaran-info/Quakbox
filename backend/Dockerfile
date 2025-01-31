@@ -7,11 +7,15 @@ WORKDIR /var/www/html
 # Install required extensions
 RUN apt-get update \
     && apt-get install -y \
+        ffmpeg \
         libzip-dev \
         unzip \
         libonig-dev \
     && docker-php-ext-install pdo_mysql zip mbstring exif pcntl bcmath \
     && a2enmod rewrite
+
+# Copy your custom php.ini file into the container
+COPY ./php.ini /usr/local/etc/php/
 
 # Enable Apache mod_rewrite
 RUN a2enmod rewrite

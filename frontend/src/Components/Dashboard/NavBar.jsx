@@ -18,6 +18,7 @@ const NavBar = () => {
   const navigate = useNavigate();
   const [countries, setCountries] = useState([]);
   const [userName, setUserName] = useState("");
+  const [favCountries, setFavCountries] = useState([]);
 
   const favouriteCountries = useSelector(selectFavouriteCountries);
 
@@ -187,10 +188,39 @@ const NavBar = () => {
 
   useEffect(() => {
     const fetchCountries = async () => {
+      const token = localStorage.getItem("api_token"); // Get token from localStorage
+
+      if (!token) {
+        setError("Authorization token not found. Please log in.");
+        return;
+      }
+
       try {
-        const res = await axios.get("https://restcountries.com/v3.1/all");
-        setCountries(res.data);
-        console.log(res.data);
+        // Fetch all countries
+        const res = await axios.get(
+          // "https://restcountries.com/v3.1/all"
+          "https://develop.quakbox.com/admin/api/get_geo_country"
+        );
+
+        // console.log(res);
+
+        // Fetch favorite countries
+        const favCountriesRes = await axios.get(
+          "https://develop.quakbox.com/admin/api/get_favourite_country",
+          {
+            headers: { Authorization: `Bearer ${token}` },
+          }
+        );
+        // Store the full list of all countries
+        setCountries(res.data.geo_countries);
+        console.log(favCountriesRes);
+        const favouriteCountries =
+          favCountriesRes.data.favourite_country.filter(
+            (fav) => fav.favourite_country === "1"
+          );
+        // Store the list of favorite countries (just names)
+        setFavCountries(favouriteCountries || []);
+        console.log(favouriteCountries);
       } catch (error) {
         console.error("Error fetching countries:", error);
       }
@@ -218,6 +248,10 @@ const NavBar = () => {
       country.name.common.toLowerCase().includes(searchQuery.toLowerCase())
     )
     .sort((a, b) => a.name.common.localeCompare(b.name.common)); // Sort A-Z
+
+    const handleIconClick = () => {
+      navigate('/Thome');  // This will navigate to the Thome.jsx route
+    };
 
   return (
     <div>
@@ -441,14 +475,9 @@ const NavBar = () => {
 
             {/* Video Icon */}
             <i
-              onClick={(e) => {
-                e.preventDefault();
-                navigate("/goVideo");
-              }}
-              className="fas fa-video d-none d-lg-block"
-              style={{ color: "white", cursor: "pointer" }}
-
-              // <Route path="/goVideo" element={<home />} />
+            className="fas fa-video d-none d-lg-block"
+            style={{ color: 'white', cursor: 'pointer' }}
+            onClick={handleIconClick}  // Handle the click event
             ></i>
 
             {/* Go Live Icon */}
@@ -511,27 +540,67 @@ const NavBar = () => {
               />
             </div>
             {/* Favourite countries section */}
-            <div className="favourite-countries">
-              {favouriteCountries.length > 0 && (
-                <div className="favourite-countries-list">
-                  {favouriteCountries.map((country) => (
-                    <img
-                      style={{
-                        width: "65px",
-                        height: "40px",
-                        objectFit: "cover",
-                        border: "1px solid black",
-                        borderRadius: "3px",
-                      }}
-                      key={country.favourite_country_id}
-                      src={country.flag}
-                      alt={country.name}
-                      title={country.name}
-                      className="flag-icon"
-                    />
-                  ))}
-                </div>
-              )}
+            {/* Display Favorite Countries: Only Name and Image */}
+            <div
+              className="d-none d-lg-flex"
+              style={{
+                gap: "10px", // Reduced gap between flags
+                alignItems: "center",
+                position: "relative",
+              }}
+            >
+              <div style={{ display: "flex", gap: "7px" }}>
+                {favCountries.length > 0 ? (
+                  favCountries.map((fav, index) => {
+                    // Find the matched country in allCountries based on the name
+                    const matchedCountry = countries.find(
+                      (c) => c.country_name === fav.code
+                    );
+                    // console.log(matchedCountry);
+
+                    // Only render the country if it's matched (found)
+                    return (
+                      matchedCountry && (
+                        <div
+                          key={index}
+                          style={{
+                            display: "flex",
+                            flexDirection: "column",
+                            alignItems: "center",
+                          }}
+                        >
+                          <img
+                            src={matchedCountry.country_image}
+                            alt={matchedCountry.country_name}
+                            className="card-img-top img-fluid"
+                            style={{
+                              width: "40px",
+                              height: "20px",
+                              objectFit: "cover",
+                            }}
+                          />
+                          <span
+                            style={{
+                              fontSize: "0.6rem",
+                              color: "#ffffff",
+                              // marginTop: "5px",
+                              textAlign: "center",
+                              whiteSpace: "nowrap",
+                              overflow: "hidden",
+                              textOverflow: "ellipsis",
+                              maxWidth: "50px",
+                            }}
+                          >
+                            {matchedCountry.country_name}
+                          </span>
+                        </div>
+                      )
+                    );
+                  })
+                ) : (
+                 ""
+                )}
+              </div>
             </div>
 
             {/* Profile Section */}
