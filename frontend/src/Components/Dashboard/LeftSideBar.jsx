@@ -18,6 +18,7 @@ import user1 from "../../assets/images/Rigth side property/user.jpg";
 import user3 from "../../assets/images/Rigth side property/user3.jpg";
 import user2 from "../../assets/images/Rigth side property/user2.jpeg";
 import user from "../../assets/images/Rigth side property/user.png";
+import { Box, Typography } from "@mui/material";
 
 const LeftSidebar = ({
   countryCode,
@@ -121,349 +122,315 @@ const LeftSidebar = ({
   }, [currentVideoIndex, isPlaying]);
 
   return (
-    <div
-      className="col-md-3 d-none d-md-block bg-light position-fixed mb-5"
-      style={{
-        top: "55px",
-        left: "0",
-        boxSizing: "border-box",
-        paddingBottom: "100px",
-        overflowY: "auto",
-        height: "calc(100vh - 55px - 50px)", // Adjusted height for the sidebar
-        position: "relative", // Ensure it holds the position of elements within it
+    <Box
+      sx={{
+        width: "370px",
+        position: "fixed",
+        height: "85vh",
+        backgroundColor: "#f5f5f5",
+        display: "flex",
+        flexDirection: "column",
+        // margin: "10px",
+        padding: "2px",
+        borderRadius: "10px",
+        // border: "1px solid red",
       }}
     >
-      <div className="card mb-1">
-        <div
-          className="video-container"
+      {/* Video Section */}
+      <Box
+        sx={{
+          height: "50%",
+          overflow: "hidden",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          position: "relative", // Ensure hover works
+          // border: "1px solid yellow",
+        }}
+        onMouseEnter={() => setIsHovered(true)} // Show buttons on hover
+        onMouseLeave={() => setIsHovered(false)} // Hide buttons when not hovering
+      >
+        <video
+          ref={videoRef}
+          src={videos[currentVideoIndex]}
+          width="100%"
+          height="100%"
+          controls
+          muted={volume === 0}
+          loop={false}
+          autoPlay={false}
           style={{
-            textAlign: "center",
-            position: "relative",
-            marginBottom: "clamp(8px, 2vh, 16px)",
-            paddingBottom: "1rem",
+            backgroundColor: "#000",
+            border: "1px solid #ccc",
+            zIndex: "0", // Ensure video is behind the buttons
+          }}
+          onLoadedData={handleLoadedData}
+        >
+          <source src={videos[currentVideoIndex]} type="video/mp4" />
+          Your browser does not support the video tag.
+        </video>
+
+        {/* Loading Spinner */}
+        {isLoading && (
+          <div
+            style={{
+              position: "absolute",
+              top: "0",
+              left: "0",
+              width: "100%",
+              height: "100%",
+              backgroundColor: "rgba(0, 0, 0, 0.6)",
+              display: "flex",
+              justifyContent: "center",
+              alignItems: "center",
+              zIndex: "5",
+            }}
+          >
+            <div
+              style={{
+                border: "6px solid #f3f3f3",
+                borderTop: "6px solid #3498db",
+                borderRadius: "50%",
+                width: "50px",
+                height: "50px",
+                animation: "spin 2s linear infinite",
+              }}
+            ></div>
+          </div>
+        )}
+
+        {/* Video Controls */}
+        {/* Video Controls 1 */}
+        {isHovered && (
+          <div
+            style={{
+              position: "absolute",
+              top: "10px",
+              left: "10px",
+              zIndex: "10", // Ensure controls are above video
+              display: "flex",
+              justifyContent: "space-between",
+              width: "calc(100% - 20px)",
+            }}
+          >
+            {/* Play/Pause Button */}
+            {/* <button
+              onClick={togglePlayPause}
+              style={{
+                backgroundColor: "rgba(0, 0, 0, 0.7)",
+                color: "white",
+                border: "none",
+                borderRadius: "50%",
+                padding: "10px",
+                cursor: "pointer",
+              }}
+            >
+              {isPlaying ? <FaPause /> : <FaPlay />}
+            </button> */}
+
+            {/* Mute Button */}
+            {/* <button
+              onClick={handleVolumeToggle}
+              style={{
+                backgroundColor: "rgba(0, 0, 0, 0.7)",
+                color: "white",
+                border: "none",
+                borderRadius: "50%",
+                padding: "10px",
+                cursor: "pointer",
+              }}
+            >
+              {volume === 0 ? <FaVolumeMute /> : <FaVolumeUp />}
+            </button> */}
+          </div>
+        )}
+        {/* Video Controls 2 */}
+        {/* {isHovered && (
+          <div
+            style={{
+              position: "absolute",
+              top: "10px",
+              left: "10px",
+              zIndex: "10",
+              display: "flex",
+              justifyContent: "space-between",
+              gap: "10px",
+              width: "calc(100% - 20px)",
+            }}
+          >
+            <button
+              onClick={togglePlayPause}
+              style={{
+                backgroundColor: "rgba(0, 0, 0, 0.7)",
+                color: "white",
+                border: "none",
+                borderRadius: "50%",
+                padding: "10px",
+                cursor: "pointer",
+              }}
+            >
+              {isPlaying ? <FaPause /> : <FaPlay />}
+            </button>
+            <div
+              style={{
+                display: "flex",
+                justifyContent: "center",
+                alignItems: "center",
+              }}
+            >
+              <input
+                type="range"
+                min="0"
+                max="1"
+                step="0.1"
+                value={volume}
+                onChange={(e) => {
+                  const newVolume = parseFloat(e.target.value);
+                  setVolume(newVolume);
+                  if (videoRef.current) {
+                    videoRef.current.volume = newVolume; 
+                  }
+                }}
+                style={{
+                  width: "100px",
+                  cursor: "pointer",
+                  background: "#ccc",
+                  appearance: "none",
+                  height: "5px",
+                  borderRadius: "5px",
+                  transition: "opacity 0.3s",
+                }}
+              />
+              <button
+                onClick={handleVolumeToggle}
+                style={{
+                  backgroundColor: "rgba(0, 0, 0, 0.7)",
+                  color: "white",
+                  border: "none",
+                  borderRadius: "50%",
+                  padding: "10px",
+                  cursor: "pointer",
+                }}
+              >
+                {volume === 0 ? <FaVolumeMute /> : <FaVolumeUp />}
+              </button>
+            </div>
+          </div>
+        )} */}
+        {/* Video Controls end */}
+        {/* Left Arrow Button */}
+        {isHovered && (
+          <button
+            style={{
+              position: "absolute",
+              left: "10px",
+              top: "40%", // Center vertically
+              transform: "translateY(-50%)", // Align center
+              // transform: "translateY(0)",
+              backgroundColor: "rgba(0, 0, 0, 0.7)",
+              color: "#FFFFFF",
+              fontSize: "24px",
+              fontWeight: "bold",
+              padding: "12px 16px",
+              borderRadius: "50%",
+              cursor: "pointer",
+              boxShadow: "0 4px 8px rgba(0, 0, 0, 0.4)",
+              transition: "all 0.3s ease-in-out",
+              border: "none",
+              zIndex: "5",
+            }}
+            onClick={() => handleArrowClick("left")}
+          >
+            ← {/* Left Arrow */}
+          </button>
+        )}
+
+        {/* Right Arrow Button */}
+        {isHovered && (
+          <button
+            style={{
+              position: "absolute",
+              right: "10px",
+              top: "40%", // Center vertically
+              transform: "translateY(-50%)", // Align center
+              // transform: "translateY(0)",
+              backgroundColor: "rgba(0, 0, 0, 0.7)",
+              color: "#FFFFFF",
+              fontSize: "24px",
+              fontWeight: "bold",
+              padding: "12px 16px",
+              borderRadius: "50%",
+              cursor: "pointer",
+              boxShadow: "0 4px 8px rgba(0, 0, 0, 0.4)",
+              transition: "all 0.3s ease-in-out",
+              border: "none",
+              zIndex: "5",
+            }}
+            onClick={() => handleArrowClick("right")}
+          >
+            → {/* Right Arrow */}
+          </button>
+        )}
+      </Box>
+
+      {/* Groups Section */}
+      <Box
+        sx={{
+          height: "50%",
+          overflowY: "auto",
+          // border: "1px solid blue",
+          // padding: "10px",
+          display: "flex",
+          flexDirection: "column",
+          margin: "0px",
+          padding: "0px",
+        }}
+      >
+        {/* Groups Heading */}
+        <div
+          className="d-flex align-items-center text-light p-2"
+          style={{
+            background: "linear-gradient(to right, #1e90ff, #87cefa)",
+            color: "white",
+            height: "15%", // Adjust this value to 10% or 20% as per your preference
+            justifyContent: "flex-start",
+            position: "sticky", // Ensures the header stays at the top when scrolling
+            top: "0", // Ensures it sticks to the top of the container
+            zIndex: "1",
+            marginBottom: "0px",
+            margin: "0px",
+            padding: "0px",
           }}
         >
-          <div
-            style={{
-              marginBottom: "5px",
-              width: "100%",
-              maxWidth: "400px",
-              margin: "0 auto",
-              position: "relative",
-              minHeight: "220px", // Ensure the video section has a minimum height, so the group section stays in place
-            }}
-            onMouseEnter={() => setIsHovered(true)}
-            onMouseLeave={() => setIsHovered(false)}
+          <h5
+            className="text-center mb-0"
+            style={{ fontSize: "15px", marginLeft: "10px" }}
           >
-            <video
-              ref={videoRef}
-              src={videos[currentVideoIndex]}
-              width="100%"
-              height="100%"
-              controls={false}
-              muted={false}
-              loop={true}
-              autoPlay={false}
-              style={{
-                border: "1px solid #ccc",
-                backgroundColor: "#000",
-                left: "0",
-                position: "sticky",
-                top: "0",
-                zIndex: "1",
-              }}
-              onLoadedData={handleLoadedData}
-            />
-
-            {/* Show loading screen when the video is loading */}
-            {isLoading && (
-              <div
-                style={{
-                  position: "absolute",
-                  top: "0",
-                  left: "0",
-                  width: "100%",
-                  height: videoRef.current
-                    ? videoRef.current.clientHeight
-                    : "100%", // Match spinner height to video height
-                  backgroundColor: "rgba(0, 0, 0, 0.6)",
-                  display: "flex",
-                  justifyContent: "center",
-                  alignItems: "center",
-                  zIndex: "5",
-                }}
-              >
-                {/* Loading Spinner */}
-                <div
-                  style={{
-                    border:
-                      "6px solid #f3f3f3" /* Light background color for the spinner */,
-                    borderTop: "6px solid #3498db" /* Spinner color */,
-                    borderRadius: "50%",
-                    width: "50px" /* Size of the spinner */,
-                    height: "50px" /* Size of the spinner */,
-                    animation:
-                      "spin 2s linear infinite" /* Spinner animation */,
-                  }}
-                ></div>
-              </div>
-            )}
-
-            {isHovered && (
-              <>
-                <button
-                  onClick={togglePlayPause}
-                  style={{
-                    position: "absolute",
-                    top: "10px",
-                    left: "10px",
-                    backgroundColor: "rgba(0, 0, 0, 0.7)",
-                    color: "white",
-                    border: "none",
-                    borderRadius: "50%",
-                    padding: "10px",
-                    cursor: "pointer",
-                    fontSize: "18px",
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "center",
-                    zIndex: "10",
-                  }}
-                  onMouseOver={(e) =>
-                    (e.target.style.backgroundColor = "rgba(0, 0, 0, 0.9)")
-                  }
-                  onMouseOut={(e) =>
-                    (e.target.style.backgroundColor = "rgba(0, 0, 0, 0.7)")
-                  }
-                >
-                  {isPlaying ? <FaPause /> : <FaPlay />}
-                </button>
-
-                {/* Mute button positioned on top right */}
-                <button
-                  onClick={handleVolumeToggle}
-                  style={{
-                    position: "absolute",
-                    top: "10px",
-                    right: "10px", // Positioned to the top-right corner
-                    backgroundColor: "rgba(0, 0, 0, 0.7)",
-                    color: "white",
-                    border: "none",
-                    borderRadius: "50%",
-                    padding: "10px",
-                    cursor: "pointer",
-                    fontSize: "18px",
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "center",
-                    zIndex: "10",
-                  }}
-                  onMouseOver={(e) =>
-                    (e.target.style.backgroundColor = "rgba(0, 0, 0, 0.9)")
-                  }
-                  onMouseOut={(e) =>
-                    (e.target.style.backgroundColor = "rgba(0, 0, 0, 0.7)")
-                  }
-                >
-                  {volume === 0 ? <FaVolumeMute /> : <FaVolumeUp />}
-                </button>
-
-                {/* Arrow buttons */}
-                <button
-                  style={{
-                    position: "absolute",
-                    bottom: "45px",
-                    left: "10px",
-                    transform: "translateY(0)",
-                    backgroundColor: "rgba(0, 0, 0, 0.7)",
-                    color: "#FFFFFF",
-                    fontSize: "24px",
-                    fontWeight: "bold",
-                    padding: "12px 16px",
-                    borderRadius: "50%",
-                    cursor: "pointer",
-                    boxShadow: "0 4px 8px rgba(0, 0, 0, 0.4)",
-                    transition: "all 0.3s ease-in-out",
-                    border: "none",
-                    zIndex: "5",
-                  }}
-                  onClick={() => handleArrowClick("left")}
-                >
-                  ← {/* Left Arrow */}
-                </button>
-
-                <button
-                  style={{
-                    position: "absolute",
-                    bottom: "45px",
-                    right: "10px",
-                    transform: "translateY(0)",
-                    backgroundColor: "rgba(0, 0, 0, 0.7)",
-                    color: "#FFFFFF",
-                    fontSize: "24px",
-                    fontWeight: "bold",
-                    padding: "12px 16px",
-                    borderRadius: "50%",
-                    cursor: "pointer",
-                    boxShadow: "0 4px 8px rgba(0, 0, 0, 0.4)",
-                    transition: "all 0.3s ease-in-out",
-                    border: "none",
-                    zIndex: "5",
-                  }}
-                  onClick={() => handleArrowClick("right")}
-                >
-                  → {/* Right Arrow */}
-                </button>
-              </>
-            )}
-
-            {/* Arrow buttons */}
-            {isHovered && (
-              <>
-                <button
-                  style={{
-                    position: "absolute",
-                    bottom: "45px",
-                    left: "10px",
-                    transform: "translateY(0)",
-                    backgroundColor: "rgba(0, 0, 0, 0.7)",
-                    color: "#FFFFFF",
-                    fontSize: "24px",
-                    fontWeight: "bold",
-                    padding: "12px 16px",
-                    borderRadius: "50%",
-                    cursor: "pointer",
-                    boxShadow: "0 4px 8px rgba(0, 0, 0, 0.4)",
-                    transition: "all 0.3s ease-in-out",
-                    border: "none",
-                    zIndex: "5",
-                  }}
-                  onClick={() => handleArrowClick("left")}
-                >
-                  ← {/* Left Arrow */}
-                </button>
-
-                <button
-                  style={{
-                    position: "absolute",
-                    bottom: "45px",
-                    right: "10px",
-                    transform: "translateY(0)",
-                    backgroundColor: "rgba(0, 0, 0, 0.7)",
-                    color: "#FFFFFF",
-                    fontSize: "24px",
-                    fontWeight: "bold",
-                    padding: "12px 16px",
-                    borderRadius: "50%",
-                    cursor: "pointer",
-                    boxShadow: "0 4px 8px rgba(0, 0, 0, 0.4)",
-                    transition: "all 0.3s ease-in-out",
-                    border: "none",
-                    zIndex: "5",
-                  }}
-                  onClick={() => handleArrowClick("right")}
-                >
-                  → {/* Right Arrow */}
-                </button>
-              </>
-            )}
-
-            {/* Icons section */}
-            {isHovered && (
-              <div
-                style={{
-                  position: "absolute",
-                  bottom: "120px",
-                  right: "10px",
-                  display: "flex",
-                  flexDirection: "column",
-                  alignItems: "flex-end",
-                  gap: "10px",
-                  zIndex: "10",
-                }}
-              >
-                <FaThumbsUp
-                  style={{
-                    color: "white",
-                    fontSize: "24px",
-                    cursor: "pointer",
-                  }}
-                  title="Like"
-                />
-                <p
-                  style={{ color: "white", margin: "5px 0", fontSize: "14px" }}
-                >
-                  7.5K
-                </p>
-
-                <FaThumbsDown
-                  style={{
-                    color: "white",
-                    fontSize: "24px",
-                    cursor: "pointer",
-                  }}
-                  title="Dislike"
-                />
-                <p
-                  style={{ color: "white", margin: "5px 0", fontSize: "14px" }}
-                >
-                  Dislike
-                </p>
-
-                <FaComment
-                  style={{
-                    color: "white",
-                    fontSize: "24px",
-                    cursor: "pointer",
-                  }}
-                  title="Comment"
-                />
-                <p
-                  style={{ color: "white", margin: "5px 0", fontSize: "14px" }}
-                >
-                  18K
-                </p>
-
-                <FaShare
-                  style={{
-                    color: "white",
-                    fontSize: "24px",
-                    cursor: "pointer",
-                  }}
-                  title="Share"
-                />
-                <p
-                  style={{ color: "white", margin: "5px 0", fontSize: "14px" }}
-                >
-                  Share
-                </p>
-              </div>
-            )}
-          </div>
+            Groups
+          </h5>
         </div>
 
-        {/* Second Topic: Groups */}
-        <div className="card mt-4" style={{ zIndex: 1 }}>
-          <div
-            className="d-flex align-items-center text-light p-2"
-            style={{
-              background: "linear-gradient(to right, #1e90ff, #87cefa)",
-              color: "white",
-            }}
-          >
-            <h5 className="text-center mb-0" style={{ fontSize: "15px" }}>
-              Groups
-            </h5>
-          </div>
-        </div>
-      </div>
-      <div className="p-1">
-        <ul className="list-unstyled">
+        {/* List of Comments (taking the remaining space) */}
+        <ul
+          className="list-unstyled"
+          style={{
+            overflowY: "auto",
+            height: "80%", // Adjust this value to 80% or 90% based on the Groups heading height
+            padding: "0px",
+            margin: "0px",
+            // marginLeft: "5px",
+          }}
+        >
           {updates.map((update) => (
             <li
               key={update.id}
-              className="d-flex align-items-start mb-3"
-              style={{ gap: "10px" }}
+              className="d-flex align-items-start m-1"
+              style={{
+                gap: "10px",
+                boxShadow: "0 2px 5px rgba(0, 0, 0, 0.3)",
+                borderRadius: "10px",
+                margin: "0px",
+              }}
             >
               <img
                 src={update.avatar}
@@ -480,8 +447,8 @@ const LeftSidebar = ({
             </li>
           ))}
         </ul>
-      </div>
-    </div>
+      </Box>
+    </Box>
   );
 };
 

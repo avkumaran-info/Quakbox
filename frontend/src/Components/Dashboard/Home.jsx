@@ -165,7 +165,8 @@ const Home = () => {
         handleCountryChange={handleCountryChange} // Pass country change handler
         handleWorldClick={handleWorldClick}
       />
-      <div className="container-fluid mt-4">
+      {/* <div className="container-fluid mt-4"> */}
+      <div>
         <LeftSidebar
           countryCode={currentCountry.code}
           flag={currentCountry.flag}

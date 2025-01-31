@@ -171,7 +171,8 @@ const Feed = ({ countryCode, flag, countryName, handleCountryChange }) => {
       revertLike(postId);
     }
   };
-
+  // handleDislikeClick
+  ///////////////////////////
   // Helper function to revert the like action
   const revertLike = (postId) => {
     setData((prevData) =>
@@ -538,6 +539,28 @@ const Feed = ({ countryCode, flag, countryName, handleCountryChange }) => {
                         }`}
                       ></i>{" "}
                       Like
+                    </button>
+                    {/* Dislike Button */}
+                    <button
+                      className={`btn btn-sm me-2 ${
+                        post.disliked_users?.some(
+                          (user) => user.id === currentUserId
+                        )
+                          ? "btn-danger text-white"
+                          : "btn-light"
+                      }`}
+                      onClick={() => handleDislikeClick(post.id)}
+                    >
+                      <i
+                        className={`bi ${
+                          post.disliked_users?.some(
+                            (user) => user.id === currentUserId
+                          )
+                            ? "bi-hand-thumbs-down-fill"
+                            : "bi-hand-thumbs-down"
+                        }`}
+                      ></i>{" "}
+                      Dislike
                     </button>
                     <button className="btn btn-light btn-sm me-2">
                       <i className="bi bi-chat"></i> Comment{" "}
