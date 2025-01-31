@@ -564,9 +564,9 @@ const LeftSidebar = ({
               className="d-flex align-items-start m-1"
               style={{
                 gap: "10px",
-                boxShadow: "0 2px 5px rgba(0, 0, 0, 0.3)",
-                borderRadius: "10px",
-                margin: "0px",
+                // boxShadow: "0 2px 5px rgba(0, 0, 0, 0.3)",
+                // borderRadius: "10px",
+                // margin: "0px",
               }}
             >
               <img
