@@ -6,16 +6,19 @@ use App\Http\Controllers\AuthController;
 use App\Http\Controllers\ForgotPasswordController;
 use App\Http\Controllers\CountryController;
 use App\Http\Controllers\PostController;
+use App\Http\Controllers\VideoCategoryController;
 
 //facebook
 use Laravel\Socialite\Facades\Socialite;
 
 //video Module
 use App\Http\Controllers\VideoController;
-use App\Http\Controllers\VideoCommentController;
-use App\Http\Controllers\VideoChannelController;
-use App\Http\Controllers\VideoInteractionController;
-use App\Http\Controllers\VideoSubscriptionController;
+use FFMpeg\Media\Video;
+
+// use App\Http\Controllers\VideoCommentController;
+// use App\Http\Controllers\VideoChannelController;
+// use App\Http\Controllers\VideoInteractionController;
+// use App\Http\Controllers\VideoSubscriptionController;
 
 /*
 |--------------------------------------------------------------------------
@@ -44,8 +47,6 @@ Route::post('auth/google', [AuthController::class, 'loginWithGoogle']);
 Route::post('/auth/facebook', [AuthController::class, 'handleFacebookAccessToken']);
 
 Route::middleware('auth:api')->get('user', [AuthController::class, 'user']);
-
-Route::middleware('auth:api')->post('/videos/upload', [VideoController::class, 'upload']);
 
 Route::get('get_geo_country', [CountryController::class, 'getGeoCountry']);
 Route::middleware('auth:api')->get('get_favourite_country', [CountryController::class, 'favouriteCountryByMemberId']);
@@ -87,6 +88,7 @@ Route::middleware('auth:api')->prefix('videos')->group(function () {
     Route::get('{id}', [VideoController::class, 'show']);
     Route::delete('{id}', [VideoController::class, 'delete']);
     Route::get('search/{query}', [VideoController::class, 'search']);
+    Route::get('categories/{id}', [VideoController::class, 'getVideosByCategory']);
 });
 
 

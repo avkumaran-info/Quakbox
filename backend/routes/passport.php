@@ -5,6 +5,7 @@ use Laravel\Passport\Http\Controllers\AuthorizationController;
 use Laravel\Passport\Http\Controllers\ApproveAuthorizationController;
 use Laravel\Passport\Http\Controllers\DenyAuthorizationController;
 use Laravel\Passport\Http\Controllers\TransientTokenController;
+use Illuminate\Support\Facades\Route;
 
 Route::prefix('oauth')->group(function () {
     Route::post('token', [AccessTokenController::class, 'issueToken'])->name('passport.token');

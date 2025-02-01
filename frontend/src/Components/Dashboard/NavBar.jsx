@@ -373,30 +373,45 @@ const NavBar = ({ userDetail }) => {
               }}
             ></i> */}
 
+
             <Tooltip
               className="d-none d-lg-block"
               title="Global"
               arrow
               disableInteractive
+
+            {/* <div
+              style={{
+                display: "flex",
+                justifyContent: "space-between",
+                alignItems: "center",
+                margin: "0px 40px",
+              }}
+            > */}
+
             >
               <PublicIcon
                 sx={{
                   fontSize: 25,
                   color: "white",
                   cursor: "pointer",
+
                   margin: "0px 15px",
+p
                   "&:hover": {
                     transform: "scale(1.2)",
                     // color: "#1e90ff",
                   },
                   transition: "all 0.3s ease",
                 }}
+
                 // onClick={() => handleCountryChange("99")}
                 onClick={(e) => {
                   e.preventDefault();
                   // handleCountryChange("99");
                   navigate("/world");
                 }}
+
               />
             </Tooltip>
             {/* Video Icon */}
@@ -406,28 +421,34 @@ const NavBar = ({ userDetail }) => {
               onClick={handleIconClick} // Handle the click event
             ></i> */}
             <Tooltip
+
               className="d-none d-lg-block"
               title="Record Video"
               arrow
               disableInteractive
+
             >
               <VideocamIcon
                 sx={{
                   fontSize: 25,
                   color: "white",
                   cursor: "pointer",
+
                   margin: "0px 15px",
+
                   "&:hover": {
                     transform: "scale(1.2)",
                     // color: "#1e90ff",
                   },
                   transition: "all 0.3s ease",
                 }}
+
                 // onClick={handleIconClick} // Handle the click event
                 onClick={(e) => {
                   e.preventDefault();
                   navigate("/qcast");
                 }}
+
               />
             </Tooltip>
             {/* Go Live Icon */}
@@ -440,17 +461,21 @@ const NavBar = ({ userDetail }) => {
               style={{ color: "white", cursor: "pointer" }}
             ></i> */}
             <Tooltip
+
               className="d-none d-lg-block"
               title="Go Live"
               arrow
               disableInteractive
+
             >
               <PodcastsIcon
                 sx={{
                   fontSize: 25,
                   color: "white",
                   cursor: "pointer",
+
                   margin: "0px 15px",
+
                   "&:hover": {
                     transform: "scale(1.2)",
                     // color: "#ff1744",
@@ -469,17 +494,21 @@ const NavBar = ({ userDetail }) => {
               style={{ color: "white", cursor: "pointer" }}
             ></i> */}
             <Tooltip
+
               className="d-none d-lg-block"
               title="Friends"
               arrow
               disableInteractive
+
             >
               <GroupIcon
                 sx={{
                   fontSize: 25,
                   color: "white",
                   cursor: "pointer",
+
                   margin: "0px 15px",
+
                   "&:hover": {
                     transform: "scale(1.2)",
                     // color: "#4caf50",
@@ -494,17 +523,21 @@ const NavBar = ({ userDetail }) => {
               style={{ color: "white", cursor: "pointer" }}
             ></i> */}
             <Tooltip
+
               className="d-none d-lg-block"
               title="Notifications"
               arrow
               disableInteractive
+
             >
               <NotificationsIcon
                 sx={{
                   fontSize: 25,
                   color: "white",
                   cursor: "pointer",
+
                   margin: "0px 15px",
+
                   "&:hover": {
                     transform: "scale(1.2)",
                     // color: "#ff9800",
@@ -519,17 +552,21 @@ const NavBar = ({ userDetail }) => {
               style={{ color: "white", cursor: "pointer" }}
             ></i> */}
             <Tooltip
+
               className="d-none d-lg-block"
               title="Messages"
               arrow
               disableInteractive
+
             >
               <EmailIcon
                 sx={{
                   fontSize: 25,
                   color: "white",
                   cursor: "pointer",
+
                   margin: "0px 15px",
+
                   "&:hover": {
                     transform: "scale(1.2)",
                     // color: "#4caf50",
@@ -544,17 +581,21 @@ const NavBar = ({ userDetail }) => {
               style={{ color: "white", cursor: "pointer" }}
             ></i> */}
             <Tooltip
+
               className="d-none d-lg-block"
               title="Inbox"
               arrow
               disableInteractive
+
             >
               <InboxIcon
                 sx={{
                   fontSize: 25,
                   color: "white",
                   cursor: "pointer",
+
                   margin: "0px 15px",
+
                   "&:hover": {
                     transform: "scale(1.2)",
                     // color: "#4caf50",
@@ -573,17 +614,21 @@ const NavBar = ({ userDetail }) => {
               }}
             ></i> */}
             <Tooltip
+
               className="d-none d-lg-block"
               title="Favourite Countries"
               arrow
               disableInteractive
+
             >
               <FavoriteIcon
                 sx={{
                   fontSize: 25,
                   color: "white",
                   cursor: "pointer",
+
                   margin: "0px 15px",
+
                   "&:hover": {
                     transform: "scale(1.2)",
                     // color: "#ff4081",
