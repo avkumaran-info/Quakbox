@@ -1,7 +1,4 @@
-import React from "react";
-import { FaThumbsUp, FaThumbsDown, FaComment, FaShare } from "react-icons/fa"; // Import FontAwesome icons
-import India from "../../assets/images/Rigth side property/Flag_of_India.svg.webp"; // Your flag image
-import banner from "../../assets/images/Rigth side property/banner.jpeg"; // Banner image
+import React, { useEffect, useState } from "react";
 import user1 from "../../assets/images/Rigth side property/user.jpg"; // User image 1
 import user2 from "../../assets/images/Rigth side property/user2.jpeg"; // User image 2
 import user3 from "../../assets/images/Rigth side property/user3.jpg"; // User image 3
@@ -12,33 +9,17 @@ import event from "../../assets/images/Rigth side property/7.png"; // Event icon
 import group from "../../assets/images/Rigth side property/group.png"; // Group icon
 import notification from "../../assets/images/Rigth side property/not.png"; // Notification icon
 import set from "../../assets/images/Rigth side property/set.webp"; // Settings icon
-import ThumbUpOffAltIcon from "@mui/icons-material/ThumbUpOffAlt";
-import ThumbDownOffAltIcon from "@mui/icons-material/ThumbDownOffAlt";
 import CommentIcon from "@mui/icons-material/Comment";
 import ThumbUpIcon from "@mui/icons-material/ThumbUp";
 import ThumbDownIcon from "@mui/icons-material/ThumbDown";
-import PersonAddIcon from "@mui/icons-material/PersonAdd";
-import PersonIcon from "@mui/icons-material/Person";
-import AddCircleIcon from "@mui/icons-material/AddCircle";
-import FavoriteBorderIcon from "@mui/icons-material/FavoriteBorder";
 import FavoriteSharpIcon from "@mui/icons-material/FavoriteSharp";
-import StarBorderIcon from "@mui/icons-material/StarBorder";
-import SportsBaseballIcon from "@mui/icons-material/SportsBaseball";
-import SportsSoccerIcon from "@mui/icons-material/SportsSoccer";
-import SportsFootballIcon from "@mui/icons-material/SportsFootball";
-import StarIcon from "@mui/icons-material/Star";
 import GroupIcon from "@mui/icons-material/Group";
-import SendIcon from "@mui/icons-material/Send";
-import ShareIcon from "@mui/icons-material/Share";
 import ScreenShareIcon from "@mui/icons-material/ScreenShare";
 import { Tooltip } from "@mui/material";
 
-const RightSidebar = ({
-  countryCode,
-  flag,
-  countryName,
-  handleCountryChange,
-}) => {
+const RightSidebar = ({ countryCode, flag, countryName }) => {
+  const [navbarHeight, setNavbarHeight] = useState(56);
+
   const updates = [
     {
       id: 1,
@@ -79,12 +60,26 @@ const RightSidebar = ({
 
   const isWorld = location.pathname === "/world"; // Determines if we're in the "world" section
 
+  useEffect(() => {
+    const updateNavbarHeight = () => {
+      setNavbarHeight(window.innerWidth <= 991 ? 110 : 56);
+    };
+
+    updateNavbarHeight();
+    window.addEventListener("resize", updateNavbarHeight);
+
+    return () => {
+      window.removeEventListener("resize", updateNavbarHeight);
+    };
+  });
+
   return (
     <div
       className="col-md-3 d-none d-md-block bg-light position-fixed"
       style={{
+        // marginTop: ``,
         height: "100vh",
-        top: "56px", // Height of the topbar
+        top: `${navbarHeight}px`, // Height of the topbar
         right: "0",
         paddingBottom: "54px", // Ensures space for footer
       }}
