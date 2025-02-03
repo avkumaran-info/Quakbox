@@ -1,0 +1,19 @@
+/* @media (max-width: 600px) {
+  .resetButton {
+    top: 130px !important;
+  }
+} */
+
+/* video::-webkit-media-controls-download-button{
+  display: none;
+}
+video::-webkit-media-controls-fullscreen-button{
+  display: none;
+}
+video::-webkit-media-controls-picture-in-picture-button {
+  display: none;
+} */
+
+video::-webkit-media-controls-fullscreen-button {
+  display: none;
+}
