@@ -48,12 +48,15 @@ Route::post('/auth/facebook', [AuthController::class, 'handleFacebookAccessToken
 
 Route::middleware('auth:api')->get('user', [AuthController::class, 'user']);
 
-Route::get('get_geo_country', [CountryController::class, 'getGeoCountry']);
+Route::get('get_geo_country/{cc?}', [CountryController::class, 'getGeoCountry']);
+Route::get('get_country_comments/{cc}', [CountryController::class, 'getCountryComments']);
 Route::middleware('auth:api')->get('get_favourite_country', [CountryController::class, 'favouriteCountryByMemberId']);
 Route::middleware('auth:api')->post('set_favourite_country', [CountryController::class, 'storeFavouriteCountry']);
 Route::middleware('auth:api')->post('put_favourite_country', [CountryController::class, 'updateFavouriteCountry']);
 Route::middleware('auth:api')->post('del_favourite_country', [CountryController::class, 'deleteFavouriteCountry']);
-
+Route::middleware('auth:api')->post('set_country_likes', [CountryController::class, 'storeCountryLikes']);
+Route::middleware('auth:api')->post('set_country_comments', [CountryController::class, 'storeCountryComments']);
+Route::middleware('auth:api')->post('set_country_shares', [CountryController::class, 'storeCountryShares']);
 
 Route::middleware('auth:api')->group(function () {
     Route::post('set_posts', [PostController::class, 'postStore']); // Create post with media
