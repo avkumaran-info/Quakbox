@@ -34,7 +34,7 @@ const Signup = () => {
     name: "",
     quakboxEmail: "",
     dob: "",
-    country: "",
+    country: "IN",
     password: "",
     confirmPassword: "",
   });

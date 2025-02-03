@@ -250,7 +250,7 @@ const Feed = ({ countryCode, flag, countryName, handleCountryChange }) => {
     userData();
     getPost();
     const updateNavbarHeight = () => {
-      setNavbarHeight(window.innerWidth <= 768 ? 90 : 56);
+      setNavbarHeight(window.innerWidth <= 991 ? 110 : 56);
     };
 
     updateNavbarHeight();
@@ -263,7 +263,7 @@ const Feed = ({ countryCode, flag, countryName, handleCountryChange }) => {
 
   return (
     <div
-      className="col-12 col-md-6 offset-md-3 p-0"
+      className="col-12 col-md-6 offset-md-3 p-1"
       style={{
         marginTop: `${navbarHeight}px`,
         marginBottom: "60px",

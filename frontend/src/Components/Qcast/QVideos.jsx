@@ -1,5 +1,6 @@
 import React, { useState, useRef } from "react";
-
+import { useNavigate } from "react-router-dom";
+import video1 from "../../assets/images/leftside videos/v3.mp4";
 // Category List with Icons
 const categories = [
   { name: "Popping on Quakbox", icon: "fa-foursquare" },
@@ -27,20 +28,25 @@ const link =
 
 // Video List
 const videos = [
-  { title: "Heart Candies", views: "2.2M", image: link },
-  { title: "Smiling Girl", views: "2.5M", image: link },
-  { title: "Nike Shoes", views: "1.8M", image: link },
-  { title: "Golden Coin", views: "1.5M", image: link },
-  { title: "Heart Candies", views: "2.2M", image: link },
-  { title: "Smiling Girl", views: "2.5M", image: link },
-  { title: "Nike Shoes", views: "1.8M", image: link },
-  { title: "Golden Coin", views: "1.5M", image: link },
-  { title: "Heart Candies", views: "2.2M", image: link },
+  { title: "Heart Candies", views: "2.2M", image: link, src: video1 },
+  { title: "Smiling Girl", views: "2.5M", image: link, src: video1 },
+  { title: "Nike Shoes", views: "1.8M", image: link, src: video1 },
+  { title: "Golden Coin", views: "1.5M", image: link, src: video1 },
+  { title: "Heart Candies", views: "2.2M", image: link, src: video1 },
+  { title: "Smiling Girl", views: "2.5M", image: link, src: video1 },
+  { title: "Nike Shoes", views: "1.8M", image: link, src: video1 },
+  { title: "Golden Coin", views: "1.5M", image: link, src: video1 },
+  { title: "Heart Candies", views: "2.2M", image: link, src: video1 },
 ];
 
 const QVideos = () => {
   const [currentIndex, setCurrentIndex] = useState(0);
   const scrollContainerRef = useRef(null);
+  const navigate = useNavigate();
+
+  const handleVideoClick = (video) => {
+    navigate(`/video/${encodeURIComponent(video.title)}`, { state: { video } });
+  };
 
   // Function to scroll left (by 6 categories)
   const scrollLeft = () => {
@@ -143,9 +149,15 @@ const QVideos = () => {
 
       {/* Featured Videos Section */}
       <div className="p-0">
+        {/* Video Thumbnails */}
         <div className="row">
           {videos.map((video, index) => (
-            <div className="col-12 col-sm-6 col-lg-4 col-xl-3 mb-3" key={index}>
+            <div
+              className="col-12 col-sm-6 col-lg-4 col-xl-3 mb-3"
+              key={index}
+              onClick={() => handleVideoClick(video)}
+              style={{ cursor: "pointer" }}
+            >
               <div
                 className="card position-relative"
                 style={{
@@ -154,34 +166,12 @@ const QVideos = () => {
                   boxShadow: "0 4px 8px rgba(0,0,0,0.1)",
                 }}
               >
-                {/* Thumbnail with Overlay */}
-                <div style={{ position: "relative" }}>
-                  <img
-                    src={video.image}
-                    className="card-img-top"
-                    alt={video.title}
-                    style={{ height: "150px", objectFit: "cover" }}
-                  />
-                  {/* Overlay Text */}
-                  <div
-                    style={{
-                      position: "absolute",
-                      top: "0",
-                      left: "0",
-                      width: "100%",
-                      background:
-                        "linear-gradient(to bottom, rgba(0,0,0,0.6), rgba(0,0,0,0))",
-                      color: "white",
-                      padding: "5px 10px",
-                      fontSize: "12px",
-                      fontWeight: "bold",
-                    }}
-                  >
-                    LIVE
-                  </div>
-                </div>
-
-                {/* Video Info */}
+                <img
+                  src={video.image}
+                  className="card-img-top"
+                  alt={video.title}
+                  style={{ height: "150px", objectFit: "cover" }}
+                />
                 <div className="card-body">
                   <h6 className="card-title" style={{ fontWeight: "bold" }}>
                     {video.title}

@@ -138,6 +138,8 @@ const FanCountry = () => {
       const response = await axios.get(GET_API_URL, {
         headers: { Authorization: `Bearer ${token}` },
       });
+      console.log(response);
+      
       const uniqueCountries = response.data.favourite_country.map(
         (country) => ({
           code: country.code.toLowerCase(),

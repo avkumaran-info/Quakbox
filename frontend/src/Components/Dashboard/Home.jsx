@@ -10,22 +10,23 @@ import axios from "axios";
 // Function to fetch country details
 const getCountryDetails = async (countryCode) => {
   try {
-    const response = await axios.get(
-      // "https://restcountries.com/v3.1/all"
-      "https://develop.quakbox.com/admin/api/get_geo_country"
-    );
-    // console.log(response.data);
-    // console.log(response.data.geo_countries);
+    // const response = await axios.get(
+    //   // "https://restcountries.com/v3.1/all"
+    //   "https://develop.quakbox.com/admin/api/get_geo_country"
+    // );
 
-    const countryData = response.data.geo_countries.find(
+    const storedCountries =
+      JSON.parse(localStorage.getItem("geo_country")) || [];
+
+    const countryData = storedCountries.find(
       (country) => country.code.toLowerCase() === countryCode.toLowerCase()
     );
-    // console.log(countryData);
 
     if (!countryData) return { flag: "/default-flag.png", name: "Unknown" };
     return {
       flag: countryData.country_image || "/default-flag.png",
       name: countryData.country_name,
+      code: countryData.code,
     };
   } catch (error) {
     console.log("Error fetching country details:", error);
@@ -34,12 +35,14 @@ const getCountryDetails = async (countryCode) => {
 };
 
 const Home = () => {
-  const { countryCode } = useParams(); // Get the country code from the URL
-  const location = useLocation(); // Get the flag image and country name from the location state
-  const { flag, countryName } = location.state || {};
-  const navigate = useNavigate(); // Navigate to change URL and country details
+  const { countryCode } = useParams();
 
+  const location = useLocation(); // Get the flag image and country name from the location state
+  const isWorld = location.pathname === "/world";
+  const { flag, countryName } = location.state || {};
+  const [userDetail, setUserDetail] = useState("");
   const [userData, setUserData] = useState(null);
+
   const [currentCountry, setCurrentCountry] = useState({
     code: countryCode || "IN", // Default country code to "IN"
     name: countryName || "India", // Default country name to "India"
@@ -58,10 +61,12 @@ const Home = () => {
           headers: { Authorization: `Bearer ${token}` },
         }
       );
+      // console.log(res.data.users.email);
+
+      setUserData(res.data.users.email);
+
       const userDetails = res.data.user_details;
-
-      const defaultCountryCode = userDetails.country; // Default to IN if no country code is present
-
+      const defaultCountryCode = userDetails.country || "IN"; // Default to IN if no country code is present
       const countryDetails = await getCountryDetails(defaultCountryCode);
 
       setUserData({
@@ -77,7 +82,7 @@ const Home = () => {
 
       setCurrentCountry({
         code: defaultCountryCode,
-        name: userDetails.country_name || "India",
+        name: userDetails.country_name,
         flag: countryDetails.flag,
       });
     } catch (error) {
@@ -90,104 +95,80 @@ const Home = () => {
   }, []);
 
   useEffect(() => {
-    if (countryCode) {
-      const updateCountryDetails = async () => {
-        const countryDetails = await getCountryDetails(countryCode);
-        setCurrentCountry({
-          code: countryCode,
-          name: countryDetails.name,
-          flag: countryDetails.flag,
-        });
-      };
-      updateCountryDetails();
-    }
-  }, [countryCode]);
-
-  // if (!userData || !currentCountry) {
-  //   return <div>Loading...</div>;
-  // }
-
-  // Handle logo click to navigate to dashboard and pass default country details
-  const handleLogoClick = () => {
-    navigate("/dashboard", {
-      state: {
-        flag: currentCountry.flag,
-        countryName: currentCountry.name,
-        countryCode: currentCountry.code,
-      },
-    });
-    window.location.reload();
-  };
-
-  const handleWorldClick = () => {
-    navigate("/world", {
-      state: {
-        flag: currentCountry.flag,
-        countryName: currentCountry.name,
-        countryCode: currentCountry.code,
-      },
-    });
-    window.location.reload();
-  };
-
-  // Handle country change
-  const handleCountryChange = async (newCountryCode) => {
-    console.log(newCountryCode);
-
-    const countryDetails = await getCountryDetails(newCountryCode);
-    // console.log(countryDetails);
-
-    setCurrentCountry({
-      code: newCountryCode,
-      name: countryDetails.name,
-      flag: countryDetails.flag,
-    });
-
-    // console.log(newCountryCode);
-
-    if (newCountryCode !== "99") {
-      // Update the URL to reflect the new country
-      navigate(`/country/${newCountryCode.toLowerCase()}`, {
-        state: { flag: countryDetails.flag, countryName: countryDetails.name },
+    const updateCountryDetails = async (code) => {
+      const countryDetails = await getCountryDetails(code);
+      setCurrentCountry({
+        code,
+        name: countryDetails.name,
+        flag: countryDetails.flag,
       });
+    };
+
+    if (isWorld) {
+      updateCountryDetails("99"); // World View
+    } else if (countryCode) {
+      updateCountryDetails(countryCode); // Selected Country
     } else {
-      navigate(`/world`, {
-        state: { flag: countryDetails.flag, countryName: countryDetails.name },
-      });
+      updateCountryDetails("IN"); // Default Country (India)
     }
-  };
+  }, [countryCode, location]);
+
+  // useEffect(() => {
+  //   if (!isWorld && countryCode) {
+  //     if (countryCode) {
+  //       const updateCountryDetails = async () => {
+  //         const countryDetails = await getCountryDetails(countryCode);
+  //         setCurrentCountry({
+  //           code: countryCode,
+  //           name: countryDetails.name,
+  //           flag: countryDetails.flag,
+  //         });
+  //       };
+  //       updateCountryDetails();
+  //     }
+  //   } else if (isWorld) {
+  //     const updateCountryDetails = async () => {
+  //       const countryDetails = await getCountryDetails("99");
+  //       setCurrentCountry({
+  //         code: "99",
+  //         name: countryDetails.name,
+  //         flag: countryDetails.flag,
+  //       });
+  //     };
+  //     updateCountryDetails();
+  //   } else {
+  //     const updateCountryDetails = async () => {
+  //       const countryDetails = await getCountryDetails("IN");
+  //       setCurrentCountry({
+  //         code: countryDetails.code,
+  //         name: countryDetails.name,
+  //         flag: countryDetails.flag,
+  //       });
+  //     };
+  //     updateCountryDetails();
+  //   }
+  // }, [countryCode, location]);
 
   return (
     <div className="app">
-      <NavBar
-        currentCountry={currentCountry}
-        handleLogoClick={handleLogoClick} // Pass the function to NavBar
-        handleCountryChange={handleCountryChange} // Pass country change handler
-        handleWorldClick={handleWorldClick}
-      />
+      <NavBar userDetail={userDetail} />
       {/* <div className="container-fluid mt-4"> */}
       <div>
         <LeftSidebar
           countryCode={currentCountry.code}
           flag={currentCountry.flag}
           countryName={currentCountry.name}
-          handleCountryChange={handleCountryChange} // Pass to LeftSidebar
-          handleWorldClick={handleWorldClick}
         />
         <Feed
           userData={userData}
           countryCode={currentCountry.code}
           flag={currentCountry.flag}
           countryName={currentCountry.name}
-          handleCountryChange={handleCountryChange} // Pass to Feed
-          handleWorldClick={handleWorldClick}
         />
         <RigthSideBar
           countryCode={currentCountry.code}
           flag={currentCountry.flag}
           countryName={currentCountry.name}
-          handleCountryChange={handleCountryChange} // Pass to RigthSideBar
-          handleWorldClick={handleWorldClick}
         />
       </div>
       <Footer />
