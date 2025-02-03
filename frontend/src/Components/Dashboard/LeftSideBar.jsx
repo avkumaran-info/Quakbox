@@ -1,15 +1,4 @@
 import React, { useState, useRef, useEffect } from "react";
-import {
-  FaThumbsUp,
-  FaThumbsDown,
-  FaComment,
-  FaShare,
-  FaPlay,
-  FaPause,
-  FaVolumeUp,
-  FaVolumeMute,
-  FaVolumeDown,
-} from "react-icons/fa";
 import video1 from "../../assets/images/leftside videos/v1.mp4";
 import video2 from "../../assets/images/leftside videos/v2.mp4";
 import video3 from "../../assets/images/leftside videos/v3.mp4";
@@ -20,18 +9,14 @@ import user2 from "../../assets/images/Rigth side property/user2.jpeg";
 import user from "../../assets/images/Rigth side property/user.png";
 import { Box, Typography } from "@mui/material";
 
-const LeftSidebar = ({
-  countryCode,
-  flag,
-  countryName,
-  handleCountryChange,
-}) => {
+const LeftSidebar = ({ countryCode, flag, countryName }) => {
   const videos = [video4, video1, video2, video3];
   const [currentVideoIndex, setCurrentVideoIndex] = useState(0);
   const [isHovered, setIsHovered] = useState(false);
   const [isPlaying, setIsPlaying] = useState(false);
   const [volume, setVolume] = useState(1); // Default volume is 100%
   const [isLoading, setIsLoading] = useState(true); // Loading state for video
+  const [navbarHeight, setNavbarHeight] = useState(56);
 
   const videoRef = useRef(null);
 
@@ -137,9 +122,12 @@ const LeftSidebar = ({
     //   }}
     // >
     <Box
+      className="col-md-3 d-none d-md-block bg-light position-fixed"
       sx={{
+
         width: "100%",
         maxWidth: "21rem",
+
         position: "fixed",
         height: "85vh",
         backgroundColor: "#f5f5f5",

@@ -250,7 +250,7 @@ const Feed = ({ countryCode, flag, countryName, handleCountryChange }) => {
     userData();
     getPost();
     const updateNavbarHeight = () => {
-      setNavbarHeight(window.innerWidth <= 768 ? 90 : 56);
+      setNavbarHeight(window.innerWidth <= 991 ? 110 : 56);
     };
 
     updateNavbarHeight();

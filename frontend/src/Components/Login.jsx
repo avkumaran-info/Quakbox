@@ -71,6 +71,7 @@ const Login = () => {
       );
       // Handle successful login
       // console.log("Login Successful:", response.data);
+      // country getatis
       if (response.data.result) {
         // Store the token (optional)
         localStorage.setItem("api_token", response.data.token);
@@ -105,6 +106,29 @@ const Login = () => {
       }
     }
   };
+
+  useEffect(() => {
+    const fetchCountries = async () => {
+      try {
+        // Fetch all countries
+        const res = await axios.get(
+          "https://develop.quakbox.com/admin/api/get_geo_country"
+        );
+
+        console.log(res.data.geo_countries);
+
+        // Convert to string and store in localStorage
+        localStorage.setItem(
+          "geo_country",
+          JSON.stringify(res.data.geo_countries)
+        );
+      } catch (error) {
+        console.error("Error fetching countries:", error);
+      }
+    };
+
+    fetchCountries();
+  }, []);
 
   return (
     <>

@@ -14,21 +14,11 @@ import FavoriteIcon from "@mui/icons-material/Favorite";
 import { Link, useNavigate } from "react-router-dom";
 import { useSelector, useDispatch } from "react-redux";
 
-const NavBar = ({
-  userData,
-  currentCountry,
-  handleLogoClick,
-  handleCountryChange,
-  handleWorldClick,
-}) => {
+const NavBar = ({ userDetail }) => {
   const navigate = useNavigate();
   const [countries, setCountries] = useState([]);
   const [userName, setUserName] = useState("");
   const [favCountries, setFavCountries] = useState([]);
-
-  // const favouriteCountries = useSelector(selectFavouriteCountries);
-  // console.log("favouriteCountries");
-  // console.log(favouriteCountries);
 
   const dropdownRef = useRef(null);
   const [showDropdown, setShowDropdown] = useState(false);
@@ -36,54 +26,31 @@ const NavBar = ({
   const [showAllFlags, setShowAllFlags] = useState(false);
   const [searchQuery, setSearchQuery] = useState(""); // State for search input
 
-  // const handleLogoClick = () => {
-  //   navigate("/dashboard"); // Navigate to /dashboard
-  // };
-
-  // const handleFlagClick = (countryCode, flag, countryName) => {
-  //   navigate(`/country/${countryCode.toLowerCase()}`, {
-  //     state: { flag, countryName },
-  //   }); // Pass the flag image with navigate
-  //   window.location.reload();
-  // };
-
   const userDatas = async () => {
-    const token = localStorage.getItem("api_token");
-    if (!token) {
-      return;
-    }
-    try {
-      const res = await axios.get(
-        "https://develop.quakbox.com/admin/api/user",
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        }
-      );
+    // const token = localStorage.getItem("api_token");
+    const storedCountries =
+      JSON.parse(localStorage.getItem("geo_country")) || [];
+    setCountries(storedCountries);
+    console.log(userDetail);
 
-      // console.log(res.data);
-      setUserName(res.data.users.username);
-      // console.log(userName);
+    // if (!token) {
+    //   return;
+    // }
+    // try {
+    //   const res = await axios.get(
+    //     "https://develop.quakbox.com/admin/api/user",
+    //     {
+    //       headers: {
+    //         Authorization: `Bearer ${token}`,
+    //       },
+    //     }
+    //   );
 
-      // countries.map((e, i) => {
-      //   console.log(e);
-
-      //   if (e.cca2 === res.data.user_details.country) {
-      //     const flag = e.flags.png;
-      //     const countryName = e.name.common;
-      //     console.log(flag);
-      //     navigate(`/dashboard`, {
-      //       state: { flag, countryName },
-      //     }); // Pass the flag image with navigate
-      //     window.location.reload();
-      //   }
-      // });
-
-      // console.log(userName);
-    } catch (error) {
-      console.log(error);
-    }
+    //   // console.log(res.data);
+    //   setUserName(res.data.users.username);
+    // } catch (error) {
+    //   console.log(error);
+    // }
   };
 
   const handleLogout = async () => {
@@ -129,16 +96,7 @@ const NavBar = ({
         setError("Authorization token not found. Please log in.");
         return;
       }
-
       try {
-        // Fetch all countries
-        const res = await axios.get(
-          // "https://restcountries.com/v3.1/all"
-          "https://develop.quakbox.com/admin/api/get_geo_country"
-        );
-
-        // console.log(res);
-
         // Fetch favorite countries
         const favCountriesRes = await axios.get(
           "https://develop.quakbox.com/admin/api/get_favourite_country",
@@ -146,16 +104,13 @@ const NavBar = ({
             headers: { Authorization: `Bearer ${token}` },
           }
         );
-        // Store the full list of all countries
-        setCountries(res.data.geo_countries);
-        console.log(favCountriesRes);
+
         const favouriteCountries =
           favCountriesRes.data.favourite_country.filter(
             (fav) => fav.favourite_country === "1"
           );
         // Store the list of favorite countries (just names)
         setFavCountries(favouriteCountries || []);
-        console.log(favouriteCountries);
       } catch (error) {
         console.error("Error fetching countries:", error);
       }
@@ -186,10 +141,6 @@ const NavBar = ({
         country.country_name.toLowerCase().includes(searchQuery.toLowerCase())
     )
     .sort((a, b) => a.country_name.localeCompare(b.country_name)); // Sort A-Z
-
-  const handleIconClick = () => {
-    navigate("/qcast"); // This will navigate to the Thome.jsx route
-  };
 
   return (
     <div>
@@ -267,12 +218,14 @@ const NavBar = ({
                       alignItems: "center",
                       cursor: "pointer",
                     }}
-                    onClick={() => {
-                      handleCountryChange(
-                        country.code,
-                        country.country_image,
-                        country.country_name
-                      );
+                    onClick={(e) => {
+                      e.preventDefault();
+                      navigate(`/country/${country.code}`);
+                      // handleCountryChange(
+                      //   country.code,
+                      //   country.country_image,
+                      //   country.country_name
+                      // );
                       setShowAllFlags(false);
                     }}
                   >
@@ -364,12 +317,17 @@ const NavBar = ({
                           alignItems: "center",
                           cursor: "pointer",
                         }}
-                        onClick={() => {
-                          handleCountryChange(
-                            country.code,
-                            country.country_image,
-                            country.country_name
-                          );
+                        // onClick={() => {
+                        //   handleCountryChange(
+                        //     country.code,
+                        //     country.country_image,
+                        //     country.country_name
+                        //   );
+                        //   setShowAllFlags(false);
+                        // }}
+                        onClick={(e) => {
+                          e.preventDefault();
+                          navigate(`/country/${country.code}`);
                           setShowAllFlags(false);
                         }}
                       >
@@ -414,6 +372,14 @@ const NavBar = ({
                 handleCountryChange("99");
               }}
             ></i> */}
+
+
+            <Tooltip
+              className="d-none d-lg-block"
+              title="Global"
+              arrow
+              disableInteractive
+
             {/* <div
               style={{
                 display: "flex",
@@ -422,25 +388,30 @@ const NavBar = ({
                 margin: "0px 40px",
               }}
             > */}
-            <Tooltip
-              title="Global"
-              arrow
-              disableInteractive
-              className="d-none d-lg-flex"
+
             >
               <PublicIcon
                 sx={{
                   fontSize: 25,
                   color: "white",
                   cursor: "pointer",
-                  // margin: "0px 15px",
+
+                  margin: "0px 15px",
+p
                   "&:hover": {
                     transform: "scale(1.2)",
                     // color: "#1e90ff",
                   },
                   transition: "all 0.3s ease",
                 }}
-                onClick={() => handleCountryChange("99")}
+
+                // onClick={() => handleCountryChange("99")}
+                onClick={(e) => {
+                  e.preventDefault();
+                  // handleCountryChange("99");
+                  navigate("/world");
+                }}
+
               />
             </Tooltip>
             {/* Video Icon */}
@@ -450,24 +421,34 @@ const NavBar = ({
               onClick={handleIconClick} // Handle the click event
             ></i> */}
             <Tooltip
+
+              className="d-none d-lg-block"
               title="Record Video"
               arrow
               disableInteractive
-              className="d-none d-lg-flex"
+
             >
               <VideocamIcon
                 sx={{
                   fontSize: 25,
                   color: "white",
                   cursor: "pointer",
-                  // margin: "0px 15px",
+
+                  margin: "0px 15px",
+
                   "&:hover": {
                     transform: "scale(1.2)",
                     // color: "#1e90ff",
                   },
                   transition: "all 0.3s ease",
                 }}
-                onClick={handleIconClick} // Handle the click event
+
+                // onClick={handleIconClick} // Handle the click event
+                onClick={(e) => {
+                  e.preventDefault();
+                  navigate("/qcast");
+                }}
+
               />
             </Tooltip>
             {/* Go Live Icon */}
@@ -480,17 +461,21 @@ const NavBar = ({
               style={{ color: "white", cursor: "pointer" }}
             ></i> */}
             <Tooltip
+
+              className="d-none d-lg-block"
               title="Go Live"
               arrow
               disableInteractive
-              className="d-none d-lg-flex"
+
             >
               <PodcastsIcon
                 sx={{
                   fontSize: 25,
                   color: "white",
                   cursor: "pointer",
-                  // margin: "0px 15px",
+
+                  margin: "0px 15px",
+
                   "&:hover": {
                     transform: "scale(1.2)",
                     // color: "#ff1744",
@@ -509,17 +494,21 @@ const NavBar = ({
               style={{ color: "white", cursor: "pointer" }}
             ></i> */}
             <Tooltip
+
+              className="d-none d-lg-block"
               title="Friends"
               arrow
               disableInteractive
-              className="d-none d-lg-flex"
+
             >
               <GroupIcon
                 sx={{
                   fontSize: 25,
                   color: "white",
                   cursor: "pointer",
-                  // margin: "0px 15px",
+
+                  margin: "0px 15px",
+
                   "&:hover": {
                     transform: "scale(1.2)",
                     // color: "#4caf50",
@@ -534,17 +523,21 @@ const NavBar = ({
               style={{ color: "white", cursor: "pointer" }}
             ></i> */}
             <Tooltip
+
+              className="d-none d-lg-block"
               title="Notifications"
               arrow
               disableInteractive
-              className="d-none d-lg-flex"
+
             >
               <NotificationsIcon
                 sx={{
                   fontSize: 25,
                   color: "white",
                   cursor: "pointer",
-                  // margin: "0px 15px",
+
+                  margin: "0px 15px",
+
                   "&:hover": {
                     transform: "scale(1.2)",
                     // color: "#ff9800",
@@ -559,17 +552,21 @@ const NavBar = ({
               style={{ color: "white", cursor: "pointer" }}
             ></i> */}
             <Tooltip
+
+              className="d-none d-lg-block"
               title="Messages"
               arrow
               disableInteractive
-              className="d-none d-lg-flex"
+
             >
               <EmailIcon
                 sx={{
                   fontSize: 25,
                   color: "white",
                   cursor: "pointer",
-                  // margin: "0px 15px",
+
+                  margin: "0px 15px",
+
                   "&:hover": {
                     transform: "scale(1.2)",
                     // color: "#4caf50",
@@ -584,17 +581,21 @@ const NavBar = ({
               style={{ color: "white", cursor: "pointer" }}
             ></i> */}
             <Tooltip
+
+              className="d-none d-lg-block"
               title="Inbox"
               arrow
               disableInteractive
-              className="d-none d-lg-flex"
+
             >
               <InboxIcon
                 sx={{
                   fontSize: 25,
                   color: "white",
                   cursor: "pointer",
-                  // margin: "0px 15px",
+
+                  margin: "0px 15px",
+
                   "&:hover": {
                     transform: "scale(1.2)",
                     // color: "#4caf50",
@@ -613,17 +614,21 @@ const NavBar = ({
               }}
             ></i> */}
             <Tooltip
+
+              className="d-none d-lg-block"
               title="Favourite Countries"
               arrow
               disableInteractive
-              className="d-none d-lg-flex"
+
             >
               <FavoriteIcon
                 sx={{
                   fontSize: 25,
                   color: "white",
                   cursor: "pointer",
-                  // margin: "0px 15px",
+
+                  margin: "0px 15px",
+
                   "&:hover": {
                     transform: "scale(1.2)",
                     // color: "#ff4081",
@@ -636,7 +641,7 @@ const NavBar = ({
                 }}
               />
             </Tooltip>
-            {/* </div> */}
+
             {/* Search Input */}
             <div className="d-none d-lg-block " style={{ width: "250px" }}>
               {/* Smaller width for input */}
@@ -681,6 +686,12 @@ const NavBar = ({
                               display: "flex",
                               flexDirection: "column",
                               alignItems: "center",
+                              cursor: "pointer",
+                            }}
+                            onClick={(e) => {
+                              e.preventDefault();
+                              // navigate(`/country/${fav.country_code}`);
+                              console.log(fav);
                             }}
                           >
                             <img
