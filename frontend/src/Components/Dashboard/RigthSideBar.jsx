@@ -19,6 +19,11 @@ import { Tooltip } from "@mui/material";
 
 const RightSidebar = ({ countryCode, flag, countryName }) => {
   const [navbarHeight, setNavbarHeight] = useState(56);
+  const [comments, setComments] = useState([]); // Store comments
+  const [showComments, setShowComments] = useState(false); // Controls comment section visibility
+  const [showMore, setShowMore] = useState(false); // Show 2 or 10 comments
+  const [currentPage, setCurrentPage] = useState(1); // For pagination
+  const commentsPerPage = 10; // Number of comments per page
 
   const updates = [
     {
@@ -59,6 +64,45 @@ const RightSidebar = ({ countryCode, flag, countryName }) => {
   ];
 
   const isWorld = location.pathname === "/world"; // Determines if we're in the "world" section
+
+  useEffect(() => {
+    // Mock API call to get comments
+    const fetchComments = () => {
+      const mockComments = Array.from({ length: 50 }, (_, index) => ({
+        id: index + 1,
+        user: `User ${index + 1}`,
+        text: `This is comment number ${index + 1}`,
+      }));
+      setComments(mockComments);
+    };
+    fetchComments();
+  }, []);
+
+  const handleCommentClick = () => {
+    setShowComments((prev) => {
+      if (prev) {
+        setShowMore(false); // Reset Show More when closing
+        setCurrentPage(1); // Reset pagination to page 1
+      }
+      return !prev;
+    });
+  };
+
+  const handleShowMore = () => {
+    setShowMore(true);
+  };
+
+  const paginate = (pageNumber) => {
+    setCurrentPage(pageNumber);
+  };
+
+  // Get current comments
+  const indexOfLastComment = currentPage * commentsPerPage;
+  const indexOfFirstComment = indexOfLastComment - commentsPerPage;
+  const currentComments = comments.slice(
+    indexOfFirstComment,
+    indexOfLastComment
+  );
 
   useEffect(() => {
     const updateNavbarHeight = () => {
@@ -169,7 +213,7 @@ const RightSidebar = ({ countryCode, flag, countryName }) => {
                     opacity: 0.8,
                     cursor: "pointer",
                   }}
-                  onClick={() => console.log("Icon clicked")}
+                  onClick={handleCommentClick}
                 />
               </Tooltip>
               <Tooltip title="Follow" arrow disableInteractive>
@@ -274,11 +318,71 @@ const RightSidebar = ({ countryCode, flag, countryName }) => {
               /> */}
             </div>
           </div>
+
+          {/* Comment Section */}
+          {showComments && (
+            <div className="container mt-3">
+              <h5>Comments</h5>
+              <div
+                className="list-group"
+                style={{
+                  maxHeight: "300px", // Adjust height as needed
+                  overflowY: "auto", // Enables scrolling
+                }}
+              >
+                {showMore
+                  ? currentComments.map((comment) => (
+                      <li key={comment.id} className="list-group-item">
+                        <strong>{comment.user}:</strong> {comment.text}
+                      </li>
+                    ))
+                  : comments.slice(0, 2).map((comment) => (
+                      <li key={comment.id} className="list-group-item">
+                        <strong>{comment.user}:</strong> {comment.text}
+                      </li>
+                    ))}
+              </div>
+
+              {!showMore && (
+                <button className="btn btn-link mt-2" onClick={handleShowMore}>
+                  Show More
+                </button>
+              )}
+
+              {/* Pagination - Keep this unchanged */}
+              {showMore && (
+                <nav className="mt-3">
+                  <ul className="pagination">
+                    {Array.from({
+                      length: Math.ceil(comments.length / commentsPerPage),
+                    }).map((_, index) => (
+                      <li
+                        key={index}
+                        className={`page-item ${
+                          currentPage === index + 1 ? "active" : ""
+                        }`}
+                      >
+                        <button
+                          className="page-link"
+                          onClick={() => paginate(index + 1)}
+                        >
+                          {index * commentsPerPage + 1}-
+                          {(index + 1) * commentsPerPage}
+                        </button>
+                      </li>
+                    ))}
+                  </ul>
+                </nav>
+              )}
+            </div>
+          )}
+
           {/* Part 2 & 3: Scrollable Section */}
           <div
+            className="mt-3"
             style={{
               overflowY: "auto",
-              maxHeight: "calc(100vh - 56px - 200px - 54px)", // Adjust height to exclude the flag section and footer
+              maxHeight: "calc(100vh - 56px - 200px - 54px)",
             }}
           >
             {/* Activity Section */}
