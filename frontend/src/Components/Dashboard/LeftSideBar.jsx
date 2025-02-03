@@ -8,6 +8,7 @@ import user3 from "../../assets/images/Rigth side property/user3.jpg";
 import user2 from "../../assets/images/Rigth side property/user2.jpeg";
 import user from "../../assets/images/Rigth side property/user.png";
 import { Box, Typography } from "@mui/material";
+import { FaThumbsUp,FaThumbsDown,FaComment,FaShare } from "react-icons/fa";
 
 const LeftSidebar = ({ countryCode, flag, countryName }) => {
   const videos = [video4, video1, video2, video3];

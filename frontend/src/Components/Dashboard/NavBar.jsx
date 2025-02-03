@@ -380,14 +380,7 @@ const NavBar = ({ userDetail }) => {
               arrow
               disableInteractive
 
-            {/* <div
-              style={{
-                display: "flex",
-                justifyContent: "space-between",
-                alignItems: "center",
-                margin: "0px 40px",
-              }}
-            > */}
+         
 
             >
               <PublicIcon
@@ -397,7 +390,7 @@ const NavBar = ({ userDetail }) => {
                   cursor: "pointer",
 
                   margin: "0px 15px",
-p
+
                   "&:hover": {
                     transform: "scale(1.2)",
                     // color: "#1e90ff",
