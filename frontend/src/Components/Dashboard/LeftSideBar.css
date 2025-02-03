@@ -17,3 +17,15 @@ video::-webkit-media-controls-picture-in-picture-button {
 video::-webkit-media-controls-fullscreen-button {
   display: none;
 }
+/* CSS Media Queries */
+@media (max-width: 991px) {
+  .responsive-div {
+    top: 100px !important; /* Override top for medium screens */
+  }
+}
+
+@media (max-width: 576px) {
+  .responsive-div {
+    top: 100px !important; /* Override top for small screens */
+  }
+}
