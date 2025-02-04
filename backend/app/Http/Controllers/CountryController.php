@@ -16,17 +16,20 @@ use App\Models\User;
 use App\Models\Members;
 use App\Models\FavouriteCountry;
 use App\Models\GeoCountry;
+use App\Models\Flag_Likes;
+use App\Models\Flag_Comments;
+use App\Models\Flag_Shares;
 
 use GuzzleHttp\Client;
 
 class CountryController extends Controller
 {
-    public function getGeoCountry(Request $request) {
+    public function getGeoCountry(Request $request, $cc = null) {
 
         $geoCountryList = GeoCountry::get();
 
         if ($geoCountryList->isEmpty()) {
-            $response = Http::get('https://restcountries.com/v3.1/all?fields=name,flags,cca2');
+            $response = Http::get('https://restcountries.com/v3.1/all?fields=name,flags,cca2,idd');
             if ($response->successful()) {
                 $countries = $response->json();
 
@@ -34,12 +37,14 @@ class CountryController extends Controller
                     // Extract relevant fields
                     $countryName = $country['name']['common'] ?? null;
                     $countryCode = $country['cca2'] ?? null;
+                    $countryPhoneCode = $country['idd'] ?? null;
+                    $countrySuffix = (isset($countryPhoneCode["suffixes"][0]) ? $countryPhoneCode["suffixes"][0] : "");
                     $countryImage = $country['flags']['png'] ?? null;
-
                     $imageResponse = Http::get($countryImage);
                     if ($imageResponse->successful()) {
                         // Get the image content
                         $imageContent = $imageResponse->body();
+                        $dialingCode = $countryPhoneCode["root"].$countrySuffix;
                         // Define a file name and path
                         $fileName = $countryCode.'.png';
                         $filePath = 'flags/' . $fileName;
@@ -51,6 +56,7 @@ class CountryController extends Controller
                         GeoCountry::updateOrCreate(
                             ['code' => $countryCode],
                             ['country_name' => $countryName,
+                             'phone_code' => $dialingCode,
                              'country_image' => env('APP_URL') . '/api/images/flags/'.$countryCode.'.png'],
                         );
                     }
@@ -58,11 +64,36 @@ class CountryController extends Controller
             }
         }
 
-        $geoCountryList = GeoCountry::orderBy('country_name', 'asc')->get();
+        $geoCountryList = GeoCountry::orderBy('country_name', 'asc')
+                            ->when($cc, function ($query, $country_code) {
+                                return $query->where('code', $country_code);
+                            })->get();
+        $geoCountrySuperList = [];
+        $geoCountryDetail;
+        foreach ($geoCountryList as $country) {
+            $geoCountryDetail["country_id"]     = $country["country_id"];
+            $geoCountryDetail["country_name"]   = $country["country_name"];
+            $geoCountryDetail["code"]           = $country["code"];
+            $geoCountryDetail["phone_code"]     = $country["phone_code"];
+            $geoCountryDetail["country_image"]  = $country["country_image"];
+            $countryActivity = GeoCountry::getCountryActivity($country["code"]);
+            if ($countryActivity) {
+                $geoCountryDetail["like_cnt"] = $countryActivity->likes_count;
+                $geoCountryDetail["dislikes_count"] = $countryActivity->dislikes_count;
+                $geoCountryDetail["comments_count"] = $countryActivity->comments_count;
+                $geoCountryDetail["shares_count"] = $countryActivity->shares_count;
+            } else {
+                $geoCountryDetail["like_cnt"] = 0;
+                $geoCountryDetail["dislikes_count"] = 0;
+                $geoCountryDetail["comments_count"] = 0;
+                $geoCountryDetail["shares_count"] = 0;
+            }
+            $geoCountrySuperList[] = $geoCountryDetail;
+        }
 
         return response()->json([
             'success' => true,
-            'geo_countries' => $geoCountryList
+            'geo_countries' => $geoCountrySuperList
         ], 200);
     }
 
@@ -194,5 +225,82 @@ class CountryController extends Controller
         ->delete();
 
         return response()->json(['success' => true, 'message' => 'Countries reseted successfully']);
+    }
+
+    public function storeCountryLikes(Request $request)
+    {
+        try {
+            $request->validate([
+                'country_code' => 'required',
+                'user_id' => 'required|exists:users,id',
+                'is_like' => 'required|boolean',
+            ]);
+
+            Flag_Likes::updateOrCreate(
+                ['country_code' => $request->country_code, 'user_id' => $request->user_id],
+                ['is_like' => $request->is_like]
+            );
+            
+            return response()->json(['success' => true, 'message' => 'Country Liked/Disliked successfully']);
+        
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Error inserting data',
+                'error' => $e->getMessage()
+            ], 500);
+        }
+    }
+
+    public function storeCountryComments(Request $request)
+    {
+        try {
+            $request->validate([
+                'country_code' => 'required',
+                'user_id' => 'required|exists:users,id',
+                'comment' => 'required|string',
+            ]);
+
+            Flag_Comments::create($request->all());
+            
+            return response()->json(['success' => true, 'message' => 'Country Commented successfully']);
+
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Error inserting data',
+                'error' => $e->getMessage()
+            ], 500);
+        }
+    }
+
+    public function storeCountryShares(Request $request)
+    {
+        try {
+            $request->validate([
+                'country_code' => 'required',
+                'user_id' => 'required|exists:users,id',
+                'platform' => 'required|string',
+            ]);
+
+            Flag_Shares::create($request->all());
+            
+            return response()->json(['success' => true, 'message' => 'Country Shared successfully']);
+
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Error inserting data',
+                'error' => $e->getMessage()
+            ], 500);
+        }
+    }
+
+    public function getCountryComments(Request $request, $cc)
+    {
+        $countryComment = GeoCountry::getCountryComment($cc);
+
+        return $countryComment;
+
     }
 }

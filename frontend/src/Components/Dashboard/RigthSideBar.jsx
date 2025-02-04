@@ -1,7 +1,4 @@
-import React from "react";
-import { FaThumbsUp, FaThumbsDown, FaComment, FaShare } from "react-icons/fa"; // Import FontAwesome icons
-import India from "../../assets/images/Rigth side property/Flag_of_India.svg.webp"; // Your flag image
-import banner from "../../assets/images/Rigth side property/banner.jpeg"; // Banner image
+import React, { useEffect, useState } from "react";
 import user1 from "../../assets/images/Rigth side property/user.jpg"; // User image 1
 import user2 from "../../assets/images/Rigth side property/user2.jpeg"; // User image 2
 import user3 from "../../assets/images/Rigth side property/user3.jpg"; // User image 3
@@ -12,33 +9,22 @@ import event from "../../assets/images/Rigth side property/7.png"; // Event icon
 import group from "../../assets/images/Rigth side property/group.png"; // Group icon
 import notification from "../../assets/images/Rigth side property/not.png"; // Notification icon
 import set from "../../assets/images/Rigth side property/set.webp"; // Settings icon
-import ThumbUpOffAltIcon from "@mui/icons-material/ThumbUpOffAlt";
-import ThumbDownOffAltIcon from "@mui/icons-material/ThumbDownOffAlt";
 import CommentIcon from "@mui/icons-material/Comment";
 import ThumbUpIcon from "@mui/icons-material/ThumbUp";
 import ThumbDownIcon from "@mui/icons-material/ThumbDown";
-import PersonAddIcon from "@mui/icons-material/PersonAdd";
-import PersonIcon from "@mui/icons-material/Person";
-import AddCircleIcon from "@mui/icons-material/AddCircle";
-import FavoriteBorderIcon from "@mui/icons-material/FavoriteBorder";
 import FavoriteSharpIcon from "@mui/icons-material/FavoriteSharp";
-import StarBorderIcon from "@mui/icons-material/StarBorder";
-import SportsBaseballIcon from "@mui/icons-material/SportsBaseball";
-import SportsSoccerIcon from "@mui/icons-material/SportsSoccer";
-import SportsFootballIcon from "@mui/icons-material/SportsFootball";
-import StarIcon from "@mui/icons-material/Star";
 import GroupIcon from "@mui/icons-material/Group";
-import SendIcon from "@mui/icons-material/Send";
-import ShareIcon from "@mui/icons-material/Share";
 import ScreenShareIcon from "@mui/icons-material/ScreenShare";
 import { Tooltip } from "@mui/material";
 
-const RightSidebar = ({
-  countryCode,
-  flag,
-  countryName,
-  handleCountryChange,
-}) => {
+const RightSidebar = ({ countryCode, flag, countryName }) => {
+  const [navbarHeight, setNavbarHeight] = useState(56);
+  const [comments, setComments] = useState([]); // Store comments
+  const [showComments, setShowComments] = useState(false); // Controls comment section visibility
+  const [showMore, setShowMore] = useState(false); // Show 2 or 10 comments
+  const [currentPage, setCurrentPage] = useState(1); // For pagination
+  const commentsPerPage = 10; // Number of comments per page
+
   const updates = [
     {
       id: 1,
@@ -79,12 +65,65 @@ const RightSidebar = ({
 
   const isWorld = location.pathname === "/world"; // Determines if we're in the "world" section
 
+  useEffect(() => {
+    // Mock API call to get comments
+    const fetchComments = () => {
+      const mockComments = Array.from({ length: 50 }, (_, index) => ({
+        id: index + 1,
+        user: `User ${index + 1}`,
+        text: `This is comment number ${index + 1}`,
+      }));
+      setComments(mockComments);
+    };
+    fetchComments();
+  }, []);
+
+  const handleCommentClick = () => {
+    setShowComments((prev) => {
+      if (prev) {
+        setShowMore(false); // Reset Show More when closing
+        setCurrentPage(1); // Reset pagination to page 1
+      }
+      return !prev;
+    });
+  };
+
+  const handleShowMore = () => {
+    setShowMore(true);
+  };
+
+  const paginate = (pageNumber) => {
+    setCurrentPage(pageNumber);
+  };
+
+  // Get current comments
+  const indexOfLastComment = currentPage * commentsPerPage;
+  const indexOfFirstComment = indexOfLastComment - commentsPerPage;
+  const currentComments = comments.slice(
+    indexOfFirstComment,
+    indexOfLastComment
+  );
+
+  useEffect(() => {
+    const updateNavbarHeight = () => {
+      setNavbarHeight(window.innerWidth <= 991 ? 110 : 56);
+    };
+
+    updateNavbarHeight();
+    window.addEventListener("resize", updateNavbarHeight);
+
+    return () => {
+      window.removeEventListener("resize", updateNavbarHeight);
+    };
+  });
+
   return (
     <div
       className="col-md-3 d-none d-md-block bg-light position-fixed"
       style={{
+        // marginTop: ``,
         height: "100vh",
-        top: "56px", // Height of the topbar
+        top: `${navbarHeight}px`, // Height of the topbar
         right: "0",
         paddingBottom: "54px", // Ensures space for footer
       }}
@@ -174,7 +213,7 @@ const RightSidebar = ({
                     opacity: 0.8,
                     cursor: "pointer",
                   }}
-                  onClick={() => console.log("Icon clicked")}
+                  onClick={handleCommentClick}
                 />
               </Tooltip>
               <Tooltip title="Follow" arrow disableInteractive>
@@ -279,11 +318,71 @@ const RightSidebar = ({
               /> */}
             </div>
           </div>
+
+          {/* Comment Section */}
+          {showComments && (
+            <div className="container mt-3">
+              <h5>Comments</h5>
+              <div
+                className="list-group"
+                style={{
+                  maxHeight: "300px", // Adjust height as needed
+                  overflowY: "auto", // Enables scrolling
+                }}
+              >
+                {showMore
+                  ? currentComments.map((comment) => (
+                      <li key={comment.id} className="list-group-item">
+                        <strong>{comment.user}:</strong> {comment.text}
+                      </li>
+                    ))
+                  : comments.slice(0, 2).map((comment) => (
+                      <li key={comment.id} className="list-group-item">
+                        <strong>{comment.user}:</strong> {comment.text}
+                      </li>
+                    ))}
+              </div>
+
+              {!showMore && (
+                <button className="btn btn-link mt-2" onClick={handleShowMore}>
+                  Show More
+                </button>
+              )}
+
+              {/* Pagination - Keep this unchanged */}
+              {showMore && (
+                <nav className="mt-3">
+                  <ul className="pagination">
+                    {Array.from({
+                      length: Math.ceil(comments.length / commentsPerPage),
+                    }).map((_, index) => (
+                      <li
+                        key={index}
+                        className={`page-item ${
+                          currentPage === index + 1 ? "active" : ""
+                        }`}
+                      >
+                        <button
+                          className="page-link"
+                          onClick={() => paginate(index + 1)}
+                        >
+                          {index * commentsPerPage + 1}-
+                          {(index + 1) * commentsPerPage}
+                        </button>
+                      </li>
+                    ))}
+                  </ul>
+                </nav>
+              )}
+            </div>
+          )}
+
           {/* Part 2 & 3: Scrollable Section */}
           <div
+            className="mt-3"
             style={{
               overflowY: "auto",
-              maxHeight: "calc(100vh - 56px - 200px - 54px)", // Adjust height to exclude the flag section and footer
+              maxHeight: "calc(100vh - 56px - 200px - 54px)",
             }}
           >
             {/* Activity Section */}

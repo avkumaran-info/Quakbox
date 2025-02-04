@@ -16,6 +16,7 @@ import FanCountry from "./Components/FanCountry";
 import QHomw from "./Components/Qcast/QHomw";
 import UploadVideo from "./Components/Qcast/UploadVideo";
 import AddVideo from "./Components/Qcast/AddVideo";
+import VideoPlayer from "./Components/Qcast/VideoPlayer";
 const App = () => {
   return (
     <Provider store={store}>
@@ -33,6 +34,7 @@ const App = () => {
           <Route path="/favouriteCountires" element={<FanCountry />} />
           <Route path="/qcast" element={<QHomw />} />
           <Route path="/upload" element={<UploadVideo />} />
+          <Route path="/video/:videoTitle" element={<VideoPlayer />} />
           <Route path="/addvideo" element={<AddVideo />} />
         </Routes>
       </Router>
