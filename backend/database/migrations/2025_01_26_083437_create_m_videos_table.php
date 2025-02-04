@@ -25,7 +25,7 @@ return new class extends Migration
             $table->string('title_colour', 50)->nullable();
             $table->string('defaultthumbnail', 255)->nullable();
             $table->string('country_code', 10)->nullable();
-
+            $table->json('tags')->nullable();
             $table->foreign('user_id')->references('id')->on('users')->onDelete('cascade');
         });
     }
