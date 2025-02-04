@@ -6,8 +6,11 @@ import videoupload from "../../assets/images/Videos property/videoupload.png";
 import webcam from "../../assets/images/Videos property/webcam.png";
 import photo from "../../assets/images/Videos property/photo.jpeg";
 import music from "../../assets/images/Videos property/music.jpg";
+import loading from "../../assets/images/loading.gif";
 import { FaUpload } from "react-icons/fa"; // For upload icon
 import { useNavigate } from "react-router-dom";
+import axios from "axios";
+import { getOpacity } from "@mui/material/styles/createColorScheme";
 
 const UploadVideo = () => {
   const [sidebarOpen, setSidebarOpen] = useState(true);
@@ -16,6 +19,7 @@ const UploadVideo = () => {
   const videoRef = useRef(null); // Reference to video element
   const fileInputRef = useRef(null); // File input reference for upload
   const navigate = useNavigate();
+  const [isLoading, setIsLoading] = useState(false); // Track loading state
 
   const toggleSidebar = () => {
     setSidebarOpen(!sidebarOpen);
@@ -37,12 +41,13 @@ const UploadVideo = () => {
       });
       setWebcamStream(stream);
       if (videoRef.current) {
-        videoRef.current.srcObject = stream; // Set the webcam stream to the video element
+        videoRef.current.srcObject = stream;
         videoRef.current.play();
       }
-      setSelectedCategory("webcam"); // Switch to "webcam" category
+      setSelectedCategory("webcam");
     } catch (error) {
       console.error("Error accessing webcam: ", error);
+      alert("Please allow webcam access.");
     }
   };
 
@@ -56,14 +61,40 @@ const UploadVideo = () => {
   };
 
   // Handle file upload
-  const handleFileUpload = () => {
-    const file = event.target.files[0];
-    if (file) {
-      console.log("File uploaded: ", file);
-    }
-    navigate("/addvideo");
-  };
+  
+  const handleFileUpload = async (e) => {
+    const formData = new FormData();
+  
+    // Append temp_upload and file
+    formData.append("temp_upload", true); // This will be sent as 'temp_upload=true'
+    formData.append('video_file', e.target.files[0]); // Make sure the field name matches the backend
 
+    setIsLoading(true); // Start loading
+  
+    try {
+      const response = await axios.post('http://localhost:8000/api/videos/upload', formData, {
+        headers: {
+          'Authorization': 'Bearer eyJ0eXAiOiJKV1QiLCJhbGciOiJSUzI1NiJ9.eyJhdWQiOiIxIiwianRpIjoiY2M5NGYyN2I0NmNiMWQxMWZhM2EzMzcxMzBhYTJjODRhOTI4MGViYmQ2NTc2NDJhYTg0NDcyM2Q2MjkyZDE2MDNjNjZhMWFhNzU4NzI1OTIiLCJpYXQiOjE3Mzg1Nzg3NTEuODUyODgsIm5iZiI6MTczODU3ODc1MS44NTI4ODQsImV4cCI6MTc3MDExNDc1MC41MDQxMjgsInN1YiI6IjIiLCJzY29wZXMiOltdfQ.UNZr25H5RrztciL3VJlY9MDEcok7vXdy7FZ3TRAVkrf9wUtLHAyfmEFe0HICJIeyF9UW_uP1V3LmDCeKtDVVZpS69rMWnNPy9IUNTCnxJwM514BOVpsQ-Vqs4iw2JnzUs9OD6yJhrh26DmRa15Cx_PLMyXt6PIUWk-PPSFZfqZs-hMuBMUanEeWigH6EFCYBaAsQehezkxnwafYVavaibu3YXTOb7naMB5iR9yL5Tl94Y8dn_X0wIkU9y2pOD-nDiMEJbNbzKKBvAmrDE9rtJyiWYVrH-CBgRm1EG6eV2KIivA9Kqy2WBswxQOZ61PP1DmpkADZcnzyRXUiwMB3ikunh5ZLoxj6QJVsEL8CzzngfQ8lA0bFlgqFvhfGOFbILO4O4py_OuRiu942bB-48vJPva_1XyKer0c4nN8TPK7u4zyAYTizGPdHqccvmw2keC4czkm0vOp0n6wpFMiDmHLcOLyf2hK9U5FOT3Aqn9rhfwsEef5E_0CobKdxWZjM9m2byUvnI1GvQ-DxrGvz4n8Xqy7TlPKNVIDYKBM8vBI-ABa72NOKLH5-iFgcrWj8LiWnAw_b5EwlewQD1riRX9autXE5XNcjoHr8VeYethI1CCfEyoLz1XivOCT8AJwbW-cCjCDRVfixj1e4IhyJitIHNeD21WfTfLTXpz5YVRyo', // Include the token if authentication is required  
+        },
+      });
+      setIsLoading(false); // End loading
+      if (response.data.result) {
+        // Redirect to add video page with video data
+        const videoData = {
+          message: response.data.message,
+          filePath: response.data.file_path,
+          thumbnails: response.data.thumbnails,
+        };
+  
+        navigate('/addvideo', { state: { videoData } });
+      } else {
+        alert(response.data.message);  // Handle errors
+      }
+    } catch (error) {
+      console.error('Error uploading video:', error);
+    }
+  };
+  
   // Content for each category
   const categoryContent = {
     video: {
@@ -118,6 +149,7 @@ const UploadVideo = () => {
       ],
     },
   };
+  
 
   // Handle back button click to navigate to /qcast
   const handleBackClick = () => {
@@ -125,17 +157,26 @@ const UploadVideo = () => {
   };
 
   useEffect(() => {
-    // Cleanup webcam when component unmounts or category changes
-    return () => {
-      if (selectedCategory !== "webcam") {
-        stopWebcam(); // Stop webcam if the selected category is not "webcam"
-      }
-    };
-  }, [selectedCategory]); // Run effect when selectedCategory changes
+    if (selectedCategory === "webcam" && !webcamStream) {
+      handleWebcamCapture();  // Start the webcam if it's selected
+    } else {
+      stopWebcam();
+    }
+  
+    return () => stopWebcam();  // Cleanup on unmount
+  }, [selectedCategory]);
+   // Run effect when selectedCategory changes
 
   return (
     <>
       <NavBar />
+         {/* Full-page loading overlay */}
+      {isLoading && (
+        <div style={overlayStyle}>
+          <img src={loading} alt="Loading..." style={gifStyle} />
+        </div>
+      )}
+    
       <div style={{ marginTop: "56px" }}>
         <div className="d-flex">
           <div
@@ -289,6 +330,7 @@ const UploadVideo = () => {
           <QSidebar isOpen={sidebarOpen} toggleSidebar={toggleSidebar} />
         </div>
       </div>
+      
 
       {/* CSS for Hover Zoom Effect */}
       <style>
@@ -300,10 +342,30 @@ const UploadVideo = () => {
           .hover-zoom:hover {
             transform: scale(1.1); /* Zoom in slightly */
           }
+          
         `}
       </style>
     </>
   );
 };
+
+        export const overlayStyle = {
+          position: 'fixed',
+          top: 0,
+          left: 0,
+          width: '100%',
+          height: '100%',
+          backgroundColor: 'rgba(0, 0, 0, 0.5)', // Semi-transparent black background
+          display: 'flex',
+          justifyContent: 'center',
+          alignItems: 'center',
+          zIndex: 9999, // Ensures it's above all other elements
+        };
+        
+        export const gifStyle = {
+          width:'200px',
+          height:'100px',
+          opacity:0.5,
+        };
 
 export default UploadVideo;

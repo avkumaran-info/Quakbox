@@ -12,9 +12,9 @@ return new class extends Migration
     public function up(): void
     {
         Schema::create('m_videocategory', function (Blueprint $table) {
-            $table->id('category_id'); // auto-increment primary key
-            $table->string('category_name', 255); // category name column
-            $table->timestamps(); // created_at and updated_at timestamps
+            $table->id('category_id')->comment('Unique category identifier'); // auto-increment primary key
+            $table->string('category_name', 255)->comment('Category name'); // category name column
+            $table->timestampsTz(); // created_at and updated_at timestamps with timezone
         });
     }
 

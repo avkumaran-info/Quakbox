@@ -11,19 +11,21 @@ class M_Videos extends Model
 
     protected $table = 'm_videos'; 
     protected $primaryKey = 'id';
+    protected $casts = [
+        'tags' => 'array',
+    ];  
     public $timestamps = true;
 
     protected $fillable = [
         'title', 'file_path', 'description', 'user_id',
         'category_id', 'type', 'title_size', 'title_colour',
-        'defaultthumbnail', 'country_code'
+        'defaultthumbnail', 'country_code','tags'
     ];
-    
-    // Define relationship: Each video belongs to one category
+
     public function category()
     {
-        return $this->belongsTo(M_VideoCategory::class, 'category_id');
-    }    
+        return $this->belongsTo(M_VideoCategory::class, 'category_id', 'category_id');
+    }           
 
     public function comments()
     {
