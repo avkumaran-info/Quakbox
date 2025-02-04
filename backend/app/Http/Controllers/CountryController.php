@@ -232,12 +232,11 @@ class CountryController extends Controller
         try {
             $request->validate([
                 'country_code' => 'required',
-                'user_id' => 'required|exists:users,id',
                 'is_like' => 'required|boolean',
             ]);
 
             Flag_Likes::updateOrCreate(
-                ['country_code' => $request->country_code, 'user_id' => $request->user_id],
+                ['country_code' => $request->country_code, 'user_id' => $request->user()->id],
                 ['is_like' => $request->is_like]
             );
             
@@ -257,10 +256,9 @@ class CountryController extends Controller
         try {
             $request->validate([
                 'country_code' => 'required',
-                'user_id' => 'required|exists:users,id',
                 'comment' => 'required|string',
             ]);
-
+            $request["user_id"] = $request->user()->id;
             Flag_Comments::create($request->all());
             
             return response()->json(['success' => true, 'message' => 'Country Commented successfully']);
@@ -279,10 +277,9 @@ class CountryController extends Controller
         try {
             $request->validate([
                 'country_code' => 'required',
-                'user_id' => 'required|exists:users,id',
                 'platform' => 'required|string',
             ]);
-
+            $request["user_id"] = $request->user()->id;
             Flag_Shares::create($request->all());
             
             return response()->json(['success' => true, 'message' => 'Country Shared successfully']);

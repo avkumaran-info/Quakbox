@@ -27,7 +27,7 @@ class PostController extends Controller
                         'message' => $post->message,
                         'from' => [
                             'name' => $post->user->username,
-                            'profile_image' => $post->user->profile_image,
+                            'profile_image' => env('APP_URL') . '/api/images/' . $post->user->profile_image,
                         ],
                         'attachments' => [
                             'data' => $this->getPostAttachments($post),

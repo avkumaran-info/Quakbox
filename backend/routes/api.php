@@ -49,7 +49,7 @@ Route::post('/auth/facebook', [AuthController::class, 'handleFacebookAccessToken
 Route::middleware('auth:api')->get('user', [AuthController::class, 'user']);
 
 Route::get('get_geo_country/{cc?}', [CountryController::class, 'getGeoCountry']);
-Route::get('get_country_comments/{cc}', [CountryController::class, 'getCountryComments']);
+Route::middleware('auth:api')->get('get_country_comments/{cc}', [CountryController::class, 'getCountryComments']);
 Route::middleware('auth:api')->get('get_favourite_country', [CountryController::class, 'favouriteCountryByMemberId']);
 Route::middleware('auth:api')->post('set_favourite_country', [CountryController::class, 'storeFavouriteCountry']);
 Route::middleware('auth:api')->post('put_favourite_country', [CountryController::class, 'updateFavouriteCountry']);
