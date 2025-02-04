@@ -142,3 +142,10 @@ Route::middleware('auth:api')->prefix('videos')->group(function () {
 
 // // Video Moderation Management
 
+Route::get('images/uploads/profile/image/{filename}', function ($filename) {
+    $path = storage_path('app/public/uploads/profile/image/' . $filename);
+    if (!file_exists($path)) {
+        abort(404);
+    }
+    return response()->file($path);
+});

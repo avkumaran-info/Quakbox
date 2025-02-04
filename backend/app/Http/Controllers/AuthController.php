@@ -17,6 +17,9 @@ use Illuminate\Auth\Events\Registered;
 use Laravel\Socialite\Facades\Socialite;
 use Illuminate\Support\Facades\DB;
 
+use Firebase\JWT\JWT;
+use Firebase\JWT\Key;
+
 use App\Models\User;
 use App\Models\Members;
 
@@ -108,7 +111,15 @@ class AuthController extends Controller
     }
     public function login(Request $request)
     {
-
+        $secretKey = env('PASSWORD_SECRET_DECODE'); // Must match the React secret key
+        try {
+            // Decode the JWT password
+            $decoded = JWT::decode($request->password, new Key($secretKey, 'HS256'));
+            $password = $decoded->password;
+        } catch (\Exception $e) {
+            return response()->json(['error' => 'Invalid token'], 401);
+        }
+        $request["password"] = $password;
         // Validate the incoming request
         $request->validate([
             'email' => [
@@ -162,15 +173,39 @@ class AuthController extends Controller
         $validator = Validator::make($request->all(), [
             'username' => ['required', 'string', 'max:255'],
             'email' => ['required', 'string', 'email', 'max:255', 'unique:users'],
-            'password' => ['required', 'string', 'min:8', 'confirmed'],
             'birthdate' => ['nullable', 'string', 'max:15'],
             'country' => ['nullable', 'string', 'max:255'],
+            'mobile_number' => ['required'],
+            'profile_image' => ['required'],
         ]);
 
         if ($validator->fails()) {
             return response()->json(['errors' => $validator->errors()], 422);
         }
-        event(new Registered($user = $this->create($request->all())));
+
+        $secretKey = env('PASSWORD_SECRET_DECODE'); // Must match the React secret key
+        try {
+            // Decode the JWT password
+            $decoded = JWT::decode($request->password, new Key($secretKey, 'HS256'));
+            $password = $decoded->password;
+        } catch (\Exception $e) {
+            return response()->json(['error' => 'Invalid token'], 401);
+        }
+        $request["password"] = $password;
+        $validator = Validator::make($request->all(), [
+            'password' => ['required', 'string', 'min:8', 'confirmed'],
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json(['errors' => $validator->errors()], 422);
+        }
+
+        $mediaPath = "";
+        if ($request->hasFile('profile_image')) {
+            $file = $request->file('profile_image');
+            $mediaPath = $file->store('uploads/profile/image', 'public');
+        }
+        event(new Registered($user = $this->create($request->all(), $mediaPath)));
         return response()->json([
             'result' => true
         ], 200);
@@ -181,12 +216,14 @@ class AuthController extends Controller
      * @param  array  $data
      * @return \App\Models\User
      */
-    protected function create(array $data)
+    protected function create(array $data, string $mediaPath)
     {
         // Create the user in the 'users' table
         $user = User::create([
             'username' => $data['username'],
             'email' => $data['email'],
+            'mobile_number' => $data['mobile_number'],
+            'profile_image' => $mediaPath,
             'password' => Hash::make($data['password']),
         ]);
 
@@ -225,7 +262,16 @@ class AuthController extends Controller
             'result' => true,
             'message' => 'User Details',
             'users' => $request->user(),
+            'profile_image_url' => $this->getProfileImage( $request->user() ),
             'user_details' => $memberData
         ]);
+    }
+    private function getProfileImage($user)
+    {
+        if ($user) {
+            return env('APP_URL') . '/api/images/' . $user->profile_image
+        }
+
+        return "";
     }
 }

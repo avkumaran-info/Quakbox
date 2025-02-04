@@ -29,7 +29,7 @@ class CountryController extends Controller
         $geoCountryList = GeoCountry::get();
 
         if ($geoCountryList->isEmpty()) {
-            $response = Http::get('https://restcountries.com/v3.1/all?fields=name,flags,cca2');
+            $response = Http::get('https://restcountries.com/v3.1/all?fields=name,flags,cca2,idd');
             if ($response->successful()) {
                 $countries = $response->json();
 
@@ -37,12 +37,14 @@ class CountryController extends Controller
                     // Extract relevant fields
                     $countryName = $country['name']['common'] ?? null;
                     $countryCode = $country['cca2'] ?? null;
+                    $countryPhoneCode = $country['idd'] ?? null;
+                    $countrySuffix = (isset($countryPhoneCode["suffixes"][0]) ? $countryPhoneCode["suffixes"][0] : "");
                     $countryImage = $country['flags']['png'] ?? null;
-
                     $imageResponse = Http::get($countryImage);
                     if ($imageResponse->successful()) {
                         // Get the image content
                         $imageContent = $imageResponse->body();
+                        $dialingCode = $countryPhoneCode["root"].$countrySuffix;
                         // Define a file name and path
                         $fileName = $countryCode.'.png';
                         $filePath = 'flags/' . $fileName;
@@ -54,6 +56,7 @@ class CountryController extends Controller
                         GeoCountry::updateOrCreate(
                             ['code' => $countryCode],
                             ['country_name' => $countryName,
+                             'phone_code' => $dialingCode,
                              'country_image' => env('APP_URL') . '/api/images/flags/'.$countryCode.'.png'],
                         );
                     }
@@ -71,6 +74,7 @@ class CountryController extends Controller
             $geoCountryDetail["country_id"]     = $country["country_id"];
             $geoCountryDetail["country_name"]   = $country["country_name"];
             $geoCountryDetail["code"]           = $country["code"];
+            $geoCountryDetail["phone_code"]     = $country["phone_code"];
             $geoCountryDetail["country_image"]  = $country["country_image"];
             $countryActivity = GeoCountry::getCountryActivity($country["code"]);
             if ($countryActivity) {
