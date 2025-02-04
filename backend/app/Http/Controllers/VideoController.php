@@ -197,7 +197,9 @@ class VideoController extends Controller
                       ->save(public_path('storage/' . $thumbnailPath));
 
                 // Add the full URL to the array
-                $thumbnails[] = url('storage/' . $thumbnailPath); // Ensure this is the correct URL format
+                // $thumbnails[] = url('storage/' . $thumbnailPath); // Ensure this is the correct URL format
+                $thumbnails[] = env('APP_URL') . '/api/images/' . $thumbnailPath; // Ensure this is the correct URL format
+                
             }
 
             return $thumbnails;

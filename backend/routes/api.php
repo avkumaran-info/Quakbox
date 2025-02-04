@@ -150,3 +150,11 @@ Route::get('images/uploads/profile/image/{filename}', function ($filename) {
     }
     return response()->file($path);
 });
+
+Route::get('images/uploads/thumbnails/{filename}', function ($filename) {
+    $path = storage_path('app/public/uploads/thumbnails/' . $filename);
+    if (!file_exists($path)) {
+        abort(404);
+    }
+    return response()->file($path);
+});

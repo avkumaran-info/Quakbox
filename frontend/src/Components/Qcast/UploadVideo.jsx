@@ -72,10 +72,14 @@ const UploadVideo = () => {
     setIsLoading(true); // Start loading
   
     try {
-      const response = await axios.post('http://localhost:8000/api/videos/upload', formData, {
-        headers: {
-          'Authorization': 'Bearer eyJ0eXAiOiJKV1QiLCJhbGciOiJSUzI1NiJ9.eyJhdWQiOiIxIiwianRpIjoiY2M5NGYyN2I0NmNiMWQxMWZhM2EzMzcxMzBhYTJjODRhOTI4MGViYmQ2NTc2NDJhYTg0NDcyM2Q2MjkyZDE2MDNjNjZhMWFhNzU4NzI1OTIiLCJpYXQiOjE3Mzg1Nzg3NTEuODUyODgsIm5iZiI6MTczODU3ODc1MS44NTI4ODQsImV4cCI6MTc3MDExNDc1MC41MDQxMjgsInN1YiI6IjIiLCJzY29wZXMiOltdfQ.UNZr25H5RrztciL3VJlY9MDEcok7vXdy7FZ3TRAVkrf9wUtLHAyfmEFe0HICJIeyF9UW_uP1V3LmDCeKtDVVZpS69rMWnNPy9IUNTCnxJwM514BOVpsQ-Vqs4iw2JnzUs9OD6yJhrh26DmRa15Cx_PLMyXt6PIUWk-PPSFZfqZs-hMuBMUanEeWigH6EFCYBaAsQehezkxnwafYVavaibu3YXTOb7naMB5iR9yL5Tl94Y8dn_X0wIkU9y2pOD-nDiMEJbNbzKKBvAmrDE9rtJyiWYVrH-CBgRm1EG6eV2KIivA9Kqy2WBswxQOZ61PP1DmpkADZcnzyRXUiwMB3ikunh5ZLoxj6QJVsEL8CzzngfQ8lA0bFlgqFvhfGOFbILO4O4py_OuRiu942bB-48vJPva_1XyKer0c4nN8TPK7u4zyAYTizGPdHqccvmw2keC4czkm0vOp0n6wpFMiDmHLcOLyf2hK9U5FOT3Aqn9rhfwsEef5E_0CobKdxWZjM9m2byUvnI1GvQ-DxrGvz4n8Xqy7TlPKNVIDYKBM8vBI-ABa72NOKLH5-iFgcrWj8LiWnAw_b5EwlewQD1riRX9autXE5XNcjoHr8VeYethI1CCfEyoLz1XivOCT8AJwbW-cCjCDRVfixj1e4IhyJitIHNeD21WfTfLTXpz5YVRyo', // Include the token if authentication is required  
-        },
+      const token = localStorage.getItem("api_token"); // Get token from localStorage
+
+      if (!token) {
+        setError("Authorization token not found. Please log in.");
+        return;
+      }
+      const response = await axios.post('https://develop.quakbox.com/admin/api/videos/upload', formData, {
+        headers: { Authorization: `Bearer ${token}` },
       });
       setIsLoading(false); // End loading
       if (response.data.result) {

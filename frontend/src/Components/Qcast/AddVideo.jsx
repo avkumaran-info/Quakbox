@@ -69,10 +69,16 @@ const AddVideo = () => {
      // ✅ Show loading GIF and disable interaction
      setLoading(true);
     // Make the POST request with raw JSON
-    const response = await axios.post('http://localhost:8000/api/videos/upload', payload, {
+    const token = localStorage.getItem("api_token"); // Get token from localStorage
+
+    if (!token) {
+      setError("Authorization token not found. Please log in.");
+      return;
+    }
+    const response = await axios.post('https://develop.quakbox.com/admin/api/videos/upload', payload, {
       headers: {
         'Content-Type': 'application/json', 
-        'Authorization': 'Bearer eyJ0eXAiOiJKV1QiLCJhbGciOiJSUzI1NiJ9.eyJhdWQiOiIxIiwianRpIjoiMTFhODlkZjY2NjY0MTZiOGQxOWQ2ZmU0N2U1ZTdhODVhYzBmOWJiNTNiZjAyNmRmMTIzOTg4ODg1ODY0Y2U4ZWYwNGNmZTQzZjBhMzg5OTAiLCJpYXQiOjE3Mzg1ODkzNjYuMjc2MzExLCJuYmYiOjE3Mzg1ODkzNjYuMjc2MzE1LCJleHAiOjE3NzAxMjUzNjUuODI2MzI2LCJzdWIiOiIyIiwic2NvcGVzIjpbXX0.Hz6VihgoA9_DNLFvAKp1ECtKQrJvBdQJz0MzrhGl9Cmpo5RUWf7-0ThG1vKIbQ5ZTxt8Fw9NM404osWKENV_jdA6Ljox0jRtzvMv1Z2hiVfufVcPmBrFs41v7dtGhs9zwEAYxOB2nBZ8YG7UsQ61AvOZpxARr7n-sLEXyl-8ssXiuhMHehRZ-akOY5jU9vPEuwkIvUiAnCA7eaQW9eCSXp2JjwLVlRMNI3byoaqfCCEHMRk3y6b2sEjZgvFu623H2dxsI71pJqGwHMOVSBtDSn9oz-WsP05QISPE0V4wxiFiv-02RUOuD2IAdzGFVcCTJq02TpUhr3zRh1wWpnFMa9H1_r79uZnOpsTmnD6xHIdxXC_GLS9B_IDezYGRsaW-qxSxzwezn5FGgIECt-XNejfDEXsEwVypAywCawBMNgciqVXC36ftsZ03m_-D3bqv5dyohL8KZhCFZqMJmI4w1ZPq3A7NErYHF4bNy5GrbI7V0l_54CnkyKsAIwsiIrKyV3Hu92W7elovgvqZR99-p3bc589Yuko-TQUKR24vY1VG5_hIQ0d6iieYbx1fBZN-DqzAXp6MGtL8Xd0KbAEniq-6NBNpYp_FBFmMRjED9MbUf6OveCA_eoTIn2SBcNiiga8zJugece_QG7RxBBoNKMgnmWxuVKdDXb1VmROvpWU', // Include the token if authentication is required
+        'Authorization': `Bearer ${token}`, // Include the token if authentication is required
         },
       });
   
