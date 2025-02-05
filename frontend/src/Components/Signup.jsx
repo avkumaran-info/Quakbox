@@ -6,6 +6,8 @@ import { useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import logo from "../assets/logo/quak_logo.png";
 import bg from "../assets/images/blurred-empty-open-space-office-600nw-2411635125.webp";
+import DEFAULT_PROFILE_IMAGE from "../assets/images/user1.png";
+import { FaEdit } from "react-icons/fa";
 
 const Signup = () => {
   const navigate = useNavigate();
@@ -13,38 +15,24 @@ const Signup = () => {
   const [selectedCountry, setSelectedCountry] = useState(null);
   const [dropdownVisible, setDropdownVisible] = useState(false);
   const [message, setMessage] = useState(""); // For Success, Error, or Confirmation messages
-  const countries = [
-    {
-      code: "US",
-      name: "United States",
-      flag: "https://flagcdn.com/w320/us.png",
-    },
-    { code: "CA", name: "Canada", flag: "https://flagcdn.com/w320/ca.png" },
-    { code: "IN", name: "India", flag: "https://flagcdn.com/w320/in.png" },
-    {
-      code: "UK",
-      name: "United Kingdom",
-      flag: "https://flagcdn.com/w320/gb.png",
-    },
-    { code: "AU", name: "Australia", flag: "https://flagcdn.com/w320/au.png" },
-  ];
+  const [countries, setCountries] = useState([]);
+  const [profileImage, setProfileImage] = useState();
+  const [profilePreview, setProfilePreview] = useState(DEFAULT_PROFILE_IMAGE);
 
   const [userField, setUserField] = useState({
     email: "",
-    name: "",
+    username: "",
     quakboxEmail: "",
     dob: "",
-    country: "IN",
+    country: "",
+    countryCode: "+91",
+    phone: "",
     password: "",
     confirmPassword: "",
+    profile_image: "",
   });
 
-  const [selectedDate, setSelectedDate] = useState("");
   const [isChecked, setIsChecked] = useState(false);
-
-  const handleChange = (event) => {
-    setSelectedDate(event.target.value);
-  };
 
   const handleCheckboxChange = (event) => {
     setIsChecked(event.target.checked);
@@ -65,64 +53,61 @@ const Signup = () => {
         transition: Bounce,
       });
     } else {
-      signup(); // Proceed with signup if no errors
+      signup();
     }
   };
 
-  // const changeUserFieldHandler = (e) => {
-  //   const { name, value } = e.target;
-  //   setUserField({
-  //     ...userField,
-  //     [name]: value,
-  //   });
-
-  //   // Re-validate the form to clear the current error if resolved
-  //   const errors = validateFields();
-  //   if (errors.length > 0 && errors[0].field === name) {
-  //     toast.error(errors[0].message, {
-  //       position: "top-center",
-  //       autoClose: 5000,
-  //       hideProgressBar: false,
-  //       closeOnClick: true,
-  //       pauseOnHover: true,
-  //       draggable: true,
-  //       theme: "light",
-  //       transition: Bounce,
-  //     });
-  //   } else {
-  //     setMessage(""); // Reset message if there are no errors
-  //   }
-  // };
   const changeUserFieldHandler = (e) => {
     const { name, value } = e.target;
-    setUserField({
-      ...userField,
+    setUserField((prevUserField) => ({
+      ...prevUserField,
       [name]: value,
-    });
-
-    // Optionally clear the message if the field being edited resolves the issue
-    if (message) {
-      const errors = validateFields();
-      if (errors.length === 0 || errors.every((err) => err.field !== name)) {
-        setMessage("");
-      }
-    }
-  };
-  const handleSelect = (country) => {
-    setSelectedCountry(country);
-    // setDropdownVisible(false); // Close dropdown
+    }));
+    console.log(userField);
   };
 
-  const toggleDropdown = (e) => {
-    e.stopPropagation();
-    console.log("Dropdown Toggled", dropdownVisible); // Add this log to check the state
-    setDropdownVisible((prevState) => !prevState);
+  const handleSelect = (selectedOption) => {
+    setSelectedCountry(selectedOption);
+
+    // Update userField with selected country code
+    setUserField((prevUserField) => ({
+      ...prevUserField,
+      country: selectedOption.code, // Ensure the country code is set correctly
+    }));
   };
+
   useEffect(() => {
-    console.log("Dropdown state updated:", dropdownVisible);
-  }, [dropdownVisible]);
+    // Retrieve geo_country from localStorage
+    const geoCountryData = localStorage.getItem("geo_country");
+    if (geoCountryData) {
+      // Parse the geo_country data and set it in state
+      const parsedCountries = JSON.parse(geoCountryData);
+      setCountries(parsedCountries);
+      console.log(parsedCountries);
+    } else {
+      // Fallback to default countries if geo_country is not found
+      setCountries([
+        {
+          code: "US",
+          name: "United States",
+          flag: "https://flagcdn.com/w320/us.png",
+        },
+        { code: "CA", name: "Canada", flag: "https://flagcdn.com/w320/ca.png" },
+        { code: "IN", name: "India", flag: "https://flagcdn.com/w320/in.png" },
+        {
+          code: "UK",
+          name: "United Kingdom",
+          flag: "https://flagcdn.com/w320/gb.png",
+        },
+        {
+          code: "AU",
+          name: "Australia",
+          flag: "https://flagcdn.com/w320/au.png",
+        },
+      ]);
+    }
+  }, []);
 
-  // Close dropdown if clicked outside
   useEffect(() => {
     const closeDropdown = (e) => {
       if (!e.target.closest(".custom-dropdown")) {
@@ -133,13 +118,53 @@ const Signup = () => {
     document.addEventListener("click", closeDropdown);
     return () => document.removeEventListener("click", closeDropdown); // Cleanup on unmount
   }, []);
+
+  const handleProfileImageChange = (event) => {
+    const file = event.target.files[0];
+
+    if (file) {
+      setProfileImage(file);
+
+      // Show image preview
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setProfilePreview(reader.result);
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
   const signup = async () => {
     try {
-      const response = await axios.post(
-        "http://localhost:8000/api/addnew",
-        userField
+      const formData = new FormData();
+      formData.append("username", userField.username);
+      formData.append("email", userField.email);
+      formData.append("birthdate", userField.dob);
+      formData.append("country", userField.country);
+      formData.append(
+        "mobile_number",
+        `${userField.countryCode}${userField.phone}`
       );
-      console.log(response);
+      formData.append("password", userField.password);
+      formData.append("password_confirmation", userField.confirmPassword);
+
+      // If no image is selected, use default profile image
+      if (profileImage) {
+        formData.append("profile_image", profileImage);
+      } else {
+        // Convert the default image to a File object
+        const response = await fetch(DEFAULT_PROFILE_IMAGE);
+        const blob = await response.blob();
+        const defaultFile = new File([blob], "default-profile.png", {
+          type: "image/png",
+        });
+        formData.append("profile_image", defaultFile);
+      }
+
+      const response = await axios.post(
+        "https://develop.quakbox.com/admin/api/register",
+        formData
+      );
 
       if (response.data.result) {
         toast.success("Registered successfully!", {
@@ -154,21 +179,24 @@ const Signup = () => {
         });
 
         if (window.confirm("Registered successfully!")) {
-          navigate("/", {});
+          navigate("/");
         }
       }
     } catch (error) {
       if (error.response) {
-        toast.error(errors[0].message, {
-          position: "top-center",
-          autoClose: 5000,
-          hideProgressBar: false,
-          closeOnClick: true,
-          pauseOnHover: true,
-          draggable: true,
-          theme: "light",
-          transition: Bounce,
-        });
+        toast.error(
+          error.response.data.errors.email[0] || "Registration failed",
+          {
+            position: "top-center",
+            autoClose: 5000,
+            hideProgressBar: false,
+            closeOnClick: true,
+            pauseOnHover: true,
+            draggable: true,
+            theme: "light",
+            transition: Bounce,
+          }
+        );
       } else if (error.request) {
         toast.error("No response received. Please try again.", {
           position: "top-center",
@@ -192,18 +220,28 @@ const Signup = () => {
           transition: Bounce,
         });
       }
+      console.log(error);
     }
-  };
-  const clearMessage = () => {
-    setMessage(""); // Clears the message when called
   };
 
   const validateFields = () => {
     const errors = [];
 
-    if (!userField.name.trim()) {
-      errors.push({ field: "name", message: "Username is required." });
+    // ✅ Username Validation
+    if (!userField.username.trim()) {
+      errors.push({ field: "username", message: "Username is required." });
     }
+
+    const usernameRegex = /^(?!.*__)(?![_])[a-zA-Z0-9_]{3,20}(?<![_])$/;
+    if (userField.username.trim() && !usernameRegex.test(userField.username)) {
+      errors.push({
+        field: "username",
+        message:
+          "Enter a valid username (only letters, numbers, and underscores, 3-20 characters, no double underscores, no start/end underscores).",
+      });
+    }
+
+    // ✅ QuakBox Email Validation
     if (
       !userField.quakboxEmail.trim() ||
       !/^[a-zA-Z0-9._%+-]+$/.test(userField.quakboxEmail)
@@ -213,35 +251,73 @@ const Signup = () => {
         message: "Valid QuakBox email prefix is required.",
       });
     }
-    if (
-      !userField.email.trim() ||
-      !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(userField.email)
-    ) {
+
+    // ✅ Email Validation
+    if (!userField.email.trim()) {
       errors.push({
         field: "email",
         message: "A valid email address is required.",
       });
+    } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(userField.email)) {
+      errors.push({
+        field: "email",
+        message: "Enter a valid email format (e.g., user@example.com).",
+      });
     }
+
+    // ✅ Date of Birth (DOB) Validation
     if (!userField.dob.trim()) {
       errors.push({ field: "dob", message: "Date of Birth is required." });
+    } else {
+      const birthDate = new Date(userField.dob);
+      const today = new Date();
+
+      if (birthDate > today) {
+        errors.push({
+          field: "dob",
+          message: "Date of Birth cannot be in the future.",
+        });
+      }
+
+      const age = today.getFullYear() - birthDate.getFullYear();
+      const monthDiff = today.getMonth() - birthDate.getMonth();
+      const dayDiff = today.getDate() - birthDate.getDate();
+
+      if (
+        age < 13 ||
+        (age === 13 && (monthDiff < 0 || (monthDiff === 0 && dayDiff < 0)))
+      ) {
+        errors.push({
+          field: "dob",
+          message: "You must be at least 13 years old.",
+        });
+      }
     }
+
+    // ✅ Country Selection Validation
     if (!selectedCountry) {
       errors.push({ field: "country", message: "Please select a country." });
     }
+
+    // ✅ Password Validation
     if (!userField.password.trim()) {
       errors.push({ field: "password", message: "Password is required." });
     } else if (userField.password.length < 6) {
       errors.push({
         field: "password",
-        message: "Password must be at least 6 characters.",
+        message: "Password must be at least 6 characters long.",
       });
     }
+
+    // ✅ Confirm Password Validation
     if (userField.password !== userField.confirmPassword) {
       errors.push({
         field: "confirmPassword",
         message: "Passwords do not match.",
       });
     }
+
+    // ✅ Terms & Conditions Validation
     if (!isChecked) {
       errors.push({
         field: "terms",
@@ -251,32 +327,27 @@ const Signup = () => {
 
     return errors;
   };
+
   return (
     <div className="container-fluid vh-100 d-flex flex-column flex-md-row p-0">
       {/* Left Section */}
       <div
         className="bg-light col-12 col-md-8 position-relative d-none d-md-block"
-        // style={{ overflow: "hidden" }}
         style={{
           backgroundImage: `url(${bg})`,
           backgroundSize: "cover",
           backgroundPosition: "center",
-          // height: "100vh", // Ensure full height
-          overflow: "hidden", // Prevent scrollbar on left side
+          overflow: "hidden",
           display: "flex",
           flexDirection: "column",
           alignItems: "center",
           justifyContent: "center",
         }}
       >
-        {" "}
-        {/* Overlay */}
         <div
           className="position-absolute top-0 start-0 w-100 h-100"
           style={{ backgroundColor: "rgba(0, 0, 0, 0.5)" }}
         ></div>
-        {/* Left-Side Content */}
-        {/* First Section */}
         <div
           className="text-white d-flex align-items-end justify-content-center"
           style={{ height: "50vh", width: "100%" }}
@@ -296,7 +367,6 @@ const Signup = () => {
             </p>
           </div>
         </div>
-        {/* Second Section */}
         <div
           className=" text-white d-flex align-items-end justify-content-center"
           style={{ height: "30vh", width: "100%" }}
@@ -323,7 +393,6 @@ const Signup = () => {
             </div>
           </div>
         </div>
-        {/* Third Section */}
         <div
           className=" text-white d-flex align-items-center justify-content-center mx-auto"
           style={{ height: "20vh", width: "50%" }}
@@ -331,22 +400,11 @@ const Signup = () => {
           <div className="position-absolute bottom-0 start-0 end-0 text-center text-white p-3">
             <hr />
             <div className="d-flex flex-column">
-              {/* Language Selector */}
               <div className="language-selector mb-2">
                 <div className="d-flex justify-content-center flex-wrap gap-2">
                   {[
                     { code: "ar", label: "العربية" },
-                    { code: "bg", label: "Български" },
-                    { code: "ca", label: "Català" },
-                    { code: "zh-CN", label: "简体中文" },
-                    { code: "zh-TW", label: "繁體中文" },
-                    { code: "cs", label: "Čeština" },
-                    { code: "da", label: "Dansk" },
-                    { code: "nl", label: "Nederlands" },
                     { code: "en", label: "English" },
-                    { code: "et", label: "Eesti" },
-                    { code: "fi", label: "Suomi" },
-                    { code: "fr", label: "Français" },
                   ].map((lang) => (
                     <button
                       key={lang.code}
@@ -361,8 +419,6 @@ const Signup = () => {
                   ))}
                 </div>
               </div>
-
-              {/* Copyright */}
               <div>
                 <p className="small mb-0">
                   © 2024 Quakbox. All rights reserved.
@@ -371,7 +427,6 @@ const Signup = () => {
             </div>
           </div>
         </div>
-        {/*  */}
       </div>
 
       {/* Right Section */}
@@ -379,19 +434,16 @@ const Signup = () => {
         className="bg-white p-3 col-12 col-md-4"
         style={{ overflowY: "auto", height: "100%" }}
       >
-        {/*  */}
-        {/* Company Logo and Name for small/medium screens */}
         <div className="d-md-none d-block text-center mb-4">
           <div className="d-flex align-items-center justify-content-center">
             <img
               src={logo}
               alt="Logo"
-              style={{ width: "40px", marginRight: "10px" }} // Adjust logo size
+              style={{ width: "40px", marginRight: "10px" }}
             />
             <h2 className="fw-bold mb-0 fs-1">Quakbox</h2>
           </div>
         </div>
-        {/*  */}
         <div className="card shadow-lg border-0">
           <div className="card-body p-4">
             <h2 className="text-center fw-bold mb-2 fs-3">Signup</h2>
@@ -400,6 +452,60 @@ const Signup = () => {
             </p>
             {message}
             <form>
+              <div className="text-center position-relative">
+                {/* Profile Image Clickable */}
+                <img
+                  src={profilePreview}
+                  alt="Profile"
+                  className="rounded-circle"
+                  style={{
+                    width: "100px",
+                    height: "100px",
+                    objectFit: "cover",
+                    cursor: "pointer",
+                  }}
+                  onClick={() =>
+                    document.getElementById("profileUpload").click()
+                  }
+                />
+
+                {/* Edit Icon and Text Overlay */}
+                <div
+                  className="position-absolute d-flex flex-column align-items-center justify-content-center"
+                  style={{
+                    bottom: "0",
+                    left: "50%",
+                    transform: "translateX(-50%)",
+                    width: "100px", // Same as image width
+                    height: "50px", // Smaller height
+                    background: "rgba(0, 0, 0, 0.5)",
+                    color: "white",
+                    borderRadius: "0 0 50px 50px", // Rounded bottom to match the image
+                    fontSize: "12px",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    gap: "4px",
+                    cursor: "pointer",
+                  }}
+                  onClick={() =>
+                    document.getElementById("profileUpload").click()
+                  }
+                >
+                  <FaEdit size={12} />
+                  <span>Edit Profile</span>
+                </div>
+
+                {/* Hidden File Input */}
+                <input
+                  type="file"
+                  accept="image/*"
+                  id="profileUpload"
+                  className="d-none"
+                  onChange={handleProfileImageChange}
+                />
+              </div>
+
               <div className="form-group mb-1">
                 <label htmlFor="name" className="fs-6">
                   Username
@@ -407,11 +513,11 @@ const Signup = () => {
                 <input
                   type="text"
                   id="name"
-                  name="name"
+                  name="username"
                   value={userField.name}
                   className="form-control form-control-sm"
                   placeholder="Enter your username"
-                  onChange={(e) => changeUserFieldHandler(e)}
+                  onChange={changeUserFieldHandler}
                 />
               </div>
 
@@ -427,7 +533,7 @@ const Signup = () => {
                     value={userField.quakboxEmail}
                     className="form-control form-control-sm"
                     placeholder="Enter your desired email"
-                    onChange={(e) => changeUserFieldHandler(e)}
+                    onChange={changeUserFieldHandler}
                   />
                   <span
                     style={{
@@ -453,7 +559,7 @@ const Signup = () => {
                   value={userField.email}
                   className="form-control form-control-sm"
                   placeholder="Enter your email"
-                  onChange={(e) => changeUserFieldHandler(e)}
+                  onChange={changeUserFieldHandler}
                 />
               </div>
 
@@ -467,10 +573,10 @@ const Signup = () => {
                   name="dob"
                   value={userField.dob}
                   className="form-control form-control-sm"
-                  onChange={(e) => changeUserFieldHandler(e)}
+                  onChange={changeUserFieldHandler}
                 />
               </div>
-              {/* Country Dropdown */}
+
               <div className="mb-3">
                 <label htmlFor="country" className="form-label">
                   Country
@@ -479,7 +585,7 @@ const Signup = () => {
                   <div className="d-flex align-items-center">
                     {selectedCountry && (
                       <div
-                        className="border p-2 d-flex align-items-center"
+                        className="border d-flex align-items-center"
                         style={{
                           width: "40px",
                           height: "30px",
@@ -489,11 +595,11 @@ const Signup = () => {
                         }}
                       >
                         <img
-                          src={selectedCountry.flag}
-                          alt={selectedCountry.name}
+                          src={selectedCountry.country_image}
+                          alt={selectedCountry.country_name}
                           style={{
-                            width: "30px",
-                            height: "20px",
+                            width: "100%",
+                            height: "100%",
                             objectFit: "cover",
                           }}
                         />
@@ -503,7 +609,7 @@ const Signup = () => {
                       <select
                         className="form-select ms-2"
                         id="country"
-                        value={selectedCountry ? selectedCountry.code : ""}
+                        value={userField.country} // Now correctly linked to userField
                         onChange={(e) =>
                           handleSelect(
                             countries.find(
@@ -515,7 +621,7 @@ const Signup = () => {
                         <option value="">Select your country</option>
                         {countries.map((country) => (
                           <option key={country.code} value={country.code}>
-                            {country.name}
+                            {country.country_name}
                           </option>
                         ))}
                       </select>
@@ -523,6 +629,46 @@ const Signup = () => {
                   </div>
                 </div>
               </div>
+
+              <div className="form-group mb-3">
+                <label htmlFor="phone" className="fs-6">
+                  Mobile Number
+                </label>
+                <div className="d-flex">
+                  {/* Country Code Dropdown */}
+                  <select
+                    className="form-select me-2"
+                    style={{ width: "130px" }} // Adjust width as needed
+                    value={userField.countryCode}
+                    onChange={(e) =>
+                      setUserField({
+                        ...userField,
+                        countryCode: e.target.value,
+                      })
+                    }
+                  >
+                    {countries.map((country) => (
+                      <option key={country.code} value={country.phone_code}>
+                        {country.country_name} ({country.phone_code})
+                      </option>
+                    ))}
+                  </select>
+
+                  {/* Mobile Number Input */}
+                  <input
+                    type="tel"
+                    id="phone"
+                    name="phone"
+                    value={userField.phone}
+                    className="form-control"
+                    placeholder="Enter mobile number"
+                    onChange={(e) =>
+                      setUserField({ ...userField, phone: e.target.value })
+                    }
+                  />
+                </div>
+              </div>
+
               <div className="form-group mb-1">
                 <label htmlFor="password" className="fs-6">
                   Password
@@ -534,9 +680,10 @@ const Signup = () => {
                   value={userField.password}
                   className="form-control form-control-sm"
                   placeholder="Create a password"
-                  onChange={(e) => changeUserFieldHandler(e)}
+                  onChange={changeUserFieldHandler}
                 />
               </div>
+
               <div className="form-group mb-1">
                 <label htmlFor="confirmPassword" className="fs-6">
                   Confirm Password
@@ -548,9 +695,10 @@ const Signup = () => {
                   value={userField.confirmPassword}
                   className="form-control form-control-sm"
                   placeholder="Confirm your password"
-                  onChange={(e) => changeUserFieldHandler(e)}
+                  onChange={changeUserFieldHandler}
                 />
               </div>
+
               <div className="form-group d-flex justify-content-between">
                 <div>
                   <input
@@ -564,12 +712,11 @@ const Signup = () => {
                   <a href="/terms">{t("terms and conditions")}</a>
                 </div>
               </div>
-              {/* Submit Button */}
+
               <div className="text-center mt-3">
                 <button
                   type="submit"
                   className="btn btn-primary w-100"
-                  // onClick={signup}
                   onClick={handleSubmit}
                 >
                   {t("Quakin")}
@@ -590,8 +737,6 @@ const Signup = () => {
               </a>
             </p>
           </div>
-          {/* ToastContainer to display toasts */}
-
           <ToastContainer
             position="top-center"
             autoClose={5000}

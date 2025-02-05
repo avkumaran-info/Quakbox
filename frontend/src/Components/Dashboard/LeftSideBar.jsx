@@ -18,7 +18,7 @@ const LeftSidebar = ({ countryCode, flag, countryName }) => {
   const [volume, setVolume] = useState(1); // Default volume is 100%
   const [isLoading, setIsLoading] = useState(true); // Loading state for video
   const [navbarHeight, setNavbarHeight] = useState(56);
-
+  const groups = ["Group 1", "Group 2", "Group 3", "Group 4", "Group 5"];
   const videoRef = useRef(null);
 
   const updates = [
@@ -395,7 +395,7 @@ const LeftSidebar = ({ countryCode, flag, countryName }) => {
                   left: "15%", // Default value for larger screens
                   top: "40%",
                   transform: "translateY(-50%)",
-                  fontSize: "60px",
+                  fontSize: "40px",
                   color: "#FFFFFF", // White arrow color
                   cursor: "pointer",
                   border: "none",
@@ -446,7 +446,7 @@ const LeftSidebar = ({ countryCode, flag, countryName }) => {
                   right: "15%", // Default value for larger screens
                   top: "40%",
                   transform: "translateY(-50%)",
-                  fontSize: "60px",
+                  fontSize: "40px",
                   color: "#FFFFFF", // White arrow color
                   cursor: "pointer",
                   border: "none",
@@ -469,7 +469,9 @@ const LeftSidebar = ({ countryCode, flag, countryName }) => {
           <Box
             sx={{
               height: "50vh",
-              // overflowY: "auto",
+              overflowY: "auto",
+              maxHeight: "calc(100vh - 56px - 200px - 54px)",
+
               // border: "1px solid blue",
               // padding: "10px",
               display: "flex",
@@ -487,66 +489,58 @@ const LeftSidebar = ({ countryCode, flag, countryName }) => {
             }}
           >
             {/* Groups Heading */}
-            <div
-              className="d-flex align-items-center text-light p-2"
-              style={{
-                background: "linear-gradient(to right, #1e90ff, #87cefa)",
-                color: "white",
-                height: "15%", // Adjust this value to 10% or 20% as per your preference
-                justifyContent: "flex-start",
-                position: "sticky", // Ensures the header stays at the top when scrolling
-                top: "0", // Ensures it sticks to the top of the container
-                zIndex: "1",
-                marginBottom: "0px",
-                margin: "0px",
-                padding: "0px",
-              }}
-            >
-              <h5
-                className="text-center mb-0"
-                style={{ fontSize: "15px", marginLeft: "10px" }}
-              >
-                Groups
-              </h5>
-            </div>
-
-            {/* List of Comments (taking the remaining space) */}
-            <ul
-              className="list-unstyled"
-              style={{
-                overflowY: "auto",
-                height: "80%", // Adjust this value to 80% or 90% based on the Groups heading height
-                padding: "0px",
-                margin: "0px",
-                // marginLeft: "5px",
-              }}
-            >
-              {updates.map((update) => (
-                <li
-                  key={update.id}
-                  className="d-flex align-items-start m-1"
-                  style={{
-                    gap: "10px",
-                    // boxShadow: "0 2px 5px rgba(0, 0, 0, 0.3)",
-                    // borderRadius: "10px",
-                    // margin: "0px",
-                  }}
-                >
-                  <img
-                    src={update.avatar}
-                    alt={update.name}
-                    className="rounded-circle"
-                    style={{ width: "40px", height: "40px" }}
-                  />
-                  <div>
-                    <p className="mb-1" style={{ fontSize: "0.9rem" }}>
-                      <strong>{update.name}</strong> {update.message}
-                    </p>
-                    <small className="text-muted">{update.time}</small>
+            <div className="mt-2">
+              <div className="d-flex justify-content-between align-items-center p-3 bg-primary text-white rounded-top">
+                <h4 className="m-0">Groups</h4>
+                <div className="d-flex align-items-center">
+                  <div
+                    className="rounded-circle bg-light text-dark d-flex align-items-center justify-content-center me-2"
+                    style={{
+                      width: "30px",
+                      height: "30px",
+                      fontSize: "18px",
+                      fontWeight: "bold",
+                    }}
+                  >
+                    +
                   </div>
-                </li>
-              ))}
-            </ul>
+                </div>
+              </div>
+              <div className="list-group p-1">
+                {groups.map((group, index) => (
+                  <div
+                    key={index}
+                    className="list-group-item d-flex justify-content-between align-items-center border rounded mb-2 shadow-sm"
+                  >
+                    <span>{group}</span>
+                    <div className="d-flex align-items-center">
+                      <img
+                        src="https://randomuser.me/api/portraits/men/1.jpg"
+                        alt="User"
+                        className="rounded-circle me-1"
+                        style={{ width: "30px", height: "30px" }}
+                      />
+                      <img
+                        src="https://randomuser.me/api/portraits/women/1.jpg"
+                        alt="User"
+                        className="rounded-circle me-1"
+                        style={{ width: "30px", height: "30px" }}
+                      />
+                      <div
+                        className="rounded-circle bg-light text-dark d-flex align-items-center justify-content-center"
+                        style={{
+                          width: "30px",
+                          height: "30px",
+                          fontSize: "14px",
+                        }}
+                      >
+                        +25
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
           </Box>
         </div>
       </div>

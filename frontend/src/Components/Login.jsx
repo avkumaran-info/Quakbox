@@ -110,18 +110,35 @@ const Login = () => {
   useEffect(() => {
     const fetchCountries = async () => {
       try {
-        // Fetch all countries
+        // Fetch latest countries data from API
         const res = await axios.get(
           "https://develop.quakbox.com/admin/api/get_geo_country"
         );
 
-        console.log(res.data.geo_countries);
+        const newCountryData = res.data.geo_countries; // Latest country data
+        console.log("Fetched Countries:", newCountryData);
 
-        // Convert to string and store in localStorage
-        localStorage.setItem(
-          "geo_country",
-          JSON.stringify(res.data.geo_countries)
-        );
+        // Retrieve existing data from localStorage
+        const storedCountryData = localStorage.getItem("geo_country");
+
+        // Check if stored data exists
+        if (storedCountryData) {
+          const parsedStoredData = JSON.parse(storedCountryData);
+
+          // Compare new data with stored data
+          if (
+            JSON.stringify(parsedStoredData) !== JSON.stringify(newCountryData)
+          ) {
+            console.log("Country data changed! Updating localStorage...");
+            localStorage.setItem("geo_country", JSON.stringify(newCountryData));
+          } else {
+            console.log("No changes in country data.");
+          }
+        } else {
+          // If no data exists in localStorage, store the new data
+          console.log("Storing country data for the first time.");
+          localStorage.setItem("geo_country", JSON.stringify(newCountryData));
+        }
       } catch (error) {
         console.error("Error fetching countries:", error);
       }

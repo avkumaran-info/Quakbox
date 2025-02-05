@@ -15,6 +15,7 @@ const Feed = ({ countryCode, flag, countryName, handleCountryChange }) => {
   const [mediaPreview, setMediaPreview] = useState(null);
   const [userName, setUserName] = useState("");
   const [currentUserId, setCurrentUserId] = useState(null);
+  const [userDetails, setUserDetails] = useState([]);
 
   // Functions to handle popup visibility
   const openPopup = () => setIsPopupOpen(true);
@@ -45,6 +46,7 @@ const Feed = ({ countryCode, flag, countryName, handleCountryChange }) => {
           headers: { Authorization: `Bearer ${token}` },
         }
       );
+      setUserDetails(res.data);
       setUserName(res.data.users);
       setCurrentUserId(res.data.users.id);
     } catch (error) {
@@ -81,7 +83,7 @@ const Feed = ({ countryCode, flag, countryName, handleCountryChange }) => {
           created_time: new Date().toISOString(),
           from: {
             name: userName.username,
-            profile_image: userImage,
+            profile_image: userDetails.profile_image_url,
           },
           attachments: mediaFile
             ? {
@@ -231,6 +233,8 @@ const Feed = ({ countryCode, flag, countryName, handleCountryChange }) => {
           },
         }
       );
+      console.log(res.data);
+
       setData(res.data);
     } catch (error) {
       console.log(error);
@@ -274,9 +278,9 @@ const Feed = ({ countryCode, flag, countryName, handleCountryChange }) => {
         <div className="card p-1 mb-1">
           <div className="d-flex align-items-center">
             <img
-              src={userImage}
+              src={userDetails.profile_image_url}
               alt="Profile"
-              className="rounded-circle"
+              className="rounded-circle me-2"
               style={{ width: "40px", height: "40px" }}
             />
             <input
@@ -334,7 +338,7 @@ const Feed = ({ countryCode, flag, countryName, handleCountryChange }) => {
                       {/* User Info at the Top */}
                       <div className="d-flex align-items-center mb-3">
                         <img
-                          src={userImage || defaultUserImage} // Use userImage or a default image
+                          src={userDetails.profile_image_url} // Use userImage or a default image
                           alt="User Avatar"
                           className="rounded-circle me-2"
                           style={{ width: "40px", height: "40px" }}
