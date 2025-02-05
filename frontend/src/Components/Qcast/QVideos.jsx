@@ -26,7 +26,6 @@ const categories = [
 const link =
   "https://create.microsoft.com/_next/image?url=https%3A%2F%2Fcdn.create.microsoft.com%2Fcmsassets%2FyoutubeBanner-Hero.webp&w=1920&q=75";
 
-
 const QVideos = () => {
   const [currentIndex, setCurrentIndex] = useState(0);
   const scrollContainerRef = useRef(null);
@@ -35,39 +34,86 @@ const QVideos = () => {
   const [videos, setVideos] = useState([]);
   const [message, setMessage] = useState("");
 
+  // useEffect(() => {
+  //   const fetchVideos = async () => {
+  //     try {
+  //       const token = localStorage.getItem("api_token");
+  //       if (!token) {
+  //         setMessage("❌ Authorization token missing. Please log in.");
+  //         return;
+  //       }
+
+  //       const response = await axios.get("http://localhost:8000/api/videos/", {
+  //         headers: {
+  //           Authorization: `Bearer ${token}`,
+  //         },
+  //       });
+  //       console.log(response.data);
+
+  //       // if (response.status === 200) {
+  //       //   setVideos(response.data.data);
+  //       // } else {
+  //       //   setMessage(`⚠️ Unexpected response: ${response.status}`);
+  //       // }
+  //     } catch (error) {
+  //       console.error(
+  //         "Error fetching videos:",
+  //         error.response || error.message
+  //       );
+  //       setMessage(
+  //         `❌ Error fetching videos: ${
+  //           error.response?.data?.message || error.message
+  //         }`
+  //       );
+  //     }
+  //   };
+
+  //   fetchVideos();
+  // }, []);
+
   useEffect(() => {
+    const fetchVideos = async () => {
+      try {
+        const token = localStorage.getItem("api_token");
+        // console.log("Stored Token:", token); // Check if token exists
+
+        if (!token) {
+          console.error("No token found! Please log in.");
+          return;
+        }
+
+        const response = await axios.get(
+          "https://develop.quakbox.com/admin/api/videos",
+          {
+            headers: { Authorization: `Bearer ${token}` },
+          }
+        );
+        console.log(response.data.data);
+        if (response.status === 200) {
+          setVideos(response.data.data);
+        } else {
+          setMessage(`⚠️ Unexpected response: ${response.status}`);
+        }
+      } catch (error) {
+        if (error.response) {
+          console.error("Server Response Error:", error.response.data);
+          console.error("Status Code:", error.response.status);
+        } else if (error.request) {
+          console.error("No Response from Server:", error.request);
+        } else {
+          console.error("Request Error:", error.message);
+        }
+        setLoading(false);
+      }
+    };
+
     fetchVideos();
   }, []);
 
-  const fetchVideos = async () => {
-    try {
-      const token = localStorage.getItem("api_token");
-      if (!token) {
-        setMessage("❌ Authorization token missing. Please log in.");
-        return;
-      }
-  
-      const response = await axios.get("http://localhost:8000/api/videos/", {
-        headers: {
-          "Authorization": `Bearer ${token}`,
-          "Content-Type": "application/json",
-          "Accept": "application/json",
-        },
-      });
-  
-      if (response.status === 200) {
-        setVideos(response.data.data);
-      } else {
-        setMessage(`⚠️ Unexpected response: ${response.status}`);
-      }
-    } catch (error) {
-      console.error("Error fetching videos:", error.response || error.message);
-      setMessage(`❌ Error fetching videos: ${error.response?.data?.message || error.message}`);
-    }
-  };
-  
   const handleVideoClick = (video) => {
-    navigate(`/video/${encodeURIComponent(video.video_id)}`, { state: { video } });
+    navigate(`/video/${encodeURIComponent(video.video_id)}`, {
+      state: { video },
+    });
   };
   // Function to scroll left (by 6 categories)
   const scrollLeft = () => {
@@ -170,43 +216,43 @@ const QVideos = () => {
 
       {/* Featured Videos Section */}
       <div className="p-0">
-        {/* Video Thumbnails
+        Video Thumbnails
         <div className="row">
-        {videos.map((video, index) => (
-          <div
-            className="col-12 col-sm-6 col-lg-4 col-xl-3 mb-3"
-            key={video.video_id || index} // Use video_id if unique, fallback to index
-            onClick={() => handleVideoClick(video)}
-            style={{ cursor: "pointer" }}
-          >
+          {videos.map((video, index) => (
             <div
-              className="card position-relative"
-              style={{
-                borderRadius: "12px",
-                overflow: "hidden",
-                boxShadow: "0 4px 8px rgba(0,0,0,0.1)",
-              }}
+              className="col-12 col-sm-6 col-lg-4 col-xl-3 mb-3"
+              key={video.video_id || index} // Use video_id if unique, fallback to index
+              onClick={() => handleVideoClick(video)}
+              style={{ cursor: "pointer" }}
             >
-              {video.image && ( // Ensure video.image exists before rendering
-                <img
-                src={video.defaultthumbnail ? video.defaultthumbnail : link} // Fallback image
-                className="card-img-top"
-                alt={video.title || "Video Thumbnail"}
-                style={{ height: "150px", objectFit: "cover" }}
-              />
-              )}
-              <div className="card-body">
-                <h6 className="card-title" style={{ fontWeight: "bold" }}>
-                  {video.title || "Untitled Video"}
-                </h6>
-                <p className="card-text text-muted">{video.views || 0} views</p>
+              <div
+                className="card position-relative"
+                style={{
+                  borderRadius: "12px",
+                  overflow: "hidden",
+                  boxShadow: "0 4px 8px rgba(0,0,0,0.1)",
+                }}
+              >
+                {video.image && ( // Ensure video.image exists before rendering
+                  <img
+                    src={video.defaultthumbnail ? video.defaultthumbnail : link} // Fallback image
+                    className="card-img-top"
+                    alt={video.title || "Video Thumbnail"}
+                    style={{ height: "150px", objectFit: "cover" }}
+                  />
+                )}
+                <div className="card-body">
+                  <h6 className="card-title" style={{ fontWeight: "bold" }}>
+                    {video.title || "Untitled Video"}
+                  </h6>
+                  <p className="card-text text-muted">
+                    {video.views || 0} views
+                  </p>
+                </div>
               </div>
             </div>
-          </div>
-        ))}
-
-
-        </div> */}
+          ))}
+        </div>
       </div>
       {message && <p>{message}</p>}
     </div>
@@ -214,6 +260,3 @@ const QVideos = () => {
 };
 
 export default QVideos;
-
-
-
