@@ -21,7 +21,7 @@ class VideoController extends Controller
         if ($request->hasFile('video_file') && filter_var($request->temp_upload, FILTER_VALIDATE_BOOLEAN)) {
             // Validate the video file
             $validator = Validator::make($request->all(), [
-                'video_file' => 'required|file|mimes:mp4,mov|max:20480', // Max 20MB
+                'video_file' => 'required|file|mimes:mp4,mov', // Max 20MB
             ]);
 
             if ($validator->fails()) {
@@ -116,7 +116,20 @@ class VideoController extends Controller
                     'message' => 'Thumbnail is required.',
                 ], 400);
             }
-        
+           // Get the tags as a string
+            $tags = $request->input('tags'); // It could be a string or an array
+
+            // If it's an array, convert it to a comma-separated string
+            if (is_array($tags)) {
+                $tags = implode(',', $tags); // Convert array to string (e.g., ["hello", "hai"] => "hello,hai")
+            }
+
+            // Convert the tags string into an array
+            $tagsArray = explode(',', $tags); // ["hello", "hai"]
+
+            // You can further clean up the tags, if needed
+            $tagsArray = array_map('trim', $tagsArray); // Trim any extra spaces
+
             // Log the video metadata before saving
             Log::info('Video Metadata:', [
                 'user_id' => $userId,
@@ -129,7 +142,7 @@ class VideoController extends Controller
                 'title_colour' => $request->title_colour,
                 'defaultthumbnail' => url('storage/', $defaultThumbnailPath),
                 'country_code' => $request->country_code,
-                'tags' => $request->tags,
+                'tags' => $tagsArray, // Save the tags as JSON
                 'temp_upload' => false,
             ]);
         
@@ -213,53 +226,54 @@ class VideoController extends Controller
     }
     
     public function index(Request $request, $category_id = null)
-    {
-        // Query the videos
-        $query = M_Videos::query();
-    
-        // Apply category filter if category_id is provided
-        if ($category_id) {
-            $query->where('category_id', $category_id);
-        }
-    
-        // Fetch videos with category relationship
-        $videos = $query->with('category')->get();
-    
-        // If no videos found
-        if ($videos->isEmpty()) {
+        {
+            // Query the videos
+            $query = M_Videos::query();
+            
+            // Apply category filter if category_id is provided
+            if ($category_id) {
+                $query->where('category_id', $category_id);
+            }
+
+            // Fetch videos with category relationship
+            $videos = $query->with('category')->get();
+
+            // If no videos found
+            if ($videos->isEmpty()) {
+                return response()->json([
+                    'result' => false,
+                    'message' => 'No videos found' . ($category_id ? ' for this category' : ''),
+                ], 404);
+            }
+
+            // Return formatted video data
             return response()->json([
-                'result' => false,
-                'message' => 'No videos found' . ($category_id ? ' for this category' : ''),
-            ], 404);
+                'result' => true,
+                'message' => 'Videos fetched successfully',
+                'data' => $videos->map(function ($video) {
+                    return [
+                        'video_id' => $video->id,
+                        'title' => $video->title,
+                        'description' => $video->description,
+                        'file_path' => url('storage/' . $video->file_path),
+                        'user_id' => $video->user_id,
+                        'category' => $video->category ? [
+                            'id' => $video->category->category_id,
+                            'name' => $video->category->category_name, // Ensure correct column name
+                        ] : null,
+                        'type' => $video->type,
+                        'title_size' => $video->title_size,
+                        'title_colour' => $video->title_colour,
+                        'defaultthumbnail' => $video->defaultthumbnail ? url('storage/' . $video->defaultthumbnail) : null,
+                        'country_code' => $video->country_code,
+                        'tags' => is_string($video->tags) ? json_decode($video->tags) : $video->tags,
+                        'created_at' => $video->created_at,
+                        'updated_at' => $video->updated_at,
+                    ];
+                }),
+            ], 200);
         }
-    
-        // Return formatted video data
-        return response()->json([
-            'result' => true,
-            'message' => 'Videos fetched successfully',
-            'data' => $videos->map(function ($video) {
-                return [
-                    'video_id' => $video->id,
-                    'title' => $video->title,
-                    'description' => $video->description,
-                    'file_path' => url('storage/' . $video->file_path),
-                    'user_id' => $video->user_id,
-                    'category' => $video->category ? [
-                        'id' => $video->category->category_id,
-                        'name' => $video->category->category_name, // Ensure correct column name
-                    ] : null,
-                    'type' => $video->type,
-                    'title_size' => $video->title_size,
-                    'title_colour' => $video->title_colour,
-                    'defaultthumbnail' => $video->defaultthumbnail ? url('storage/' . $video->defaultthumbnail) : null,
-                    'country_code' => $video->country_code,
-                    'created_at' => $video->created_at,
-                    'updated_at' => $video->updated_at,
-                ];
-            }),
-        ], 200);
-    }
-    
+
     public function show($id)
     {
         // Find the video by its ID or fail if not found
@@ -352,7 +366,7 @@ class VideoController extends Controller
                     'description' => $video->description,
                     'file_path' => url('storage/' . $video->file_path), // Full URL for file_path
                     'user_id' => $video->user_id,
-                    'category_id' => $video->category_id,
+                    'category_id' => $video->category_name,
                     'type' => $video->type,
                     'title_size' => $video->title_size,
                     'title_colour' => $video->title_colour,
@@ -367,14 +381,14 @@ class VideoController extends Controller
     
     public function update(Request $request, $id)
     {
-        $video = M_video::findOrFail($id);
+        $video = M_Videos::findOrFail($id);
         $video->update($request->only('title', 'description'));
         return response()->json($video);
     }
 
     public function destroy($id)
     {
-        $video = M_video::findOrFail($id);
+        $video = M_Videos::findOrFail($id);
         Storage::disk('public')->delete($video->file_path);
         $video->delete();
 
