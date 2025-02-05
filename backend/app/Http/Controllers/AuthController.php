@@ -173,7 +173,12 @@ class AuthController extends Controller
         if ($validator->fails()) {
             return response()->json(['errors' => $validator->errors()], 422);
         }
-        event(new Registered($user = $this->create($request->all())));
+        $mediaPath = "";
+        if ($request->hasFile('profile_image')) {
+            $file = $request->file('profile_image');
+            $mediaPath = $file->store('uploads/profile/image', 'public');
+        }
+        event(new Registered($user = $this->create($request->all(), $mediaPath)));
         return response()->json([
             'result' => true
         ], 200);
@@ -223,15 +228,10 @@ class AuthController extends Controller
         $userId = $request->user()->id;
 
         $memberData = DB::table('members')
+            ->leftJoin('geo_country', 'members.country', '=', 'geo_country.code')
             ->where('member_id', $userId)
+            ->select('members.*', 'geo_country.country_name')
             ->first();
-
-        // $countryData = DB::table('geo_country')
-        //     ->where('geo_country.code', $memberData->data)
-        //     ->first();
-        //     ->leftJoin('geo_country', 'members.country', '=', 'geo_country.code')
-        //     ->select('members.*', 'geo_country.country_name')
-
 
         return response()->json([
             'result' => true,
