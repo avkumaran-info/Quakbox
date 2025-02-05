@@ -19,7 +19,7 @@ class M_Videos extends Model
     protected $fillable = [
         'title', 'file_path', 'description', 'user_id',
         'category_id', 'type', 'title_size', 'title_colour',
-        'defaultthumbnail', 'country_code','tags'
+        'defaultthumbnail', 'country_code','tags',
     ];
 
     public function category()

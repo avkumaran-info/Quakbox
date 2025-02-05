@@ -17,7 +17,7 @@ const AddVideo = () => {
   const [thumbnailFile, setThumbnailFile] = useState(null);
   const [titleSize, setTitleSize] = useState("text-base"); // Default font size
   const [titleColor, setTitleColor] = useState("#000000"); // Default color
-  const [titleText, setTitleText] = useState("Title portion of the video");
+  const [titleText, setTitleText] = useState("");
   const [tags, setTags] = useState("");
   const [progress, setProgress] = useState(0);
   const location = useLocation();
@@ -33,7 +33,6 @@ const AddVideo = () => {
 
 
   const [file, setFile] = useState(null);
-    const [title, setTitle] = useState('');
     const [description, setDescription] = useState('');
     const [category, setCategory] = useState('');
     const [type, setType] = useState('');
@@ -47,7 +46,7 @@ const AddVideo = () => {
     const handleThumbnailChange = (event) => {
         setThumbnail(event.target.files[0]);
     };
-
+  const tagsArray = tags.split(',').map(tag => tag.trim());  // Convert tags string to array
    const handleSaveChanges = async () => {
           const payload = {
             file_path: videoData.filePath,
@@ -59,7 +58,7 @@ const AddVideo = () => {
             title_color: titleColor,
             title_size: titleSize,
             defaultthumbnail: selectedThumbnail,
-            tags: tags,
+            tags: tagsArray,
             temp_upload: false,  // Add other necessary fields if any
           };
 
@@ -75,6 +74,8 @@ const AddVideo = () => {
       setError("Authorization token not found. Please log in.");
       return;
     }
+    // ✅ Show loading GIF and disable interaction
+    setLoading(true);
     const response = await axios.post('https://develop.quakbox.com/admin/api/videos/upload', payload, {
       headers: {
         'Content-Type': 'application/json', 
@@ -87,6 +88,7 @@ const AddVideo = () => {
       } else {
         setMessage(response.data.message || "❌ Error uploading video");
       }
+  
     } catch (error) {
       console.error("Error:", error);
       setMessage("❌ Error uploading video");
@@ -94,7 +96,9 @@ const AddVideo = () => {
       // ✅ Hide loading GIF after response
       setLoading(false);
     }
+    
    };
+  
 
   useEffect(() => {
     if (videoData?.thumbnails) {
@@ -260,6 +264,7 @@ const AddVideo = () => {
              <label className="form-label mb-1">Video Title</label>
               <input
                 type="text"
+                placeholder="Title"
                 className={`form-control ${titleSize}`}
                 value={titleText}
                 style={{ color: titleColor }}
@@ -308,6 +313,7 @@ const AddVideo = () => {
                 <input
                   type="text"
                   className="form-control"
+                  placeholder="Tags"
                   value={tags}
                   onChange={(e) => setTags(e.target.value)}
                 />
@@ -638,12 +644,19 @@ const AddVideo = () => {
                     textAlign: "center",
                   }}
                 >
-                  <p>{message}</p>
-                  <button onClick={() => setMessage("")} className="btn btn-secondary">
-                    OK
-                  </button>
+                   <p>{message}</p>
+                    <button
+                      onClick={() => {
+                        setMessage(""); // Clear the message
+                        navigate("/qcast"); // Navigate to the route
+                      }}
+                      className="btn btn-secondary"
+                    >
+                      OK
+                    </button>
                 </div>
               )}
+              
 
               <div className="row mb-3 d-flex justify-content-center" style={{ marginTop :"20px" }}>
                 <div className="col-md-4 d-flex justify-content-between">

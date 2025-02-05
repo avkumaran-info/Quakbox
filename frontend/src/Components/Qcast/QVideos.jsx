@@ -1,6 +1,6 @@
-import React, { useState, useRef } from "react";
+import React, { useState, useRef, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import video1 from "../../assets/images/leftside videos/v3.mp4";
+import axios from "axios";
 // Category List with Icons
 const categories = [
   { name: "Popping on Quakbox", icon: "fa-foursquare" },
@@ -26,28 +26,49 @@ const categories = [
 const link =
   "https://create.microsoft.com/_next/image?url=https%3A%2F%2Fcdn.create.microsoft.com%2Fcmsassets%2FyoutubeBanner-Hero.webp&w=1920&q=75";
 
-// Video List
-const videos = [
-  { title: "Heart Candies", views: "2.2M", image: link, src: video1 },
-  { title: "Smiling Girl", views: "2.5M", image: link, src: video1 },
-  { title: "Nike Shoes", views: "1.8M", image: link, src: video1 },
-  { title: "Golden Coin", views: "1.5M", image: link, src: video1 },
-  { title: "Heart Candies", views: "2.2M", image: link, src: video1 },
-  { title: "Smiling Girl", views: "2.5M", image: link, src: video1 },
-  { title: "Nike Shoes", views: "1.8M", image: link, src: video1 },
-  { title: "Golden Coin", views: "1.5M", image: link, src: video1 },
-  { title: "Heart Candies", views: "2.2M", image: link, src: video1 },
-];
 
 const QVideos = () => {
   const [currentIndex, setCurrentIndex] = useState(0);
   const scrollContainerRef = useRef(null);
   const navigate = useNavigate();
 
-  const handleVideoClick = (video) => {
-    navigate(`/video/${encodeURIComponent(video.title)}`, { state: { video } });
-  };
+  const [videos, setVideos] = useState([]);
+  const [message, setMessage] = useState("");
 
+  useEffect(() => {
+    fetchVideos();
+  }, []);
+
+  const fetchVideos = async () => {
+    try {
+      const token = localStorage.getItem("api_token");
+      if (!token) {
+        setMessage("❌ Authorization token missing. Please log in.");
+        return;
+      }
+  
+      const response = await axios.get("http://localhost:8000/api/videos/", {
+        headers: {
+          "Authorization": `Bearer ${token}`,
+          "Content-Type": "application/json",
+          "Accept": "application/json",
+        },
+      });
+  
+      if (response.status === 200) {
+        setVideos(response.data.data);
+      } else {
+        setMessage(`⚠️ Unexpected response: ${response.status}`);
+      }
+    } catch (error) {
+      console.error("Error fetching videos:", error.response || error.message);
+      setMessage(`❌ Error fetching videos: ${error.response?.data?.message || error.message}`);
+    }
+  };
+  
+  const handleVideoClick = (video) => {
+    navigate(`/video/${encodeURIComponent(video.video_id)}`, { state: { video } });
+  };
   // Function to scroll left (by 6 categories)
   const scrollLeft = () => {
     setCurrentIndex((prevIndex) =>
@@ -149,42 +170,50 @@ const QVideos = () => {
 
       {/* Featured Videos Section */}
       <div className="p-0">
-        {/* Video Thumbnails */}
+        {/* Video Thumbnails
         <div className="row">
-          {videos.map((video, index) => (
+        {videos.map((video, index) => (
+          <div
+            className="col-12 col-sm-6 col-lg-4 col-xl-3 mb-3"
+            key={video.video_id || index} // Use video_id if unique, fallback to index
+            onClick={() => handleVideoClick(video)}
+            style={{ cursor: "pointer" }}
+          >
             <div
-              className="col-12 col-sm-6 col-lg-4 col-xl-3 mb-3"
-              key={index}
-              onClick={() => handleVideoClick(video)}
-              style={{ cursor: "pointer" }}
+              className="card position-relative"
+              style={{
+                borderRadius: "12px",
+                overflow: "hidden",
+                boxShadow: "0 4px 8px rgba(0,0,0,0.1)",
+              }}
             >
-              <div
-                className="card position-relative"
-                style={{
-                  borderRadius: "12px",
-                  overflow: "hidden",
-                  boxShadow: "0 4px 8px rgba(0,0,0,0.1)",
-                }}
-              >
+              {video.image && ( // Ensure video.image exists before rendering
                 <img
-                  src={video.image}
-                  className="card-img-top"
-                  alt={video.title}
-                  style={{ height: "150px", objectFit: "cover" }}
-                />
-                <div className="card-body">
-                  <h6 className="card-title" style={{ fontWeight: "bold" }}>
-                    {video.title}
-                  </h6>
-                  <p className="card-text text-muted">{video.views} views</p>
-                </div>
+                src={video.defaultthumbnail ? video.defaultthumbnail : link} // Fallback image
+                className="card-img-top"
+                alt={video.title || "Video Thumbnail"}
+                style={{ height: "150px", objectFit: "cover" }}
+              />
+              )}
+              <div className="card-body">
+                <h6 className="card-title" style={{ fontWeight: "bold" }}>
+                  {video.title || "Untitled Video"}
+                </h6>
+                <p className="card-text text-muted">{video.views || 0} views</p>
               </div>
             </div>
-          ))}
-        </div>
+          </div>
+        ))}
+
+
+        </div> */}
       </div>
+      {message && <p>{message}</p>}
     </div>
   );
 };
 
 export default QVideos;
+
+
+
