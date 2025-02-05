@@ -137,7 +137,7 @@ const Home = () => {
           countryName={currentCountry.name}
         />
       </div>
-      <Footer />
+      {/* <Footer /> */}
     </div>
   );
 };

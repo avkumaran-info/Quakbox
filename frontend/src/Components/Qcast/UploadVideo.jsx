@@ -61,16 +61,16 @@ const UploadVideo = () => {
   };
 
   // Handle file upload
-  
+
   const handleFileUpload = async (e) => {
     const formData = new FormData();
-  
+
     // Append temp_upload and file
     formData.append("temp_upload", true); // This will be sent as 'temp_upload=true'
-    formData.append('video_file', e.target.files[0]); // Make sure the field name matches the backend
+    formData.append("video_file", e.target.files[0]); // Make sure the field name matches the backend
 
     setIsLoading(true); // Start loading
-  
+
     try {
       const token = localStorage.getItem("api_token"); // Get token from localStorage
 
@@ -78,9 +78,13 @@ const UploadVideo = () => {
         setError("Authorization token not found. Please log in.");
         return;
       }
-      const response = await axios.post('https://develop.quakbox.com/admin/api/videos/upload', formData, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
+      const response = await axios.post(
+        "https://develop.quakbox.com/admin/api/videos/upload",
+        formData,
+        {
+          headers: { Authorization: `Bearer ${token}` },
+        }
+      );
       setIsLoading(false); // End loading
       if (response.data.result) {
         // Redirect to add video page with video data
@@ -89,16 +93,16 @@ const UploadVideo = () => {
           filePath: response.data.file_path,
           thumbnails: response.data.thumbnails,
         };
-  
-        navigate('/addvideo', { state: { videoData } });
+
+        navigate("/addvideo", { state: { videoData } });
       } else {
-        alert(response.data.message);  // Handle errors
+        alert(response.data.message); // Handle errors
       }
     } catch (error) {
-      console.error('Error uploading video:', error);
+      console.error("Error uploading video:", error);
     }
   };
-  
+
   // Content for each category
   const categoryContent = {
     video: {
@@ -153,7 +157,6 @@ const UploadVideo = () => {
       ],
     },
   };
-  
 
   // Handle back button click to navigate to /qcast
   const handleBackClick = () => {
@@ -162,25 +165,25 @@ const UploadVideo = () => {
 
   useEffect(() => {
     if (selectedCategory === "webcam" && !webcamStream) {
-      handleWebcamCapture();  // Start the webcam if it's selected
+      handleWebcamCapture(); // Start the webcam if it's selected
     } else {
       stopWebcam();
     }
-  
-    return () => stopWebcam();  // Cleanup on unmount
+
+    return () => stopWebcam(); // Cleanup on unmount
   }, [selectedCategory]);
-   // Run effect when selectedCategory changes
+  // Run effect when selectedCategory changes
 
   return (
     <>
       <NavBar />
-         {/* Full-page loading overlay */}
+      {/* Full-page loading overlay */}
       {isLoading && (
         <div style={overlayStyle}>
           <img src={loading} alt="Loading..." style={gifStyle} />
         </div>
       )}
-    
+
       <div style={{ marginTop: "56px" }}>
         <div className="d-flex">
           <div
@@ -334,7 +337,6 @@ const UploadVideo = () => {
           <QSidebar isOpen={sidebarOpen} toggleSidebar={toggleSidebar} />
         </div>
       </div>
-      
 
       {/* CSS for Hover Zoom Effect */}
       <style>
@@ -353,23 +355,23 @@ const UploadVideo = () => {
   );
 };
 
-        export const overlayStyle = {
-          position: 'fixed',
-          top: 0,
-          left: 0,
-          width: '100%',
-          height: '100%',
-          backgroundColor: 'rgba(0, 0, 0, 0.5)', // Semi-transparent black background
-          display: 'flex',
-          justifyContent: 'center',
-          alignItems: 'center',
-          zIndex: 9999, // Ensures it's above all other elements
-        };
-        
-        export const gifStyle = {
-          width:'200px',
-          height:'100px',
-          opacity:0.5,
-        };
+export const overlayStyle = {
+  position: "fixed",
+  top: 0,
+  left: 0,
+  width: "100%",
+  height: "100%",
+  backgroundColor: "rgba(0, 0, 0, 0.5)", // Semi-transparent black background
+  display: "flex",
+  justifyContent: "center",
+  alignItems: "center",
+  zIndex: 9999, // Ensures it's above all other elements
+};
+
+export const gifStyle = {
+  width: "200px",
+  height: "100px",
+  opacity: 0.5,
+};
 
 export default UploadVideo;
