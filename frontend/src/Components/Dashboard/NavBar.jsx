@@ -14,12 +14,11 @@ import FavoriteIcon from "@mui/icons-material/Favorite";
 import { Link, useNavigate } from "react-router-dom";
 import { useSelector, useDispatch } from "react-redux";
 
-const NavBar = ({ userDetail }) => {
+const NavBar = () => {
   const navigate = useNavigate();
   const [countries, setCountries] = useState([]);
-  const [userName, setUserName] = useState("");
   const [favCountries, setFavCountries] = useState([]);
-
+  const [userDetails, setUserDetail] = useState([]);
   const dropdownRef = useRef(null);
   const [showDropdown, setShowDropdown] = useState(false);
   const [dropdown, setDropdown] = useState(false);
@@ -27,30 +26,33 @@ const NavBar = ({ userDetail }) => {
   const [searchQuery, setSearchQuery] = useState(""); // State for search input
 
   const userDatas = async () => {
-    // const token = localStorage.getItem("api_token");
+    const token = localStorage.getItem("api_token");
     const storedCountries =
       JSON.parse(localStorage.getItem("geo_country")) || [];
     setCountries(storedCountries);
-    console.log(userDetail);
+    console.log(storedCountries);
+    
+    
+    
 
-    // if (!token) {
-    //   return;
-    // }
-    // try {
-    //   const res = await axios.get(
-    //     "https://develop.quakbox.com/admin/api/user",
-    //     {
-    //       headers: {
-    //         Authorization: `Bearer ${token}`,
-    //       },
-    //     }
-    //   );
+    if (!token) {
+      return;
+    }
+    try {
+      const res = await axios.get(
+        "https://develop.quakbox.com/admin/api/user",
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+      console.log(res.data);
 
-    //   // console.log(res.data);
-    //   setUserName(res.data.users.username);
-    // } catch (error) {
-    //   console.log(error);
-    // }
+      setUserDetail(res.data);
+    } catch (error) {
+      console.log(error);
+    }
   };
 
   const handleLogout = async () => {
@@ -373,15 +375,11 @@ const NavBar = ({ userDetail }) => {
               }}
             ></i> */}
 
-
             <Tooltip
               className="d-none d-lg-block"
               title="Global"
               arrow
               disableInteractive
-
-         
-
             >
               <PublicIcon
                 sx={{
@@ -397,14 +395,12 @@ const NavBar = ({ userDetail }) => {
                   },
                   transition: "all 0.3s ease",
                 }}
-
                 // onClick={() => handleCountryChange("99")}
                 onClick={(e) => {
                   e.preventDefault();
                   // handleCountryChange("99");
                   navigate("/world");
                 }}
-
               />
             </Tooltip>
             {/* Video Icon */}
@@ -414,12 +410,10 @@ const NavBar = ({ userDetail }) => {
               onClick={handleIconClick} // Handle the click event
             ></i> */}
             <Tooltip
-
               className="d-none d-lg-block"
               title="Record Video"
               arrow
               disableInteractive
-
             >
               <VideocamIcon
                 sx={{
@@ -435,13 +429,11 @@ const NavBar = ({ userDetail }) => {
                   },
                   transition: "all 0.3s ease",
                 }}
-
                 // onClick={handleIconClick} // Handle the click event
                 onClick={(e) => {
                   e.preventDefault();
                   navigate("/qcast");
                 }}
-
               />
             </Tooltip>
             {/* Go Live Icon */}
@@ -454,12 +446,10 @@ const NavBar = ({ userDetail }) => {
               style={{ color: "white", cursor: "pointer" }}
             ></i> */}
             <Tooltip
-
               className="d-none d-lg-block"
               title="Go Live"
               arrow
               disableInteractive
-
             >
               <PodcastsIcon
                 sx={{
@@ -487,12 +477,10 @@ const NavBar = ({ userDetail }) => {
               style={{ color: "white", cursor: "pointer" }}
             ></i> */}
             <Tooltip
-
               className="d-none d-lg-block"
               title="Friends"
               arrow
               disableInteractive
-
             >
               <GroupIcon
                 sx={{
@@ -516,12 +504,10 @@ const NavBar = ({ userDetail }) => {
               style={{ color: "white", cursor: "pointer" }}
             ></i> */}
             <Tooltip
-
               className="d-none d-lg-block"
               title="Notifications"
               arrow
               disableInteractive
-
             >
               <NotificationsIcon
                 sx={{
@@ -545,12 +531,10 @@ const NavBar = ({ userDetail }) => {
               style={{ color: "white", cursor: "pointer" }}
             ></i> */}
             <Tooltip
-
               className="d-none d-lg-block"
               title="Messages"
               arrow
               disableInteractive
-
             >
               <EmailIcon
                 sx={{
@@ -574,12 +558,10 @@ const NavBar = ({ userDetail }) => {
               style={{ color: "white", cursor: "pointer" }}
             ></i> */}
             <Tooltip
-
               className="d-none d-lg-block"
               title="Inbox"
               arrow
               disableInteractive
-
             >
               <InboxIcon
                 sx={{
@@ -607,12 +589,10 @@ const NavBar = ({ userDetail }) => {
               }}
             ></i> */}
             <Tooltip
-
               className="d-none d-lg-block"
               title="Favourite Countries"
               arrow
               disableInteractive
-
             >
               <FavoriteIcon
                 sx={{
@@ -745,7 +725,7 @@ const NavBar = ({ userDetail }) => {
                   onClick={() => setShowDropdown((prev) => !prev)}
                 >
                   <img
-                    src={profileImage}
+                    src={userDetails.profile_image_url}
                     alt="User"
                     style={{
                       width: "100%",
@@ -782,7 +762,7 @@ const NavBar = ({ userDetail }) => {
                         console.log("Change Profile Picture clicked")
                       }
                     >
-                      {userName}
+                      {userDetails.users.username}
                     </a>
 
                     <a

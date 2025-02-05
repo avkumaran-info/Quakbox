@@ -21,8 +21,10 @@ const getCountryDetails = async (countryCode) => {
     const countryData = storedCountries.find(
       (country) => country.code.toLowerCase() === countryCode.toLowerCase()
     );
+    console.log(countryData);
 
     if (!countryData) return { flag: "/default-flag.png", name: "Unknown" };
+
     return {
       flag: countryData.country_image || "/default-flag.png",
       name: countryData.country_name,
@@ -42,11 +44,12 @@ const Home = () => {
   const { flag, countryName } = location.state || {};
   const [userDetail, setUserDetail] = useState("");
   const [userData, setUserData] = useState(null);
+  const [userCountry, setUserCountry] = useState("");
 
   const [currentCountry, setCurrentCountry] = useState({
-    code: countryCode || "IN", // Default country code to "IN"
-    name: countryName || "India", // Default country name to "India"
-    flag: flag || "/default-flag.png", // Default country flag
+    code: countryCode,
+    name: countryName,
+    flag: flag,
   });
 
   // Fetch user data
@@ -61,12 +64,11 @@ const Home = () => {
           headers: { Authorization: `Bearer ${token}` },
         }
       );
-      // console.log(res.data.users.email);
-
-      setUserData(res.data.users.email);
-
+      console.log(res.data);
+      setUserCountry(res.data.user_details.country);
       const userDetails = res.data.user_details;
-      const defaultCountryCode = userDetails.country || "IN"; // Default to IN if no country code is present
+      const defaultCountryCode = userDetails.country; // Default to IN if no country code is present
+      const defaultCountryName = "INDIA";
       const countryDetails = await getCountryDetails(defaultCountryCode);
 
       setUserData({
@@ -109,45 +111,9 @@ const Home = () => {
     } else if (countryCode) {
       updateCountryDetails(countryCode); // Selected Country
     } else {
-      updateCountryDetails("IN"); // Default Country (India)
+      updateCountryDetails(userCountry || "IN"); // Default Country (India)
     }
   }, [countryCode, location]);
-
-  // useEffect(() => {
-  //   if (!isWorld && countryCode) {
-  //     if (countryCode) {
-  //       const updateCountryDetails = async () => {
-  //         const countryDetails = await getCountryDetails(countryCode);
-  //         setCurrentCountry({
-  //           code: countryCode,
-  //           name: countryDetails.name,
-  //           flag: countryDetails.flag,
-  //         });
-  //       };
-  //       updateCountryDetails();
-  //     }
-  //   } else if (isWorld) {
-  //     const updateCountryDetails = async () => {
-  //       const countryDetails = await getCountryDetails("99");
-  //       setCurrentCountry({
-  //         code: "99",
-  //         name: countryDetails.name,
-  //         flag: countryDetails.flag,
-  //       });
-  //     };
-  //     updateCountryDetails();
-  //   } else {
-  //     const updateCountryDetails = async () => {
-  //       const countryDetails = await getCountryDetails("IN");
-  //       setCurrentCountry({
-  //         code: countryDetails.code,
-  //         name: countryDetails.name,
-  //         flag: countryDetails.flag,
-  //       });
-  //     };
-  //     updateCountryDetails();
-  //   }
-  // }, [countryCode, location]);
 
   return (
     <div className="app">
