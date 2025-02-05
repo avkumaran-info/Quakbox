@@ -229,7 +229,6 @@ const LeftSidebar = ({ countryCode, flag, countryName }) => {
                   <p style={{ margin: 0, fontWeight: "500" }}>
                     {selectedPrivacy}
                   </p>
-                 
                 </div>
               </div>
             </div>
@@ -720,6 +719,7 @@ const LeftSidebar = ({ countryCode, flag, countryName }) => {
                       height: "30px",
                       fontSize: "18px",
                       fontWeight: "bold",
+                      cursor: "pointer",
                     }}
                     onClick={() => setShowIcons(!showIcons)} // Toggle visibility
                   >
@@ -780,6 +780,7 @@ const LeftSidebar = ({ countryCode, flag, countryName }) => {
                 >
                   <div
                     className="d-flex flex-column align-items-center"
+                    style={{ cursor: "pointer" }}
                     onClick={() => handleIconClick("Public")}
                   >
                     <i className="fa-solid fa-earth-americas"></i>{" "}
@@ -787,6 +788,7 @@ const LeftSidebar = ({ countryCode, flag, countryName }) => {
                   </div>
                   <div
                     className="d-flex flex-column align-items-center"
+                    style={{ cursor: "pointer" }}
                     onClick={() => handleIconClick("Friends of Friends")}
                   >
                     <i className="fa-solid fa-hands-clapping"></i>{" "}
@@ -794,6 +796,7 @@ const LeftSidebar = ({ countryCode, flag, countryName }) => {
                   </div>
                   <div
                     className="d-flex flex-column align-items-center"
+                    style={{ cursor: "pointer" }}
                     onClick={() => handleIconClick("Friends Only")}
                   >
                     <i className="fa-solid fa-user-group"></i>{" "}
@@ -809,6 +812,7 @@ const LeftSidebar = ({ countryCode, flag, countryName }) => {
                       display: "inline-flex",
                       alignItems: "center",
                       gap: "8px", // Space between icon and text
+                      cursor: "pointer",
                     }}
                   >
                     <div
