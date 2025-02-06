@@ -16,297 +16,240 @@ use FFMpeg\Coordinate\TimeCode;
 class VideoController extends Controller
 {
     public function videoUpload(Request $request)
-    {
-               // Step 1: Upload video temporarily and generate thumbnails if temp_upload is true
-        if ($request->hasFile('video_file') && filter_var($request->temp_upload, FILTER_VALIDATE_BOOLEAN)) {
-            // Validate the video file
-            $validator = Validator::make($request->all(), [
-                'video_file' => 'required|file|mimes:mp4,mov', // Max 20MB
-            ]);
+        {
+            Log::info('Video upload request received', ['request' => $request->all()]);
 
-            if ($validator->fails()) {
-                return response()->json([
-                    'result' => false,
-                    'message' => 'Validation failed',
-                    'errors' => $validator->errors(),
-                ], 422);
-            }
-
-            // Handle video file upload
-            $file = $request->file('video_file');
-            $userId = $request->user()->id;
-            $tempFolder = 'uploads/videos/' . $userId . '/temp';
-            $mediaPath = $file->store($tempFolder, 'public');
-
-            // Generate thumbnails (for internal use, not saving all to DB)
-            $filePath = storage_path('app/public/' . $mediaPath);
-            $thumbnails = $this->generateThumbnails($filePath);
-
-            // Return response with video and thumbnail info (correct URL format)
-            return response()->json([
-                'result' => true,
-                'message' => 'Video uploaded successfully',
-                'file_path' => url('storage/' . $mediaPath), // Use the full URL
-                'thumbnails' => array_map(function ($thumbnail) {
-                    return ($thumbnail); // Use the full URL for each thumbnail
-                }, $thumbnails),
-            ], 201);
-        }
-
-        // Log the incoming request data for debugging
-        Log::info('Video upload request received', ['request' => $request->all()]);
-
-        // Step 2: Move video to permanent storage and store metadata if temp_upload is false
-        if ($request->has('file_path') && $request->has('title') && $request->has('description') && filter_var($request->temp_upload, FILTER_VALIDATE_BOOLEAN) === false) {
-
-            // Log the validation of temp_upload value
-            Log::info('temp_upload value: ', ['temp_upload' => $request->temp_upload]);
-        
-            // Get the full URL file path and extract the relative path
-            $filePath = $request->file_path;
-            $relativeFilePath = str_replace(url('storage'), '', $filePath); // Remove the base URL
-            Log::info('Relative File Path: ' . $relativeFilePath);
-        
-            // Validate that the video exists in temporary storage
-            $userId = $request->user()->id;
-            $permanentFolder = 'uploads/videos/' . $userId . '/permanent';
-        
-            // Ensure the video exists
-            Log::info('Checking file existence at: ' . $relativeFilePath);
-            if (!Storage::disk('public')->exists($relativeFilePath)) {
-                return response()->json([
-                    'result' => false,
-                    'message' => 'Video file not found in temporary storage',
-                ], 404);
-            }
-        
-            // Create the permanent folder if it doesn't exist
-            Log::info('Creating permanent folder: ' . $permanentFolder);
-            if (!Storage::disk('public')->exists($permanentFolder)) {
-                Storage::disk('public')->makeDirectory($permanentFolder);
-            }
-        
-            // Move video from temporary to permanent storage
-            $fileName = basename($relativeFilePath);
-            $newFilePath = $permanentFolder . '/' . $fileName;
-            Log::info('Old File Path: ' . $relativeFilePath);
-            Log::info('New File Path: ' . $newFilePath);
-            Storage::disk('public')->move($relativeFilePath, $newFilePath);
-        
-            // Delete temporary folder and its contents
-            $tempFolder = 'uploads/videos/' . $userId . '/temp';
-            Log::info('Deleting temp folder: ' . $tempFolder);
-            Storage::disk('public')->deleteDirectory($tempFolder);
-        
-            // Handle the default thumbnail upload or use generated one
-            $defaultThumbnailPath = null;
-        
-            // Check if thumbnail path is provided
-            if ($request->has('defaultthumbnail')) {
-                // If default thumbnail is passed as a full URL, extract relative path
-                if (filter_var($request->defaultthumbnail, FILTER_VALIDATE_URL)) {
-                    $defaultThumbnailPath = str_replace(url('storage'), '', $request->defaultthumbnail); // Extract relative path from URL
-                } else {
-                    $defaultThumbnailPath = $request->defaultthumbnail; // Assuming it's a relative path
-                }
-                Log::info('Default Thumbnail Path: ' . $defaultThumbnailPath);
-            } else {
-                return response()->json([
-                    'result' => false,
-                    'message' => 'Thumbnail is required.',
-                ], 400);
-            }
-           // Get the tags as a string
-            $tags = $request->input('tags'); // It could be a string or an array
-
-            // If it's an array, convert it to a comma-separated string
-            if (is_array($tags)) {
-                $tags = implode(',', $tags); // Convert array to string (e.g., ["hello", "hai"] => "hello,hai")
-            }
-
-            // Convert the tags string into an array
-            $tagsArray = explode(',', $tags); // ["hello", "hai"]
-
-            // You can further clean up the tags, if needed
-            $tagsArray = array_map('trim', $tagsArray); // Trim any extra spaces
-
-            // Log the video metadata before saving
-            Log::info('Video Metadata:', [
-                'user_id' => $userId,
-                'title' => $request->title,
-                'description' => $request->description,
-                'file_path' => url('storage/',$newFilePath),
-                'category_id' => $request->category_id,
-                'type' => $request->type,
-                'title_size' => $request->title_size,
-                'title_colour' => $request->title_colour,
-                'defaultthumbnail' => url('storage/', $defaultThumbnailPath),
-                'country_code' => $request->country_code,
-                'tags' => $tagsArray, // Save the tags as JSON
-                'temp_upload' => false,
-            ]);
-        
-            try {
-                // Save the video metadata
-                $video = M_Videos::create([
-                    'user_id' => $userId,
-                    'title' => $request->title,
-                    'description' => $request->description,
-                    'file_path' => url('storage/',$newFilePath), // Store the relative URL path in DB
-                    'category_id' => $request->category_id,
-                    'type' => $request->type,
-                    'title_size' => $request->title_size,
-                    'title_colour' => $request->title_colour,
-                    'defaultthumbnail' =>url('storage/', $defaultThumbnailPath), // Store the relative URL path in DB
-                    'country_code' => $request->country_code,
-                    'tags' => $request->tags,
-                    'temp_upload' => false, // Mark as permanent upload
+            // Step 1: Upload video temporarily and generate thumbnails
+            if ($request->hasFile('video_file') && filter_var($request->temp_upload, FILTER_VALIDATE_BOOLEAN)) {
+                $validator = Validator::make($request->all(), [
+                    'video_file' => 'required|file|mimes:mp4,mov',
                 ]);
-        
-                // Log the successful video save
-                Log::info('Video metadata saved: ' . $video->id);
-        
-                // Return successful response
+
+                if ($validator->fails()) {
+                    return response()->json([
+                        'result' => false,
+                        'message' => 'Validation failed',
+                        'errors' => $validator->errors(),
+                    ], 422);
+                }
+
+                $file = $request->file('video_file');
+                $userId = $request->user()->id;
+                $tempFolder = 'uploads/videos/' . $userId . '/temp';
+                $uniqueFileName = uniqid() . '.' . $file->getClientOriginalExtension();
+                $mediaPath = $file->storeAs($tempFolder, $uniqueFileName, 'public');
+                $filePath = storage_path('app/public/' . $mediaPath);
+
+                // Generate thumbnails and save them in the correct path
+                $thumbnails = $this->generateThumbnails($filePath, $uniqueFileName);
+
+                Log::info('Video uploaded to temporary storage', ['file_path' => $filePath]);
+                Log::info('Generated Thumbnails', ['thumbnails' => $thumbnails]);
+
                 return response()->json([
                     'result' => true,
                     'message' => 'Video uploaded successfully',
-                    'video_id' => $video->id,
+                    'file_path' => $mediaPath,
+                    'thumbnails' => $thumbnails,
                 ], 201);
-            } catch (\Exception $e) {
-                // Log any database or other errors
-                Log::error('Database Error: ' . $e->getMessage());
-                return response()->json([
-                    'result' => false,
-                    'message' => 'Database error: ' . $e->getMessage(),
-                ], 500);
-            }
-        }
-        
-        // If neither condition is met, return invalid request error
-        return response()->json([
-            'result' => false,
-            'message' => 'Invalid request',
-        ], 422);
-    }
-
-    private function generateThumbnails($filePath)
-    {
-        try {
-            $ffmpeg = FFMpeg::create();
-            $video = $ffmpeg->open($filePath);
-
-            $thumbnails = [];
-            $timestamps = [1, 5, 10, 15]; // Generate thumbnails at 1, 5, 10, and 15 seconds
-
-            // Check if the thumbnail folder exists
-            $thumbnailFolder = storage_path('app/public/uploads/thumbnails');
-            if (!file_exists($thumbnailFolder)) {
-                mkdir($thumbnailFolder, 0775, true);
             }
 
-            foreach ($timestamps as $timestamp) {
-                $thumbnailPath = 'uploads/thumbnails/' . basename($filePath) . '-' . $timestamp . '.jpg';
-                $video->frame(TimeCode::fromSeconds($timestamp))
-                      ->save(public_path('storage/' . $thumbnailPath));
+            // Step 2: Move video to permanent storage
+            if ($request->has('file_path') && $request->has('title') && filter_var($request->temp_upload, FILTER_VALIDATE_BOOLEAN) === false) {
+                Log::info('Processing permanent storage for video', ['temp_upload' => $request->temp_upload]);
 
-                // Add the full URL to the array
-                // $thumbnails[] = url('storage/' . $thumbnailPath); // Ensure this is the correct URL format
-                $thumbnails[] = env('APP_URL') . '/api/images/' . $thumbnailPath; // Ensure this is the correct URL format
-                
-            }
+                $filePath = $request->file_path;
+                $userId = $request->user()->id;
+                $permanentFolder = 'uploads/videos/' . $userId . '/permanent';
 
-            return $thumbnails;
-        } catch (\Exception $e) {
-            // Log the error
-            Log::error('Thumbnail generation failed: ' . $e->getMessage());
+                if (!Storage::disk('public')->exists($filePath)) {
+                    return response()->json([
+                        'result' => false,
+                        'message' => 'Video file not found in temporary storage',
+                    ], 404);
+                }
 
-            // Return empty array or an error response as needed
-            return [];
-        }
-    }
-    
-    public function index(Request $request, $category_id = null)
-        {
-            // Query the videos
-            $query = M_Videos::query();
-            
-            // Apply category filter if category_id is provided
-            if ($category_id) {
-                $query->where('category_id', $category_id);
-            }
+                if (!Storage::disk('public')->exists($permanentFolder)) {
+                    Storage::disk('public')->makeDirectory($permanentFolder);
+                }
 
-            // Fetch videos with category relationship
-            $videos = $query->with('category')->get();
+                $fileName = basename($filePath);
+                $newFilePath = $permanentFolder . '/' . $fileName;
+                Storage::disk('public')->move($filePath, $newFilePath);
+                Storage::disk('public')->deleteDirectory('uploads/videos/' . $userId . '/temp');
 
-            // If no videos found
-            if ($videos->isEmpty()) {
-                return response()->json([
-                    'result' => false,
-                    'message' => 'No videos found' . ($category_id ? ' for this category' : ''),
-                ], 404);
-            }
+                $defaultThumbnailPath = $request->has('defaultthumbnail') ? $request->defaultthumbnail : null;
+                if (!$defaultThumbnailPath) {
+                    return response()->json([
+                        'result' => false,
+                        'message' => 'Thumbnail is required.',
+                    ], 400);
+                }
 
-            // Return formatted video data
-            return response()->json([
-                'result' => true,
-                'message' => 'Videos fetched successfully',
-                'data' => $videos->map(function ($video) {
-                    return [
+                $tags = is_array($request->tags) ? implode(',', $request->tags) : $request->tags;
+                $tagsArray = array_map('trim', explode(',', $tags));
+
+                try {
+                    $video = M_Videos::create([
+                        'user_id' => $userId,
+                        'title' => $request->title,
+                        'description' => $request->description,
+                        'file_path' => $newFilePath,
+                        'category_id' => $request->category_id,
+                        'type' => $request->type,
+                        'title_size' => $request->title_size,
+                        'title_colour' => $request->title_colour,
+                        'defaultthumbnail' => $defaultThumbnailPath,
+                        'country_code' => $request->country_code,
+                        'tags' => json_encode($tagsArray),
+                        'temp_upload' => false,
+                    ]);
+
+                    Log::info('Video metadata saved', ['video_id' => $video->id]);
+
+                    return response()->json([
+                        'result' => true,
+                        'message' => 'Video uploaded successfully',
                         'video_id' => $video->id,
-                        'title' => $video->title,
-                        'description' => $video->description,
-                        'file_path' => url('storage/' . $video->file_path),
-                        'user_id' => $video->user_id,
-                        'category' => $video->category ? [
-                            'id' => $video->category->category_id,
-                            'name' => $video->category->category_name, // Ensure correct column name
-                        ] : null,
-                        'type' => $video->type,
-                        'title_size' => $video->title_size,
-                        'title_colour' => $video->title_colour,
-                        'defaultthumbnail' => $video->defaultthumbnail ? url('storage/' . $video->defaultthumbnail) : null,
-                        'country_code' => $video->country_code,
-                        'tags' => is_string($video->tags) ? json_decode($video->tags) : $video->tags,
-                        'created_at' => $video->created_at,
-                        'updated_at' => $video->updated_at,
-                    ];
-                }),
-            ], 200);
-        }
+                    ], 201);
+                } catch (\Exception $e) {
+                    Log::error('Database Error: ' . $e->getMessage());
+                    return response()->json([
+                        'result' => false,
+                        'message' => 'Database error: ' . $e->getMessage(),
+                    ], 500);
+                }
+            }
 
-    public function show($id)
-    {
-        // Find the video by its ID or fail if not found
-        $video = M_Videos::find($id);
-    
-        if (!$video) {
             return response()->json([
                 'result' => false,
-                'message' => 'Video not found'
-            ], 404); // 404 Not Found
+                'message' => 'Invalid request',
+            ], 422);
         }
-    
-        // Return the video details with proper paths
-        return response()->json([
-            'result' => true,
-            'message' => 'Video fetched successfully',
-            'data' => [
+        
+    private function generateThumbnails($filePath, $uniqueFileName)
+        {
+            try {
+                $ffmpeg = FFMpeg::create();
+                $video = $ffmpeg->open($filePath);
+                $thumbnails = [];
+                $timestamps = [1, 5, 10, 15]; // Define timestamps for multiple thumbnails
+                $thumbnailFolder = 'uploads/thumbnails'; // Store thumbnails in a folder
+
+                // Ensure thumbnail folder exists
+                if (!file_exists(storage_path($thumbnailFolder))) {
+                    mkdir(storage_path($thumbnailFolder), 0775, true);
+                }
+
+                // Generate thumbnails for the defined timestamps
+                foreach ($timestamps as $timestamp) {
+                    // Use a unique filename format for the thumbnail
+                    $thumbnailFileName = $uniqueFileName . '-' . $timestamp . '.jpg'; // Example: 'uniqueFileName-5.jpg'
+                    $thumbnailPath = $thumbnailFolder . '/' . $thumbnailFileName;
+
+                    // Generate the thumbnail at the specified timestamp and save it
+                    $video->frame(TimeCode::fromSeconds($timestamp))
+                        ->save(storage_path($thumbnailPath));
+
+                    // Save the relative path of the generated thumbnail (this will match the format you want)
+                    $thumbnails[] = $thumbnailPath;
+                }
+
+                return $thumbnails;
+
+            } catch (\Exception $e) {
+                Log::error('Thumbnail generation failed: ' . $e->getMessage());
+                return [];
+            }
+        }
+
+
+    public function index(Request $request, $category_id = null)
+        {
+        // Build the query
+        $query = M_Videos::with('category');
+        
+        // Apply category filter if category_id is provided
+        if (!is_null($category_id)) {
+            $query->where('category_id', $category_id);
+        }
+
+        // Fetch videos
+        $videos = $query->get();
+
+        // Check if videos exist
+        if ($videos->isEmpty()) {
+            return response()->json([
+                'result' => false,
+                'message' => 'No videos found' . ($category_id ? ' for this category' : ''),
+            ], 404);
+        }
+
+        // Format video data
+        $formattedVideos = $videos->map(function ($video) {
+            return [
                 'video_id' => $video->id,
                 'title' => $video->title,
                 'description' => $video->description,
-                'file_path' => url('storage/' . $video->file_path), // Fixed File Path
+                'file_path' => $video->file_path ? ($video->file_path) : null,
                 'user_id' => $video->user_id,
-                'category_id' => $video->category_id,
+                'category' => $video->category ? [
+                    'id' => $video->category->id, // Assuming `id` is the correct column name
+                    'name' => $video->category->name, // Assuming `name` is the correct column name
+                ] : null,
                 'type' => $video->type,
                 'title_size' => $video->title_size,
                 'title_colour' => $video->title_colour,
-                'defaultthumbnail' => $video->defaultthumbnail ? url('storage/' . $video->defaultthumbnail) : null,
+                'defaultthumbnail' => $video->defaultthumbnail ? ($video->defaultthumbnail) : null,
                 'country_code' => $video->country_code,
-                'created_at' => $video->created_at,
-                'updated_at' => $video->updated_at,
-            ]
-        ]);
+                'tags' => is_string($video->tags) ? json_decode($video->tags, true) : $video->tags,
+                'created_at' => $video->created_at->toDateTimeString(),
+                'updated_at' => $video->updated_at->toDateTimeString(),
+            ];
+        });
+
+        // Return response
+        return response()->json([
+            'result' => true,
+            'message' => 'Videos fetched successfully',
+            'data' => $formattedVideos,
+        ], 200);
     }
+
+    public function show($id)
+{
+    // Find the video by its ID or fail if not found
+    $video = M_Videos::find($id);
+
+    if (!$video) {
+        return response()->json([
+            'result' => false,
+            'message' => 'Video not found'
+        ], 404); // 404 Not Found
+    }
+
+    // Return the video details with proper paths
+    return response()->json([
+        'result' => true,
+        'message' => 'Video fetched successfully',
+        'data' => [
+            'video_id' => $video->id,
+            'title' => $video->title,
+            'description' => $video->description,
+            'file_path' => url($video->file_path), // Fixed File Path
+            'user_id' => $video->user_id,
+            'category_id' => $video->category_id,
+            'type' => $video->type,
+            'title_size' => $video->title_size,
+            'title_colour' => $video->title_colour,
+            'defaultthumbnail' => url($video->defaultthumbnail ? $video->defaultthumbnail : null),
+            'country_code' => $video->country_code,
+            'created_at' => $video->created_at,
+            'updated_at' => $video->updated_at,
+        ]
+    ]);
+}
+
     
     public function delete($id)
     {
