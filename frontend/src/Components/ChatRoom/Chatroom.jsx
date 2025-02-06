@@ -359,8 +359,9 @@ const Chatroom = () => {
                         style={{
                           width: "100px",
                           height: "100px",
-                          position: "relative",
-                        }}
+                          position: "relative", 
+                          
+                        }} 
                       />
                       {/* Mic Icon - Positioned at Bottom-Right Inside Image */}
                       <i
