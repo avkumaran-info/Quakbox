@@ -38,10 +38,11 @@ class VideoController extends Controller
             $tempFolder = 'uploads/videos/' . $userId . '/temp';
             $uniqueFileName = uniqid() . '.' . $file->getClientOriginalExtension();
             $mediaPath = $file->storeAs($tempFolder, $uniqueFileName, 'public');
+            $videoPath = Storage::disk('public')->path($mediaPath);
             $filePath = env('APP_URL') . '/api/images/' . $mediaPath;
     
             // Generate thumbnails and save them in the correct path
-            $thumbnails = $this->generateThumbnails($filePath, $uniqueFileName);
+            $thumbnails = $this->generateThumbnails($videoPath, $uniqueFileName);
     
             Log::info('Video uploaded to temporary storage', ['file_path' => $filePath]);
             Log::info('Generated Thumbnails', ['thumbnails' => $thumbnails]);
@@ -154,7 +155,7 @@ class VideoController extends Controller
                     ->save(storage_path($thumbnailPath));
     
                 // Save the relative path of the generated thumbnail (this will match the format you want)
-                $thumbnails[] =  $a;
+                $thumbnails[] =  env('APP_URL') . '/api/images/' . $thumbnailPath;
             }
     
             return $thumbnails;
