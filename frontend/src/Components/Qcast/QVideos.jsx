@@ -1,7 +1,7 @@
 import React, { useState, useRef, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useParams, useLocation } from "react-router-dom";
 import axios from "axios";
-// Category List with Icons
+
 const categories = [
   { name: "Popping on Quakbox", icon: "fa-foursquare" },
   { name: "Tune", icon: "fa-headphones" },
@@ -28,101 +28,67 @@ const link =
 
 const QVideos = () => {
   const [currentIndex, setCurrentIndex] = useState(0);
-  const scrollContainerRef = useRef(null);
-  const navigate = useNavigate();
-
   const [videos, setVideos] = useState([]);
   const [message, setMessage] = useState("");
-
-  // useEffect(() => {
-  //   const fetchVideos = async () => {
-  //     try {
-  //       const token = localStorage.getItem("api_token");
-  //       if (!token) {
-  //         setMessage("❌ Authorization token missing. Please log in.");
-  //         return;
-  //       }
-
-  //       const response = await axios.get("http://localhost:8000/api/videos/", {
-  //         headers: {
-  //           Authorization: `Bearer ${token}`,
-  //         },
-  //       });
-  //       console.log(response.data);
-
-  //       // if (response.status === 200) {
-  //       //   setVideos(response.data.data);
-  //       // } else {
-  //       //   setMessage(`⚠️ Unexpected response: ${response.status}`);
-  //       // }
-  //     } catch (error) {
-  //       console.error(
-  //         "Error fetching videos:",
-  //         error.response || error.message
-  //       );
-  //       setMessage(
-  //         `❌ Error fetching videos: ${
-  //           error.response?.data?.message || error.message
-  //         }`
-  //       );
-  //     }
-  //   };
-
-  //   fetchVideos();
-  // }, []);
+  const [loading, setLoading] = useState(true);
+  const scrollContainerRef = useRef(null);
+  const navigate = useNavigate();
+  const { id } = useParams(); // Get the video id from the URL
+  const { state } = useLocation(); // Get state from navigate
 
   useEffect(() => {
-    const fetchVideos = async () => {
-      try {
-        const token = localStorage.getItem("api_token");
-        // console.log("Stored Token:", token); // Check if token exists
-
-        if (!token) {
-          console.error("No token found! Please log in.");
-          return;
-        }
-
-        const response = await axios.get(
-          "https://develop.quakbox.com/admin/api/videos",
-          {
-            headers: { Authorization: `Bearer ${token}` },
+    if (state && Array.isArray(state.video)) {
+      setVideos(state.video); // state.video should be an array of videos
+      setLoading(false);
+    } else {
+      const fetchVideos = async () => {
+        try {
+          const token = localStorage.getItem("api_token");
+          if (!token) {
+            setMessage("❌ Authorization token missing. Please log in.");
+            return;
           }
-        );
-        console.log(response.data.data);
-        if (response.status === 200) {
-          setVideos(response.data.data);
-        } else {
-          setMessage(`⚠️ Unexpected response: ${response.status}`);
-        }
-      } catch (error) {
-        if (error.response) {
-          console.error("Server Response Error:", error.response.data);
-          console.error("Status Code:", error.response.status);
-        } else if (error.request) {
-          console.error("No Response from Server:", error.request);
-        } else {
-          console.error("Request Error:", error.message);
-        }
-        setLoading(false);
-      }
-    };
 
-    fetchVideos();
-  }, []);
+          const response = await axios.get("https://develop.quakbox.com/admin/api/videos", {
+            headers: { Authorization: `Bearer ${token}` },
+          });
+
+          console.log("API Response:", response.data);
+
+          if (response.status === 200 && response.data.data) {
+            setVideos(response.data.data);
+          } else {
+            setMessage("⚠️ No videos found.");
+          }
+        } catch (error) {
+          console.error("Error fetching videos:", error);
+          setMessage("❌ Error fetching videos. Please try again later.");
+        } finally {
+          setLoading(false);
+        }
+      };
+
+      fetchVideos();
+    }
+  }, [id, state]);
 
   const handleVideoClick = (video) => {
-    navigate(`/video/${encodeURIComponent(video.video_id)}`, {
+    if (!video.video_id) {
+      console.error("Video ID is missing:", video);
+      return;
+    }
+
+    navigate(`/videos/${encodeURIComponent(video.video_id)}`, {
       state: { video },
     });
   };
-  // Function to scroll left (by 6 categories)
+
   const scrollLeft = () => {
     setCurrentIndex((prevIndex) =>
       prevIndex === 0 ? categories.length - 6 : prevIndex - 6
     );
   };
 
-  // Function to scroll right (by 6 categories)
   const scrollRight = () => {
     setCurrentIndex((prevIndex) =>
       prevIndex >= categories.length - 6 ? 0 : prevIndex + 6
@@ -143,7 +109,6 @@ const QVideos = () => {
           gap: "4px",
         }}
       >
-        {/* Left Scroll Button */}
         <button
           className="btn btn-light"
           onClick={scrollLeft}
@@ -157,7 +122,6 @@ const QVideos = () => {
           <i className="fa fa-arrow-left"></i>
         </button>
 
-        {/* Scrollable Category Cards */}
         <div
           ref={scrollContainerRef}
           style={{
@@ -170,7 +134,7 @@ const QVideos = () => {
           }}
         >
           {categories
-            .slice(currentIndex, currentIndex + 6) // Display 6 categories at a time
+            .slice(currentIndex, currentIndex + 6)
             .map((category, index) => (
               <div
                 key={index}
@@ -180,17 +144,14 @@ const QVideos = () => {
                   borderRadius: "10px",
                   boxShadow: "0 2px 5px rgba(0,0,0,0.1)",
                   cursor: "pointer",
-                  paddingTop: "15px", // Add padding on top
+                  paddingTop: "15px",
                   paddingBottom: "15px",
                 }}
               >
                 <div
                   style={{ display: "flex", alignItems: "center", gap: "6px" }}
                 >
-                  <i
-                    className={`fa ${category.icon}`}
-                    style={{ fontSize: "18px" }}
-                  ></i>
+                  <i className={`fa ${category.icon}`} style={{ fontSize: "18px" }}></i>
                   <h5 className="card-title m-0" style={{ fontSize: "14px" }}>
                     {category.name}
                   </h5>
@@ -199,7 +160,6 @@ const QVideos = () => {
             ))}
         </div>
 
-        {/* Right Scroll Button */}
         <button
           className="btn btn-light"
           onClick={scrollRight}
@@ -216,45 +176,44 @@ const QVideos = () => {
 
       {/* Featured Videos Section */}
       <div className="p-0">
-        Video Thumbnails
         <div className="row">
-          {videos.map((video, index) => (
-            <div
-              className="col-12 col-sm-6 col-lg-4 col-xl-3 mb-3"
-              key={video.video_id || index} // Use video_id if unique, fallback to index
-              onClick={() => handleVideoClick(video)}
-              style={{ cursor: "pointer" }}
-            >
+          {loading ? (
+            <div>Loading...</div>
+          ) : message ? (
+            <div>{message}</div>
+          ) : (
+            videos.map((video, index) => (
               <div
-                className="card position-relative"
-                style={{
-                  borderRadius: "12px",
-                  overflow: "hidden",
-                  boxShadow: "0 4px 8px rgba(0,0,0,0.1)",
-                }}
+                className="col-12 col-sm-6 col-lg-4 col-xl-3 mb-3"
+                key={video.video_id || index}
+                onClick={() => handleVideoClick(video)}
+                style={{ cursor: "pointer" }}
               >
-                {video.image && ( // Ensure video.image exists before rendering
+                <div
+                  className="card position-relative"
+                  style={{
+                    borderRadius: "15px",
+                    overflow: "hidden",
+                    boxShadow: "0 2px 5px rgba(0,0,0,0.1)",
+                    transition: "transform 0.3s ease",
+                  }}
+                >
                   <img
-                    src={video.defaultthumbnail ? video.defaultthumbnail : link} // Fallback image
+                    src={video.defaultthumbnail || link}
                     className="card-img-top"
                     alt={video.title || "Video Thumbnail"}
                     style={{ height: "150px", objectFit: "cover" }}
                   />
-                )}
-                <div className="card-body">
-                  <h6 className="card-title" style={{ fontWeight: "bold" }}>
-                    {video.title || "Untitled Video"}
-                  </h6>
-                  <p className="card-text text-muted">
-                    {video.views || 0} views
-                  </p>
+                  <div className="card-body">
+                    <h5 className="card-title">{video.title}</h5>
+                    <p className="card-text">{video.description}</p>
+                  </div>
                 </div>
               </div>
-            </div>
-          ))}
+            ))
+          )}
         </div>
       </div>
-      {message && <p>{message}</p>}
     </div>
   );
 };

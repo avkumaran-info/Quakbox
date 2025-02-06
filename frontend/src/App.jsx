@@ -34,7 +34,7 @@ const App = () => {
           <Route path="/favouriteCountires" element={<FanCountry />} />
           <Route path="/qcast" element={<QHomw />} />
           <Route path="/upload" element={<UploadVideo />} />
-          <Route path="/video/:videoTitle" element={<VideoPlayer />} />
+          <Route path="/videos/:id" element={<VideoPlayer />} />
           <Route path="/addvideo" element={<AddVideo />} />
         </Routes>
       </Router>
