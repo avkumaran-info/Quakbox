@@ -275,107 +275,155 @@ const Chatroom = () => {
 
           {/* Group Section */}
           <div
-  className={`${
-    showExtraSection ? "col-md-7" : "col-md-9"
-  } d-flex flex-column`}
-  style={{ height: "100%" }}
->
-  <div
-    className="card p-3 mb-3 border rounded d-flex"
-    style={{ borderColor: "#ddd", borderRadius: "12px" }}
-  >
-    <div className="d-flex justify-content-between align-items-center">
-      <div>
-        <h6 className="mb-1">Group name</h6>
-        <span
-          className="text-muted d-flex align-items-center"
-          style={{ fontSize: "14px" }}
-        >
-          <i className="fas fa-user-group me-1"></i> Friends only
-        </span>
-      </div>
-      <button
-        className="btn btn-link text-dark p-0"
-        onClick={toggleExtraSection}
-      >
-        <i className="fas fa-ellipsis-v"></i>
-      </button>
-    </div>
-  </div>
+            className={`${
+              showExtraSection ? "col-md-7" : "col-md-9"
+            } d-flex flex-column`}
+            style={{ height: "100%" }}
+          >
+            <div
+              className="card p-3 mb-3 border rounded d-flex"
+              style={{ borderColor: "#ddd", borderRadius: "12px" }}
+            >
+              <div className="d-flex justify-content-between align-items-center">
+                <div>
+                  <h6 className="mb-1">Group name</h6>
+                  <span
+                    className="text-muted d-flex align-items-center"
+                    style={{ fontSize: "14px" }}
+                  >
+                    <i className="fas fa-user-group me-1"></i> Friends only
+                  </span>
+                </div>
+                <button
+                  className="btn btn-link text-dark p-0"
+                  onClick={toggleExtraSection}
+                >
+                  <i className="fas fa-ellipsis-v"></i>
+                </button>
+              </div>
+            </div>
 
-  {/* Speakers & Listeners */}
-  <div
-    className="card p-3 border rounded flex-grow-1 overflow-auto"
-    style={{ borderColor: "#ddd" }}
-  >
-    <h6>Speakers</h6>
-    <div className="d-flex gap-3 align-items-center mb-3">
-      {speakers.map((user, index) => (
-        <div key={index} className="text-center position-relative">
-          <div className="position-relative">
-            <img
-              src={user.img}
-              alt={user.name}
-              className="rounded-circle"
-              style={{ width: "100px", height: "100px", position: "relative" }}
-            />
-            {/* Mic Icon - Positioned at Bottom-Right Inside Image */}
-            <i
-              className={`fas ${
-                user.micStatus ? "fa-microphone" : "fa-microphone-slash"
-              } position-absolute`}
-              style={{
-                bottom: "5px",
-                right: "5px",
-                fontSize: "16px",
-                color: user.micStatus ? "green" : "red",
-                background: "#fff",
-                borderRadius: "50%",
-                padding: "5px",
-                boxShadow: "0 0 5px rgba(0,0,0,0.3)",
-              }}
-            ></i>
+            {/* Speakers & Listeners */}
+            <div
+              className="card p-3 border rounded flex-grow-1 overflow-auto"
+              style={{ borderColor: "#ddd" }}
+            >
+              <h6>Speakers</h6>
+              <div className="d-flex gap-3 align-items-center mb-3">
+                {speakers.map((user, index) => (
+                  <div key={index} className="text-center">
+                    <div className="position-relative">
+                      <img
+                        src={user.img}
+                        alt={user.name}
+                        className="rounded-circle"
+                        style={{
+                          width: "100px",
+                          height: "100px",
+                          position: "relative",
+                        }}
+                      />
+                      {/* Mic Icon - Positioned at Bottom-Right Inside Image */}
+                      <i
+                        className={`fas ${
+                          user.micStatus
+                            ? "fa-microphone"
+                            : "fa-microphone-slash"
+                        } position-absolute`}
+                        style={{
+                          bottom: "5px",
+                          right: "5px",
+                          fontSize: "16px",
+                          color: user.micStatus ? "green" : "red",
+                          background: "#fff",
+                          borderRadius: "50%",
+                          padding: "5px",
+                          boxShadow: "0 0 5px rgba(0,0,0,0.3)",
+                        }}
+                      ></i>
+                    </div>
+                    <p>{user.name}</p>
+                  </div>
+                ))}
+              </div>
+
+              <h6>Listeners</h6>
+              <div className="d-flex gap-3 flex-wrap">
+                {listeners.map((user, index) => (
+                  <div key={index} className="text-center  position-relative">
+                    <div className="position-relative">
+                      <img
+                        src={user.img}
+                        alt={user.name}
+                        className="rounded-circle"
+                        style={{
+                          width: "100px",
+                          height: "100px",
+                          position: "relative", 
+                          
+                        }} 
+                      />
+                      {/* Mic Icon - Positioned at Bottom-Right Inside Image */}
+                      <i
+                        className={`fas ${
+                          user.micStatus
+                            ? "fa-microphone"
+                            : "fa-microphone-slash"
+                        } position-absolute`}
+                        style={{
+                          bottom: "5px",
+                          right: "5px",
+                          fontSize: "16px",
+                          color: user.micStatus ? "green" : "red",
+                          background: "#fff",
+                          borderRadius: "50%",
+                          padding: "5px",
+                          boxShadow: "0 0 5px rgba(0,0,0,0.3)",
+                        }}
+                      ></i>
+                    </div>
+                    <p>{user.name}</p>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* Mute & Raise Hand Buttons */}
+            <div
+              className="d-flex justify-content-center gap-3 mt-1"
+              style={{ borderColor: "#ddd", background: "#fff" }}
+            >
+              <div className="d-flex flex-column align-items-center">
+                <button
+                  className="btn btn-light rounded-circle d-flex align-items-center justify-content-center"
+                  style={{ width: "60px", height: "60px", borderColor: "#ddd" }}
+                >
+                  <i className="fas fa-microphone-slash"></i>
+                </button>
+                <p
+                  className="mt-2 mb-0 text-center"
+                  style={{ fontSize: "14px" }}
+                >
+                  Mute
+                </p>
+              </div>
+
+              <div className="d-flex flex-column align-items-center">
+                <button
+                  className="btn btn-light rounded-circle d-flex align-items-center justify-content-center"
+                  style={{ width: "60px", height: "60px", borderColor: "#ddd" }}
+                >
+                  <i className="fas fa-hand-paper"></i>
+                </button>
+                <p
+                  className="mt-2 mb-0 text-center"
+                  style={{ fontSize: "14px" }}
+                >
+                  Raise Hand
+                </p>
+              </div>
+            </div>
           </div>
-          <p className="mt-1">{user.name}</p>
-        </div>
-      ))}
-    </div>
-
-    <h6>Listeners</h6>
-    <div className="d-flex gap-3 flex-wrap">
-      {listeners.map((user, index) => (
-        <div key={index} className="text-center position-relative">
-          <div className="position-relative">
-            <img
-              src={user.img}
-              alt={user.name}
-              className="rounded-circle"
-              style={{ width: "100px", height: "100px", position: "relative" }}
-            />
-            {/* Mic Icon - Positioned at Bottom-Right Inside Image */}
-            <i
-              className={`fas ${
-                user.micStatus ? "fa-microphone" : "fa-microphone-slash"
-              } position-absolute`}
-              style={{
-                bottom: "5px",
-                right: "5px",
-                fontSize: "16px",
-                color: user.micStatus ? "green" : "red",
-                background: "#fff",
-                borderRadius: "50%",
-                padding: "5px",
-                boxShadow: "0 0 5px rgba(0,0,0,0.3)",
-              }}
-            ></i>
-          </div>
-          <p className="mt-1">{user.name}</p>
-        </div>
-      ))}
-    </div>
-  </div>
-</div>
-
           {/* Extra Section (Visible when toggled) */}
           {showExtraSection && (
             <div
