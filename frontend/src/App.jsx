@@ -17,6 +17,7 @@ import QHomw from "./Components/Qcast/QHomw";
 import UploadVideo from "./Components/Qcast/UploadVideo";
 import AddVideo from "./Components/Qcast/AddVideo";
 import VideoPlayer from "./Components/Qcast/VideoPlayer";
+import Chatroom from "./Components/ChatRoom/Chatroom";
 const App = () => {
   return (
     <Provider store={store}>
@@ -30,12 +31,14 @@ const App = () => {
           <Route path="/world" element={<Home />} />
           <Route path="/chatroom" element={<ChatPage />} />
           <Route path="/golive" element={<GoLive />} />
-          <Route path="/test" element={<FanCountry />} />
+          {/* <Route path="/test" element={<FanCountry />} /> */}
           <Route path="/favouriteCountires" element={<FanCountry />} />
           <Route path="/qcast" element={<QHomw />} />
           <Route path="/upload" element={<UploadVideo />} />
           <Route path="/videos/:id" element={<VideoPlayer />} />
           <Route path="/addvideo" element={<AddVideo />} />
+          <Route path="/test" element={<Chatroom />} />
+
         </Routes>
       </Router>
     </Provider>

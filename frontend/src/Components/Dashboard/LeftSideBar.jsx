@@ -16,6 +16,7 @@ import {
   FaBroadcastTower,
 } from "react-icons/fa"; // Import icons
 import "./LeftsideBar.css";
+import { useNavigate } from "react-router-dom";
 const LeftSidebar = ({ countryCode, flag, countryName }) => {
   const videos = [video4, video1, video2, video3];
   const [currentVideoIndex, setCurrentVideoIndex] = useState(0);
@@ -27,21 +28,23 @@ const LeftSidebar = ({ countryCode, flag, countryName }) => {
   const [showIcons, setShowIcons] = useState(false);
   const [isPopupOpen, setIsPopupOpen] = useState(false);
   const [selectedPrivacy, setSelectedPrivacy] = useState("");
+  const [selectIcon, setSelectIcon] = useState("");
+  const navigate =useNavigate();
 
   // Function to handle icon click
-  const handleIconClick = (privacy) => {
-    console.log(privacy);
-    console.log("hiii");
-    setIsPopupOpen(true);
-    console.log(isPopupOpen);
-
+  const handleIconClick = (privacy, icon) => {
     setSelectedPrivacy(privacy);
+    setSelectIcon(icon);
   };
 
   // Function to close the popup
   const closePopup = () => {
     setIsPopupOpen(false);
   };
+
+  const handleLive=()=>{
+    navigate('/test')
+  }
 
   const groups = [
     "Group 1",
@@ -224,7 +227,7 @@ const LeftSidebar = ({ countryCode, flag, countryName }) => {
               <div
                 style={{ display: "flex", alignItems: "center", gap: "10px" }}
               >
-                <i className="fas fa-user-friends"></i>
+                <i className={`fas ${selectIcon}`}></i>
                 <div>
                   <p style={{ margin: 0, fontWeight: "500" }}>
                     {selectedPrivacy}
@@ -263,7 +266,7 @@ const LeftSidebar = ({ countryCode, flag, countryName }) => {
               <span>Allow in-room chat</span>
               <input
                 type="checkbox"
-                checked={true}
+                // checked={true}
                 style={{ transform: "scale(1.2)" }}
               />
             </div>
@@ -286,7 +289,7 @@ const LeftSidebar = ({ countryCode, flag, countryName }) => {
 
             {/* Go Live Button */}
             <button
-              onClick={closePopup}
+              onClick={handleLive}
               style={{
                 width: "100%",
                 padding: "12px",
@@ -778,56 +781,52 @@ const LeftSidebar = ({ countryCode, flag, countryName }) => {
                     zIndex: "20",
                   }}
                 >
-                  <div
-                    className="d-flex flex-column align-items-center"
-                    style={{ cursor: "pointer" }}
-                    onClick={() => handleIconClick("Public")}
-                  >
-                    <i className="fa-solid fa-earth-americas"></i>{" "}
-                    <span style={{ fontSize: "8px" }}>Pubilc</span>
-                  </div>
-                  <div
-                    className="d-flex flex-column align-items-center"
-                    style={{ cursor: "pointer" }}
-                    onClick={() => handleIconClick("Friends of Friends")}
-                  >
-                    <i className="fa-solid fa-hands-clapping"></i>{" "}
-                    <span style={{ fontSize: "8px" }}>Friends of friends</span>
-                  </div>
-                  <div
-                    className="d-flex flex-column align-items-center"
-                    style={{ cursor: "pointer" }}
-                    onClick={() => handleIconClick("Friends Only")}
-                  >
-                    <i className="fa-solid fa-user-group"></i>{" "}
-                    <span style={{ fontSize: "8px" }}>Friends Only</span>
-                  </div>
+                  {[
+                    { label: "Public", icon: "fa-earth-americas" },
+                    { label: "Friends of Friends", icon: "fa-hands-clapping" },
+                    { label: "Friends Only", icon: "fa-user-group" },
+                  ].map(({ label, icon }) => (
+                    <div
+                      key={label}
+                      className="d-flex flex-column align-items-center"
+                      style={{
+                        cursor: "pointer",
+                        color: selectedPrivacy === label ? "blue" : "white", // Change color if selected
+                      }}
+                      onClick={() => handleIconClick(label, icon)}
+                    >
+                      <i className={`fa-solid ${icon}`}></i>
+                      <span style={{ fontSize: "8px" }}>{label}</span>
+                    </div>
+                  ))}
+
+                  {/* Live Button */}
                   <div
                     className="d-flex align-items-center"
                     style={{
-                      background: "#6c757d", // Background color from image
-                      color: "white", // Text color
-                      borderRadius: "20px", // Rounded background
+                      background: "#6c757d",
+                      color: "white",
+                      borderRadius: "20px",
                       padding: "6px 12px",
                       display: "inline-flex",
                       alignItems: "center",
-                      gap: "8px", // Space between icon and text
+                      gap: "8px",
                       cursor: "pointer",
                     }}
+                    onClick={() => setIsPopupOpen(true)} // Show popup
                   >
                     <div
                       style={{
                         width: "32px",
                         height: "32px",
-                        background: "#007bff", // Blue circular button
+                        background: "#007bff",
                         borderRadius: "50%",
                         display: "flex",
                         alignItems: "center",
                         justifyContent: "center",
                       }}
                     >
-                      <i className="fa-solid fa-broadcast-tower"></i>{" "}
-                      {/* Live stream icon */}
+                      <i className="fa-solid fa-broadcast-tower"></i>
                     </div>
                     <span style={{ fontSize: "14px", fontWeight: "bold" }}>
                       tap to go live
