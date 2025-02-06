@@ -10,7 +10,14 @@ import group from "../../assets/images/Rigth side property/group.png"; // Group 
 import notification from "../../assets/images/Rigth side property/not.png"; // Notification icon
 import set from "../../assets/images/Rigth side property/set.webp"; // Settings icon
 import axios from "axios";
-import { Avatar, Button, Pagination, Stack, TextField } from "@mui/material";
+import {
+  Avatar,
+  Button,
+  Pagination,
+  Stack,
+  TextField,
+  Typography,
+} from "@mui/material";
 import CommentIcon from "@mui/icons-material/Comment";
 import ThumbUpIcon from "@mui/icons-material/ThumbUp";
 import ThumbDownIcon from "@mui/icons-material/ThumbDown";
@@ -18,6 +25,45 @@ import FavoriteSharpIcon from "@mui/icons-material/FavoriteSharp";
 import GroupIcon from "@mui/icons-material/Group";
 import ScreenShareIcon from "@mui/icons-material/ScreenShare";
 import { Tooltip } from "@mui/material";
+
+const updates = [
+  {
+    id: 1,
+    name: "John",
+    message: "posted an update",
+    avatar: user, // Replace with actual image URL
+    time: "a year ago",
+  },
+  {
+    id: 2,
+    name: "Adele",
+    message: "posted an update",
+    avatar: user1, // Replace with actual image URL
+    time: "a year ago",
+  },
+  {
+    id: 3,
+    name: "John",
+    message: "posted an update",
+    avatar: user2, // Replace with actual image URL
+    time: "2 years ago",
+  },
+  {
+    id: 4,
+    name: "John",
+    message: "posted an update in the group ☕ Coffee Addicts",
+    avatar: user3, // Replace with actual image URL
+    time: "2 years ago",
+  },
+  {
+    id: 5,
+    name: "John",
+    message: "posted an update",
+    avatar: user, // Replace with actual image URL
+    time: "2 years ago",
+  },
+];
+
 const dummyProfilePic = "https://via.placeholder.com/40";
 const RightSidebar = ({ countryCode, flag, countryName }) => {
   const [countryData, setCountryData] = useState(null);
@@ -104,12 +150,19 @@ const RightSidebar = ({ countryCode, flag, countryName }) => {
   //   fetchComments();
   // }, []);
 
-  const handleCommentClick = () => setShowComments(!showComments);
+  const handleCommentClick = () => {
+    setCurrentPage(1);
+    setShowMore(false);
+    setShowComments(!showComments);
+  };
 
   const handleShowMore = () => {
     setShowMore(true);
   };
-
+  const handleShowLess = () => {
+    setCurrentPage(1);
+    setShowMore(false);
+  };
   const paginate = (pageNumber) => {
     console.log("pageNumber - ", pageNumber);
     return setCurrentPage(pageNumber);
@@ -457,19 +510,29 @@ const RightSidebar = ({ countryCode, flag, countryName }) => {
               >
                 <div className="container mt-1 mb-1 p-0">
                   <div style={{ display: "flex", alignItems: "center" }}>
-                    <h5>Comments</h5>
+                    <Typography
+                      variant="h5"
+                      sx={{
+                        fontSize: { xs: "12px", sm: "16px", md: "18px" },
+                      }}
+                    >
+                      Comments
+                    </Typography>
                     {/* Pagination - Keep this unchanged */}
                     {showMore && (
                       <nav
                         className="m-2"
-                        style={{ display: "flex", justifyContent: "center" }}
+                        style={{
+                          display: "flex",
+                          justifyContent: "center",
+                        }}
                       >
                         <Stack spacing={2}>
                           <Pagination
                             // count={Math.ceil(comments.length / commentsPerPage)}
                             // count={10}
                             count={Math.max(
-                              10,
+                              1,
                               Math.ceil(comments.length / commentsPerPage)
                             )}
                             // defaultPage={0}
@@ -484,19 +547,26 @@ const RightSidebar = ({ countryCode, flag, countryName }) => {
                             variant="outlined"
                             shape="rounded"
                             sx={{
-                              "& .MuiPaginationItem-root": { margin: "0 0px" },
+                              "& .MuiPaginationItem-root": {
+                                fontSize: "12px", // Smaller font size
+                                minWidth: "25px", // Reduce width
+                                height: "25px", // Reduce height
+                                padding: "2px 6px", // Adjust padding
+                                margin: "2px", // Reduce margin for compact layout
+                              },
+                              "@media (max-width: 900px)": {
+                                "& .MuiPaginationItem-root": {
+                                  fontSize: "8px", // Smaller font on mobile
+                                  minWidth: "15px",
+                                  height: "15px",
+                                  padding: "1px 4px",
+                                },
+                              },
                             }}
                           />
                         </Stack>
                       </nav>
                     )}
-
-                    {/* <Stack spacing={2}>
-      <Pagination count={10} />
-      <Pagination count={10} color="primary" />
-      <Pagination count={10} color="secondary" />
-      <Pagination count={10} disabled />
-    </Stack> */}
                   </div>
 
                   <div
@@ -508,39 +578,26 @@ const RightSidebar = ({ countryCode, flag, countryName }) => {
                   >
                     {showMore
                       ? currentComments.map((comment) => (
-                          <div
-                            key={comment.id}
-                            style={
-                              {
-                                // display: "flex",
-                                // justifyContent: "center",
-                                // alignItems: "center",
-                                // flexDirection: "column",
-                                // // minWidth: "200px",
-                              }
-                            }
-                          >
+                          <div key={comment.id}>
                             <li
                               key={comment.id}
                               className="list-group-item"
-                              style={{
+                              sx={{
                                 display: "flex",
-                                // justifyContent: "space-between",
                                 alignItems: "center",
-                                gap: "5px",
-                                // minWidth: "200px",
-                                padding: "2px",
+                                gap: { xs: "5px", sm: "10px" }, // Responsive gap
+                                padding: { xs: "5px", sm: "8px" }, // Responsive padding
                                 margin: "2px",
-                                fontSize: "10px",
+                                fontSize: { xs: "10px", sm: "12px" }, // Responsive font size
                               }}
                             >
                               <Avatar
                                 src={dummyProfilePic}
                                 alt="User"
-                                style={{
+                                sx={{
+                                  width: { xs: 20, sm: 24 }, // Responsive Avatar size
+                                  height: { xs: 20, sm: 24 },
                                   marginRight: 0,
-                                  width: 24, // Adjusts the size of the Avatar icon
-                                  height: 24, // Adjusts the size of the Avatar icon
                                 }}
                               />
                               <strong style={{ fontSize: "12px" }}>
@@ -553,38 +610,26 @@ const RightSidebar = ({ countryCode, flag, countryName }) => {
                           </div>
                         ))
                       : comments.slice(0, 2).map((comment) => (
-                          <div
-                            key={comment.id}
-                            style={
-                              {
-                                // display: "flex",
-                                // justifyContent: "center",
-                                // alignItems: "center",
-                                // flexDirection: "column",
-                              }
-                            }
-                          >
+                          <div key={comment.id}>
                             <li
                               key={comment.id}
                               className="list-group-item"
-                              style={{
+                              sx={{
                                 display: "flex",
-                                // justifyContent: "space-between",
                                 alignItems: "center",
-                                gap: "5px",
-                                // minWidth: "200px",
-                                padding: "2px",
+                                gap: { xs: "5px", sm: "10px" },
+                                padding: { xs: "5px", sm: "8px" },
                                 margin: "2px",
-                                fontSize: "10px",
+                                fontSize: { xs: "10px", sm: "12px" },
                               }}
                             >
                               <Avatar
                                 src={dummyProfilePic}
                                 alt="User"
-                                style={{
+                                sx={{
+                                  width: { xs: 20, sm: 24 },
+                                  height: { xs: 20, sm: 24 },
                                   marginRight: 0,
-                                  width: 24, // Adjusts the size of the Avatar icon
-                                  height: 24, // Adjusts the size of the Avatar icon
                                 }}
                               />
                               <strong style={{ fontSize: "12px" }}>
@@ -601,6 +646,7 @@ const RightSidebar = ({ countryCode, flag, countryName }) => {
                     <button
                       className="btn btn-link mt-2"
                       onClick={handleShowMore}
+                      style={{ fontSize: "12px" }}
                     >
                       Show More
                     </button>
@@ -613,21 +659,41 @@ const RightSidebar = ({ countryCode, flag, countryName }) => {
                       size="small"
                       value={newComment}
                       onChange={(e) => setNewComment(e.target.value)}
+                      sx={{
+                        // marginBottom: 2,
+                        fontSize: { xs: "12px", sm: "14px", md: "16px" }, // Responsive font size
+                      }}
                     />
                     <Button
                       onClick={handleCommentSubmit}
                       variant="contained"
                       color="primary"
                       size="small"
-                      sx={{ marginLeft: 1 }}
+                      sx={{
+                        margin: 1,
+                        fontSize: { xs: "10px", sm: "12px", md: "14px" }, // Responsive font size
+                        padding: {
+                          xs: "6px 12px",
+                          sm: "8px 16px",
+                          md: "4px 10px",
+                        }, // Responsive padding
+                      }}
                     >
                       Add Comment
                     </Button>
                     <Button
                       onClick={() => setNewComment("")}
-                      variant="outlined"
+                      variant="contained"
                       size="small"
-                      sx={{ marginLeft: 1 }}
+                      sx={{
+                        margin: 1,
+                        fontSize: { xs: "10px", sm: "12px", md: "14px" }, // Responsive font size
+                        padding: {
+                          xs: "6px 12px",
+                          sm: "8px 16px",
+                          md: "4px 10px",
+                        }, // Responsive padding
+                      }}
                     >
                       Cancel Comment
                     </Button>
@@ -635,10 +701,37 @@ const RightSidebar = ({ countryCode, flag, countryName }) => {
                       onClick={handleCommentClick}
                       variant="outlined"
                       size="small"
-                      sx={{ marginLeft: 1 }}
+                      sx={{
+                        margin: 1,
+                        fontSize: { xs: "10px", sm: "12px", md: "14px" }, // Responsive font size
+                        padding: {
+                          xs: "6px 12px",
+                          sm: "8px 16px",
+                          md: "4px 10px",
+                        }, // Responsive padding
+                      }}
                     >
                       Hide Comments Sections
                     </Button>
+
+                    {showMore && (
+                      <Button
+                        onClick={handleShowLess}
+                        variant="outlined"
+                        size="small"
+                        sx={{
+                          margin: 1,
+                          fontSize: { xs: "10px", sm: "12px", md: "14px" }, // Responsive font size
+                          padding: {
+                            xs: "6px 12px",
+                            sm: "8px 16px",
+                            md: "4px 10px",
+                          }, // Responsive padding
+                        }}
+                      >
+                        Show Less
+                      </Button>
+                    )}
                   </div>
                 </div>
               </div>
