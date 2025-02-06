@@ -18,45 +18,6 @@ import FavoriteSharpIcon from "@mui/icons-material/FavoriteSharp";
 import GroupIcon from "@mui/icons-material/Group";
 import ScreenShareIcon from "@mui/icons-material/ScreenShare";
 import { Tooltip } from "@mui/material";
-
-const updates = [
-  {
-    id: 1,
-    name: "John",
-    message: "posted an update",
-    avatar: user, // Replace with actual image URL
-    time: "a year ago",
-  },
-  {
-    id: 2,
-    name: "Adele",
-    message: "posted an update",
-    avatar: user1, // Replace with actual image URL
-    time: "a year ago",
-  },
-  {
-    id: 3,
-    name: "John",
-    message: "posted an update",
-    avatar: user2, // Replace with actual image URL
-    time: "2 years ago",
-  },
-  {
-    id: 4,
-    name: "John",
-    message: "posted an update in the group ☕ Coffee Addicts",
-    avatar: user3, // Replace with actual image URL
-    time: "2 years ago",
-  },
-  {
-    id: 5,
-    name: "John",
-    message: "posted an update",
-    avatar: user, // Replace with actual image URL
-    time: "2 years ago",
-  },
-];
-
 const dummyProfilePic = "https://via.placeholder.com/40";
 const RightSidebar = ({ countryCode, flag, countryName }) => {
   const [countryData, setCountryData] = useState(null);
