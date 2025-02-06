@@ -158,3 +158,11 @@ Route::get('images/uploads/thumbnails/{filename}', function ($filename) {
     }
     return response()->file($path);
 });
+
+Route::get('images/uploads/videos/{filename}', function ($filename) {
+    $path = storage_path('app/public/uploads/videos/' . $filename);
+    if (!file_exists($path)) {
+        abort(404);
+    }
+    return response()->file($path);
+});
