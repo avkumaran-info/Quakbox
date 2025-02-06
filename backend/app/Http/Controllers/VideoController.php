@@ -35,7 +35,7 @@ class VideoController extends Controller
     
             $file = $request->file('video_file');
             $userId = $request->user()->id;
-            $tempFolder = 'uploads/videos/' . $userId . '/temp';
+            $tempFolder = 'uploads/videos/temp';
             $uniqueFileName = uniqid() . '.' . $file->getClientOriginalExtension();
             $mediaPath = $file->storeAs($tempFolder, $uniqueFileName, 'public');
             $videoPath = Storage::disk('public')->path($mediaPath);
@@ -135,9 +135,8 @@ class VideoController extends Controller
             $video = $ffmpeg->open($filePath);
             $thumbnails = [];
             $timestamps = [1, 5, 10, 15]; // Define timestamps for multiple thumbnails
-            $thumbnailFolder = 'uploads/thumbnails';
-             // Store thumbnails in a folder
-             $a = env('APP_URL') . '/api/images/';
+            $thumbnailFolder = 'uploads/thumbnails';  // Store thumbnails in a folder
+    
     
             // Ensure thumbnail folder exists
             if (!file_exists(storage_path($thumbnailFolder))) {

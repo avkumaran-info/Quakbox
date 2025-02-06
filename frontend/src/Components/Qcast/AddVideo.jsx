@@ -379,26 +379,28 @@ const AddVideo = () => {
                   <label className="form-label">Select Country Code</label>
 
                   {/* Search Input */}
-                  <input
-                    type="text"
-                    className="form-control mb-2"
-                    placeholder="Search country..."
-                    value={search}
-                    onChange={(e) => setSearch(e.target.value)}
-                  />
+                  <div className="d-flex align-items-center gap-2">
+                    <input
+                      type="text"
+                      className="form-control"
+                      placeholder="Search..."
+                      value={search}
+                      onChange={(e) => setSearch(e.target.value)}
+                      style={{ width: "150px" }}
+                    />
+                    <select className="form-select" value={selectedCountryCode} onChange={handleSelect}>
+                      {filteredCountries.length > 0 ? (
+                        filteredCountries.map((country) => (
+                          <option key={country.code} value={country.code}>
+                            {country.code} ({country.name})
+                          </option>
+                        ))
+                      ) : (
+                        <option disabled>No match</option>
+                      )}
+                    </select>
+                  </div>
 
-                  {/* Country Code Dropdown */}
-                  <select className="form-select" value={selectedCountryCode} onChange={handleSelect}>
-                    {filteredCountries.length > 0 ? (
-                      filteredCountries.map((country) => (
-                        <option key={country.code} value={country.code}>
-                          {country.code} ({country.name})
-                        </option>
-                      ))
-                    ) : (
-                      <option disabled>No matching country found</option>
-                    )}
-                  </select>
                 </div>
                 </div>
 
