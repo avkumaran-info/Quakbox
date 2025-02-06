@@ -91,6 +91,7 @@ const Chatroom = () => {
                   style={{
                     backgroundColor: "#d3d3d3", // Light gray for You
                     maxWidth: "75%",
+                    fontSize: "12px",
                   }}
                 >
                   Hey! How's it going?
@@ -111,6 +112,7 @@ const Chatroom = () => {
                     style={{
                       backgroundColor: "#b0b0b0", // Slightly darker gray for User 1
                       maxWidth: "75%",
+                      fontSize: "12px",
                     }}
                   >
                     Hey! I'm good, just working on a project. What about you?
@@ -125,6 +127,7 @@ const Chatroom = () => {
                   style={{
                     backgroundColor: "#d3d3d3", // Light gray for You
                     maxWidth: "75%",
+                    fontSize: "12px",
                   }}
                 >
                   That sounds cool! I'm just chilling right now.
@@ -145,6 +148,7 @@ const Chatroom = () => {
                     style={{
                       backgroundColor: "#9e9e9e", // Medium gray for User 2
                       maxWidth: "75%",
+                      fontSize: "12px",
                     }}
                   >
                     Nice! Did you finish that book you were reading?
@@ -159,6 +163,7 @@ const Chatroom = () => {
                   style={{
                     backgroundColor: "#d3d3d3", // Light gray for You
                     maxWidth: "75%",
+                    fontSize: "12px",
                   }}
                 >
                   Almost! I have a few chapters left.
@@ -179,6 +184,7 @@ const Chatroom = () => {
                     style={{
                       backgroundColor: "#8c8c8c", // Darker gray for User 3
                       maxWidth: "75%",
+                      fontSize: "12px",
                     }}
                   >
                     That's awesome! What's it about?
@@ -193,6 +199,7 @@ const Chatroom = () => {
                   style={{
                     backgroundColor: "#d3d3d3", // Light gray for You
                     maxWidth: "75%",
+                    fontSize: "12px",
                   }}
                 >
                   It's a mystery novel, lots of twists and turns!
@@ -213,6 +220,7 @@ const Chatroom = () => {
                     style={{
                       backgroundColor: "#7f7f7f", // Even darker gray for User 4
                       maxWidth: "75%",
+                      fontSize: "12px",
                     }}
                   >
                     Sounds interesting! You'll have to tell me about it once
@@ -228,6 +236,7 @@ const Chatroom = () => {
                   style={{
                     backgroundColor: "#d3d3d3", // Light gray for You
                     maxWidth: "75%",
+                    fontSize: "12px",
                   }}
                 >
                   Definitely! Maybe I'll lend it to you if you want to read it.
@@ -248,6 +257,7 @@ const Chatroom = () => {
                     style={{
                       backgroundColor: "#9e9e9e", // Medium gray for User 2
                       maxWidth: "75%",
+                      fontSize: "12px",
                     }}
                   >
                     That would be great! Let me know when you're done.
@@ -309,7 +319,7 @@ const Chatroom = () => {
               style={{ borderColor: "#ddd" }}
             >
               <h6>Speakers</h6>
-              <div className="d-flex gap-3 align-items-center mb-3">
+              <div className="d-flex gap-3 align-items-center">
                 {speakers.map((user, index) => (
                   <div key={index} className="text-center">
                     <div className="position-relative">
@@ -327,14 +337,14 @@ const Chatroom = () => {
                       <i
                         className={`fas ${
                           user.micStatus
-                            ? "fa-microphone"
-                            : "fa-microphone-slash"
+                            ? "fa-microphone-slash"
+                            : "fa-microphone"
                         } position-absolute`}
                         style={{
                           bottom: "5px",
                           right: "5px",
                           fontSize: "16px",
-                          color: user.micStatus ? "green" : "red",
+                          color: user.micStatus ? "red" : "green",
                           background: "#fff",
                           borderRadius: "50%",
                           padding: "5px",
@@ -359,9 +369,8 @@ const Chatroom = () => {
                         style={{
                           width: "100px",
                           height: "100px",
-                          position: "relative", 
-                          
-                        }} 
+                          position: "relative",
+                        }}
                       />
                       {/* Mic Icon - Positioned at Bottom-Right Inside Image */}
                       <i
