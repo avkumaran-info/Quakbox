@@ -33,12 +33,12 @@ const QVideos = () => {
   const [loading, setLoading] = useState(true);
   const scrollContainerRef = useRef(null);
   const navigate = useNavigate();
-  const { id } = useParams(); // Get the video id from the URL
-  const { state } = useLocation(); // Get state from navigate
+  const { id } = useParams();
+  const { state } = useLocation();
 
   useEffect(() => {
     if (state && Array.isArray(state.video)) {
-      setVideos(state.video); // state.video should be an array of videos
+      setVideos(state.video);
       setLoading(false);
     } else {
       const fetchVideos = async () => {
@@ -53,15 +53,12 @@ const QVideos = () => {
             headers: { Authorization: `Bearer ${token}` },
           });
 
-          console.log("API Response:", response.data);
-
           if (response.status === 200 && response.data.data) {
             setVideos(response.data.data);
           } else {
             setMessage("⚠️ No videos found.");
           }
         } catch (error) {
-          console.error("Error fetching videos:", error);
           setMessage("❌ Error fetching videos. Please try again later.");
         } finally {
           setLoading(false);
@@ -84,9 +81,7 @@ const QVideos = () => {
   };
 
   const scrollLeft = () => {
-    setCurrentIndex((prevIndex) =>
-      prevIndex === 0 ? categories.length - 6 : prevIndex - 6
-    );
+    setCurrentIndex((prevIndex) => (prevIndex - 6 + categories.length) % categories.length);
   };
 
   const scrollRight = () => {
@@ -96,108 +91,78 @@ const QVideos = () => {
   };
 
   return (
-    <div className="p-0">
-      {/* Category Card Section */}
-      <div
-        className="d-flex align-items-center justify-content-around mb-4"
-        style={{
-          width: "100%",
-          position: "relative",
-          display: "flex",
-          flexWrap: "wrap",
-          justifyContent: "center",
-          gap: "4px",
-        }}
-      >
+    <div className="p-2">
+      {/* Category Section */}
+      <div className="d-flex align-items-center justify-content-center mb-4 position-relative">
+        {/* Left Scroll Button */}
         <button
-          className="btn btn-light"
+          className="btn btn-light position-absolute"
           onClick={scrollLeft}
-          style={{
-            position: "absolute",
-            left: "0",
-            zIndex: "10",
-            marginLeft: "-10px",
-          }}
+          style={{ left: "10px", zIndex: "10" }}
         >
           <i className="fa fa-arrow-left"></i>
         </button>
 
+        {/* Scrollable Categories */}
         <div
           ref={scrollContainerRef}
-          style={{
-            display: "flex",
-            flexWrap: "wrap",
-            justifyContent: "center",
-            gap: "4px",
-            overflow: "hidden",
-            width: "100%",
-          }}
+          className="d-flex flex-wrap justify-content-center gap-2"
+          style={{ overflow: "hidden", width: "90%"  }}
         >
-          {categories
-            .slice(currentIndex, currentIndex + 6)
-            .map((category, index) => (
+          {categories.slice(currentIndex, currentIndex + 6).map((category, index) => (
               <div
-                key={index}
-                className="card d-flex align-items-center justify-content-center"
-                style={{
-                  width: "190px",
-                  borderRadius: "10px",
-                  boxShadow: "0 2px 5px rgba(0,0,0,0.1)",
-                  cursor: "pointer",
-                  paddingTop: "15px",
-                  paddingBottom: "15px",
-                }}
-              >
-                <div
-                  style={{ display: "flex", alignItems: "center", gap: "6px" }}
-                >
-                  <i className={`fa ${category.icon}`} style={{ fontSize: "18px" }}></i>
-                  <h5 className="card-title m-0" style={{ fontSize: "14px" }}>
-                    {category.name}
-                  </h5>
-                </div>
-              </div>
-            ))}
+              key={index}
+              className="card align-items-center justify-content-center"
+              style={{
+                width: "200px",
+                borderRadius: "10px",
+                boxShadow: "0 2px 5px rgba(0,0,0,0.1)",
+                cursor: "pointer",
+                paddingTop: "5px", // Add padding on top
+                paddingBottom: "5px",
+              }}
+            >
+              <i className={`fa ${category.icon}`} style={{ fontSize: "18px" }}></i>
+              <h6 className="mt-2 mb-0" style={{ fontSize: "14px" }}>
+                {category.name}
+              </h6>
+            </div>
+          ))}
         </div>
 
+        {/* Right Scroll Button */}
         <button
-          className="btn btn-light"
+          className="btn btn-light position-absolute"
           onClick={scrollRight}
-          style={{
-            position: "absolute",
-            right: "0",
-            zIndex: "10",
-            marginRight: "-10px",
-          }}
+          style={{ right: "10px", zIndex: "10" }}
         >
           <i className="fa fa-arrow-right"></i>
         </button>
       </div>
 
-      {/* Featured Videos Section */}
-      <div className="p-0">
+      {/* Videos Section */}
+      <div className="container">
         <div className="row">
           {loading ? (
-            <div>Loading...</div>
+            <div className="text-center">Loading...</div>
           ) : message ? (
-            <div>{message}</div>
+            <div className="text-center">{message}</div>
           ) : (
             videos.map((video, index) => (
               <div
-                className="col-12 col-sm-6 col-lg-4 col-xl-3 mb-3"
-                key={video.video_id || index}
-                onClick={() => handleVideoClick(video)}
-                style={{ cursor: "pointer" }}
+              className="col-12 col-sm-6 col-lg-4 col-xl-3 mb-3"
+              key={index}
+              onClick={() => handleVideoClick(video)}
+              style={{ cursor: "pointer" }}
+            >
+              <div
+                className="card position-relative"
+                style={{
+                  borderRadius: "12px",
+                  overflow: "hidden",
+                  boxShadow: "0 4px 8px rgba(0,0,0,0.1)",
+                }}
               >
-                <div
-                  className="card position-relative"
-                  style={{
-                    borderRadius: "15px",
-                    overflow: "hidden",
-                    boxShadow: "0 2px 5px rgba(0,0,0,0.1)",
-                    transition: "transform 0.3s ease",
-                  }}
-                >
                   <img
                     src={video.defaultthumbnail || link}
                     className="card-img-top"
@@ -205,8 +170,8 @@ const QVideos = () => {
                     style={{ height: "150px", objectFit: "cover" }}
                   />
                   <div className="card-body">
-                    <h5 className="card-title">{video.title}</h5>
-                    <p className="card-text">{video.description}</p>
+                    <h6 className="fw-bold">{video.title}</h6>
+                    <p className="text-muted">{video.views} views</p>
                   </div>
                 </div>
               </div>

@@ -31,8 +31,8 @@ const QHomw = () => {
           <div
             style={{
               padding: "5px",
-              paddingRight: "15px",
               transition: "margin 0.3s",
+              marginRight: sidebarOpen ? "40px" : "20px", // Adjust margin when sidebar is toggled
             }}
           >
             <QVideos />
