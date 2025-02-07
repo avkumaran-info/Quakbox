@@ -11,6 +11,7 @@ use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Validator;
 use FFMpeg\Coordinate\TimeCode;
+use FFMpeg\FFProbe;
 
 class VideoController extends Controller
 {
@@ -54,30 +55,41 @@ class VideoController extends Controller
             ], 201);
         }
     
-        // Step 2: Move video to permanent storage
         if ($request->has('file_path') && $request->has('title') && filter_var($request->temp_upload, FILTER_VALIDATE_BOOLEAN) === false) {
             Log::info('Processing permanent storage for video', ['temp_upload' => $request->temp_upload]);
-    
+        
             $filePath = $request->file_path;
             $userId = $request->user()->id;
             $permanentFolder = 'uploads/videos/permanent';
-    
-            if (!Storage::disk('public')->exists(str_replace(env('APP_URL') . '/api/images/', '', $filePath))) {             
+            $tempFolder = 'uploads/videos/temp';
+        
+            // Extract relative file path
+            $relativeFilePath = str_replace(env('APP_URL') . '/api/images/', '', $filePath);
+        
+            // Check if file exists in temp storage
+            if (!Storage::disk('public')->exists($relativeFilePath)) {
                 return response()->json([
                     'result' => false,
                     'message' => 'Video file not found in temporary storage',
                 ], 404);
             }
-    
+        
+            // Ensure directories exist
+            if (!Storage::disk('public')->exists($tempFolder)) {
+                Storage::disk('public')->makeDirectory($tempFolder);
+            }
             if (!Storage::disk('public')->exists($permanentFolder)) {
                 Storage::disk('public')->makeDirectory($permanentFolder);
             }
-    
-            $fileName = basename($filePath);
+        
+            // Move file to permanent storage
+            $fileName = basename($relativeFilePath);
             $newFilePath = $permanentFolder . '/' . $fileName;
-            Storage::disk('public')->move($filePath, $newFilePath);
-            Storage::disk('public')->delete($filePath);
-    
+            Storage::disk('public')->move($relativeFilePath, $newFilePath);
+        
+            // Delete the file from temp storage after moving
+            Storage::disk('public')->delete($relativeFilePath);
+        
             $defaultThumbnailPath = $request->has('defaultthumbnail') ? $request->defaultthumbnail : null;
             if (!$defaultThumbnailPath) {
                 return response()->json([
@@ -85,10 +97,10 @@ class VideoController extends Controller
                     'message' => 'Thumbnail is required.',
                 ], 400);
             }
-    
+        
             $tags = is_array($request->tags) ? implode(',', $request->tags) : $request->tags;
             $tagsArray = array_map('trim', explode(',', $tags));
-    
+        
             try {
                 $video = M_Videos::create([
                     'user_id' => $userId,
@@ -104,9 +116,9 @@ class VideoController extends Controller
                     'tags' => json_encode($tagsArray),
                     'temp_upload' => false,
                 ]);
-    
+        
                 Log::info('Video metadata saved', ['video_id' => $video->id]);
-    
+        
                 return response()->json([
                     'result' => true,
                     'message' => 'Video uploaded successfully',
@@ -120,40 +132,48 @@ class VideoController extends Controller
                 ], 500);
             }
         }
-    
+        
         return response()->json([
             'result' => false,
             'message' => 'Invalid request',
         ], 422);
-    }
+    }        
     
     private function generateThumbnails($filePath, $uniqueFileName)
     {
         try {
             $ffmpeg = FFMpeg::create();
             $video = $ffmpeg->open($filePath);
+            // Get the video duration
+            $ffprobe = FFProbe::create();
+            $duration = $ffprobe->format($filePath)->get('duration');
+    
+            // Determine timestamps dynamically
+            $thumbnailCount = 4; // Number of thumbnails
+            $timestamps = [];
+            for ($i = 1; $i <= $thumbnailCount; $i++) {
+                $timestamps[] = round(($duration / ($thumbnailCount + 1)) * $i); // Avoid first and last frames
+            }
+    
             $thumbnails = [];
-            $timestamps = [1, 5, 10, 15]; // Define timestamps for multiple thumbnails
             $thumbnailFolder = 'uploads/thumbnails';  // Store thumbnails in a folder
     
-    
-            // Ensure thumbnail folder exists
+            // Ensure the thumbnail folder exists
             if (!Storage::disk('public')->exists($thumbnailFolder)) {
                 Storage::disk('public')->makeDirectory($thumbnailFolder);
-            }            
+            }
     
-            // Generate thumbnails for the defined timestamps
+            // Generate thumbnails for calculated timestamps
             foreach ($timestamps as $timestamp) {
-                // Use a unique filename format for the thumbnail
-                $thumbnailFileName = $uniqueFileName . '-' . $timestamp . '.jpg'; // Example: 'uniqueFileName-5.jpg'
+                $thumbnailFileName = $uniqueFileName . '-' . $timestamp . '.jpg'; 
                 $thumbnailPath = $thumbnailFolder . '/' . $thumbnailFileName;
     
-                // Generate the thumbnail at the specified timestamp and save it
+                // Generate the thumbnail at the specified timestamp
                 $video->frame(TimeCode::fromSeconds($timestamp))
-                ->save(Storage::disk('public')->path($thumbnailPath));
+                    ->save(Storage::disk('public')->path($thumbnailPath));
     
-                // Save the relative path of the generated thumbnail (this will match the format you want)
-                $thumbnails[] =  env('APP_URL') . '/api/images/' . $thumbnailPath;
+                // Save the relative path of the generated thumbnail
+                $thumbnails[] = env('APP_URL') . '/api/images/' . $thumbnailPath;
             }
     
             return $thumbnails;
@@ -162,7 +182,7 @@ class VideoController extends Controller
             Log::error('Thumbnail generation failed: ' . $e->getMessage());
             return [];
         }
-    }
+    }    
     
     public function index(Request $request, $category_id = null)
     {
@@ -191,20 +211,20 @@ class VideoController extends Controller
                 'video_id' => $video->id,
                 'title' => $video->title,
                 'description' => $video->description,
-                'file_path' => $video->file_path ? env('APP_URL') . '/api/images/' . $video->file_path : null, // Full URL for the video file
+                'file_path' => $video->file_path ? url('/api/images/' . $video->file_path) : null,
                 'user_id' => $video->user_id,
                 'category' => $video->category ? [
-                    'id' => $video->category->id, // Assuming `id` is the correct column name
-                    'name' => $video->category->name, // Assuming `name` is the correct column name
+                    'id' => $video->category->id,
+                    'name' => $video->category->name,
                 ] : null,
                 'type' => $video->type,
                 'title_size' => $video->title_size,
                 'title_colour' => $video->title_colour,
-                'defaultthumbnail' => $video->defaultthumbnail ? env('APP_URL') . '/api/images/' . $video->defaultthumbnail : null, // Full URL for the thumbnail
+                'defaultthumbnail' => $video->defaultthumbnail,
                 'country_code' => $video->country_code,
-                'tags' => is_string($video->tags) ? json_decode($video->tags, true) : $video->tags,
-                'created_at' => $video->created_at->toDateTimeString(),
-                'updated_at' => $video->updated_at->toDateTimeString(),
+                'tags' => is_string($video->tags) ? json_decode($video->tags, true) ?? [] : $video->tags,
+                'created_at' => optional($video->created_at)->toDateTimeString(),
+                'updated_at' => optional($video->updated_at)->toDateTimeString(),
             ];
         });
     
@@ -316,7 +336,7 @@ class VideoController extends Controller
                     'type' => $video->type,
                     'title_size' => $video->title_size,
                     'title_colour' => $video->title_colour,
-                    'defaultthumbnail' => $video->defaultthumbnail ? url('storage/' . $video->defaultthumbnail) : null,
+                    'defaultthumbnail' => $video->defaultthumbnail,
                     'country_code' => $video->country_code,
                     'created_at' => $video->created_at,
                     'updated_at' => $video->updated_at,
