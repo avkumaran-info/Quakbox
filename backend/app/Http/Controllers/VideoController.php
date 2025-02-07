@@ -3,7 +3,6 @@
 namespace App\Http\Controllers;
 
 ini_set('memory_limit', '2G');
-namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use App\Models\M_Videos;
@@ -63,7 +62,7 @@ class VideoController extends Controller
             $userId = $request->user()->id;
             $permanentFolder = 'uploads/videos/permanent';
     
-            if (!Storage::disk('public')->exists($filePath)) {
+            if (!Storage::disk('public')->exists(str_replace(env('APP_URL') . '/api/images/', '', $filePath))) {             
                 return response()->json([
                     'result' => false,
                     'message' => 'Video file not found in temporary storage',
@@ -77,7 +76,7 @@ class VideoController extends Controller
             $fileName = basename($filePath);
             $newFilePath = $permanentFolder . '/' . $fileName;
             Storage::disk('public')->move($filePath, $newFilePath);
-            Storage::disk('public')->deleteDirectory('uploads/videos/temp');
+            Storage::disk('public')->delete($filePath);
     
             $defaultThumbnailPath = $request->has('defaultthumbnail') ? $request->defaultthumbnail : null;
             if (!$defaultThumbnailPath) {
@@ -139,9 +138,9 @@ class VideoController extends Controller
     
     
             // Ensure thumbnail folder exists
-            if (!file_exists(storage_path($thumbnailFolder))) {
-                mkdir(storage_path($thumbnailFolder), 0775, true);
-            }
+            if (!Storage::disk('public')->exists($thumbnailFolder)) {
+                Storage::disk('public')->makeDirectory($thumbnailFolder);
+            }            
     
             // Generate thumbnails for the defined timestamps
             foreach ($timestamps as $timestamp) {
@@ -151,7 +150,7 @@ class VideoController extends Controller
     
                 // Generate the thumbnail at the specified timestamp and save it
                 $video->frame(TimeCode::fromSeconds($timestamp))
-                    ->save(storage_path($thumbnailPath));
+                ->save(Storage::disk('public')->path($thumbnailPath));
     
                 // Save the relative path of the generated thumbnail (this will match the format you want)
                 $thumbnails[] =  env('APP_URL') . '/api/images/' . $thumbnailPath;

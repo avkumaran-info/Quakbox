@@ -5,6 +5,7 @@ import { useNavigate,useLocation } from "react-router-dom";
 import axios from "axios";
 import loading2 from "../../assets/images/loading.gif";
 import { overlayStyle, gifStyle } from "./UploadVideo";
+import Select from "react-select";
 
 
 const AddVideo = () => {
@@ -179,32 +180,74 @@ const AddVideo = () => {
     "Travel",
   ].map((name, index) => ({ id: index + 1, name }));
 
-  const countryCodes = [
-    { code: "+1", name: "USA" },
-    { code: "+91", name: "India" },
-    { code: "+62", name: "Indonesia" },
-    { code: "+44", name: "UK" },
-    { code: "+81", name: "Japan" },
-    { code: "+61", name: "Australia" },
-    { code: "+49", name: "Germany" },
-    { code: "+33", name: "France" },
-    { code: "+39", name: "Italy" },
-    { code: "+86", name: "China" },
-    { code: "+971", name: "UAE" },
-  ];
+  // const countryCodes = [
+  //   { code: "+1", name: "USA" },
+  //   { code: "+91", name: "India" },
+  //   { code: "+62", name: "Indonesia" },
+  //   { code: "+44", name: "UK" },
+  //   { code: "+81", name: "Japan" },
+  //   { code: "+61", name: "Australia" },
+  //   { code: "+49", name: "Germany" },
+  //   { code: "+33", name: "France" },
+  //   { code: "+39", name: "Italy" },
+  //   { code: "+86", name: "China" },
+  //   { code: "+971", name: "UAE" },
+  // ];
 
-      // Filter the country list based on user input
-      const filteredCountries = countryCodes.filter((country) =>
-        country.name.toLowerCase().includes(search.toLowerCase())
-      );
+  //     // Filter the country list based on user input
+  //     const filteredCountries = countryCodes.filter((country) =>
+  //       country.name.toLowerCase().includes(search.toLowerCase())
+  //     );
 
-      // Handle country selection
-      const handleSelect = (e) => {
-        const selectedCode = e.target.value;
-        setSelectedCountryCode(selectedCode);
-        onSelect(selectedCode); // Pass the selected country code to the parent component
-      };
+  //     // Handle country selection
+  //     const handleSelect = (e) => {
+  //       const selectedCode = e.target.value;
+  //       setSelectedCountryCode(selectedCode);
+  //       onSelect(selectedCode); // Pass the selected country code to the parent component
+  //     };
 
+  const [countries, setCountries] = useState([]);
+  useEffect(() => {
+    const fetchCountries = async () => {
+        try {
+            const token = localStorage.getItem("api_token");
+            if (!token) {
+                setMessage("❌ Authorization token missing. Please log in.");
+                return;
+            }
+
+            const response = await axios.get("https://develop.quakbox.com/admin/api/get_geo_country", {
+                headers: { Authorization: `Bearer ${token}` },
+            });
+
+            if (response.status === 200 && response.data.success) {
+                const countryOptions = response.data.geo_countries.map((country) => ({
+                    value: country.code, // Country code
+                    label: (
+                        <div style={{ display: "flex", alignItems: "center" }}>
+                            <img
+                                src={country.country_image} // Country image
+                                alt={country.country_name}
+                                style={{ width: 20, height: 15, marginRight: 10 }}
+                            />
+                            {country.country_name}
+                        </div>
+                    ),
+                }));
+                setCountries(countryOptions);
+            } else {
+                setMessage("⚠️ No countries found.");
+            }
+        } catch (error) {
+            setMessage("❌ Error fetching countries. Please try again later.");
+            console.error("Error fetching countries:", error);
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    fetchCountries();
+}, []);
 
   // Toggle the sidebar open/close state
   const toggleSidebar = () => {
@@ -377,30 +420,7 @@ const AddVideo = () => {
              
             <div className="col-md-6">
                   <label className="form-label">Select Country Code</label>
-
-                  {/* Search Input */}
-                  <div className="d-flex align-items-center gap-2">
-                    <input
-                      type="text"
-                      className="form-control"
-                      placeholder="Search..."
-                      value={search}
-                      onChange={(e) => setSearch(e.target.value)}
-                      style={{ width: "150px" }}
-                    />
-                    <select className="form-select" value={selectedCountryCode} onChange={handleSelect}>
-                      {filteredCountries.length > 0 ? (
-                        filteredCountries.map((country) => (
-                          <option key={country.code} value={country.code}>
-                            {country.code} ({country.name})
-                          </option>
-                        ))
-                      ) : (
-                        <option disabled>No match</option>
-                      )}
-                    </select>
-                  </div>
-
+                    <Select options={countries} />
                 </div>
                 </div>
 

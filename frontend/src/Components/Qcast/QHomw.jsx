@@ -21,7 +21,7 @@ const QHomw = () => {
           marginTop: "56px",
           flex: 1,
           transition: "margin 0.3s",
-          marginRight: sidebarOpen ? "250px" : "20px", // Adjust margin when sidebar is toggled
+          marginRight: sidebarOpen ? "250px" : "60px", // Adjust margin when sidebar is toggled
         }}
       >
         {/* Pass the isOpen prop and toggleSidebar to QNavBar */}
@@ -31,8 +31,8 @@ const QHomw = () => {
           <div
             style={{
               padding: "5px",
-              paddingRight: "15px",
               transition: "margin 0.3s",
+              marginRight: sidebarOpen ? "40px" : "20px", // Adjust margin when sidebar is toggled
             }}
           >
             <QVideos />
