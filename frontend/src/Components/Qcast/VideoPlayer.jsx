@@ -14,6 +14,8 @@ const VideoPlayer = () => {
 
   // Get the video from location.state if available (from previous navigation)
   const passedVideo = location.state?.video;
+  console.log(passedVideo.file_path);
+  
 
   useEffect(() => {
     console.log("useEffect triggered");
@@ -21,6 +23,8 @@ const VideoPlayer = () => {
     const fetchVideo = async () => {
       try {
         const token = localStorage.getItem("api_token");
+        console.log(token);
+        
         if (!token) {
           setMessage("❌ Authorization token missing. Please log in.");
           console.log("Authorization token is missing.");

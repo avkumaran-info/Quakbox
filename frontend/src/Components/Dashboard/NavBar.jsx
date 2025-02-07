@@ -30,7 +30,7 @@ const NavBar = () => {
     const storedCountries =
       JSON.parse(localStorage.getItem("geo_country")) || [];
     setCountries(storedCountries);
-    console.log(storedCountries);
+    // console.log(storedCountries);
     
     
     
@@ -47,7 +47,6 @@ const NavBar = () => {
           },
         }
       );
-      console.log(res.data);
 
       setUserDetail(res.data);
     } catch (error) {
