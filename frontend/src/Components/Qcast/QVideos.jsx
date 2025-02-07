@@ -59,7 +59,7 @@ const QVideos = () => {
             setMessage("⚠️ No videos found.");
           }
         } catch (error) {
-          setMessage("❌ Error fetching videos. Please try again later.");
+          setMessage("❌ No videos to display");
         } finally {
           setLoading(false);
         }

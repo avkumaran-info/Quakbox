@@ -180,32 +180,6 @@ const AddVideo = () => {
     "Travel",
   ].map((name, index) => ({ id: index + 1, name }));
 
-  // const countryCodes = [
-  //   { code: "+1", name: "USA" },
-  //   { code: "+91", name: "India" },
-  //   { code: "+62", name: "Indonesia" },
-  //   { code: "+44", name: "UK" },
-  //   { code: "+81", name: "Japan" },
-  //   { code: "+61", name: "Australia" },
-  //   { code: "+49", name: "Germany" },
-  //   { code: "+33", name: "France" },
-  //   { code: "+39", name: "Italy" },
-  //   { code: "+86", name: "China" },
-  //   { code: "+971", name: "UAE" },
-  // ];
-
-  //     // Filter the country list based on user input
-  //     const filteredCountries = countryCodes.filter((country) =>
-  //       country.name.toLowerCase().includes(search.toLowerCase())
-  //     );
-
-  //     // Handle country selection
-  //     const handleSelect = (e) => {
-  //       const selectedCode = e.target.value;
-  //       setSelectedCountryCode(selectedCode);
-  //       onSelect(selectedCode); // Pass the selected country code to the parent component
-  //     };
-
   const [countries, setCountries] = useState([]);
   useEffect(() => {
     const fetchCountries = async () => {
@@ -420,9 +394,18 @@ const AddVideo = () => {
              
             <div className="col-md-6">
                   <label className="form-label">Select Country Code</label>
-                    <Select options={countries} />
-                </div>
-                </div>
+                  <Select
+                      options={countries}
+                      placeholder="Search country..."
+                      isSearchable
+                      filterOption={(option, inputValue) =>
+                          option.data.label.props.children[1]
+                              .toLowerCase()
+                              .includes(inputValue.toLowerCase())
+                      }
+                  />
+            </div>
+          </div>
 
             <div className="mt-4">
               <h6>Category</h6>
