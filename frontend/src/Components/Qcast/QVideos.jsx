@@ -55,6 +55,7 @@ const QVideos = () => {
               headers: { Authorization: `Bearer ${token}` },
             }
           );
+          console.log(response.data.data);
 
           if (response.status === 200 && response.data.data) {
             setVideos(response.data.data);
@@ -72,17 +73,50 @@ const QVideos = () => {
     }
   }, [id, state]);
 
-  const handleVideoClick = (video) => {
+  const handleVideoClick = async (video) => {
     console.log(video);
+    console.log(video.video_id);
 
     if (!video.video_id) {
       console.error("Video ID is missing:", video);
       return;
     }
 
-    navigate(`/videos/${encodeURIComponent(video.video_id)}`, {
-      state: { video },
-    });
+    try {
+      const token = localStorage.getItem("api_token");
+
+      if (!token) {
+        setMessage("❌ Authorization token missing. Please log in.");
+        return;
+      }
+
+      const response = await axios.post(
+        `https://develop.quakbox.com/admin/api/videos/${video.video_id}/view`,
+        {}, // Empty body for POST request
+        {
+          headers: {
+            Authorization: `Bearer ${token}`, // Ensure proper format
+            "Content-Type": "application/json", // Add content type
+          },
+        }
+      );
+
+      console.log(response.data);
+      navigate(`/videos/${encodeURIComponent(video.video_id)}`, {
+        state: { video },
+      });
+    } catch (error) {
+      console.error(
+        "Error updating video views:",
+        error.response?.data || error.message
+      );
+
+      if (error.response?.status === 401) {
+        setMessage("❌ Unauthorized! Please log in again.");
+      } else {
+        setMessage("⚠️ Failed to update video views.");
+      }
+    }
   };
 
   const scrollLeft = () => {
@@ -95,6 +129,26 @@ const QVideos = () => {
     setCurrentIndex((prevIndex) =>
       prevIndex >= categories.length - 6 ? 0 : prevIndex + 6
     );
+  };
+
+  const timeAgo = (dateString) => {
+    const date = new Date(dateString);
+    const now = new Date();
+    const seconds = Math.floor((now - date) / 1000);
+
+    if (seconds < 60) return "now"; // Less than 1 minute
+    const minutes = Math.floor(seconds / 60);
+    if (minutes < 60) return `${minutes} min ago`;
+    const hours = Math.floor(minutes / 60);
+    if (hours < 24) return `${hours} hour${hours > 1 ? "s" : ""} ago`;
+    const days = Math.floor(hours / 24);
+    if (days < 7) return `${days} day${days > 1 ? "s" : ""} ago`;
+    const weeks = Math.floor(days / 7);
+    if (weeks < 4) return `${weeks} week${weeks > 1 ? "s" : ""} ago`;
+    const months = Math.floor(days / 30);
+    if (months < 12) return `${months} month${months > 1 ? "s" : ""} ago`;
+    const years = Math.floor(days / 365);
+    return `${years} year${years > 1 ? "s" : ""} ago`;
   };
 
   return (
@@ -114,7 +168,7 @@ const QVideos = () => {
         <div
           ref={scrollContainerRef}
           className="d-flex flex-wrap justify-content-center gap-2"
-          style={{ overflow: "hidden", width: "90%" }}
+          style={{ overflow: "hidden", width: "100%" }}
         >
           {categories
             .slice(currentIndex, currentIndex + 6)
@@ -123,7 +177,7 @@ const QVideos = () => {
                 key={index}
                 className="card align-items-center justify-content-center"
                 style={{
-                  width: "200px",
+                  width: "180px",
                   borderRadius: "10px",
                   boxShadow: "0 2px 5px rgba(0,0,0,0.1)",
                   cursor: "pointer",
@@ -183,7 +237,22 @@ const QVideos = () => {
                   />
                   <div className="card-body">
                     <h6 className="fw-bold">{video.title}</h6>
-                    <p className="text-muted">{video.views} views</p>
+
+                    <p className="text-muted">
+                      {video.views} views • {timeAgo(video.uploaded_datetime)}{" "}
+                    </p>
+                    {/* User Info Section */}
+                    <div className="d-flex align-items-center">
+                      <img
+                        src={video.user_profile_image}
+                        alt={video.user_name}
+                        className="rounded-circle me-2"
+                        width="40"
+                        height="40"
+                        style={{ objectFit: "cover" }}
+                      />
+                      <span className="fw-bold">{video.user_name}</span>
+                    </div>
                   </div>
                 </div>
               </div>
