@@ -64,44 +64,62 @@ const UploadVideo = () => {
 
   const handleFileUpload = async (e) => {
     const formData = new FormData();
-
-    // Append temp_upload and file
+  
+    // Define a mapping for category types
+    const categoryTypeMap = {
+      video: 1,
+      music: 2,
+      photo: 3,
+      webcam: 4, // If necessary
+    };
+  
+    // Append type, temp_upload, and file
+    formData.append("type", categoryTypeMap[selectedCategory]); // Assign correct type
     formData.append("temp_upload", true); // This will be sent as 'temp_upload=true'
-    formData.append("video_file", e.target.files[0]); // Make sure the field name matches the backend
-
+    formData.append("video_file", e.target.files[0]); // Ensure field name matches backend
+  
     setIsLoading(true); // Start loading
-
+  
     try {
       const token = localStorage.getItem("api_token"); // Get token from localStorage
-
+  
       if (!token) {
-        setError("Authorization token not found. Please log in.");
+        alert("Authorization token not found. Please log in.");
         return;
       }
+      
       const response = await axios.post(
         "https://develop.quakbox.com/admin/api/videos/upload",
         formData,
         {
-          headers: { Authorization: `Bearer ${token}` },
+          headers: { 
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "multipart/form-data", // Ensure correct header
+          },
         }
       );
+  
       setIsLoading(false); // End loading
+  
       if (response.data.result) {
         // Redirect to add video page with video data
         const videoData = {
           message: response.data.message,
           filePath: response.data.file_path,
           thumbnails: response.data.thumbnails,
+          fileType: selectedCategory, // Add fileType here
         };
-
+  
         navigate("/addvideo", { state: { videoData } });
       } else {
         alert(response.data.message); // Handle errors
       }
     } catch (error) {
+      setIsLoading(false);
       console.error("Error uploading video:", error);
+      alert("Upload failed. Please try again.");
     }
-  };
+  };  
 
   // Content for each category
   const categoryContent = {
