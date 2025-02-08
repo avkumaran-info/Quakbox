@@ -13,6 +13,7 @@ const AddVideo = () => {
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [selectedCategory, setSelectedCategory] = useState("");
   const navigate = useNavigate();
+  const [videoType, setVideoType] = useState("");
   const [isPopupOpen, setIsPopupOpen] = useState(false);
   const [thumbnailPreview, setThumbnailPreview] = useState(null);
   const [thumbnailFile, setThumbnailFile] = useState(null);
@@ -33,7 +34,7 @@ const AddVideo = () => {
   const [selectedCountryCode, setSelectedCountryCode] = useState("");
   const [file, setFile] = useState(null);
     const [description, setDescription] = useState('');
-    const [category, setCategory] = useState('');
+
     const [type, setType] = useState('');
     const [thumbnail, setThumbnail] = useState(null);
     const [message, setMessage] = useState('');
@@ -44,106 +45,119 @@ const AddVideo = () => {
    const [typeError, setTypeError] = useState(false);
    const [countryError, setCountryError] = useState(false);   
 
-    const fileType = selectedCategory; // If using selectedCategory from state
-
     const handleFileChange = (event) => {
         setFile(event.target.files[0]);
     };
+    useEffect(() => {
+      console.log("Updated Title Color:", titleColor);
+    }, [titleColor]);
 
     const handleThumbnailChange = (event) => {
         setThumbnail(event.target.files[0]);
     };
-  const tagsArray = tags.split(',').map(tag => tag.trim());  // Convert tags string to array
-  const handleSaveChanges = async () => {
-    let isValid = true;
-  
-   
-    // Title validation
-    if (!titleText.trim()) {
-      setTitleError(true);
-      isValid = false;
-    } else {
-      setTitleError(false);
-    }
+    const tagsArray = tags.split(',').map(tag => tag.trim()); // Convert tags string to an array
 
-    // Description validation
-    if (!description.trim()) {
-      setDescError(true);
-      isValid = false;
-    } else {
-      setDescError(false);
-    }
-
-    // Privacy type validation
-    if (!type || type === "Select") {
-      setTypeError(true);
-      isValid = false;
-    } else {
-      setTypeError(false);
-    }
-
-    // Country selection validation
-    if (!selectedCountryCode) {
-      setCountryError(true);
-      isValid = false;
-    } else {
-      setCountryError(false);
-    }
-
-    // Stop execution if validation fails
-    if (!isValid) {
-      return;
-    }
-  
-    const payload = {
-      file_path: videoData.filePath,
-      title: titleText,
-      description: description,
-      category_id: selectedCategory,
-      type: type,
-      video_type: videoData.fileType,  
-      country_code: selectedCountryCode,
-      title_color: titleColor,
-      title_size: titleSize,
-      defaultthumbnail: selectedThumbnail,
-      tags: tagsArray,
-      temp_upload: false,
-    };
+    const handleSaveChanges = async () => {
+        let isValid = true;
     
-  
-    try {
-      setLoading(true);
-      const token = localStorage.getItem("api_token");
-  
-      if (!token) {
-        setError("Authorization token not found. Please log in.");
-        return;
-      }
-  
-      const response = await axios.post(
-        "https://develop.quakbox.com/admin/api/videos/upload",
-        payload,
-        {
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${token}`,
-          },
+        // Title validation
+        if (!titleText.trim()) {
+            setTitleError(true);
+            isValid = false;
+        } else {
+            setTitleError(false);
         }
-      );
-  
-      if (response.data.result) {
-        setMessage("✅ Video uploaded successfully!");
-      } else {
-        setMessage(response.data.message || "❌ Error uploading video");
-      }
-    } catch (error) {
-      console.error("Error:", error);
-      setMessage("❌ Error uploading video");
-    } finally {
-      setLoading(false);
-    }
-  };
-  
+    
+        // Description validation
+        if (!description.trim()) {
+            setDescError(true);
+            isValid = false;
+        } else {
+            setDescError(false);
+        }
+    
+        // Privacy type validation
+        if (!type || type === "Select") {
+            setTypeError(true);
+            isValid = false;
+        } else {
+            setTypeError(false);
+        }
+    
+        // Country selection validation
+        if (!selectedCountryCode) {
+            setCountryError(true);
+            isValid = false;
+        } else {
+            setCountryError(false);
+        }
+    
+        // Stop execution if validation fails
+        if (!isValid) {
+            return;
+        }
+    
+        // Ensure fileType is valid
+        const fileType = videoData?.fileType || ""; 
+        const videoType = fileType ? fileType.toLowerCase() : "unknown"; 
+    
+        // Convert fileType to a number
+        const videoTypeMapping = {
+            "mp4": 1, "mkv": 1, "avi": 1, "mov": 1,  // Video
+            "mp3": 2, "wav": 2, "m4a": 2,            // Audio
+            "jpeg": 3, "png": 3, "jpg": 3, "gif": 3, // Photo
+        };
+    
+        const videoTypeNumber = videoTypeMapping[videoType] || 4; // Default to 4 (Webcam)
+    
+        const payload = {
+            file_path: videoData.filePath,
+            title: titleText,
+            description: description,
+            category_id: selectedCategory,
+            type: type,
+            video_type: videoTypeNumber, // Ensure it is a number
+            country_code: selectedCountryCode,
+            title_color: titleColor,
+            title_size: titleSize,
+            defaultthumbnail: selectedThumbnail,
+            tags: tagsArray.join(","), // ✅ Convert array to a string
+            temp_upload: false,
+        };
+    
+        try {
+            setLoading(true);
+            const token = localStorage.getItem("api_token");
+    
+            if (!token) {
+                setError("Authorization token not found. Please log in.");
+                return;
+            }
+    
+            const response = await axios.post(
+                "https://develop.quakbox.com/admin/api/videos/upload",
+                payload,
+                {
+                    headers: {
+                        "Content-Type": "application/json",
+                        Authorization: `Bearer ${token}`,
+                    },
+                }
+            );
+    
+            if (response.data.result) {
+                setMessage("✅ Video uploaded successfully!");
+            } else {
+                setMessage(response.data.message || "❌ Error uploading video");
+            }
+            
+        } catch (error) {
+            console.error("Error:", error);
+            setMessage("❌ Error uploading video");
+        } finally {
+            setLoading(false);
+        }
+    };    
 
   useEffect(() => {
     if (videoData?.thumbnails) {
@@ -434,7 +448,7 @@ const AddVideo = () => {
                 <input
                   type="color"
                   className="form-control form-control-color"
-                  value={ titleColor }
+                  value={titleColor}
                   onChange={(e) => setTitleColor(e.target.value)}
                 />
               </div>
@@ -454,23 +468,23 @@ const AddVideo = () => {
                 {countryError && <small className="text-danger">Country selection is required</small>}
               </div>
           </div>
-            <div className="mt-4">
-              <h6>Category</h6>
-              <div className="row mb-3">
-                  {categories.map((category) => (
+            <div className="mt-4"> 
+                <h6>Category</h6>
+                <div className="row mb-3">
+                  {categories?.map((category) => (
                     <div key={category.id} className="col-md-2">
                       <div className="form-check">
                         <input
                           className="form-check-input"
                           type="radio"
-                          name="category" // Use the same name to allow only one selection
-                          id={category.id} // Use the category ID for the id of the input
-                          value={category.id} // Set the value to the ID of the category
-                          checked={selectedCategory === category.id} // Compare with the selected category ID
-                          onChange={(e) => setSelectedCategory(Number(e.target.value))} // Update state with category ID
+                          name="category"
+                          id={`category-${category.id}`}
+                          value={category.id}
+                          checked={selectedCategory === category.id}
+                          onChange={(e) => setSelectedCategory(Number(e.target.value))}
                         />
-                        <label className="form-check-label" htmlFor={category.id}>
-                          {category.name} {/* Display the category name */}
+                        <label className="form-check-label" htmlFor={`category-${category.id}`}>
+                          {category.name}
                         </label>
                       </div>
                     </div>
@@ -483,7 +497,7 @@ const AddVideo = () => {
                     <div className="mt-1">
                       <div className="row g-4">
                         {Array.isArray(thumbnails) && thumbnails.length > 0 ? (
-                          ["mp3", "png", "jpeg", "jpg", "gif"].includes(fileType.toLowerCase()) ? (
+                          ["mp3", "png", "jpeg", "jpg", "gif"].includes(videoType.toLowerCase()) ? (
                             // ✅ Show only the first thumbnail for audio and image files
                             <div className="col-md-3">
                               <div
@@ -701,35 +715,49 @@ const AddVideo = () => {
                 </div>
               )}
 
-                        {/* ✅ Success or Error Message Popup */}
-              {message && (
-                <div
-                  style={{
-                    position: "fixed",
-                    top: "50%",
-                    left: "50%",
-                    transform: "translate(-50%, -50%)",
-                    backgroundColor: "#fff",
-                    padding: "20px",
-                    borderRadius: "8px",
-                    boxShadow: "0 4px 10px rgba(0,0,0,0.2)",
-                    zIndex: 10000,
-                    textAlign: "center",
-                  }}
-                >
-                   <p>{message}</p>
-                    <button
-                      onClick={() => {
-                        setMessage(""); // Clear the message
-                        navigate("/qcast"); // Navigate to the route
+            {/* ✅ Success or Error Message Popup */}
+            {message && (
+                  <>
+                    {/* Overlay to disable background interaction */}
+                    <div
+                      style={{
+                        position: "fixed",
+                        top: 0,
+                        left: 0,
+                        width: "100vw",
+                        height: "100vh",
+                        backgroundColor: "rgba(0, 0, 0, 0.5)", // Semi-transparent black
+                        zIndex: 9999, // Higher than other elements
+                        pointerEvents: "auto", // Ensures it blocks interactions
                       }}
-                      className="btn btn-secondary"
+                    />
+
+                    {/* Error Message Modal */}
+                    <div
+                      style={{
+                        position: "fixed",
+                        top: "50%",
+                        left: "50%",
+                        transform: "translate(-50%, -50%)",
+                        backgroundColor: "#fff",
+                        padding: "20px",
+                        borderRadius: "8px",
+                        boxShadow: "0px 4px 10px rgba(0, 0, 0, 0.2)",
+                        zIndex: 10000, // Must be higher than overlay
+                        textAlign: "center",
+                      }}
                     >
-                      OK
-                    </button>
-                </div>
-              )}
-              
+                      <p>{message}</p>
+                      <button
+                        onClick={() => setMessage("")}
+                        className="btn btn-secondary"
+                      >
+                        OK
+                      </button>
+                      {navigate("/qcast")}
+                    </div>
+                  </>
+                )}
 
               <div className="row mb-3 d-flex justify-content-center" style={{ marginTop :"20px" }}>
                 <div className="col-md-4 d-flex justify-content-between">
@@ -742,7 +770,6 @@ const AddVideo = () => {
                   <button 
                   className="btn btn-outline-primary btn-lg w-50 ms-2" 
                   onClick={handleSaveChanges} 
-                  disabled={!titleText.trim() || !description.trim() || !type || !selectedCountryCode}
                   >
                    Save Changes
                   </button>

@@ -173,64 +173,62 @@ class VideoController extends Controller
             // Initialize FFMpeg and FFProbe
             $ffmpeg = FFMpeg::create();
             $ffprobe = FFProbe::create();
-
+    
             // Check the file type
             $extension = pathinfo($filePath, PATHINFO_EXTENSION);
             $thumbnailFolder = 'uploads/thumbnails';
-
+    
             if (!Storage::disk('public')->exists($thumbnailFolder)) {
                 Storage::disk('public')->makeDirectory($thumbnailFolder);
             }
-
+    
             $thumbnails = [];
-
+    
             if (in_array($extension, ['mp4', 'avi', 'mov', 'mkv'])) {
                 // 📌 Generate 4 thumbnails for videos
                 $media = $ffmpeg->open($filePath);
                 $videoStreams = $ffprobe->streams($filePath)->videos();
                 $isVideo = $videoStreams->count() > 0;
-
+    
                 if ($isVideo) {
                     $duration = $ffprobe->format($filePath)->get('duration');
-
+    
                     for ($i = 1; $i <= 4; $i++) {
                         $timestamp = round(($i * $duration) / 5); // Capture at different positions
                         $thumbnailFileName = $uniqueFileName . "-video-$i.jpg";
                         $thumbnailPath = $thumbnailFolder . '/' . $thumbnailFileName;
-
+    
                         $media->frame(TimeCode::fromSeconds($timestamp))
                             ->save(Storage::disk('public')->path($thumbnailPath));
-
+    
                         $thumbnails[] = env('APP_URL') . '/api/images/' . $thumbnailPath;
                     }
                 }
             } elseif (in_array($extension, ['mp3', 'wav', 'ogg'])) {
-                // 📌 Generate 1 waveform thumbnail for audio
-                $waveformFileName = $uniqueFileName . '-audio.png';
-                $waveformPath = Storage::disk('public')->path($thumbnailFolder . '/' . $waveformFileName);
-
-                // Generate waveform using FFmpeg
-                $command = "ffmpeg -i $filePath -filter_complex 'aformat=channel_layouts=mono,showwavespic=s=640x120:colors=blue' -frames:v 1 $waveformPath";
-                exec($command);
-
-                if (file_exists($waveformPath)) {
-                    $thumbnails[] = env('APP_URL') . '/api/images/' . $thumbnailFolder . '/' . $waveformFileName;
+                // 📌 Use default audio thumbnail but rename it
+                $defaultAudioThumbnail = public_path('/img/Audioicon.jpeg');
+                $thumbnailFileName = $uniqueFileName . '-audio.jpg';
+                $thumbnailPath = $thumbnailFolder . '/' . $thumbnailFileName;
+    
+                if (file_exists($defaultAudioThumbnail)) {
+                    Storage::disk('public')->put($thumbnailPath, file_get_contents($defaultAudioThumbnail));
+                    $thumbnails[] = env('APP_URL') . '/api/images/' . $thumbnailPath;
                 } else {
-                    Log::error('Waveform generation failed for audio: ' . $filePath);
-                    $thumbnails[] = ['error' => 'Waveform generation failed'];
+                    Log::error('Default audio thumbnail not found: ' . $defaultAudioThumbnail);
+                    return ['error' => 'Default audio thumbnail not found'];
                 }
             } elseif (in_array($extension, ['png', 'jpg', 'jpeg', 'gif'])) {
                 // 📌 Directly use the image as a thumbnail
                 $thumbnailFileName = $uniqueFileName . '-photo.jpg';
                 $thumbnailPath = $thumbnailFolder . '/' . $thumbnailFileName;
-
+    
                 Storage::disk('public')->put($thumbnailPath, file_get_contents($filePath));
                 $thumbnails[] = env('APP_URL') . '/api/images/' . $thumbnailPath;
             } else {
                 Log::error('Unsupported file format: ' . $extension);
                 return ['error' => 'Unsupported file format'];
             }
-
+    
             return $thumbnails;
         } catch (\Exception $e) {
             Log::error('Thumbnail generation failed: ' . $e->getMessage());
