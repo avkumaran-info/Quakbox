@@ -6,6 +6,7 @@ ini_set('memory_limit', '2G');
 
 use Illuminate\Http\Request;
 use App\Models\M_Videos;
+use App\Models\M_Video_Interactions;
 use FFMpeg\FFMpeg;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Log;
@@ -253,7 +254,7 @@ class VideoController extends Controller
             $query->where('m_videocategory.category_id', $category_id);
         }
         // Public videos only
-        $query->where('type', 'Public');
+        $query->where('m_videos.type', '=', 'Public');
     
         // Fetch videos
         $videos = $query->get();
@@ -267,15 +268,18 @@ class VideoController extends Controller
     
         // Format video data
         $formattedVideos = $videos->map(function ($video) {
+            $videoInteraction = M_Videos::withCount(['likes', 'dislikes', 'views'])->findOrFail($video->id);
             return [
                 'video_id' => $video->id,
                 'title' => $video->title,
                 'description' => $video->description,
                 'file_path' => $video->file_path ? url('/api/images/' . $video->file_path) : null,
-                'views_cnt' => $video->views,
+                'likes' => $videoInteraction->likes_count,
+                'dislikes' => $videoInteraction->dislikes_count,
+                'views' => $videoInteraction->views_count,
                 'user_id' => $video->user_id,
                 'user_name' => $video->username,
-                'user_profile_image' => $video->profile_image,
+                'user_profile_image' => env('APP_URL') . '/api/images/' . $video->profile_image,
                 'type' => $video->type,
                 'category_id' => $video->category_id,
                 'category_name' => $video->category_name,
@@ -358,53 +362,72 @@ class VideoController extends Controller
         ]);
     }
 
-    public function search(Request $request, $query)
+    public function search(Request $request, $searchString)
     {
         // Validate the search query input
-        if (empty($query)) {
+        if (empty($searchString)) {
             return response()->json([
                 'result' => false,
                 'message' => 'Search query cannot be empty'
             ], 400); // 400 Bad Request
         }
+        
+        // Build the query
+        $query = DB::table('m_videos')
+        ->join('users', 'm_videos.user_id', '=', 'users.id')
+        ->join('m_videocategory', 'm_videos.category_id', '=', 'm_videocategory.category_id')
+        ->select('m_videos.*', 'm_videocategory.category_name as category_name', 
+                        'users.username as username', 'users.profile_image as profile_image');
     
-        // Search the videos by title or description (case insensitive)
-        $videos = M_Videos::whereRaw('LOWER(title) LIKE ?', ['%' . strtolower($query) . '%'])
-                          ->orWhereRaw('LOWER(description) LIKE ?', ['%' . strtolower($query) . '%'])
-                          ->get();
+        // Public videos only
+        $query->where('m_videos.type', '=', 'Public')
+                ->whereRaw('LOWER(m_videos.title) LIKE ?', ['%' . strtolower($searchString) . '%'])
+                ->orWhereRaw('LOWER(m_videos.description) LIKE ?', ['%' . strtolower($searchString) . '%']);
     
-        // If no videos are found, return a 404 response
+        // Fetch videos
+        $videos = $query->get();
+        // Check if videos exist
         if ($videos->isEmpty()) {
             return response()->json([
                 'result' => false,
-                'message' => 'No videos found matching the search criteria'
-            ], 404); // 404 Not Found
+                'message' => 'No videos found',
+            ], 404);
         }
     
-        // Return the found videos
+        // Format video data
+        $formattedVideos = $videos->map(function ($video) {
+            $videoInteraction = M_Videos::withCount(['likes', 'dislikes', 'views'])->findOrFail($video->id);
+            return [
+                'video_id' => $video->id,
+                'title' => $video->title,
+                'description' => $video->description,
+                'file_path' => $video->file_path ? url('/api/images/' . $video->file_path) : null,
+                'likes' => $videoInteraction->likes_count,
+                'dislikes' => $videoInteraction->dislikes_count,
+                'views' => $videoInteraction->views_count,
+                'user_id' => $video->user_id,
+                'user_name' => $video->username,
+                'user_profile_image' => env('APP_URL') . '/api/images/' . $video->profile_image,
+                'type' => $video->type,
+                'category_id' => $video->category_id,
+                'category_name' => $video->category_name,
+                'title_size' => $video->title_size,
+                'title_colour' => $video->title_colour,
+                'defaultthumbnail' => $video->defaultthumbnail,
+                'country_code' => $video->country_code,
+                'tags' => is_string($video->tags) ? json_decode($video->tags, true) ?? [] : $video->tags,
+                'video_type' => $video->video_type, // Added this
+                'uploaded_datetime' => optional($video->updated_at)->toDateTimeString(),
+            ];
+        });
+    
+        // Return response
         return response()->json([
             'result' => true,
             'message' => 'Videos fetched successfully',
-            'query' => $query, // Showing the search query
-            'videos_count' => $videos->count(), // Showing the count of videos found
-            'data' => $videos->map(function ($video) {
-                return [
-                    'video_id' => $video->id,
-                    'title' => $video->title,
-                    'description' => $video->description,
-                    'file_path' => url('storage/' . $video->file_path), // Full URL for file_path
-                    'user_id' => $video->user_id,
-                    'category_id' => $video->category_name,
-                    'type' => $video->type,
-                    'title_size' => $video->title_size,
-                    'title_colour' => $video->title_colour,
-                    'defaultthumbnail' => $video->defaultthumbnail,
-                    'country_code' => $video->country_code,
-                    'created_at' => $video->created_at,
-                    'updated_at' => $video->updated_at,
-                ];
-            })
-        ]);
+            'data' => $formattedVideos,
+        ], 200);
+
     }
     
     public function update(Request $request, $id)

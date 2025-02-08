@@ -34,22 +34,22 @@ class M_Videos extends Model
 
     public function interactions()
     {
-        return $this->hasMany(m_video_interactions::class);
+        return $this->hasMany(M_Video_Interactions::class);
     }
 
     public function likes()
     {
-        return $this->interactions()->where('type', 'like');
+        return $this->hasMany(M_Video_Interactions::class, 'video_id')->where('type', 'like');
     }
 
     public function dislikes()
     {
-        return $this->interactions()->where('type', 'dislike');
+        return $this->hasMany(M_Video_Interactions::class, 'video_id')->where('type', 'dislike');
     }
 
     public function views()
     {
-        return $this->interactions()->where('type', 'view');
+        return $this->hasMany(M_Video_Interactions::class, 'video_id')->where('type', 'view');
     }
 }
 
