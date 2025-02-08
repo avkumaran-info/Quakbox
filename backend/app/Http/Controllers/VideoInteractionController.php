@@ -69,7 +69,7 @@ class VideoInteractionController extends Controller
 
         if ($interaction) {
             if ($interaction->type === 'view') {
-                return response()->json(['result' => false, 'message' => 'You already disliked this video'], 400);
+                return response()->json(['result' => false, 'message' => 'You already viewed this video'], 400);
             }
             $interaction->update(['type' => 'view']);
         } else {
