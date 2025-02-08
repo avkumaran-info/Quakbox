@@ -64,62 +64,58 @@ const UploadVideo = () => {
 
   const handleFileUpload = async (e) => {
     const formData = new FormData();
-  
-    // Define a mapping for category types
-    const categoryTypeMap = {
-      video: 1,
-      music: 2,
-      photo: 3,
-      webcam: 4, // If necessary
-    };
-  
-    // Append type, temp_upload, and file
-    formData.append("type", categoryTypeMap[selectedCategory]); // Assign correct type
-    formData.append("temp_upload", true); // This will be sent as 'temp_upload=true'
-    formData.append("video_file", e.target.files[0]); // Ensure field name matches backend
-  
-    setIsLoading(true); // Start loading
-  
+    
+    const file = e.target.files[0];
+    const fileType = file.type.startsWith("video/") ? 1 
+                   : file.type.startsWith("audio/") ? 2 
+                   : file.type.startsWith("image/") ? 3 
+                   : 4; // Default to webcam  
+    formData.append("video_type", fileType);  // ✅ Fix: Corrected key
+    formData.append("temp_upload", true);
+    formData.append("video_file", file);
+
+    setIsLoading(true);
+
     try {
-      const token = localStorage.getItem("api_token"); // Get token from localStorage
-  
+      const token = localStorage.getItem("api_token");
       if (!token) {
         alert("Authorization token not found. Please log in.");
         return;
       }
-      
+
       const response = await axios.post(
         "https://develop.quakbox.com/admin/api/videos/upload",
         formData,
         {
           headers: { 
             Authorization: `Bearer ${token}`,
-            "Content-Type": "multipart/form-data", // Ensure correct header
+            "Content-Type": "multipart/form-data",
           },
         }
       );
-  
-      setIsLoading(false); // End loading
-  
+
+      setIsLoading(false);
+
       if (response.data.result) {
-        // Redirect to add video page with video data
+        // Pass videoType to the next page
         const videoData = {
           message: response.data.message,
           filePath: response.data.file_path,
           thumbnails: response.data.thumbnails,
-          fileType: selectedCategory, // Add fileType here
+          videoType: response.data.fileType, // ✅ Ensure this is passed
         };
-  
+
         navigate("/addvideo", { state: { videoData } });
       } else {
-        alert(response.data.message); // Handle errors
+        alert(response.data.message);
       }
     } catch (error) {
       setIsLoading(false);
       console.error("Error uploading video:", error);
       alert("Upload failed. Please try again.");
     }
-  };  
+};
+
 
   // Content for each category
   const categoryContent = {

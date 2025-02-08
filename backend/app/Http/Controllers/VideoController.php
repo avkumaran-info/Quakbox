@@ -24,9 +24,8 @@ class VideoController extends Controller
         if ($request->hasFile('video_file') && filter_var($request->temp_upload, FILTER_VALIDATE_BOOLEAN)) {
             $validator = Validator::make($request->all(), [
                 'video_file' => 'required|file|mimes:mp4,mp3,mov,avi,mkv,jpeg,png,jpg,gif',
-
             ]);
-    
+        
             if ($validator->fails()) {
                 return response()->json([
                     'result' => false,
@@ -34,7 +33,7 @@ class VideoController extends Controller
                     'errors' => $validator->errors(),
                 ], 422);
             }
-    
+        
             $file = $request->file('video_file');
             $userId = $request->user()->id;
             $tempFolder = 'uploads/videos/temp';
@@ -42,22 +41,36 @@ class VideoController extends Controller
             $mediaPath = $file->storeAs($tempFolder, $uniqueFileName, 'public');
             $videoPath = Storage::disk('public')->path($mediaPath);
             $filePath = env('APP_URL') . '/api/images/' . $mediaPath;
-    
-            // Generate thumbnails and save them in the correct path
+        
+            // **Detect the file type and assign numerical values**
+            $mimeType = $file->getMimeType();
+            if (str_starts_with($mimeType, 'video/')) {
+                $fileType = 1; // Video
+            } elseif (str_starts_with($mimeType, 'audio/')) {
+                $fileType = 2; // Audio
+            } elseif (str_starts_with($mimeType, 'image/')) {
+                $fileType = 3; // Photo
+            } else {
+                $fileType = 4; // Webcam (assuming default unknown type as webcam)
+            }
+        
+            // Generate thumbnails
             $thumbnails = $this->generateThumbnails($videoPath, $uniqueFileName);
-    
+        
             Log::info('Video uploaded to temporary storage', ['file_path' => $filePath]);
             Log::info('Generated Thumbnails', ['thumbnails' => $thumbnails]);
-    
+        
             return response()->json([
                 'result' => true,
-                'message' => 'Video uploaded successfully',
+                'message' => 'File uploaded successfully',
                 'file_path' => $filePath,
+                'video_type' => $fileType, // ✅ Assign numerical file type
                 'thumbnails' => $thumbnails,
             ], 201);
-        }
-    
-        if ($request->has('file_path') && $request->has('title') && filter_var($request->temp_upload, FILTER_VALIDATE_BOOLEAN) === false) {
+        }        
+           
+        // Step 2: Process permanent storage for video
+        if ($request->has('file_path') && $request->has('title') && !filter_var($request->temp_upload, FILTER_VALIDATE_BOOLEAN)) {
             Log::info('Processing permanent storage for video', ['temp_upload' => $request->temp_upload]);
         
             $filePath = $request->file_path;
@@ -92,7 +105,20 @@ class VideoController extends Controller
             // Delete the file from temp storage after moving
             Storage::disk('public')->delete($relativeFilePath);
         
-            $defaultThumbnailPath = $request->has('defaultthumbnail') ? $request->defaultthumbnail : null;
+            // **Detect file type and assign `video_type`**
+            $extension = pathinfo($fileName, PATHINFO_EXTENSION);
+            if (in_array($extension, ['mp4', 'mkv', 'avi', 'mov'])) {
+                $videoType = 1; // Video
+            } elseif (in_array($extension, ['mp3', 'wav', 'm4a'])) {
+                $videoType = 2; // Audio
+            } elseif (in_array($extension, ['jpeg', 'png', 'jpg', 'gif'])) {
+                $videoType = 3; // Photo
+            } else {
+                $videoType = 4; // Webcam (Default)
+            }
+        
+            // Check if thumbnail is provided
+            $defaultThumbnailPath = $request->defaultthumbnail ?? null;
             if (!$defaultThumbnailPath) {
                 return response()->json([
                     'result' => false,
@@ -100,8 +126,8 @@ class VideoController extends Controller
                 ], 400);
             }
         
-            $tags = is_array($request->tags) ? implode(',', $request->tags) : $request->tags;
-            $tagsArray = array_map('trim', explode(',', $tags));
+            // Convert tags to array
+            $tagsArray = array_map('trim', explode(',', $request->tags ?? ''));
         
             try {
                 $video = M_Videos::create([
@@ -115,7 +141,7 @@ class VideoController extends Controller
                     'title_colour' => $request->title_colour,
                     'defaultthumbnail' => $defaultThumbnailPath,
                     'country_code' => $request->country_code,
-                    'video_type' => $request->video_type,  // Added this
+                    'video_type' => $videoType, // ✅ Save `video_type`
                     'tags' => json_encode($tagsArray),
                     'temp_upload' => false,
                 ]);
@@ -134,60 +160,79 @@ class VideoController extends Controller
                     'message' => 'Database error: ' . $e->getMessage(),
                 ], 500);
             }
-        }
+        }        
         
         return response()->json([
             'result' => false,
             'message' => 'Invalid request',
         ], 422);
-    }        
-    private function generateThumbnails($filePath, $uniqueFileName)
+    }
+       
+    public function generateThumbnails($filePath, $uniqueFileName)
     {
         try {
+            // Initialize FFMpeg and FFProbe
             $ffmpeg = FFMpeg::create();
-            $media = $ffmpeg->open($filePath);
             $ffprobe = FFProbe::create();
 
-            // Check if the file is a video
-            $videoStreams = $ffprobe->streams($filePath)->videos();
-            $isVideo = $videoStreams->count() > 0;
-
+            // Check the file type
+            $extension = pathinfo($filePath, PATHINFO_EXTENSION);
             $thumbnailFolder = 'uploads/thumbnails';
 
             if (!Storage::disk('public')->exists($thumbnailFolder)) {
                 Storage::disk('public')->makeDirectory($thumbnailFolder);
             }
 
-            // 📌 If it's a VIDEO: Extract a frame as a thumbnail
-            if ($isVideo) {
-                $duration = $ffprobe->format($filePath)->get('duration');
-                $timestamp = round($duration / 2); // Take a frame from the middle
+            $thumbnails = [];
 
-                $thumbnailFileName = $uniqueFileName . '-video.jpg';
-                $thumbnailPath = $thumbnailFolder . '/' . $thumbnailFileName;
+            if (in_array($extension, ['mp4', 'avi', 'mov', 'mkv'])) {
+                // 📌 Generate 4 thumbnails for videos
+                $media = $ffmpeg->open($filePath);
+                $videoStreams = $ffprobe->streams($filePath)->videos();
+                $isVideo = $videoStreams->count() > 0;
 
-                $media->frame(TimeCode::fromSeconds($timestamp))
-                    ->save(Storage::disk('public')->path($thumbnailPath));
+                if ($isVideo) {
+                    $duration = $ffprobe->format($filePath)->get('duration');
 
-                return [env('APP_URL') . '/api/images/' . $thumbnailPath];
-            } 
+                    for ($i = 1; $i <= 4; $i++) {
+                        $timestamp = round(($i * $duration) / 5); // Capture at different positions
+                        $thumbnailFileName = $uniqueFileName . "-video-$i.jpg";
+                        $thumbnailPath = $thumbnailFolder . '/' . $thumbnailFileName;
 
-            // 📌 If it's an AUDIO: Generate a waveform image
-            else {
+                        $media->frame(TimeCode::fromSeconds($timestamp))
+                            ->save(Storage::disk('public')->path($thumbnailPath));
+
+                        $thumbnails[] = env('APP_URL') . '/api/images/' . $thumbnailPath;
+                    }
+                }
+            } elseif (in_array($extension, ['mp3', 'wav', 'ogg'])) {
+                // 📌 Generate 1 waveform thumbnail for audio
                 $waveformFileName = $uniqueFileName . '-audio.png';
                 $waveformPath = Storage::disk('public')->path($thumbnailFolder . '/' . $waveformFileName);
 
-                // Run ffmpeg waveform generation
+                // Generate waveform using FFmpeg
                 $command = "ffmpeg -i $filePath -filter_complex 'aformat=channel_layouts=mono,showwavespic=s=640x120:colors=blue' -frames:v 1 $waveformPath";
                 exec($command);
 
                 if (file_exists($waveformPath)) {
-                    return [env('APP_URL') . '/api/images/' . $thumbnailFolder . '/' . $waveformFileName];
+                    $thumbnails[] = env('APP_URL') . '/api/images/' . $thumbnailFolder . '/' . $waveformFileName;
                 } else {
                     Log::error('Waveform generation failed for audio: ' . $filePath);
-                    return ['error' => 'Waveform generation failed'];
+                    $thumbnails[] = ['error' => 'Waveform generation failed'];
                 }
+            } elseif (in_array($extension, ['png', 'jpg', 'jpeg', 'gif'])) {
+                // 📌 Directly use the image as a thumbnail
+                $thumbnailFileName = $uniqueFileName . '-photo.jpg';
+                $thumbnailPath = $thumbnailFolder . '/' . $thumbnailFileName;
+
+                Storage::disk('public')->put($thumbnailPath, file_get_contents($filePath));
+                $thumbnails[] = env('APP_URL') . '/api/images/' . $thumbnailPath;
+            } else {
+                Log::error('Unsupported file format: ' . $extension);
+                return ['error' => 'Unsupported file format'];
             }
+
+            return $thumbnails;
         } catch (\Exception $e) {
             Log::error('Thumbnail generation failed: ' . $e->getMessage());
             return ['error' => $e->getMessage()];
