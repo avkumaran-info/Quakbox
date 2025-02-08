@@ -9,6 +9,7 @@ use App\Models\M_Videos;
 use FFMpeg\FFMpeg;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Validator;
 use FFMpeg\Coordinate\TimeCode;
 use FFMpeg\FFProbe;
@@ -196,21 +197,26 @@ class VideoController extends Controller
     public function index(Request $request, $category_id = null)
     {
         // Build the query
-        $query = M_Videos::with('category');
+        $query = DB::table('m_videos')
+        ->join('users', 'm_videos.user_id', '=', 'users.id')
+        ->join('m_videocategory', 'm_videos.category_id', '=', 'm_videocategory.category_id')
+        ->select('m_videos.*', 'm_videocategory.category_name as category_name', 
+                        'users.username as username', 'users.profile_image as profile_image');
     
         // Apply category filter if category_id is provided
         if (!is_null($category_id)) {
-            $query->where('category_id', $category_id);
+            $query->where('m_videocategory.category_id', $category_id);
         }
+        // Public videos only
+        $query->where('type', 'Public');
     
         // Fetch videos
         $videos = $query->get();
-    
         // Check if videos exist
         if ($videos->isEmpty()) {
             return response()->json([
                 'result' => false,
-                'message' => 'No videos found' . ($category_id ? ' for this category' : ''),
+                'message' => 'No videos found',
             ], 404);
         }
     
@@ -221,20 +227,20 @@ class VideoController extends Controller
                 'title' => $video->title,
                 'description' => $video->description,
                 'file_path' => $video->file_path ? url('/api/images/' . $video->file_path) : null,
+                'views_cnt' => $video->views,
                 'user_id' => $video->user_id,
-                'category' => $video->category ? [
-                    'id' => $video->category->id,
-                    'name' => $video->category->name,
-                ] : null,
+                'user_name' => $video->username,
+                'user_profile_image' => $video->profile_image,
                 'type' => $video->type,
+                'category_id' => $video->category_id,
+                'category_name' => $video->category_name,
                 'title_size' => $video->title_size,
                 'title_colour' => $video->title_colour,
                 'defaultthumbnail' => $video->defaultthumbnail,
                 'country_code' => $video->country_code,
                 'tags' => is_string($video->tags) ? json_decode($video->tags, true) ?? [] : $video->tags,
                 'video_type' => $video->video_type, // Added this
-                'created_at' => optional($video->created_at)->toDateTimeString(),
-                'updated_at' => optional($video->updated_at)->toDateTimeString(),
+                'uploaded_datetime' => optional($video->updated_at)->toDateTimeString(),
             ];
         });
     
