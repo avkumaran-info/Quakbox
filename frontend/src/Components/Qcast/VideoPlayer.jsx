@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { useLocation, useParams, useNavigate } from "react-router-dom";
 import NavBar from "../Dashboard/NavBar";
+import profileImage from "../../assets/images/user1.png";
 import axios from "axios"; // Ensure axios is imported
 
 const VideoPlayer = () => {
@@ -75,7 +76,7 @@ const VideoPlayer = () => {
   };
 
   if (!video) {
-    return <h2 className="text-center mt-5">Video not found or loading...</h2>;
+    return <h2 className="text-center mt-5">Loading...</h2>;
   }
 
   return (
@@ -97,7 +98,7 @@ const VideoPlayer = () => {
               {/* Channel Info */}
               <div className="d-flex align-items-center mt-2">
                 <img
-                  src="your-channel-logo.png"
+                  src={profileImage}
                   alt="Channel Logo"
                   className="rounded-circle me-2 shadow-sm"
                   width="40"

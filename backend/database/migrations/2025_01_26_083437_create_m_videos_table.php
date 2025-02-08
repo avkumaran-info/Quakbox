@@ -26,6 +26,7 @@ return new class extends Migration
             $table->string('defaultthumbnail', 255)->nullable();
             $table->string('country_code', 10)->nullable();
             $table->json('tags')->nullable();
+            $table->integer('video_type')->comment('1 = Video, 2 = Live Video, 3 = Photo Slides, 4 = Audio');
             $table->foreign('user_id')->references('id')->on('users')->onDelete('cascade');
         });
     }

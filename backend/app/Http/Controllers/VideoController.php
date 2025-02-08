@@ -22,7 +22,8 @@ class VideoController extends Controller
         // Step 1: Upload video temporarily and generate thumbnails
         if ($request->hasFile('video_file') && filter_var($request->temp_upload, FILTER_VALIDATE_BOOLEAN)) {
             $validator = Validator::make($request->all(), [
-                'video_file' => 'required|file|mimes:mp4,mov',
+                'video_file' => 'required|file|mimes:mp4,mp3,mov,avi,mkv,jpeg,png,jpg,gif',
+
             ]);
     
             if ($validator->fails()) {
@@ -113,6 +114,7 @@ class VideoController extends Controller
                     'title_colour' => $request->title_colour,
                     'defaultthumbnail' => $defaultThumbnailPath,
                     'country_code' => $request->country_code,
+                    'video_type' => $request->video_type,  // Added this
                     'tags' => json_encode($tagsArray),
                     'temp_upload' => false,
                 ]);
@@ -138,52 +140,59 @@ class VideoController extends Controller
             'message' => 'Invalid request',
         ], 422);
     }        
-    
     private function generateThumbnails($filePath, $uniqueFileName)
     {
         try {
             $ffmpeg = FFMpeg::create();
-            $video = $ffmpeg->open($filePath);
-            // Get the video duration
+            $media = $ffmpeg->open($filePath);
             $ffprobe = FFProbe::create();
-            $duration = $ffprobe->format($filePath)->get('duration');
-    
-            // Determine timestamps dynamically
-            $thumbnailCount = 4; // Number of thumbnails
-            $timestamps = [];
-            for ($i = 1; $i <= $thumbnailCount; $i++) {
-                $timestamps[] = round(($duration / ($thumbnailCount + 1)) * $i); // Avoid first and last frames
-            }
-    
-            $thumbnails = [];
-            $thumbnailFolder = 'uploads/thumbnails';  // Store thumbnails in a folder
-    
-            // Ensure the thumbnail folder exists
+
+            // Check if the file is a video
+            $videoStreams = $ffprobe->streams($filePath)->videos();
+            $isVideo = $videoStreams->count() > 0;
+
+            $thumbnailFolder = 'uploads/thumbnails';
+
             if (!Storage::disk('public')->exists($thumbnailFolder)) {
                 Storage::disk('public')->makeDirectory($thumbnailFolder);
             }
-    
-            // Generate thumbnails for calculated timestamps
-            foreach ($timestamps as $timestamp) {
-                $thumbnailFileName = $uniqueFileName . '-' . $timestamp . '.jpg'; 
+
+            // 📌 If it's a VIDEO: Extract a frame as a thumbnail
+            if ($isVideo) {
+                $duration = $ffprobe->format($filePath)->get('duration');
+                $timestamp = round($duration / 2); // Take a frame from the middle
+
+                $thumbnailFileName = $uniqueFileName . '-video.jpg';
                 $thumbnailPath = $thumbnailFolder . '/' . $thumbnailFileName;
-    
-                // Generate the thumbnail at the specified timestamp
-                $video->frame(TimeCode::fromSeconds($timestamp))
+
+                $media->frame(TimeCode::fromSeconds($timestamp))
                     ->save(Storage::disk('public')->path($thumbnailPath));
-    
-                // Save the relative path of the generated thumbnail
-                $thumbnails[] = env('APP_URL') . '/api/images/' . $thumbnailPath;
+
+                return [env('APP_URL') . '/api/images/' . $thumbnailPath];
+            } 
+
+            // 📌 If it's an AUDIO: Generate a waveform image
+            else {
+                $waveformFileName = $uniqueFileName . '-audio.png';
+                $waveformPath = Storage::disk('public')->path($thumbnailFolder . '/' . $waveformFileName);
+
+                // Run ffmpeg waveform generation
+                $command = "ffmpeg -i $filePath -filter_complex 'aformat=channel_layouts=mono,showwavespic=s=640x120:colors=blue' -frames:v 1 $waveformPath";
+                exec($command);
+
+                if (file_exists($waveformPath)) {
+                    return [env('APP_URL') . '/api/images/' . $thumbnailFolder . '/' . $waveformFileName];
+                } else {
+                    Log::error('Waveform generation failed for audio: ' . $filePath);
+                    return ['error' => 'Waveform generation failed'];
+                }
             }
-    
-            return $thumbnails;
-    
         } catch (\Exception $e) {
             Log::error('Thumbnail generation failed: ' . $e->getMessage());
-            return [];
+            return ['error' => $e->getMessage()];
         }
-    }    
-    
+    }
+
     public function index(Request $request, $category_id = null)
     {
         // Build the query
@@ -223,6 +232,7 @@ class VideoController extends Controller
                 'defaultthumbnail' => $video->defaultthumbnail,
                 'country_code' => $video->country_code,
                 'tags' => is_string($video->tags) ? json_decode($video->tags, true) ?? [] : $video->tags,
+                'video_type' => $video->video_type, // Added this
                 'created_at' => optional($video->created_at)->toDateTimeString(),
                 'updated_at' => optional($video->updated_at)->toDateTimeString(),
             ];
@@ -267,6 +277,7 @@ class VideoController extends Controller
                     : null,
                 'country_code' => $video->country_code,
                 'tags' => is_string($video->tags) ? json_decode($video->tags, true) : $video->tags,
+                'video_type' => $video->video_type, // Added this
                 'created_at' => $video->created_at,
                 'updated_at' => $video->updated_at,
             ]
