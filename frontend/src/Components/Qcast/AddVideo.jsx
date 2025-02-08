@@ -44,7 +44,7 @@ const AddVideo = () => {
    const [descError, setDescError] = useState(false);
    const [typeError, setTypeError] = useState(false);
    const [countryError, setCountryError] = useState(false);   
-
+   const [thumbnailError, setThumbnailError] = useState(false);   
     const handleFileChange = (event) => {
         setFile(event.target.files[0]);
     };
@@ -67,7 +67,7 @@ const AddVideo = () => {
         } else {
             setTitleError(false);
         }
-    
+      
         // Description validation
         if (!description.trim()) {
             setDescError(true);
@@ -91,7 +91,12 @@ const AddVideo = () => {
         } else {
             setCountryError(false);
         }
-    
+        if (!selectedThumbnail) {
+          setThumbnailError(true);
+          isValid = false;
+        } else {
+          setThumbnailError(false);
+        }
         // Stop execution if validation fails
         if (!isValid) {
             return;
@@ -118,7 +123,7 @@ const AddVideo = () => {
             type: type,
             video_type: videoTypeNumber, // Ensure it is a number
             country_code: selectedCountryCode,
-            title_color: titleColor,
+            title_colour: titleColor,
             title_size: titleSize,
             defaultthumbnail: selectedThumbnail,
             tags: tagsArray.join(","), // ✅ Convert array to a string
@@ -464,6 +469,11 @@ const AddVideo = () => {
                   isSearchable
                   onChange={(selectedOption) => setSelectedCountryCode(selectedOption?.value || null)}
                   className={countryError ? "border border-danger" : ""}
+                  filterOption={(option, inputValue) =>
+                    option.data.label.props.children[1]
+                      .toLowerCase()
+                      .includes(inputValue.toLowerCase())
+                    }
                 />
                 {countryError && <small className="text-danger">Country selection is required</small>}
               </div>
@@ -490,106 +500,108 @@ const AddVideo = () => {
                     </div>
                   ))}
                 </div>
-
+            {/* Thumbnail Section */}
+            <div className="mt-1">
+              <h6>Thumbnails</h6>
               <div className="mt-1">
-                    {/* Thumbnail Section */}
-                    <h6>Thumbnails</h6>
-                    <div className="mt-1">
-                      <div className="row g-4">
-                        {Array.isArray(thumbnails) && thumbnails.length > 0 ? (
-                          ["mp3", "png", "jpeg", "jpg", "gif"].includes(videoType.toLowerCase()) ? (
-                            // ✅ Show only the first thumbnail for audio and image files
-                            <div className="col-md-3">
-                              <div
-                                className={`card ${selectedThumbnail === thumbnails[0] ? "border-primary" : ""}`}
-                                style={{
-                                  cursor: "pointer",
-                                  boxShadow: selectedThumbnail === thumbnails[0] ? "0 0 10px rgba(0, 123, 255, 0.5)" : "",
-                                }}
-                                onClick={() => handleThumbnailClick(thumbnails[0])}
-                              >
-                                <img
-                                  src={thumbnails[0]}
-                                  className="card-img-top"
-                                  alt="Thumbnail"
-                                  style={{ width: "100%", height: "150px", objectFit: "cover" }}
-                                />
-                              </div>
-                            </div>
-                          ) : (
-                            // ✅ Show up to 4 thumbnails for videos
-                            thumbnails.slice(0, 4).map((thumbnail, index) => (
-                              <div key={index} className="col-md-3">
-                                <div
-                                  className={`card ${selectedThumbnail === thumbnail ? "border-primary" : ""}`}
-                                  style={{
-                                    cursor: "pointer",
-                                    boxShadow: selectedThumbnail === thumbnail ? "0 0 10px rgba(0, 123, 255, 0.5)" : "",
-                                  }}
-                                  onClick={() => handleThumbnailClick(thumbnail)}
-                                >
-                                  <img
-                                    src={thumbnail}
-                                    className="card-img-top"
-                                    alt={`Thumbnail ${index + 1}`}
-                                    style={{ width: "100%", height: "150px", objectFit: "cover" }}
-                                  />
-                                </div>
-                              </div>
-                            ))
-                          )
-                        ) : (
-                          <p>No thumbnails available.</p>
-                        )}
-                      </div>
-                    </div>
-                          {/* Custom Thumbnail Upload Button */}
-                          <div className="text-center mt-2 mb-3">
-                            <button className="btn btn-outline-secondary btn-lg" onClick={openFilePicker}>
-                              Custom Thumbnail
-                            </button>
-                          </div>
-
-                          {/* Hidden File Input */}
-                          <input
-                            type="file"
-                            accept="image/*"
-                            ref={fileInputRef}
-                            style={{ display: 'none' }}
-                            onChange={handleCustomThumbnailUpload}
+                <div className="row g-4">
+                  {Array.isArray(thumbnails) && thumbnails.length > 0 ? (
+                    ["mp3", "png", "jpeg", "jpg", "gif"].includes(videoType.toLowerCase()) ? (
+                      // ✅ Show only the first thumbnail for audio and image files
+                      <div className="col-md-3">
+                        <div
+                          className={`card ${selectedThumbnail === thumbnails[0] ? "border-primary" : ""}`}
+                          style={{
+                            cursor: "pointer",
+                            boxShadow: selectedThumbnail === thumbnails[0] ? "0 0 10px rgba(0, 123, 255, 0.5)" : "",
+                          }}
+                          onClick={() => handleThumbnailClick(thumbnails[0])}
+                        >
+                          <img
+                            src={thumbnails[0]}
+                            className="card-img-top"
+                            alt="Thumbnail"
+                            style={{ width: "100%", height: "150px", objectFit: "cover" }}
                           />
-
-                          {/* Display Selected Thumbnail */}
-                          {selectedThumbnail && (
-                              <div className="mt-3 d-flex flex-column align-items-center">
-                                <h6 className="mb-2">Selected Thumbnail</h6>
-                                <div
-                                  style={{
-                                    width: "400px",
-                                    height: "250px",
-                                    border: "2px solid #000",
-                                    display: "flex",
-                                    justifyContent: "center",
-                                    alignItems: "center",
-                                    overflow: "hidden",
-                                    borderRadius: "10px",
-                                  }}
-                                >
-                                  <img
-                                    src={selectedThumbnail}
-                                    alt="Selected Thumbnail"
-                                    style={{
-                                      width: "100%",
-                                      height: "100%",
-                                      objectFit: "cover",
-                                    }}
-                                  />
-                                </div>
-                              </div>
-                            )}
-
+                        </div>
+                      </div>
+                    ) : (
+                      // ✅ Show up to 4 thumbnails for videos
+                      thumbnails.slice(0, 4).map((thumbnail, index) => (
+                        <div key={index} className="col-md-3">
+                          <div
+                            className={`card ${selectedThumbnail === thumbnail ? "border-primary" : ""}`}
+                            style={{
+                              cursor: "pointer",
+                              boxShadow: selectedThumbnail === thumbnail ? "0 0 10px rgba(0, 123, 255, 0.5)" : "",
+                            }}
+                            onClick={() => handleThumbnailClick(thumbnail)}
+                          >
+                            <img
+                              src={thumbnail}
+                              className="card-img-top"
+                              alt={`Thumbnail ${index + 1}`}
+                              style={{ width: "100%", height: "150px", objectFit: "cover" }}
+                            />
                           </div>
-                       
+                        </div>
+                      ))
+                    )
+                  ) : (
+                    <p>No thumbnails available.</p>
+                  )}
+                </div>
+              </div>
+
+              {/* Validation Message for Thumbnail Selection */}
+              {thumbnailError && <small className="text-danger">Please select a thumbnail</small>}
+
+              {/* Custom Thumbnail Upload Button */}
+              <div className="text-center mt-2 mb-3">
+                <button className="btn btn-outline-secondary btn-lg" onClick={openFilePicker}>
+                  Custom Thumbnail
+                </button>
+              </div>
+
+              {/* Hidden File Input */}
+              <input
+                type="file"
+                accept="image/*"
+                ref={fileInputRef}
+                style={{ display: 'none' }}
+                onChange={handleCustomThumbnailUpload}
+              />
+
+              {/* Display Selected Thumbnail */}
+              {selectedThumbnail && (
+                <div className="mt-3 d-flex flex-column align-items-center">
+                  <h6 className="mb-2">Selected Thumbnail</h6>
+                  <div
+                    style={{
+                      width: "400px",
+                      height: "250px",
+                      border: "2px solid #000",
+                      display: "flex",
+                      justifyContent: "center",
+                      alignItems: "center",
+                      overflow: "hidden",
+                      borderRadius: "10px",
+                    }}
+                  >
+                    <img
+                      src={selectedThumbnail}
+                      alt="Selected Thumbnail"
+                      style={{
+                        width: "100%",
+                        height: "100%",
+                        objectFit: "cover",
+                      }}
+                    />
+                  </div>
+                </div>
+              )}
+            </div>
+    
               {isPopupOpen && (
                 <div
                   className="modal fade show d-block"
@@ -715,8 +727,8 @@ const AddVideo = () => {
                 </div>
               )}
 
-            {/* ✅ Success or Error Message Popup */}
-            {message && (
+           {/* ✅ Access Restriction Popup */}
+                {message && (
                   <>
                     {/* Overlay to disable background interaction */}
                     <div
@@ -727,37 +739,41 @@ const AddVideo = () => {
                         width: "100vw",
                         height: "100vh",
                         backgroundColor: "rgba(0, 0, 0, 0.5)", // Semi-transparent black
-                        zIndex: 9999, // Higher than other elements
-                        pointerEvents: "auto", // Ensures it blocks interactions
+                        zIndex: 9999,
+                        pointerEvents: "auto",
                       }}
                     />
 
-                    {/* Error Message Modal */}
+                    {/* Restriction Message Modal */}
                     <div
                       style={{
                         position: "fixed",
                         top: "50%",
                         left: "50%",
                         transform: "translate(-50%, -50%)",
-                        backgroundColor: "#fff",
+                        backgroundColor: "white", 
                         padding: "20px",
                         borderRadius: "8px",
                         boxShadow: "0px 4px 10px rgba(0, 0, 0, 0.2)",
-                        zIndex: 10000, // Must be higher than overlay
+                        zIndex: 10000,
                         textAlign: "center",
+                        maxWidth: "400px",
                       }}
                     >
-                      <p>{message}</p>
+                      <p>{message}</p> 
                       <button
-                        onClick={() => setMessage("")}
+                        onClick={() => {
+                          setMessage("");
+                          navigate("/qcast");
+                        }}
                         className="btn btn-secondary"
                       >
                         OK
                       </button>
-                      {navigate("/qcast")}
                     </div>
                   </>
                 )}
+
 
               <div className="row mb-3 d-flex justify-content-center" style={{ marginTop :"20px" }}>
                 <div className="col-md-4 d-flex justify-content-between">
