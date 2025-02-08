@@ -13,11 +13,11 @@ use Laravel\Socialite\Facades\Socialite;
 
 //video Module
 use App\Http\Controllers\VideoController;
+use App\Http\Controllers\VideoInteractionController;
 use FFMpeg\Media\Video;
 
 // use App\Http\Controllers\VideoCommentController;
 // use App\Http\Controllers\VideoChannelController;
-// use App\Http\Controllers\VideoInteractionController;
 // use App\Http\Controllers\VideoSubscriptionController;
 
 /*
@@ -87,14 +87,21 @@ Route::get('images/flags/{filename}', function ($filename) {
 // Video Management
 Route::middleware('auth:api')->prefix('videos')->group(function () {
     Route::post('upload', [VideoController::class, 'videoUpload']);
-    Route::get('/', [VideoController::class, 'index']);
-    Route::get('categories/{id}', [VideoController::class, 'index']);
-    Route::get('categories/', [VideoController::class, 'index']);
-    Route::get('{id}', [VideoController::class, 'show']);
-    Route::delete('{id}', [VideoController::class, 'delete']);
-    Route::get('search/{query}', [VideoController::class, 'search']);   
+    Route::get('/{category_id?}', [VideoController::class, 'index']);
+    Route::get('{id}/show', [VideoController::class, 'show']);
+    Route::post('{id}/delete', [VideoController::class, 'delete']);
+    Route::get('search/{query?}', [VideoController::class, 'search']);   
 });
 
+// Video Interactions Management
+Route::middleware('auth:api')->group(function () {
+    Route::post('/videos/{videoId}/like', [VideoInteractionController::class, 'like']);
+    Route::post('/videos/{videoId}/dislike', [VideoInteractionController::class, 'dislike']);
+    Route::post('/videos/{videoId}/view', [VideoInteractionController::class, 'view']); // Can be accessed anonymously
+    Route::get('/videos/{videoId}/stats', [VideoInteractionController::class, 'stats']);
+    Route::post('/videos/{videoId}/removeinteraction', [VideoInteractionController::class, 'removeInteraction']);
+
+});
 
 // // Video Channel Management
 // Route::middleware('auth:api')->prefix('channel')->group(function () {
@@ -119,13 +126,7 @@ Route::middleware('auth:api')->prefix('videos')->group(function () {
 //     Route::delete('/comments/{id}', [VideoCommentController::class, 'destroy']);
 // });
 
-// // Video Interactions Management
-// Route::middleware('auth:api')->group(function () {
-//     Route::post('/videos/{videoId}/like', [VideoInteractionController::class, 'like']);
-//     Route::post('/videos/{videoId}/dislike', [VideoInteractionController::class, 'dislike']);
-//     Route::post('/videos/{videoId}/view', [VideoInteractionController::class, 'view']); // Can be accessed anonymously
-//     Route::get('/videos/{videoId}/stats', [VideoInteractionController::class, 'stats']);
-// });
+
 
 // // Video Subscriptions Management
 // Route::middleware('auth:api')->group(function () {

@@ -19,9 +19,9 @@ class M_Videos extends Model
     protected $fillable = [
         'title', 'file_path', 'description', 'user_id',
         'category_id', 'type', 'title_size', 'title_colour',
-        'defaultthumbnail', 'country_code','tags',
-    ];
-
+        'defaultthumbnail', 'country_code', 'tags', 'video_type',
+    ];    
+    
     public function category()
     {
         return $this->belongsTo(M_VideoCategory::class, 'category_id', 'category_id');
@@ -34,22 +34,22 @@ class M_Videos extends Model
 
     public function interactions()
     {
-        return $this->hasMany(m_video_interactions::class);
+        return $this->hasMany(M_Video_Interactions::class);
     }
 
     public function likes()
     {
-        return $this->interactions()->where('type', 'like');
+        return $this->hasMany(M_Video_Interactions::class, 'video_id')->where('type', 'like');
     }
 
     public function dislikes()
     {
-        return $this->interactions()->where('type', 'dislike');
+        return $this->hasMany(M_Video_Interactions::class, 'video_id')->where('type', 'dislike');
     }
 
     public function views()
     {
-        return $this->interactions()->where('type', 'view');
+        return $this->hasMany(M_Video_Interactions::class, 'video_id')->where('type', 'view');
     }
 }
 

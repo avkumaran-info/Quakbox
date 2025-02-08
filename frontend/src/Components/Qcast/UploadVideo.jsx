@@ -64,44 +64,58 @@ const UploadVideo = () => {
 
   const handleFileUpload = async (e) => {
     const formData = new FormData();
+    
+    const file = e.target.files[0];
+    const videoType = file.type.startsWith("video/") ? 1 
+                   : file.type.startsWith("audio/") ? 2 
+                   : file.type.startsWith("image/") ? 3 
+                   : 4; // Default to webcam  
+    formData.append("video_type", videoType);  // ✅ Fix: Corrected key
+    formData.append("temp_upload", true);
+    formData.append("video_file", file);
 
-    // Append temp_upload and file
-    formData.append("temp_upload", true); // This will be sent as 'temp_upload=true'
-    formData.append("video_file", e.target.files[0]); // Make sure the field name matches the backend
-
-    setIsLoading(true); // Start loading
+    setIsLoading(true);
 
     try {
-      const token = localStorage.getItem("api_token"); // Get token from localStorage
-
+      const token = localStorage.getItem("api_token");
       if (!token) {
-        setError("Authorization token not found. Please log in.");
+        alert("Authorization token not found. Please log in.");
         return;
       }
+
       const response = await axios.post(
         "https://develop.quakbox.com/admin/api/videos/upload",
         formData,
         {
-          headers: { Authorization: `Bearer ${token}` },
+          headers: { 
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "multipart/form-data",
+          },
         }
       );
-      setIsLoading(false); // End loading
+
+      setIsLoading(false);
+
       if (response.data.result) {
-        // Redirect to add video page with video data
+        // Pass videoType to the next page
         const videoData = {
           message: response.data.message,
           filePath: response.data.file_path,
           thumbnails: response.data.thumbnails,
+          videoType: response.data.videoType, // ✅ Ensure this is passed
         };
 
         navigate("/addvideo", { state: { videoData } });
       } else {
-        alert(response.data.message); // Handle errors
+        alert(response.data.message);
       }
     } catch (error) {
+      setIsLoading(false);
       console.error("Error uploading video:", error);
+      alert("Upload failed. Please try again.");
     }
-  };
+};
+
 
   // Content for each category
   const categoryContent = {
@@ -257,6 +271,7 @@ const UploadVideo = () => {
                           accept="image/*"
                           style={{ display: "none" }}
                           ref={fileInputRef}
+                          multiple
                           onChange={handleFileUpload}
                         />
                       </label>
