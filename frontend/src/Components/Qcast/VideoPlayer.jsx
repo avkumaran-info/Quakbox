@@ -152,8 +152,8 @@ const VideoPlayer = () => {
     <>
       <NavBar />
       <div
-        className="g-light text-dark min-vh-100 d-flex flex-column p-1"
-        style={{ marginTop: "40px" }}
+        className="g-light text-dark min-vh-100 d-flex flex-column me-3"
+        style={{ marginTop: "40px", marginRight: "25px" }}
       >
         <div className="row flex-grow-1">
           {/* Left Side - Video Section */}
