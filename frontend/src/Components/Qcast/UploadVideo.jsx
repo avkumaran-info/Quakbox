@@ -66,11 +66,11 @@ const UploadVideo = () => {
     const formData = new FormData();
     
     const file = e.target.files[0];
-    const fileType = file.type.startsWith("video/") ? 1 
+    const videoType = file.type.startsWith("video/") ? 1 
                    : file.type.startsWith("audio/") ? 2 
                    : file.type.startsWith("image/") ? 3 
                    : 4; // Default to webcam  
-    formData.append("video_type", fileType);  // ✅ Fix: Corrected key
+    formData.append("video_type", videoType);  // ✅ Fix: Corrected key
     formData.append("temp_upload", true);
     formData.append("video_file", file);
 
@@ -102,7 +102,7 @@ const UploadVideo = () => {
           message: response.data.message,
           filePath: response.data.file_path,
           thumbnails: response.data.thumbnails,
-          videoType: response.data.fileType, // ✅ Ensure this is passed
+          videoType: response.data.videoType, // ✅ Ensure this is passed
         };
 
         navigate("/addvideo", { state: { videoData } });
@@ -271,6 +271,7 @@ const UploadVideo = () => {
                           accept="image/*"
                           style={{ display: "none" }}
                           ref={fileInputRef}
+                          multiple
                           onChange={handleFileUpload}
                         />
                       </label>
