@@ -1,53 +1,90 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import user from "../../assets/images/user1.png";
 import user1Image from "../../assets/images/user1.png";
 import user2Image from "../../assets/images/user1.png";
 import user3Image from "../../assets/images/user1.png";
 import user4Image from "../../assets/images/user1.png";
 import NavBar from "../Dashboard/NavBar";
+import { useLocation } from "react-router-dom";
 
 const Chatroom = () => {
-  const speakers = [
-    { name: "Imman", img: user },
-    { name: "Laura", img: user },
-  ];
+  const location = useLocation();
+  const { title, allowChat, selectedPrivacy, selectIcon, userId } =
+    location.state || {};
 
-  const listeners = [
-    { name: "Imman", img: user },
-    { name: "Laura", img: user },
-    { name: "Jegan", img: user },
-    { name: "Raman", img: user },
-    { name: "Raman", img: user },
-    { name: "Raman", img: user },
-    { name: "Raman", img: user },
-    { name: "Raman", img: user },
-    { name: "Raman", img: user },
-    { name: "Raman", img: user },
-    { name: "Raman", img: user },
-    { name: "Raman", img: user },
-    { name: "Raman", img: user },
-    { name: "Raman", img: user },
-    { name: "Raman", img: user },
-    { name: "Raman", img: user },
-    { name: "Raman", img: user },
-    { name: "Raman", img: user },
-    { name: "Raman", img: user },
-    { name: "Raman", img: user },
-    { name: "Raman", img: user },
-    { name: "Raman", img: user },
-    { name: "Raman", img: user },
-    { name: "Raman", img: user },
-    { name: "Raman", img: user },
-    { name: "Raman", img: user },
-    { name: "Raman", img: user },
-    { name: "Raman", img: user },
-    { name: "Raman", img: user },
-    { name: "Raman", img: user },
-    { name: "Raman", img: user },
-    { name: "Raman", img: user },
-  ];
+  const [speakers, setSpeakers] = useState([
+    { id: userId, name: "You", img: user, micStatus: true },
+    { id: "2", name: "You", img: user, micStatus: false },
+  ]);
+  const [listeners, setListeners] = useState([
+    { id: "3", name: "Bob", img: user },
+    { id: "4", name: "Eve", img: user },
+  ]);
+
+  const [micStream, setMicStream] = useState(null);
+
+  const [requests, setRequests] = useState([]); // List of listeners requesting to speak
+
+  useEffect(() => {
+    return () => {
+      // Stop mic when user leaves
+      if (micStream) {
+        micStream.getTracks().forEach((track) => track.stop());
+      }
+    };
+  }, [micStream]);
+
+  // Toggle mic for speakers only
+  const toggleMic = async () => {
+    setSpeakers((prevSpeakers) =>
+      prevSpeakers.map((speaker) => {
+        if (speaker.id === userId) {
+          if (!speaker.micOn) {
+            navigator.mediaDevices
+              .getUserMedia({ audio: true })
+              .then((stream) => {
+                setMicStream(stream);
+              })
+              .catch((error) => {
+                console.error("Mic access denied:", error);
+              });
+          } else {
+            if (micStream) {
+              micStream.getTracks().forEach((track) => track.stop());
+            }
+          }
+          return { ...speaker, micOn: !speaker.micOn };
+        }
+        return speaker;
+      })
+    );
+  };
+
+  // Listener requests to speak
+  const requestToSpeak = (listenerId, listenerName) => {
+    if (!requests.some((req) => req.id === listenerId)) {
+      setRequests([...requests, { id: listenerId, name: listenerName }]);
+    }
+  };
+
+  // Admin accepts request
+  const acceptRequest = (listenerId) => {
+    const acceptedUser = listeners.find(
+      (listener) => listener.id === listenerId
+    );
+    if (acceptedUser) {
+      setSpeakers([...speakers, { ...acceptedUser, micOn: false }]); // Add to speakers
+      setListeners(listeners.filter((listener) => listener.id !== listenerId)); // Remove from listeners
+    }
+    setRequests(requests.filter((req) => req.id !== listenerId)); // Remove request
+  };
+
+  // Admin rejects request
+  const rejectRequest = (listenerId) => {
+    setRequests(requests.filter((req) => req.id !== listenerId)); // Remove request
+  };
+
   const [showExtraSection, setShowExtraSection] = useState(false);
-  const [chatAllowed, setChatAllowed] = useState(true);
   const toggleExtraSection = () => {
     setShowExtraSection((prev) => !prev);
   };
@@ -296,12 +333,13 @@ const Chatroom = () => {
             >
               <div className="d-flex justify-content-between align-items-center">
                 <div>
-                  <h6 className="mb-1">Group name</h6>
+                  <h6 className="mb-1">{title}</h6>
                   <span
                     className="text-muted d-flex align-items-center"
                     style={{ fontSize: "14px" }}
                   >
-                    <i className="fas fa-user-group me-1"></i> Friends only
+                    <i className={`fas ${selectIcon} me-1`}></i>{" "}
+                    {selectedPrivacy}
                   </span>
                 </div>
                 <button
@@ -336,15 +374,13 @@ const Chatroom = () => {
                       {/* Mic Icon - Positioned at Bottom-Right Inside Image */}
                       <i
                         className={`fas ${
-                          user.micStatus
-                            ? "fa-microphone-slash"
-                            : "fa-microphone"
+                          user.micOn ? "fa-microphone" : "fa-microphone-slash"
                         } position-absolute`}
                         style={{
                           bottom: "5px",
                           right: "5px",
                           fontSize: "16px",
-                          color: user.micStatus ? "red" : "green",
+                          color: user.micOn ? "green" : "red",
                           background: "#fff",
                           borderRadius: "50%",
                           padding: "5px",
@@ -406,6 +442,7 @@ const Chatroom = () => {
                 <button
                   className="btn btn-light rounded-circle d-flex align-items-center justify-content-center"
                   style={{ width: "60px", height: "60px", borderColor: "#ddd" }}
+                  onClick={toggleMic}
                 >
                   <i className="fas fa-microphone-slash"></i>
                 </button>
@@ -474,8 +511,8 @@ const Chatroom = () => {
                     <input
                       className="form-check-input"
                       type="checkbox"
-                      checked={chatAllowed}
-                      onChange={() => setChatAllowed(!chatAllowed)}
+                      checked={allowChat}
+                      onChange={() => setallowChat(!allowChat)}
                     />
                   </div>
                 </div>

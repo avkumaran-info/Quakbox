@@ -29,7 +29,11 @@ const LeftSidebar = ({ countryCode, flag, countryName }) => {
   const [isPopupOpen, setIsPopupOpen] = useState(false);
   const [selectedPrivacy, setSelectedPrivacy] = useState("");
   const [selectIcon, setSelectIcon] = useState("");
-  const navigate =useNavigate();
+  const [title, setTitle] = useState("");
+  const [allowChat, setAllowChat] = useState(false);
+  const [userId, setUserId] = useState("");
+
+  const navigate = useNavigate();
 
   // Function to handle icon click
   const handleIconClick = (privacy, icon) => {
@@ -42,25 +46,66 @@ const LeftSidebar = ({ countryCode, flag, countryName }) => {
     setIsPopupOpen(false);
   };
 
-  const handleLive=()=>{
-    navigate('/test')
-  }
+  const handleLive = () => {
+    // Create an object with form data
+    const formData = {
+      title,
+      allowChat,
+      selectedPrivacy,
+      selectIcon,
+      userId,
+    };
+    console.log(formData);
+    navigate("/test", { state: formData });
+  };
 
-  const groups = [
-    "Group 1",
-    "Group 2",
-    "Group 3",
-    "Group 4",
-    "Group 5",
-    "Group 6",
-    "Group 7",
-    "Group 8",
-    "Group 9",
-    "Group 10",
-    "Group 11",
-    "Group 12",
-    "Group 13",
-  ];
+  // const groups = [
+  //   "Group 1",
+  //   "Group 2",
+  //   "Group 3",
+  //   "Group 4",
+  //   "Group 5",
+  //   "Group 6",
+  //   "Group 7",
+  //   "Group 8",
+  //   "Group 9",
+  //   "Group 10",
+  //   "Group 11",
+  //   "Group 12",
+  //   "Group 13",
+  // ];
+
+  const [groups, setGroups] = useState([
+    {
+      id: "1",
+      title: "test 1",
+      admin: 29,
+      users: [],
+      messages: [],
+    },
+  ]);
+
+  const handleGroupClick = (groupId) => {
+    console.log(groupId);
+
+    setGroups((prevGroups) =>
+      prevGroups.map((group) =>
+        group.id === groupId
+          ? {
+              ...group,
+              users: group.users.includes(userId)
+                ? group.users
+                : [...group.users, userId], // Add user if not already in the group
+            }
+          : group
+      )
+    );
+  };
+
+  useEffect(() => {
+    // console.log(groups);
+  }, [groups]);
+
   const videoRef = useRef(null);
 
   const updates = [
@@ -140,6 +185,11 @@ const LeftSidebar = ({ countryCode, flag, countryName }) => {
   };
 
   useEffect(() => {
+    const ui = JSON.parse(localStorage.getItem("user_Id")) || [];
+    setUserId(ui);
+  }, []);
+
+  useEffect(() => {
     if (videoRef.current) {
       if (isPlaying) {
         videoRef.current.play();
@@ -162,10 +212,10 @@ const LeftSidebar = ({ countryCode, flag, countryName }) => {
               left: 0,
               width: "100%",
               height: "100%",
-              background: "rgba(0, 0, 0, 0.3)", // Light transparent overlay for popup effect
+              background: "rgba(0, 0, 0, 0.3)",
               zIndex: "99",
             }}
-            onClick={closePopup} // Close when clicking outside
+            onClick={closePopup}
           ></div>
 
           {/* Popup Box */}
@@ -176,17 +226,17 @@ const LeftSidebar = ({ countryCode, flag, countryName }) => {
               top: "50%",
               left: "50%",
               transform: "translate(-50%, -50%)",
-              background: "white", // White background
+              background: "white",
               color: "black",
               width: "420px",
               padding: "20px",
               borderRadius: "15px",
-              boxShadow: "0px 4px 10px rgba(0, 0, 0, 0.2)", // Softer shadow
+              boxShadow: "0px 4px 10px rgba(0, 0, 0, 0.2)",
               textAlign: "center",
               zIndex: "100",
             }}
           >
-            {/* Close Button in Top Right Corner */}
+            {/* Close Button */}
             <button
               onClick={closePopup}
               style={{
@@ -209,7 +259,7 @@ const LeftSidebar = ({ countryCode, flag, countryName }) => {
                 marginBottom: "15px",
               }}
             >
-              Live setup
+              Live Setup
             </h4>
 
             {/* Privacy Option */}
@@ -240,6 +290,8 @@ const LeftSidebar = ({ countryCode, flag, countryName }) => {
             <input
               type="text"
               placeholder="Add a title (optional)"
+              value={title}
+              onChange={(e) => setTitle(e.target.value)}
               style={{
                 width: "100%",
                 padding: "12px",
@@ -266,7 +318,8 @@ const LeftSidebar = ({ countryCode, flag, countryName }) => {
               <span>Allow in-room chat</span>
               <input
                 type="checkbox"
-                // checked={true}
+                checked={allowChat}
+                onChange={(e) => setAllowChat(e.target.checked)}
                 style={{ transform: "scale(1.2)" }}
               />
             </div>
@@ -737,8 +790,9 @@ const LeftSidebar = ({ countryCode, flag, countryName }) => {
                   <div
                     key={index}
                     className="list-group-item d-flex justify-content-between align-items-center border rounded mb-2 shadow-sm"
+                    onClick={() => handleGroupClick(group.id)} // Attach click handler
                   >
-                    <span>{group}</span>
+                    <span>{group.title}</span>
                     <div className="d-flex align-items-center">
                       <img
                         src="https://randomuser.me/api/portraits/men/1.jpg"

@@ -27,15 +27,14 @@ const QHomw = () => {
         {/* Pass the isOpen prop and toggleSidebar to QNavBar */}
         <QNavBar isOpen={sidebarOpen} toggleSidebar={toggleSidebar} />
 
-        <div className="d-flex">
+        <div className="">
           <div
             style={{
               padding: "5px",
               transition: "margin 0.3s",
-              marginRight: sidebarOpen ? "40px" : "20px", // Adjust margin when sidebar is toggled
             }}
           >
-            <QVideos />
+            <QVideos isOpen={sidebarOpen} toggleSidebar={toggleSidebar} />
           </div>
 
           {/* Pass the isOpen prop and toggleSidebar to QSidebar */}

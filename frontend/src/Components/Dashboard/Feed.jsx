@@ -17,9 +17,33 @@ const Feed = ({ countryCode, flag, countryName, handleCountryChange }) => {
   const [currentUserId, setCurrentUserId] = useState(null);
   const [userDetails, setUserDetails] = useState([]);
 
+  const userId = localStorage.getItem("user_Id");
+
   // Functions to handle popup visibility
   const openPopup = () => setIsPopupOpen(true);
   const closePopup = () => setIsPopupOpen(false);
+
+  // Function to calculate relative time
+  const getTimeAgo = (timestamp) => {
+    const now = new Date();
+    const postTime = new Date(timestamp);
+    const seconds = Math.floor((now - postTime) / 1000);
+
+    if (seconds < 5) return `Now`;
+    if (seconds < 60) return `${seconds} sec ago`;
+    const minutes = Math.floor(seconds / 60);
+    if (minutes < 60) return `${minutes} min ago`;
+    const hours = Math.floor(minutes / 60);
+    if (hours < 24) return `${hours} hr ago`;
+    const days = Math.floor(hours / 24);
+    if (days < 7) return `${days} day ago`;
+    const weeks = Math.floor(days / 7);
+    if (weeks < 4) return `${weeks} week ago`;
+    const months = Math.floor(days / 30);
+    if (months < 12) return `${months} month ago`;
+    const years = Math.floor(days / 365);
+    return `${years} year ago`;
+  };
 
   const handleMessageChange = (event) => {
     setMessage(event.target.value);
@@ -216,9 +240,34 @@ const Feed = ({ countryCode, flag, countryName, handleCountryChange }) => {
     }
   };
 
+  // const getPost = async () => {
+  //   const token = localStorage.getItem("api_token");
+
+  //   if (!token) {
+  //     console.log("No token found, user may not be logged in.");
+  //     return;
+  //   }
+  //   try {
+  //     const res = await axios.get(
+  //       `https://develop.quakbox.com/admin/api/get_posts/${countryCode}`,
+  //       {
+  //         headers: {
+  //           Authorization: `Bearer ${token}`,
+  //           ContentType: "contentType",
+  //         },
+  //       }
+  //     );
+  //     console.log(res.data);
+
+  //     setData(res.data);
+  //   } catch (error) {
+  //     console.log(error);
+  //   }
+  // };
+
+  // Fetch posts function
   const getPost = async () => {
     const token = localStorage.getItem("api_token");
-
     if (!token) {
       console.log("No token found, user may not be logged in.");
       return;
@@ -227,17 +276,24 @@ const Feed = ({ countryCode, flag, countryName, handleCountryChange }) => {
       const res = await axios.get(
         `https://develop.quakbox.com/admin/api/get_posts/${countryCode}`,
         {
-          headers: {
-            Authorization: `Bearer ${token}`,
-            ContentType: "contentType",
-          },
+          headers: { Authorization: `Bearer ${token}` },
         }
       );
-      console.log(res.data);
+      // Extract posts only if status is true
+      if (res.data.status && Array.isArray(res.data.posts)) {
+        const formattedPosts = res.data.posts.map((post) => ({
+          ...post,
+          created_time: post.created_time || new Date().toISOString(),
+          timeAgo: getTimeAgo(post.created_time),
+        }));
 
-      setData(res.data);
+        setData({ posts: formattedPosts });
+        // console.log(data);
+      } else {
+        console.log("Invalid API response structure.");
+      }
     } catch (error) {
-      console.log(error);
+      console.log("Error fetching posts:", error);
     }
   };
 
@@ -253,6 +309,20 @@ const Feed = ({ countryCode, flag, countryName, handleCountryChange }) => {
   useEffect(() => {
     userData();
     getPost();
+
+    // Update "time ago" dynamically every 60 seconds
+    const interval = setInterval(() => {
+      setData((prevData) => ({
+        ...prevData,
+        posts: prevData.posts.map((post) => ({
+          ...post,
+          timeAgo: getTimeAgo(post.created_time),
+        })),
+      }));
+    }, 60000);
+
+    return () => clearInterval(interval);
+
     const updateNavbarHeight = () => {
       setNavbarHeight(window.innerWidth <= 991 ? 110 : 56);
     };
@@ -443,142 +513,169 @@ const Feed = ({ countryCode, flag, countryName, handleCountryChange }) => {
           {data &&
             data.posts &&
             Array.isArray(data.posts) &&
-            data.posts.map((post) => (
-              <div className="card mb-1" key={post.id}>
-                {" "}
-                {/* Add key here */}
-                {/* Post Header */}
-                <div className="card-header d-flex align-items-center bg-white border-0">
-                  <img
-                    src={post.from?.profile_image || defaultUserImage} // Fallback to defaultUserImage
-                    alt={`${post.from?.name || "Unknown User"}'s Avatar`} // Fallback to "Unknown User"
-                    className="rounded-circle me-2"
-                    style={{ width: "40px", height: "40px" }}
-                  />
-                  <div>
-                    <h6 className="mb-0">
-                      {post.from?.name || "Unknown User"}
-                    </h6>
-                    {/* Fallback to "Unknown User" */}
-                    <small className="text-muted">
-                      {new Date(post.created_time).toLocaleString()}
-                    </small>
-                  </div>
-                </div>
-                {/* Post Content */}
-                <div className="card-body p-0 w-100">
-                  {post.message && <p className="px-3">{post.message}</p>}
+            data.posts.map((post) => {
+              const loggedInUserId = localStorage.getItem("user_Id"); // Get logged-in user ID
+              // console.log(loggedInUserId);
 
-                  {post.attachments &&
-                    post.attachments.data.map((attachment, index) => {
-                      if (attachment.type === "image") {
-                        return (
-                          <img
-                            key={index} // This key is for attachments; index is fine for these
-                            src={attachment.media[0].url}
-                            alt={attachment.media[0].alt_text || "Post image"}
-                            className="img-fluid"
-                            style={{
-                              objectFit: "contain",
-                              backgroundColor: "white",
-                              display: "block",
-                              margin: "auto",
-                              maxHeight: "70vh", // Restricts the image to 80% of the viewport height
-                              maxWidth: "100%", // Ensures it doesn't exceed the container width
-                            }}
-                          />
-                        );
-                      }
-                      if (attachment.type === "video") {
-                        return (
-                          <video
-                            key={index} // This key is for attachments, index is fine for these
-                            controls
-                            className="w-100"
-                            style={{
-                              maxWidth: "2133px",
-                              maxHeight: "362.5px",
-                              objectFit: "contain",
-                              backgroundColor: "black",
-                              display: "block",
-                              margin: "auto",
-                            }}
-                          >
-                            <source
+              const isOwner = loggedInUserId === "31"; // Check if the logged-in user is the post owner
+              console.log(isOwner);
+
+              return (
+                <div className="card mb-1" key={post.id}>
+                  {" "}
+                  {/* Add key here */}
+                  {/* Post Header */}
+                  <div className="card-header d-flex align-items-center bg-white border-0 position-relative">
+                    {/* Profile Image */}
+                    <img
+                      src={post.from?.profile_image || defaultUserImage} // Fallback to defaultUserImage
+                      alt={`${post.from?.name || "Unknown User"}'s Avatar`} // Fallback to "Unknown User"
+                      className="rounded-circle me-2"
+                      style={{ width: "40px", height: "40px" }}
+                    />
+
+                    {/* Name & Timestamp */}
+                    <div>
+                      <h6 className="mb-0">
+                        {post.from?.name || "Unknown User"}
+                      </h6>
+                      <small>{post.timeAgo}</small>
+                    </div>
+
+                    {/* Edit & Delete Buttons - Positioned to the Right */}
+                    {isOwner && (
+                      <div
+                        className="ms-auto"
+                        style={{
+                          position: "absolute",
+                          right: "15px",
+                          top: "10px",
+                        }}
+                      >
+                        <button className="btn btn-primary btn-sm me-2">
+                          <i className="bi bi-pencil"></i> Edit
+                        </button>
+                        <button className="btn btn-danger btn-sm">
+                          <i className="bi bi-trash"></i> Delete
+                        </button>
+                      </div>
+                    )}
+                  </div>
+                  {/* Post Content */}
+                  <div className="card-body p-0 w-100">
+                    {post.message && <p className="px-3">{post.message}</p>}
+
+                    {post.attachments &&
+                      post.attachments.data.map((attachment, index) => {
+                        if (attachment.type === "image") {
+                          return (
+                            <img
+                              key={index} // This key is for attachments; index is fine for these
                               src={attachment.media[0].url}
-                              type="video/mp4"
+                              alt={attachment.media[0].alt_text || "Post image"}
+                              className="img-fluid"
+                              style={{
+                                objectFit: "contain",
+                                backgroundColor: "white",
+                                display: "block",
+                                margin: "auto",
+                                maxHeight: "70vh", // Restricts the image to 80% of the viewport height
+                                maxWidth: "100%", // Ensures it doesn't exceed the container width
+                              }}
                             />
-                            Your browser does not support the video tag.
-                          </video>
-                        );
-                      }
-                      return null;
-                    })}
-                </div>
-                {/* Post Footer */}
-                <div className="card-footer bg-white d-flex justify-content-between align-items-center border-0">
-                  <span className="text-muted">
-                    {post.likes && post.likes.count !== undefined
-                      ? `${post.likes.count} likes`
-                      : "0 likes"}
-                  </span>
-                  <div className="d-flex">
-                    <button
-                      className={`btn btn-sm me-2 ${
-                        post.liked_users?.some(
-                          (user) => user.id === currentUserId
-                        )
-                          ? "btn-primary text-white"
-                          : "btn-light"
-                      }`}
-                      onClick={() => handleLikeClick(post.id)}
-                    >
-                      <i
-                        className={`bi ${
+                          );
+                        }
+                        if (attachment.type === "video") {
+                          return (
+                            <video
+                              key={index} // This key is for attachments, index is fine for these
+                              controls
+                              className="w-100"
+                              style={{
+                                maxWidth: "2133px",
+                                maxHeight: "362.5px",
+                                objectFit: "contain",
+                                backgroundColor: "black",
+                                display: "block",
+                                margin: "auto",
+                              }}
+                            >
+                              <source
+                                src={attachment.media[0].url}
+                                type="video/mp4"
+                              />
+                              Your browser does not support the video tag.
+                            </video>
+                          );
+                        }
+                        return null;
+                      })}
+                  </div>
+                  {/* Post Footer */}
+                  <div className="card-footer bg-white d-flex justify-content-between align-items-center border-0">
+                    <span className="text-muted">
+                      {post.likes && post.likes.count !== undefined
+                        ? `${post.likes.count} likes`
+                        : "0 likes"}
+                    </span>
+                    <div className="d-flex">
+                      <button
+                        className={`btn btn-sm me-2 ${
                           post.liked_users?.some(
                             (user) => user.id === currentUserId
                           )
-                            ? "bi-hand-thumbs-up-fill"
-                            : "bi-hand-thumbs-up"
+                            ? "btn-primary text-white"
+                            : "btn-light"
                         }`}
-                      ></i>{" "}
-                      Like
-                    </button>
-                    {/* Dislike Button */}
-                    <button
-                      className={`btn btn-sm me-2 ${
-                        post.disliked_users?.some(
-                          (user) => user.id === currentUserId
-                        )
-                          ? "btn-danger text-white"
-                          : "btn-light"
-                      }`}
-                      onClick={() => handleDislikeClick(post.id)}
-                    >
-                      <i
-                        className={`bi ${
+                        onClick={() => handleLikeClick(post.id)}
+                      >
+                        <i
+                          className={`bi ${
+                            post.liked_users?.some(
+                              (user) => user.id === currentUserId
+                            )
+                              ? "bi-hand-thumbs-up-fill"
+                              : "bi-hand-thumbs-up"
+                          }`}
+                        ></i>{" "}
+                        Like
+                      </button>
+                      {/* Dislike Button */}
+                      <button
+                        className={`btn btn-sm me-2 ${
                           post.disliked_users?.some(
                             (user) => user.id === currentUserId
                           )
-                            ? "bi-hand-thumbs-down-fill"
-                            : "bi-hand-thumbs-down"
+                            ? "btn-danger text-white"
+                            : "btn-light"
                         }`}
-                      ></i>{" "}
-                      Dislike
-                    </button>
-                    <button className="btn btn-light btn-sm me-2">
-                      <i className="bi bi-chat"></i> Comment{" "}
-                      <span className="text-muted">
-                        {post.comments && post.comments.count}
-                      </span>
-                    </button>
-                    <button className="btn btn-light btn-sm">
-                      <i className="bi bi-share"></i> Share
-                    </button>
+                        onClick={() => handleDislikeClick(post.id)}
+                      >
+                        <i
+                          className={`bi ${
+                            post.disliked_users?.some(
+                              (user) => user.id === currentUserId
+                            )
+                              ? "bi-hand-thumbs-down-fill"
+                              : "bi-hand-thumbs-down"
+                          }`}
+                        ></i>{" "}
+                        Dislike
+                      </button>
+                      <button className="btn btn-light btn-sm me-2">
+                        <i className="bi bi-chat"></i> Comment{" "}
+                        <span className="text-muted">
+                          {post.comments && post.comments.count}
+                        </span>
+                      </button>
+                      <button className="btn btn-light btn-sm">
+                        <i className="bi bi-share"></i> Share
+                      </button>
+                    </div>
                   </div>
                 </div>
-              </div>
-            ))}
+              );
+            })}
         </div>
       </div>
     </div>
