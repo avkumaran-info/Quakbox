@@ -31,13 +31,18 @@ const AddVideo = () => {
   const [customThumbnail, setCustomThumbnail] = useState(null);
   const fileInputRef = useRef(null);
   const [selectedCountryCode, setSelectedCountryCode] = useState("");
-  const [videoType, setVideoType] = useState("");
   const [file, setFile] = useState(null);
     const [description, setDescription] = useState('');
     const [category, setCategory] = useState('');
     const [type, setType] = useState('');
     const [thumbnail, setThumbnail] = useState(null);
     const [message, setMessage] = useState('');
+
+   // Validation states
+   const [titleError, setTitleError] = useState(false);
+   const [descError, setDescError] = useState(false);
+   const [typeError, setTypeError] = useState(false);
+   const [countryError, setCountryError] = useState(false);   
 
     const fileType = selectedCategory; // If using selectedCategory from state
 
@@ -50,17 +55,44 @@ const AddVideo = () => {
     };
   const tagsArray = tags.split(',').map(tag => tag.trim());  // Convert tags string to array
   const handleSaveChanges = async () => {
-    // Validation check
+    let isValid = true;
+  
+   
+    // Title validation
     if (!titleText.trim()) {
-      if (!window.confirm("❌ Title field is required. Do you want to continue?")) {
-        return;
-      }
+      setTitleError(true);
+      isValid = false;
+    } else {
+      setTitleError(false);
     }
-    
+
+    // Description validation
     if (!description.trim()) {
-      if (!window.confirm("❌ Description field is required. Do you want to continue?")) {
-        return;
-      }
+      setDescError(true);
+      isValid = false;
+    } else {
+      setDescError(false);
+    }
+
+    // Privacy type validation
+    if (!type || type === "Select") {
+      setTypeError(true);
+      isValid = false;
+    } else {
+      setTypeError(false);
+    }
+
+    // Country selection validation
+    if (!selectedCountryCode) {
+      setCountryError(true);
+      isValid = false;
+    } else {
+      setCountryError(false);
+    }
+
+    // Stop execution if validation fails
+    if (!isValid) {
+      return;
     }
   
     const payload = {
@@ -69,14 +101,15 @@ const AddVideo = () => {
       description: description,
       category_id: selectedCategory,
       type: type,
+      video_type: videoData.fileType,  
       country_code: selectedCountryCode,
       title_color: titleColor,
       title_size: titleSize,
       defaultthumbnail: selectedThumbnail,
       tags: tagsArray,
-      video_type: videoType,
       temp_upload: false,
     };
+    
   
     try {
       setLoading(true);
@@ -87,19 +120,22 @@ const AddVideo = () => {
         return;
       }
   
-      const response = await axios.post('https://develop.quakbox.com/admin/api/videos/upload', payload, {
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`,
-        },
-      });
+      const response = await axios.post(
+        "https://develop.quakbox.com/admin/api/videos/upload",
+        payload,
+        {
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
   
       if (response.data.result) {
         setMessage("✅ Video uploaded successfully!");
       } else {
         setMessage(response.data.message || "❌ Error uploading video");
       }
-  
     } catch (error) {
       console.error("Error:", error);
       setMessage("❌ Error uploading video");
@@ -107,7 +143,8 @@ const AddVideo = () => {
       setLoading(false);
     }
   };
-    
+  
+
   useEffect(() => {
     if (videoData?.thumbnails) {
       setThumbnails(videoData.thumbnails); // Set generated thumbnails from the backend
@@ -257,16 +294,15 @@ const AddVideo = () => {
     <div className="d-flex align-items-center mb-1">
       {/* Video Thumbnail */}
       <div
-          className={`bg-secondary video-thumbnail ${videoData.filePath}`}
-          style={{
-            width: "120px",
-            height: "80px",
-            backgroundImage: `url(${videoData.thumbnails && videoData.thumbnails[1] ? videoData.thumbnails[0] : 'placeholder.jpg'})`, // Use first thumbnail if available, otherwise use placeholder
-            backgroundSize: "cover",
-            backgroundPosition: "center",
-          }}
-        ></div>
-
+        className={`bg-secondary video-thumbnail ${videoData.filePath}`}
+        style={{
+          width: "120px",
+          height: "80px",
+          backgroundImage: `url(${videoData.thumbnails && videoData.thumbnails.length > 0 ? videoData.thumbnails[0] : 'placeholder.jpg'})`, // Ensure first thumbnail is used
+          backgroundSize: "cover",
+          backgroundPosition: "center",
+        }}
+      ></div>
         <div className="ms-3">
           <strong>
           {videoData ? videoData.message : "No message available"}
@@ -289,20 +325,22 @@ const AddVideo = () => {
               <input
                 type="text"
                 placeholder="Title"
-                className={`form-control ${titleSize}`}
+                className={`form-control ${titleError ? "border-danger" : ""}`}
                 value={titleText}
                 style={{ color: titleColor }}
                 onChange={(e) => setTitleText(e.target.value)}
               />
+              {titleError && <small className="text-danger">Title is required</small>}
             </div>
 
             <div className="mb-1">
               <label className="form-label mb-1">About</label>
               <textarea
-                className="form-control"
+                className={`form-control ${descError ? "border-danger" : ""}`}
                 placeholder="Description"
                 onChange={(e) => setDescription(e.target.value)}
               ></textarea>
+               {descError && <small className="text-danger">Description is required</small>}
             </div>
 
             <div className="row">
@@ -314,11 +352,12 @@ const AddVideo = () => {
                 </div> */}
               <div className="col-md-3">
                 <label className="form-label">Privacy Settings</label>
-                <select className="form-select" onChange={(e) => setType(e.target.value)} value={type}>
+                <select  className={`form-select ${typeError ? "border-danger" : ""}`} onChange={(e) => setType(e.target.value)} value={type}>
                   <option>Select</option>
                   <option>Public</option>
                   <option>Private</option>
                 </select>
+                {typeError && <small className="text-danger">Privacy setting is required</small>}
               </div>
               {/* <div className="col-md-3">
                 <label className="form-label">Monetize</label>
@@ -333,7 +372,7 @@ const AddVideo = () => {
                 </select>
               </div> */}
               <div className="col-md-6">
-                <label className="form-label">Tags (13 Tags Remaining)</label>
+                <label className="form-label">Tags</label>
                 <input
                   type="text"
                   className="form-control"
@@ -377,6 +416,7 @@ const AddVideo = () => {
                 <label className="form-label">Title Size</label>
                 <select
                   className="form-select"
+                  value={titleSize}
                   onChange={(e) => setTitleSize(e.target.value)}
                 >
                   <option value="text-sm">14px</option>
@@ -394,39 +434,26 @@ const AddVideo = () => {
                 <input
                   type="color"
                   className="form-control form-control-color"
+                  value={ titleColor }
                   onChange={(e) => setTitleColor(e.target.value)}
                 />
               </div>
             
              
-            <div className="col-md-6">
-                  <label className="form-label">Select Country Code</label>
-                  <Select
-                      options={countries}
-                      placeholder="Search country..."
-                      isSearchable
-                      filterOption={(option, inputValue) =>
-                          option.data.label.props.children[1]
-                              .toLowerCase()
-                              .includes(inputValue.toLowerCase())
-                      }
-                  />
-            </div>
+            {/* Country Code Selection */}
+              <div className="col-md-6">
+                <label className="form-label">Select Country Code</label>
+                <Select
+                  options={countries}
+                  value={countries.find((country) => country.value === selectedCountryCode)}
+                  placeholder="Search country..."
+                  isSearchable
+                  onChange={(selectedOption) => setSelectedCountryCode(selectedOption?.value || null)}
+                  className={countryError ? "border border-danger" : ""}
+                />
+                {countryError && <small className="text-danger">Country selection is required</small>}
+              </div>
           </div>
-          <div className="col-md-6">
-              <label className="form-label">Video Type</label>
-              <select 
-                className="form-select" 
-                onChange={(e) => setVideoType(e.target.value)} 
-                value={videoType}
-              >
-                <option value="">Select Type</option>
-                <option value="1">Video</option>
-                <option value="2">Live Video</option>
-                <option value="3">Photo Slides</option>
-                <option value="4">Audio</option>
-              </select>
-            </div>
             <div className="mt-4">
               <h6>Category</h6>
               <div className="row mb-3">
@@ -455,9 +482,9 @@ const AddVideo = () => {
                     <h6>Thumbnails</h6>
                     <div className="mt-1">
                       <div className="row g-4">
-                        {thumbnails.length > 0 ? (
-                          (fileType === "mp3" || fileType === "png") ? (
-                            // Show only the first thumbnail for MP3 or PNG
+                        {Array.isArray(thumbnails) && thumbnails.length > 0 ? (
+                          ["mp3", "png", "jpeg", "jpg", "gif"].includes(fileType.toLowerCase()) ? (
+                            // ✅ Show only the first thumbnail for audio and image files
                             <div className="col-md-3">
                               <div
                                 className={`card ${selectedThumbnail === thumbnails[0] ? "border-primary" : ""}`}
@@ -476,8 +503,8 @@ const AddVideo = () => {
                               </div>
                             </div>
                           ) : (
-                            // Show multiple thumbnails for videos
-                            thumbnails.map((thumbnail, index) => (
+                            // ✅ Show up to 4 thumbnails for videos
+                            thumbnails.slice(0, 4).map((thumbnail, index) => (
                               <div key={index} className="col-md-3">
                                 <div
                                   className={`card ${selectedThumbnail === thumbnail ? "border-primary" : ""}`}
@@ -502,7 +529,6 @@ const AddVideo = () => {
                         )}
                       </div>
                     </div>
-
                           {/* Custom Thumbnail Upload Button */}
                           <div className="text-center mt-2 mb-3">
                             <button className="btn btn-outline-secondary btn-lg" onClick={openFilePicker}>
@@ -713,7 +739,11 @@ const AddVideo = () => {
                   >
                     Cancel
                   </button>
-                  <button className="btn btn-outline-primary btn-lg w-50 ms-2" onClick={handleSaveChanges}>
+                  <button 
+                  className="btn btn-outline-primary btn-lg w-50 ms-2" 
+                  onClick={handleSaveChanges} 
+                  disabled={!titleText.trim() || !description.trim() || !type || !selectedCountryCode}
+                  >
                    Save Changes
                   </button>
                 </div>
