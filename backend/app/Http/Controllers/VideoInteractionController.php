@@ -55,7 +55,7 @@ class VideoInteractionController extends Controller
             ]);
         }
 
-        return response()->json(['result' => true, 'message' => 'Video disliked!', 'interaction' => $interaction]);
+        return response()->json(['result' => true, 'message' => 'Video disliked!']);
     }
 
     public function view(Request $request, $videoId)
