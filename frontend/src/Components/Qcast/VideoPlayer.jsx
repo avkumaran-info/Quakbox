@@ -43,12 +43,13 @@ const VideoPlayer = () => {
 
   useEffect(() => {
     console.log("useEffect triggered");
-  
+
     const fetchVideo = async () => {
+      
       try {
         const token = localStorage.getItem("api_token");
         console.log(token);
-        
+
         if (!token) {
           setMessage("❌ Authorization token missing. Please log in.");
           console.log("Authorization token is missing.");
@@ -73,7 +74,7 @@ const VideoPlayer = () => {
         console.error("Error fetching video:", error);
       }
     };
-  
+
     if (!passedVideo) {
       fetchVideo(); // Only fetch video if it wasn't passed via state
       console.log("Fetching video from API...");
@@ -203,43 +204,67 @@ const VideoPlayer = () => {
                 <button className="btn btn-outline-secondary">✂️ Clip</button>
               </div>
             </div>
-            <div className="p-3">
-              <h5 className="mt-3 fw-bold">{video.title}</h5>
 
-              {/* Channel Info */}
-              <div className="d-flex align-items-center mt-2">
+            {/* Video Description */}
+            <p className="text-muted">{video.description}</p>
+
+            {/* Channel Info & Subscribe Button */}
+            <div className="d-flex justify-content-between align-items-center  border-top">
+              <div className="d-flex align-items-center mt-1">
                 <img
-                  src={profileImage}
+                  src={video.user_profile_image}
                   alt="Channel Logo"
-                  className="rounded-circle me-2 shadow-sm"
+                  className="rounded-circle me-2"
                   width="40"
                   height="40"
                 />
                 <div>
-                  <span className="fw-bold">Moviebuff Tamil</span>
+                  <span className="fw-bold">{video.user_name}</span>
                   <br />
-                  <small className="text-muted">2.75M subscribers</small>
+                  <small className="text-muted">
+                    {video.subscribers} subscribers
+                  </small>
                 </div>
-                <button className="btn btn-danger ms-3 fw-bold">
-                  Subscribe
-                </button>
               </div>
-
-              {/* Action Buttons */}
-              <div className="mt-3 d-flex gap-2">
-                <button className="btn btn-outline-secondary">👍 11K</button>
-                <button className="btn btn-outline-secondary">👎</button>
-                <button className="btn btn-outline-secondary">Share</button>
-                <button className="btn btn-outline-secondary">Download</button>
-                <button className="btn btn-outline-secondary">Clip</button>
-              </div>
+              <button className="btn btn-danger fw-bold">Subscribe</button>
             </div>
+
+            {/* Comments Section */}
+            {showComments && (
+              <div className="mt-4">
+                <h6 className="fw-bold">Comments ({comments.length})</h6>
+                <div className="border-top pt-3">
+                  {comments.length > 0 ? (
+                    comments.map((comment, index) => (
+                      <div key={index} className="d-flex mb-3">
+                        <img
+                          src={comment.user_profile || "default-user.png"}
+                          alt="User"
+                          className="rounded-circle me-2"
+                          width="40"
+                          height="40"
+                        />
+                        <div>
+                          <strong>{comment.username}</strong>
+                          <p className="m-0">{comment.text}</p>
+                          <small className="text-muted">
+                            {comment.timestamp}
+                          </small>
+                        </div>
+                      </div>
+                    ))
+                  ) : (
+                    <p>No comments yet. Be the first to comment!</p>
+                  )}
+                </div>
+              </div>
+            )}
           </div>
 
           {/* Right Sidebar - Recommended Videos */}
           <div className="col-lg-3 bg-white p-3 overflow-hidden">
             <h6 className="text-muted">Recommended Videos</h6>
-            {/* {recommendedVideos.length > 0 ? (
+            {recommendedVideos.length > 0 ? (
               recommendedVideos.map((recVideo) => (
                 <div
                   key={recVideo.video_id}
@@ -248,22 +273,28 @@ const VideoPlayer = () => {
                   style={{ cursor: "pointer" }}
                 >
                   <img
-                    src={`${recVideo.file_path}`} // Fixed to use correct path for thumbnail
+                    src={`${recVideo.defaultthumbnail}`} // Fixed to use correct path for thumbnail
                     alt="Thumbnail"
                     className="rounded"
-                    style={{ width: "120px", height: "70px", objectFit: "cover" }}
+                    style={{
+                      width: "120px",
+                      height: "70px",
+                      objectFit: "cover",
+                    }}
                   />
                   <div className="ms-2">
                     <p className="small m-0">{recVideo.title}</p>
                     <span className="text-muted small">Channel Name</span>
                     <br />
-                    <span className="text-muted small">1.5M views</span>
+                    <span className="text-muted small">
+                      {recVideo.views} views
+                    </span>
                   </div>
                 </div>
               ))
             ) : (
               <p>No recommended videos</p>
-            )} */}
+            )}
           </div>
         </div>
       </div>
