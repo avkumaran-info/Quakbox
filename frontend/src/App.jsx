@@ -18,6 +18,7 @@ import UploadVideo from "./Components/Qcast/UploadVideo";
 import AddVideo from "./Components/Qcast/AddVideo";
 import VideoPlayer from "./Components/Qcast/VideoPlayer";
 import Chatroom from "./Components/ChatRoom/Chatroom";
+import VideosPlayer from "./Components/Qcast/VideosPlayer";
 const App = () => {
   return (
     <Provider store={store}>
@@ -35,10 +36,9 @@ const App = () => {
           <Route path="/favouriteCountires" element={<FanCountry />} />
           <Route path="/qcast" element={<QHomw />} />
           <Route path="/upload" element={<UploadVideo />} />
-          <Route path="/videos/:id" element={<VideoPlayer />} />
+          <Route path="/videos/:videoId" element={<VideosPlayer />} />
           <Route path="/addvideo" element={<AddVideo />} />
           <Route path="/test" element={<Chatroom />} />
-
         </Routes>
       </Router>
     </Provider>
