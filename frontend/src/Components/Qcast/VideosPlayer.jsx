@@ -150,7 +150,7 @@ const VideosPlayer = () => {
         }
 
         const response = await axios.get(
-          "https://develop.quakbox.com/admin/api/videos",
+          "https://develop.quakbox.com/admin/api/videos/qlist",
           { headers: { Authorization: `Bearer ${token}` } }
         );
 
