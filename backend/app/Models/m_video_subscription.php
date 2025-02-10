@@ -5,17 +5,18 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
-class m_video_Subscription extends Model
+class M_Video_Subscription extends Model
 {
-    protected $fillable = ['user_id', 'channel_id'];
+    protected $table = 'm_video_subscriptions';
+    protected $fillable = ['subscriber_id', 'creator_id'];
 
-    public function user()
+    public function subscriber()
     {
-        return $this->belongsTo(User::class);
+        return $this->belongsTo(User::class, 'subscriber_id');
     }
 
-    public function channel()
+    public function creator()
     {
-        return $this->belongsTo(m_video_channel::class);
+        return $this->belongsTo(User::class, 'creator_id');
     }
 }

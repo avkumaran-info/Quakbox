@@ -26,6 +26,7 @@ class PostController extends Controller
                         'created_time' => $post->created_at->toIso8601String(),
                         'message' => $post->message,
                         'from' => [
+                            'user_id' => $post->user->id,
                             'name' => $post->user->username,
                             'profile_image' => env('APP_URL') . '/api/images/' . $post->user->profile_image,
                         ],
@@ -36,7 +37,7 @@ class PostController extends Controller
                             'count' => $post->likes->count(),
                             'liked_users' => $post->likes->map(function ($like) {
                                 return [
-                                    'id' => $like->user->id,
+                                    'user_id' => $like->user->id,
                                     'name' => $like->user->username,
                                 ];
                             }),

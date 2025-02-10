@@ -14,11 +14,11 @@ use Laravel\Socialite\Facades\Socialite;
 //video Module
 use App\Http\Controllers\VideoController;
 use App\Http\Controllers\VideoInteractionController;
+use App\Http\Controllers\VideoSubscriptionController;
 use FFMpeg\Media\Video;
 
 // use App\Http\Controllers\VideoCommentController;
 // use App\Http\Controllers\VideoChannelController;
-// use App\Http\Controllers\VideoSubscriptionController;
 
 /*
 |--------------------------------------------------------------------------
@@ -87,7 +87,7 @@ Route::get('images/flags/{filename}', function ($filename) {
 // Video Management
 Route::middleware('auth:api')->prefix('videos')->group(function () {
     Route::post('upload', [VideoController::class, 'videoUpload']);
-    Route::get('/{category_id?}', [VideoController::class, 'index']);
+    Route::get('qlist/{category_id?}', [VideoController::class, 'index']);
     Route::get('{id}/show', [VideoController::class, 'show']);
     Route::post('{id}/delete', [VideoController::class, 'delete']);
     Route::get('search/{query?}', [VideoController::class, 'search']);   
@@ -101,6 +101,13 @@ Route::middleware('auth:api')->group(function () {
     Route::get('/videos/{videoId}/stats', [VideoInteractionController::class, 'stats']);
     Route::post('/videos/{videoId}/removeinteraction', [VideoInteractionController::class, 'removeInteraction']);
 
+});
+
+Route::middleware('auth:api')->prefix('videos')->group(function () {
+    Route::post('subscribe/{creator_id}', [VideoSubscriptionController::class, 'subscribe']);
+    Route::delete('unsubscribe/{creator_id}', [VideoSubscriptionController::class, 'unsubscribe']);
+    Route::get('mysubscriptions', [VideoSubscriptionController::class, 'listsubscriptions']);
+    Route::get('subscribers/{creator_id}', [VideoSubscriptionController::class, 'getSubscribers']);
 });
 
 // // Video Channel Management
