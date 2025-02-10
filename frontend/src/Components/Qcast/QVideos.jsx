@@ -1,7 +1,9 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate, useParams, useLocation } from "react-router-dom";
 import axios from "axios";
+import { FaUpload } from "react-icons/fa";
 
+// Categories List
 const categories = [
   // { name: "All", icon: "fa-globe" }, // Default category
   { name: "Popping on Quakbox", icon: "fa-foursquare" },
@@ -25,61 +27,99 @@ const categories = [
 ];
 
 const QVideos = () => {
-  const [videos, setVideos] = useState([]);
-  const [filteredVideos, setFilteredVideos] = useState([]);
-  const [selectedCategory, setSelectedCategory] = useState("All"); // Default to "All"
-  const [currentIndex, setCurrentIndex] = useState(0);
-  const [message, setMessage] = useState("");
+  const [videos, setVideos] = useState([]); // All videos
+  const [filteredVideos, setFilteredVideos] = useState([]); // Filtered videos
+  const [selectedCategory, setSelectedCategory] = useState("All"); // Default category
+  const [searchQuery, setSearchQuery] = useState(""); // Search state
   const [loading, setLoading] = useState(true);
+  const [message, setMessage] = useState("");
+  const [currentIndex, setCurrentIndex] = useState(0);
   const navigate = useNavigate();
   const { id } = useParams();
-  const { state } = useLocation();
 
   useEffect(() => {
-    const fetchVideos = async () => {
-      try {
-        const token = localStorage.getItem("api_token");
-        if (!token) {
-          setMessage("❌ Authorization token missing. Please log in.");
-          return;
-        }
-
-        const response = await axios.get(
-          "https://develop.quakbox.com/admin/api/videos/qlist",
-          {
-            headers: { Authorization: `Bearer ${token}` },
-          }
-        );
-
-        if (response.status === 200 && response.data.data) {
-          setVideos(response.data.data);
-          console.log(response.data.data);
-
-          setFilteredVideos(response.data.data); // Initially show all videos
-        } else {
-          setMessage("⚠️ No videos found.");
-        }
-      } catch (error) {
-        setMessage("❌ No videos to display");
-      } finally {
-        setLoading(false);
-      }
-    };
-
     fetchVideos();
   }, [id]);
 
-  // Handle Category Click - Filter Videos
+  // Fetch all videos initially
+  const fetchVideos = async () => {
+    try {
+      setLoading(true);
+      const token = localStorage.getItem("api_token");
+      if (!token) {
+        setMessage("❌ Authorization token missing. Please log in.");
+        return;
+      }
+      const response = await axios.get(
+        "https://develop.quakbox.com/admin/api/videos/qlist",
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+
+      if (response.status === 200 && response.data.data) {
+        setVideos(response.data.data);
+        setFilteredVideos(response.data.data); // Initially show all videos
+      } else {
+        setMessage("⚠️ No videos found.");
+      }
+    } catch (error) {
+      setMessage("❌ No videos to display");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Handle category selection
   const handleCategoryClick = (category) => {
     setSelectedCategory(category);
+    filterVideos(searchQuery, category);
+  };
 
-    if (category === "All") {
-      setFilteredVideos(videos);
-    } else {
-      const filtered = videos.filter(
-        (video) => video.category_name === category
-      );
-      setFilteredVideos(filtered);
+  // Handle search
+  const handleSearch = async (e) => {
+    if (e.key === "Enter") {
+      filterVideos(e.target.value, selectedCategory);
+    }
+  };
+
+  // Fetch filtered videos based on search query and category
+  const filterVideos = async (search, category) => {
+    setSearchQuery(search);
+    try {
+      setLoading(true);
+      const token = localStorage.getItem("api_token");
+      if (!token) {
+        setMessage("❌ Authorization token missing. Please log in.");
+        return;
+      }
+
+      let apiUrl = "https://develop.quakbox.com/admin/api/videos";
+      if (search) {
+        apiUrl = `https://develop.quakbox.com/admin/api/videos/search/${search}`;
+      }
+
+      const response = await axios.get(apiUrl, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+
+      if (response.status === 200 && response.data.data) {
+        let filtered = response.data.data;
+
+        // Filter based on category (only if not "All")
+        if (category !== "All") {
+          filtered = filtered.filter(
+            (video) => video.category_name === category
+          );
+        }
+
+        setFilteredVideos(filtered);
+      } else {
+        setFilteredVideos([]);
+        setMessage("⚠️ No matching videos found.");
+      }
+    } catch (error) {
+      setMessage("❌ No videos to display");
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -97,29 +137,39 @@ const QVideos = () => {
     );
   };
 
-  const timeAgo = (dateString) => {
-    const date = new Date(dateString);
-    const now = new Date();
-    const seconds = Math.floor((now - date) / 1000);
-
-    if (seconds < 60) return "now"; // Less than 1 minute
-    const minutes = Math.floor(seconds / 60);
-    if (minutes < 60) return `${minutes} min ago`;
-    const hours = Math.floor(minutes / 60);
-    if (hours < 24) return `${hours} hour${hours > 1 ? "s" : ""} ago`;
-    const days = Math.floor(hours / 24);
-    if (days < 7) return `${days} day${days > 1 ? "s" : ""} ago`;
-    const weeks = Math.floor(days / 7);
-    if (weeks < 4) return `${weeks} week${weeks > 1 ? "s" : ""} ago`;
-    const months = Math.floor(days / 30);
-    if (months < 12) return `${months} month${months > 1 ? "s" : ""} ago`;
-    const years = Math.floor(days / 365);
-    return `${years} year${years > 1 ? "s" : ""} ago`;
-  };
-
   return (
-    <div className="p-2">
-      {/* Category Section */}
+    <>
+      {/* Navbar with Search Box */}
+      <nav className="navbar navbar-light bg-light shadow d-flex justify-content-center align-items-center p-2">
+        <input
+          type="text"
+          className="form-control"
+          placeholder="Search..."
+          value={searchQuery}
+          onChange={(e) => setSearchQuery(e.target.value)}
+          onKeyDown={handleSearch} // Search on Enter key
+          style={{
+            width: "50%",
+            maxWidth: "500px",
+            marginRight: "10px",
+            height: "38px",
+          }}
+        />
+        <button
+          className="btn btn-outline-primary d-flex align-items-center justify-content-center"
+          style={{
+            padding: "8px 20px",
+            height: "38px",
+            display: "flex",
+            gap: "8px",
+          }}
+          onClick={() => navigate("/upload")}
+        >
+          <FaUpload className="me-1" /> Upload Video
+        </button>
+      </nav>
+
+      {/* Categories Section */}
       <div className="d-flex align-items-center justify-content-center mb-4 position-relative">
         {/* Left Scroll Button */}
         <button
@@ -189,9 +239,7 @@ const QVideos = () => {
           ) : message ? (
             <div className="text-center">{message}</div>
           ) : filteredVideos.length === 0 ? (
-            <div className="text-center">
-              ⚠️ No videos found in this category.
-            </div>
+            <div className="text-center">⚠️ No videos found.</div>
           ) : (
             filteredVideos.map((video, index) => (
               <div
@@ -220,20 +268,7 @@ const QVideos = () => {
                   />
                   <div className="card-body">
                     <h6 className="fw-bold">{video.title}</h6>
-                    <p className="text-muted">
-                      {video.views} views • {timeAgo(video.uploaded_datetime)}{" "}
-                    </p>
-                    <div className="d-flex align-items-center">
-                      <img
-                        src={video.user_profile_image}
-                        alt={video.user_name}
-                        className="rounded-circle me-2"
-                        width="40"
-                        height="40"
-                        style={{ objectFit: "cover" }}
-                      />
-                      <span className="fw-bold">{video.user_name}</span>
-                    </div>
+                    <p className="text-muted">{video.views} views</p>
                   </div>
                 </div>
               </div>
@@ -241,7 +276,7 @@ const QVideos = () => {
           )}
         </div>
       </div>
-    </div>
+    </>
   );
 };
 
