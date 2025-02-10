@@ -21,7 +21,7 @@ const getCountryDetails = async (countryCode) => {
     const countryData = storedCountries.find(
       (country) => country.code.toLowerCase() === countryCode.toLowerCase()
     );
-    // console.log(countryData);
+    console.log(countryData);
 
     if (!countryData) return { flag: "/default-flag.png", name: "Unknown" };
 
@@ -51,6 +51,8 @@ const Home = () => {
     name: countryName,
     flag: flag,
   });
+
+  console.log(countryCode);
 
   // Fetch user data
   const userDataFetch = async () => {

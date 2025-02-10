@@ -518,7 +518,7 @@ const Feed = ({ countryCode, flag, countryName, handleCountryChange }) => {
               // console.log(loggedInUserId);
 
               const isOwner = loggedInUserId === "31"; // Check if the logged-in user is the post owner
-              console.log(isOwner);
+              // console.log(isOwner);
 
               return (
                 <div className="card mb-1" key={post.id}>

@@ -1,141 +1,106 @@
 import React, { useEffect, useState } from "react";
-import { useLocation, useParams, useNavigate } from "react-router-dom";
-import NavBar from "../Dashboard/NavBar";
-import axios from "axios"; // Ensure axios is imported
 import user from "../../assets/images/user1.png";
-const VideoPlayer = () => {
+import { useLocation, useNavigate, useParams } from "react-router-dom";
+import axios from "axios";
+import NavBar from "../Dashboard/NavBar";
+
+const defaultComments = [
+  {
+    username: "John Doe",
+    text: "Awesome video!",
+    timestamp: "2 hours ago",
+    user_profile: user,
+  },
+  {
+    username: "Priya Sharma",
+    text: "Really informative!",
+    timestamp: "5 hours ago",
+    user_profile: user,
+  },
+  {
+    username: "Rajesh Kumar",
+    text: "Loved the editing!",
+    timestamp: "1 day ago",
+    user_profile: user,
+  },
+];
+
+const VideosPlayer = () => {
   const { videoId } = useParams(); // Get videoId from URL params
+  const [video, setVideo] = useState(null);
+  const [recommendedVideos, setRecommendedVideos] = useState([]);
+  const [showComments, setShowComments] = useState(false);
+  const [comments, setComments] = useState([]);
+
   const location = useLocation();
   const navigate = useNavigate();
-  const [id, setId] = useState();
-  const [video, setVideo] = useState(null); // State to store the current video
-  const [recommendedVideos, setRecommendedVideos] = useState([]);
-  const [message, setMessage] = useState("");
-  const [showComments, setShowComments] = useState(false); // Toggle comments visibility
-  const [comments, setComments] = useState([]); // Store comments
-  // Get the video from location.state if available (from previous navigation)
-  // const passedVideo = location.state?.video;
-
-  // console.log(passedVideo);
-  // console.log(videoId);
-
-  // Default comments JSON
-  const defaultComments = [
-    {
-      username: "John Doe",
-      text: "Awesome video! Thanks for sharing.",
-      timestamp: "2 hours ago",
-      user_profile: user,
-    },
-    {
-      username: "Priya Sharma",
-      text: "This was really informative. Keep it up!",
-      timestamp: "5 hours ago",
-      user_profile: user,
-    },
-    {
-      username: "Rajesh Kumar",
-      text: "Loved the editing and presentation!",
-      timestamp: "1 day ago",
-      user_profile: user,
-    },
-  ];
-
-  useEffect(() => {
-    if (!passedVideo) {
-      fetchVideo(); // Only fetch video if it wasn't passed via state
-      console.log("Fetching video from API...");
-    } else {
-      setVideo(passedVideo); // If video was passed from state, use it
-      console.log("Using passed video from state.");
-    }
-  }, [videoId, passedVideo]);
+  const passedVideo = location.state?.video; // Always use passedVideo for recommendations
+  console.log(passedVideo);
 
   useEffect(() => {
     const fetchVideo = async () => {
+      setVideo(null); // ✅ Force re-render before fetching new video
+
       try {
         const token = localStorage.getItem("api_token");
         if (!token) {
-          setMessage("❌ Authorization token missing. Please log in.");
+          console.error("❌ Authorization token missing. Please log in.");
           return;
         }
-  
+
         const response = await axios.get(
           `https://develop.quakbox.com/admin/api/videos/${videoId}/show`,
-          {
-            headers: { Authorization: `Bearer ${token}` },
-          }
+          { headers: { Authorization: `Bearer ${token}` } }
         );
-  
-        if (response.status === 200) {
-          setVideo(response.data);
-        } else {
-          console.error("Error fetching video:", response);
-        }
+        setVideo(response.data.data);
+        console.log(response.data.data);
       } catch (error) {
         console.error("Error fetching video:", error);
       }
     };
-  
-    if (!location.state?.video) {
-      fetchVideo(); // Fetch from server if no state video is passed
-    } else {
-      setVideo(location.state.video); // Use state if available
-    }
-  }, [videoId]); // ⬅️ Now it listens for `videoId` changes
+
+    fetchVideo();
+  }, [videoId]); // ✅ Refetch video when `videoId` changes
 
   useEffect(() => {
     const fetchVideos = async () => {
+      if (!passedVideo) return; // Ensure passedVideo is available
+
       try {
         const token = localStorage.getItem("api_token");
         if (!token) {
-          setMessage("❌ Authorization token missing. Please log in.");
+          console.error("❌ Authorization token missing. Please log in.");
           return;
         }
 
         const response = await axios.get(
           "https://develop.quakbox.com/admin/api/videos",
-          {
-            headers: { Authorization: `Bearer ${token}` },
-          }
+          { headers: { Authorization: `Bearer ${token}` } }
         );
 
         const allVideos = response.data.data;
 
-        if (!passedVideo) {
-          setMessage("❌ No video data found.");
-          return;
-        }
-        // console.log(allVideos);
-
-        // Filter videos that have the same category_name as passedVideo but exclude the current video
-        // const relatedVideos = allVideos.filter(
-        //   (video) =>
-        //     video.category_name === "Comedy" &&
-        //     video.video_id !== passedVideo.video_id
-        // );
-
+        // ✅ Always use `passedVideo.category_name` to filter recommendations
         const relatedVideos = allVideos.filter(
-          (video) =>
-            video.category_name === passedVideo.category_name &&
-            video.video_id !== passedVideo.video_id
+          (v) =>
+            v.category_name === passedVideo.category_name &&
+            v.video_id !== passedVideo.video_id
         );
 
-        console.log("Recommended Videos:", relatedVideos);
-        setRecommendedVideos(relatedVideos); // Store in state
+        setRecommendedVideos(relatedVideos);
       } catch (error) {
-        setMessage("❌ No videos to display");
+        console.error("Error fetching recommended videos:", error);
       }
     };
 
     fetchVideos();
-  }, [passedVideo]); // Runs when passedVideo changes
+  }, [passedVideo]); // ✅ Fetch recommendations based on passedVideo
 
-  // Handle clicking on recommended videos
-const handleVideoClick = (recVideo) => {
-  navigate(`/videos/${recVideo.video_id}`, { state: { video: recVideo } });
-  setVideo(null); // Ensure video updates correctly
-};
+  // ✅ Fix: Ensure video updates when clicking a recommended video
+  const handleVideoClick = (recVideo) => {
+    setVideo(null); // ✅ Clear current video before navigating
+    navigate(`/videos/${recVideo.video_id}`, { state: { video: recVideo } });
+  };
 
   // Toggle Comments Section
   const toggleComments = () => {
@@ -146,8 +111,28 @@ const handleVideoClick = (recVideo) => {
   };
 
   if (!video) {
-    return <h2 className="text-center mt-5">Video not found or loading...</h2>;
+    return <h2 className="text-center mt-5">Loading video...</h2>;
   }
+
+  const timeAgo = (dateString) => {
+    const date = new Date(dateString);
+    const now = new Date();
+    const seconds = Math.floor((now - date) / 1000);
+
+    if (seconds < 60) return "now"; // Less than 1 minute
+    const minutes = Math.floor(seconds / 60);
+    if (minutes < 60) return `${minutes} min ago`;
+    const hours = Math.floor(minutes / 60);
+    if (hours < 24) return `${hours} hour${hours > 1 ? "s" : ""} ago`;
+    const days = Math.floor(hours / 24);
+    if (days < 7) return `${days} day${days > 1 ? "s" : ""} ago`;
+    const weeks = Math.floor(days / 7);
+    if (weeks < 4) return `${weeks} week${weeks > 1 ? "s" : ""} ago`;
+    const months = Math.floor(days / 30);
+    if (months < 12) return `${months} month${months > 1 ? "s" : ""} ago`;
+    const years = Math.floor(days / 365);
+    return `${years} year${years > 1 ? "s" : ""} ago`;
+  };
 
   return (
     <>
@@ -169,7 +154,7 @@ const handleVideoClick = (recVideo) => {
               )}
               {video.video_type === 2 && (
                 <>
-                  <img src={video.defaultthumbnail} alt="" />
+                  <img src={passedVideo.defaultthumbnail} alt="" />
                   <video controls autoPlay className="w-100 rounded">
                     <source src={video.file_path} type="video/mp4" />
                     Your browser does not support the video tag.
@@ -184,14 +169,15 @@ const handleVideoClick = (recVideo) => {
               <div className="flex-grow-1">
                 <h5 className="fw-bold text-truncate">{video.title}</h5>
                 <p className="text-muted small m-0">
-                  {video.views} views {video.upload_date}
+                  {passedVideo.views} views •{" "}
+                  {timeAgo(passedVideo.uploaded_datetime)}{" "}
                 </p>
               </div>
 
               {/* Right Side: Action Buttons */}
               <div className="d-flex gap-2">
                 <button className="btn btn-outline-secondary">
-                  👍 {video.likes}
+                  👍 {video.like}
                 </button>
                 <button className="btn btn-outline-secondary">👎</button>
                 <button
@@ -212,14 +198,14 @@ const handleVideoClick = (recVideo) => {
             <div className="d-flex justify-content-between align-items-center  border-top">
               <div className="d-flex align-items-center mt-1">
                 <img
-                  src={video.user_profile_image}
+                  src={passedVideo.user_profile_image}
                   alt="Channel Logo"
                   className="rounded-circle me-2"
                   width="40"
                   height="40"
                 />
                 <div>
-                  <span className="fw-bold">{video.user_name}</span>
+                  <span className="fw-bold">{passedVideo.user_name}</span>
                   <br />
                   <small className="text-muted">
                     {video.subscribers} subscribers
@@ -302,4 +288,4 @@ const handleVideoClick = (recVideo) => {
   );
 };
 
-export default VideoPlayer;
+export default VideosPlayer;

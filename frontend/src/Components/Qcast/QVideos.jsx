@@ -1,8 +1,9 @@
-import React, { useState, useRef, useEffect } from "react";
+import React, { useState, useEffect } from "react";
 import { useNavigate, useParams, useLocation } from "react-router-dom";
 import axios from "axios";
 
 const categories = [
+  // { name: "All", icon: "fa-globe" }, // Default category
   { name: "Popping on Quakbox", icon: "fa-foursquare" },
   { name: "Tune", icon: "fa-headphones" },
   { name: "Sports", icon: "fa-futbol" },
@@ -23,111 +24,76 @@ const categories = [
   { name: "Travel", icon: "fa-truck fa-flip-horizontal" },
 ];
 
-const link =
-  "https://create.microsoft.com/_next/image?url=https%3A%2F%2Fcdn.create.microsoft.com%2Fcmsassets%2FyoutubeBanner-Hero.webp&w=1920&q=75";
-
 const QVideos = () => {
-  const [currentIndex, setCurrentIndex] = useState(0);
   const [videos, setVideos] = useState([]);
+  const [filteredVideos, setFilteredVideos] = useState([]);
+  const [selectedCategory, setSelectedCategory] = useState("All"); // Default to "All"
+  const [currentIndex, setCurrentIndex] = useState(0);
   const [message, setMessage] = useState("");
   const [loading, setLoading] = useState(true);
-  const scrollContainerRef = useRef(null);
   const navigate = useNavigate();
   const { id } = useParams();
   const { state } = useLocation();
 
   useEffect(() => {
-    if (state && Array.isArray(state.video)) {
-      setVideos(state.video);
-      setLoading(false);
-    } else {
-      const fetchVideos = async () => {
-        try {
-          const token = localStorage.getItem("api_token");
-          if (!token) {
-            setMessage("❌ Authorization token missing. Please log in.");
-            return;
-          }
+    const fetchVideos = async () => {
+      try {
+        const token = localStorage.getItem("api_token");
+        if (!token) {
+          setMessage("❌ Authorization token missing. Please log in.");
+          return;
+        }
 
-          const response = await axios.get(
-            "https://develop.quakbox.com/admin/api/videos",
-            {
-              headers: { Authorization: `Bearer ${token}` },
-            }
-          );
+        const response = await axios.get(
+          "https://develop.quakbox.com/admin/api/videos",
+          {
+            headers: { Authorization: `Bearer ${token}` },
+          }
+        );
+
+        if (response.status === 200 && response.data.data) {
+          setVideos(response.data.data);
           console.log(response.data.data);
 
-          if (response.status === 200 && response.data.data) {
-            setVideos(response.data.data);
-          } else {
-            setMessage("⚠️ No videos found.");
-          }
-        } catch (error) {
-          setMessage("❌ No videos to display");
-        } finally {
-          setLoading(false);
+          setFilteredVideos(response.data.data); // Initially show all videos
+        } else {
+          setMessage("⚠️ No videos found.");
         }
-      };
-
-      fetchVideos();
-    }
-  }, [id, state]);
-
-  const handleVideoClick = async (video) => {
-    console.log(video);
-    console.log(video.video_id);
-
-    if (!video.video_id) {
-      console.error("Video ID is missing:", video);
-      return;
-    }
-
-    try {
-      const token = localStorage.getItem("api_token");
-
-      if (!token) {
-        setMessage("❌ Authorization token missing. Please log in.");
-        return;
+      } catch (error) {
+        setMessage("❌ No videos to display");
+      } finally {
+        setLoading(false);
       }
+    };
 
-      const response = await axios.post(
-        `https://develop.quakbox.com/admin/api/videos/${video.video_id}/view`,
-        {}, // Empty body for POST request
-        {
-          headers: {
-            Authorization: `Bearer ${token}`, // Ensure proper format
-            "Content-Type": "application/json", // Add content type
-          },
-        }
+    fetchVideos();
+  }, [id]);
+
+  // Handle Category Click - Filter Videos
+  const handleCategoryClick = (category) => {
+    setSelectedCategory(category);
+
+    if (category === "All") {
+      setFilteredVideos(videos);
+    } else {
+      const filtered = videos.filter(
+        (video) => video.category_name === category
       );
-
-      console.log(response.data);
-      navigate(`/videos/${encodeURIComponent(video.video_id)}`, {
-        state: { video },
-      });
-    } catch (error) {
-      console.error(
-        "Error updating video views:",
-        error.response?.data || error.message
-      );
-
-      if (error.response?.status === 401) {
-        setMessage("❌ Unauthorized! Please log in again.");
-      } else {
-        setMessage("⚠️ Failed to update video views.");
-      }
+      setFilteredVideos(filtered);
     }
   };
 
+  // Handle Left Scroll
   const scrollLeft = () => {
-    setCurrentIndex(
-      (prevIndex) => (prevIndex - 6 + categories.length) % categories.length
+    setCurrentIndex((prevIndex) =>
+      prevIndex - 6 >= 0 ? prevIndex - 6 : categories.length - 6
     );
   };
 
+  // Handle Right Scroll
   const scrollRight = () => {
     setCurrentIndex((prevIndex) =>
-      prevIndex >= categories.length - 6 ? 0 : prevIndex + 6
+      prevIndex + 6 < categories.length ? prevIndex + 6 : 0
     );
   };
 
@@ -166,16 +132,24 @@ const QVideos = () => {
 
         {/* Scrollable Categories */}
         <div
-          ref={scrollContainerRef}
-          className="d-flex flex-wrap justify-content-center gap-2"
-          style={{ overflow: "hidden", width: "100%" }}
+          className="d-flex justify-content-center gap-2"
+          style={{
+            overflow: "hidden",
+            width: "100%",
+            transition: "transform 0.3s ease-in-out",
+          }}
         >
           {categories
             .slice(currentIndex, currentIndex + 6)
             .map((category, index) => (
               <div
                 key={index}
-                className="card align-items-center justify-content-center"
+                className={`card align-items-center justify-content-center ${
+                  selectedCategory === category.name
+                    ? "bg-primary text-white"
+                    : "bg-light text-dark"
+                }`}
+                onClick={() => handleCategoryClick(category.name)}
                 style={{
                   width: "180px",
                   borderRadius: "10px",
@@ -183,6 +157,7 @@ const QVideos = () => {
                   cursor: "pointer",
                   paddingTop: "5px", // Add padding on top
                   paddingBottom: "5px",
+                  transition: "0.3s",
                 }}
               >
                 <i
@@ -213,12 +188,20 @@ const QVideos = () => {
             <div className="text-center">Loading...</div>
           ) : message ? (
             <div className="text-center">{message}</div>
+          ) : filteredVideos.length === 0 ? (
+            <div className="text-center">
+              ⚠️ No videos found in this category.
+            </div>
           ) : (
-            videos.map((video, index) => (
+            filteredVideos.map((video, index) => (
               <div
                 className="col-12 col-sm-6 col-lg-4 col-xl-3 mb-3"
                 key={index}
-                onClick={() => handleVideoClick(video)}
+                onClick={() =>
+                  navigate(`/videos/${encodeURIComponent(video.video_id)}`, {
+                    state: { video },
+                  })
+                }
                 style={{ cursor: "pointer" }}
               >
                 <div
@@ -230,18 +213,16 @@ const QVideos = () => {
                   }}
                 >
                   <img
-                    src={video.defaultthumbnail || link}
+                    src={video.defaultthumbnail}
                     className="card-img-top"
                     alt={video.title || "Video Thumbnail"}
                     style={{ height: "150px", objectFit: "cover" }}
                   />
                   <div className="card-body">
                     <h6 className="fw-bold">{video.title}</h6>
-
                     <p className="text-muted">
                       {video.views} views • {timeAgo(video.uploaded_datetime)}{" "}
                     </p>
-                    {/* User Info Section */}
                     <div className="d-flex align-items-center">
                       <img
                         src={video.user_profile_image}
