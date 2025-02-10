@@ -23,7 +23,7 @@ const AddVideo = () => {
   const [tags, setTags] = useState("");
   const [progress, setProgress] = useState(0);
   const location = useLocation();
-  const [search, setSearch] = useState(""); // State for search input
+  const [categoryError, setCategoryError] = useState(false);
 
   const { videoData } = location.state || {};
   const [loading, setLoading] = useState(false);
@@ -91,6 +91,14 @@ const AddVideo = () => {
         } else {
             setCountryError(false);
         }
+
+        if (!selectedCategory) {
+          setCategoryError(true);
+          isValid = false;
+        } else {
+          setCategoryError(false);
+        }
+        
         if (!selectedThumbnail) {
           setThumbnailError(true);
           isValid = false;
@@ -491,7 +499,10 @@ const AddVideo = () => {
                           id={`category-${category.id}`}
                           value={category.id}
                           checked={selectedCategory === category.id}
-                          onChange={(e) => setSelectedCategory(Number(e.target.value))}
+                          onChange={(e) => {
+                            setSelectedCategory(Number(e.target.value));
+                            setCategoryError(false); // Clear error when a category is selected
+                            }}
                         />
                         <label className="form-check-label" htmlFor={`category-${category.id}`}>
                           {category.name}
@@ -500,6 +511,7 @@ const AddVideo = () => {
                     </div>
                   ))}
                 </div>
+                {categoryError && <small className="text-danger">Category selection is required</small>}
             {/* Thumbnail Section */}
             <div className="mt-1">
               <h6>Thumbnails</h6>

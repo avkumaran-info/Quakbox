@@ -102,7 +102,7 @@ const UploadVideo = () => {
           message: response.data.message,
           filePath: response.data.file_path,
           thumbnails: response.data.thumbnails,
-          videoType: response.data.videoType, // ✅ Ensure this is passed
+          videoType: response.data.video_type, // ✅ Ensure this is passed
         };
 
         navigate("/addvideo", { state: { videoData } });

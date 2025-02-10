@@ -174,9 +174,13 @@ const QSidebar = ({ isOpen, toggleSidebar }) => {
                   "opacity 0.3s ease-in-out, transform 0.3s ease-in-out",
               }}
             >
-              <NavLink to="/" className="text-white text-decoration-none">
-                Browse Stations
-              </NavLink>
+            <NavLink
+              to="/browse_channel"
+              className="text-white text-decoration-none"
+              style={{ display: "inline-block" }}
+            >
+              Browse Stations
+            </NavLink>
             </span>
           )}
         </li>
