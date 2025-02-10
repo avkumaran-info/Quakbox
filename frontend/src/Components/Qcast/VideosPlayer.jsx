@@ -3,6 +3,14 @@ import user from "../../assets/images/user1.png";
 import { useLocation, useNavigate, useParams } from "react-router-dom";
 import axios from "axios";
 import NavBar from "../Dashboard/NavBar";
+import CommentIcon from "@mui/icons-material/Comment";
+import ThumbUpIcon from "@mui/icons-material/ThumbUp";
+import ThumbDownIcon from "@mui/icons-material/ThumbDown";
+import { Tooltip } from "@mui/material";
+import FavoriteSharpIcon from "@mui/icons-material/FavoriteSharp";
+import GroupIcon from "@mui/icons-material/Group";
+import ScreenShareIcon from "@mui/icons-material/ScreenShare";
+import ReportIcon from "@mui/icons-material/Report";
 
 const defaultComments = [
   {
@@ -36,6 +44,74 @@ const VideosPlayer = () => {
   const navigate = useNavigate();
   const passedVideo = location.state?.video; // Always use passedVideo for recommendations
   console.log(passedVideo);
+  const [likes, setLikes] = useState(passedVideo?.likes || 0);
+  const [dislikes, setDislikes] = useState(passedVideo?.dislikes || 0);
+  const [isLiked, setIsLiked] = useState(false);
+  const [isDisliked, setIsDisliked] = useState(false);
+
+  const handleUpload = () => {
+    navigate("/upload");
+  };
+
+  const handleLike = async () => {
+    if (!passedVideo) return;
+
+    try {
+      const token = localStorage.getItem("api_token");
+      if (!token) {
+        console.error("❌ Authorization token missing. Please log in.");
+        return;
+      }
+
+      const response = await axios.post(
+        `https://develop.quakbox.com/admin/api/videos/${passedVideo.video_id}/like`,
+        {},
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+
+      if (response.status === 200) {
+        setLikes((prev) => prev + (isLiked ? -1 : 1)); // Toggle like count
+        setIsLiked(!isLiked);
+
+        if (isDisliked) {
+          setDislikes((prev) => prev - 1); // Remove dislike if liked
+          setIsDisliked(false);
+        }
+      }
+    } catch (error) {
+      console.error("Error liking video:", error);
+    }
+  };
+
+  const handleDislike = async () => {
+    if (!passedVideo) return;
+
+    try {
+      const token = localStorage.getItem("api_token");
+      if (!token) {
+        console.error("❌ Authorization token missing. Please log in.");
+        return;
+      }
+
+      const response = await axios.post(
+        `https://develop.quakbox.com/admin/api/videos/${passedVideo.video_id}/dislike`,
+        {},
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+
+      if (response.status === 200) {
+        setDislikes((prev) => prev + (isDisliked ? -1 : 1)); // Toggle dislike count
+        setIsDisliked(!isDisliked);
+
+        if (isLiked) {
+          setLikes((prev) => prev - 1); // Remove like if disliked
+          setIsLiked(false);
+        }
+      }
+    } catch (error) {
+      console.error("Error disliking video:", error);
+    }
+  };
 
   useEffect(() => {
     const fetchVideo = async () => {
@@ -53,7 +129,7 @@ const VideosPlayer = () => {
           { headers: { Authorization: `Bearer ${token}` } }
         );
         setVideo(response.data.data);
-        console.log(response.data.data);
+        // console.log(response.data.data);
       } catch (error) {
         console.error("Error fetching video:", error);
       }
@@ -74,7 +150,7 @@ const VideosPlayer = () => {
         }
 
         const response = await axios.get(
-          "https://develop.quakbox.com/admin/api/videos",
+          "https://develop.quakbox.com/admin/api/videos/qlist",
           { headers: { Authorization: `Bearer ${token}` } }
         );
 
@@ -173,9 +249,102 @@ const VideosPlayer = () => {
                   {timeAgo(passedVideo.uploaded_datetime)}{" "}
                 </p>
               </div>
-
-              {/* Right Side: Action Buttons */}
               <div className="d-flex gap-2">
+                <Tooltip title="Like" arrow disableInteractive>
+                  <div style={{ textAlign: "center" }} onClick={handleLike}>
+                    <ThumbUpIcon
+                      sx={{
+                        fontSize: 30,
+                        color: isLiked ? "blue" : "#263238",
+                        "&:hover": { transform: "scale(1.2)" },
+                        transition: "all 0.3s ease",
+                        cursor: "pointer",
+                      }}
+                    />
+                    <div style={{ fontSize: "16px", marginTop: "4px" }}>
+                      {likes}
+                    </div>
+                  </div>
+                </Tooltip>
+
+                <Tooltip title="Dislike" arrow disableInteractive>
+                  <div style={{ textAlign: "center" }} onClick={handleDislike}>
+                    <ThumbDownIcon
+                      sx={{
+                        fontSize: 30,
+                        color: isDisliked ? "red" : "#263238",
+                        "&:hover": { transform: "scale(1.2)" },
+                        transition: "all 0.3s ease",
+                        cursor: "pointer",
+                      }}
+                    />
+                    <div style={{ fontSize: "16px", marginTop: "4px" }}>
+                      {dislikes}
+                    </div>
+                  </div>
+                </Tooltip>
+
+                <Tooltip title="Comment" arrow disableInteractive>
+                  <div style={{ textAlign: "center" }}>
+                    <CommentIcon
+                      sx={{
+                        fontSize: 30,
+                        color: "#263238",
+                        "&:hover": {
+                          //color: "red",
+                          transform: "scale(1.2)",
+                        },
+                        transition: "all 0.3s ease",
+                        fontWeight: "bold",
+                        opacity: 0.8,
+                        cursor: "pointer",
+                      }}
+                      onClick={toggleComments}
+                    />
+                    <div style={{ fontSize: "16px", marginTop: "4px" }}>1</div>
+                  </div>
+                </Tooltip>
+
+                <Tooltip title="Share" arrow disableInteractive>
+                  <div style={{ textAlign: "center" }}>
+                    <ScreenShareIcon
+                      sx={{
+                        fontSize: 30,
+                        color: "#263238",
+                        "&:hover": {
+                          //color: "red",
+                          transform: "scale(1.2)",
+                        },
+                        transition: "all 0.3s ease",
+                        fontWeight: "bold",
+                        opacity: 0.8,
+                        cursor: "pointer",
+                      }}
+                    />
+                    <div style={{ fontSize: "16px", marginTop: "4px" }}>1</div>
+                  </div>
+                </Tooltip>
+                <Tooltip title="Report" arrow disableInteractive>
+                  <div style={{ textAlign: "center" }}>
+                    <ReportIcon
+                      sx={{
+                        fontSize: 30,
+                        color: "#263238", // Red color for report
+                        "&:hover": {
+                          transform: "scale(1.2)",
+                        },
+                        transition: "all 0.3s ease",
+                        fontWeight: "bold",
+                        opacity: 0.8,
+                        cursor: "pointer",
+                      }}
+                    />
+                    <div style={{ fontSize: "16px", marginTop: "4px" }}>1</div>
+                  </div>
+                </Tooltip>
+              </div>
+              {/* Right Side: Action Buttons */}
+              {/* <div className="d-flex gap-2">
                 <button className="btn btn-outline-secondary">
                   👍 {video.like}
                 </button>
@@ -187,8 +356,8 @@ const VideosPlayer = () => {
                   {showComments ? "Hide Comments" : "Show Comments"}
                 </button>
                 <button className="btn btn-outline-secondary">🔗 Share</button>
-                <button className="btn btn-outline-secondary">✂️ Clip</button>
-              </div>
+                <button className="btn btn-outline-secondary">Report</button>
+              </div> */}
             </div>
 
             {/* Video Description */}

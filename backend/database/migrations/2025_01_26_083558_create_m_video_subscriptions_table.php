@@ -13,13 +13,11 @@ return new class extends Migration
     {
         Schema::create('m_video_subscriptions', function (Blueprint $table) {
             $table->id();
-            $table->unsignedBigInteger('user_id');    // Subscriber
-            $table->unsignedBigInteger('channel_id'); // Subscribed channel
+            $table->foreignId('subscriber_id')->constrained('users')->onDelete('cascade');
+            $table->foreignId('creator_id')->constrained('users')->onDelete('cascade');
             $table->timestamps();
 
-            $table->unique(['user_id', 'channel_id']); // Prevent duplicate subscriptions
-            $table->foreign('user_id')->references('id')->on('users')->onDelete('cascade');
-            $table->foreign('channel_id')->references('id')->on('m_video_channels')->onDelete('cascade');
+            $table->unique(['subscriber_id', 'creator_id']); // Prevent duplicate subscriptions
         });
     }
 

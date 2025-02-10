@@ -1,5 +1,4 @@
 import React, { useState, useRef, useEffect } from "react";
-import QNavBar from "./QNavBar";
 import QSidebar from "./QSidebar";
 import NavBar from "../Dashboard/NavBar";
 import videoupload from "../../assets/images/Videos property/videoupload.png";
@@ -64,13 +63,16 @@ const UploadVideo = () => {
 
   const handleFileUpload = async (e) => {
     const formData = new FormData();
-    
+
     const file = e.target.files[0];
-    const videoType = file.type.startsWith("video/") ? 1 
-                   : file.type.startsWith("audio/") ? 2 
-                   : file.type.startsWith("image/") ? 3 
-                   : 4; // Default to webcam  
-    formData.append("video_type", videoType);  // ✅ Fix: Corrected key
+    const videoType = file.type.startsWith("video/")
+      ? 1
+      : file.type.startsWith("audio/")
+      ? 2
+      : file.type.startsWith("image/")
+      ? 3
+      : 4; // Default to webcam
+    formData.append("video_type", videoType); // ✅ Fix: Corrected key
     formData.append("temp_upload", true);
     formData.append("video_file", file);
 
@@ -87,7 +89,7 @@ const UploadVideo = () => {
         "https://develop.quakbox.com/admin/api/videos/upload",
         formData,
         {
-          headers: { 
+          headers: {
             Authorization: `Bearer ${token}`,
             "Content-Type": "multipart/form-data",
           },
@@ -114,8 +116,7 @@ const UploadVideo = () => {
       console.error("Error uploading video:", error);
       alert("Upload failed. Please try again.");
     }
-};
-
+  };
 
   // Content for each category
   const categoryContent = {

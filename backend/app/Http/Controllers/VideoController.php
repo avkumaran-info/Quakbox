@@ -7,6 +7,7 @@ ini_set('memory_limit', '2G');
 use Illuminate\Http\Request;
 use App\Models\M_Videos;
 use App\Models\M_Video_Interactions;
+use App\Models\M_Video_Subscription;
 use FFMpeg\FFMpeg;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Log;
@@ -255,12 +256,12 @@ class VideoController extends Controller
         $query->where('m_videos.type', '=', 'Public');
     
         // Fetch videos
-        $videos = $query->get();
+        $videos = $query->latest()->get();
         // Check if videos exist
         if ($videos->isEmpty()) {
             return response()->json([
                 'result' => false,
-                'message' => 'No videos found',
+                'message' => 'No videos foundssss',
             ], 404);
         }
     
@@ -287,7 +288,7 @@ class VideoController extends Controller
                 'country_code' => $video->country_code,
                 'tags' => is_string($video->tags) ? json_decode($video->tags, true) ?? [] : $video->tags,
                 'video_type' => $video->video_type, // Added this
-                'uploaded_datetime' => optional($video->updated_at)->toDateTimeString(),
+                'uploaded_datetime' => $video->updated_at,
             ];
         });
     
@@ -302,15 +303,20 @@ class VideoController extends Controller
     public function show($id)
     {
         // Find the video by its ID or fail if not found
-        $video = M_Videos::find($id);
-    
+        $video = M_Videos::join('users', 'm_videos.user_id', '=', 'users.id')
+                        ->select('m_videos.*', 'users.username as username', 'users.profile_image as profile_image')
+                        ->where('m_videos.id', '=', $id)
+                        ->where('m_videos.type', '=', 'Public')
+                        ->first();
         if (!$video) {
             return response()->json([
                 'result' => false,
                 'message' => 'Video not found'
             ], 404); // 404 Not Found
         }
-    
+        //
+        $subscribersCnt = DB::table('m_video_subscriptions')->where('creator_id', '=', $video->user_id)->count();
+        
         // Return the video details with proper URLs
         return response()->json([
             'result' => true,
@@ -321,6 +327,9 @@ class VideoController extends Controller
                 'description' => $video->description,
                 'file_path' => env('APP_URL') . '/api/images/' . $video->file_path, // Full URL for the video file
                 'user_id' => $video->user_id,
+                'user_name' => $video->username,
+                'user_profile_image' => env('APP_URL') . '/api/images/' . $video->profile_image,
+                'subscribers_cnt' => $subscribersCnt,
                 'category_id' => $video->category_id,
                 'type' => $video->type,
                 'title_size' => $video->title_size,
@@ -415,7 +424,7 @@ class VideoController extends Controller
                 'country_code' => $video->country_code,
                 'tags' => is_string($video->tags) ? json_decode($video->tags, true) ?? [] : $video->tags,
                 'video_type' => $video->video_type, // Added this
-                'uploaded_datetime' => optional($video->updated_at)->toDateTimeString(),
+                'uploaded_datetime' => $video->updated_at,
             ];
         });
     
