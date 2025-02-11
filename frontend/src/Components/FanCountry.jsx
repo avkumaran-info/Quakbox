@@ -61,10 +61,16 @@ const FanCountry = () => {
   const fetchAllCountries = async () => {
     setLoading(true);
     try {
-      const response = await axios.get(countriesApi);
-      const data = response.data.map((country) => ({
-        name: country.name.common,
-        flag: country.flags.png,
+      const storedCountries =
+      JSON.parse(localStorage.getItem("geo_country")) || [];
+      // console.log(storedCountries);
+      
+      // const response = await axios.get(countriesApi);
+      // console.log(response.data);
+
+      const data = storedCountries.map((country) => ({
+        name: country.country_name,
+        flag: country.country_image,
         isFan: false,
         isFavourite: false,
       }));
@@ -139,7 +145,7 @@ const FanCountry = () => {
         headers: { Authorization: `Bearer ${token}` },
       });
       console.log(response);
-      
+
       const uniqueCountries = response.data.favourite_country.map(
         (country) => ({
           code: country.code.toLowerCase(),
@@ -319,10 +325,7 @@ const FanCountry = () => {
   return (
     <div className="app">
       <NavBar />
-      <div
-        className=""
-        style={{ marginTop: "54px", marginBottom: "60px" }}
-      >
+      <div className="" style={{ marginTop: "54px", marginBottom: "60px" }}>
         <Loader loading={loading || resetLoading} message="Loading data..." />
         <CustomSnackbar
           open={!!successMessage}

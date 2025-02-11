@@ -57,6 +57,8 @@ const QVideos = () => {
 
       if (response.status === 200 && response.data.data) {
         setVideos(response.data.data);
+        console.log(videos);
+
         setFilteredVideos(response.data.data); // Initially show all videos
       } else {
         setMessage("⚠️ No videos found.");
@@ -65,6 +67,35 @@ const QVideos = () => {
       setMessage("❌ No videos to display");
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleVideoClick = async (video) => {
+    try {
+      const token = localStorage.getItem("api_token"); // Get the auth token
+      if (!token) {
+        console.error("❌ Authorization token missing. Please log in.");
+        return;
+      }
+
+      // Call the API to update the view count
+      await axios.post(
+        `https://develop.quakbox.com/admin/api/videos/${video.video_id}/view`,
+        {},
+        {
+          headers: { Authorization: `Bearer ${token}` },
+        }
+      );
+
+      // Navigate to the video page after API call
+      navigate(`/videos/${encodeURIComponent(video.video_id)}`, {
+        state: { video },
+      });
+    } catch (error) {
+      console.error(
+        "❌ Error updating video view count:",
+        error.response?.data || error.message
+      );
     }
   };
 
@@ -81,43 +112,70 @@ const QVideos = () => {
     }
   };
 
-  // Fetch filtered videos based on search query and category
   const filterVideos = async (search, category) => {
     setSearchQuery(search);
+    setSelectedCategory(category);
+    setLoading(true);
+    setMessage(""); // Reset message before filtering
+
     try {
-      setLoading(true);
       const token = localStorage.getItem("api_token");
       if (!token) {
         setMessage("❌ Authorization token missing. Please log in.");
         return;
       }
 
-      let apiUrl = "https://develop.quakbox.com/admin/api/videos";
-      if (search) {
-        apiUrl = `https://develop.quakbox.com/admin/api/videos/search/${search}`;
-      }
+      // Get all videos (fetch only once)
+      let allVideos = videos.length > 0 ? videos : [];
+      if (allVideos.length === 0) {
+        const response = await axios.get(
+          "https://develop.quakbox.com/admin/api/videos",
+          {
+            headers: { Authorization: `Bearer ${token}` },
+          }
+        );
 
-      const response = await axios.get(apiUrl, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
-
-      if (response.status === 200 && response.data.data) {
-        let filtered = response.data.data;
-
-        // Filter based on category (only if not "All")
-        if (category !== "All") {
-          filtered = filtered.filter(
-            (video) => video.category_name === category
-          );
+        if (response.status === 200 && response.data.data) {
+          allVideos = response.data.data;
+          setVideos(allVideos); // Store videos globally to avoid refetching
+        } else {
+          setMessage("⚠️ No videos found.");
+          setFilteredVideos([]); // Ensure empty state
+          return;
         }
-
-        setFilteredVideos(filtered);
-      } else {
-        setFilteredVideos([]);
-        setMessage("⚠️ No matching videos found.");
       }
+
+      // Apply search filter
+      let filtered = allVideos;
+      if (search) {
+        filtered = filtered.filter((video) =>
+          video.title.toLowerCase().includes(search.toLowerCase().trim())
+        );
+      }
+
+      // Apply category filter
+      if (category !== "All") {
+        filtered = filtered.filter(
+          (video) =>
+            video.category_name?.toLowerCase().trim() ===
+            category.toLowerCase().trim()
+        );
+      }
+
+      // If no matching videos, reset message correctly
+      if (filtered.length === 0) {
+        setMessage(
+          `⚠️ No videos found for '${category}'${
+            search ? ` and '${search}'` : ""
+          }.`
+        );
+      } else {
+        setMessage(""); // Ensure message is cleared if videos are found
+      }
+
+      setFilteredVideos(filtered);
     } catch (error) {
-      setMessage("❌ No videos to display");
+      setMessage("❌ Error fetching videos.");
     } finally {
       setLoading(false);
     }
@@ -137,10 +195,31 @@ const QVideos = () => {
     );
   };
 
+  // Time formatting function
+  const timeAgo = (dateString) => {
+    const date = new Date(dateString);
+    const now = new Date();
+    const seconds = Math.floor((now - date) / 1000);
+
+    if (seconds < 60) return "now"; // Less than 1 minute
+    const minutes = Math.floor(seconds / 60);
+    if (minutes < 60) return `${minutes} min ago`;
+    const hours = Math.floor(minutes / 60);
+    if (hours < 24) return `${hours} hour${hours > 1 ? "s" : ""} ago`;
+    const days = Math.floor(hours / 24);
+    if (days < 7) return `${days} day${days > 1 ? "s" : ""} ago`;
+    const weeks = Math.floor(days / 7);
+    if (weeks < 4) return `${weeks} week${weeks > 1 ? "s" : ""} ago`;
+    const months = Math.floor(days / 30);
+    if (months < 12) return `${months} month${months > 1 ? "s" : ""} ago`;
+    const years = Math.floor(days / 365);
+    return `${years} year${years > 1 ? "s" : ""} ago`;
+  };
+
   return (
     <>
       {/* Navbar with Search Box */}
-      <nav className="navbar navbar-light bg-light shadow d-flex justify-content-center align-items-center p-2">
+      <nav className="navbar navbar-light bg-light shadow d-flex justify-content-center align-items-center p-2 mb-2">
         <input
           type="text"
           className="form-control"
@@ -245,30 +324,61 @@ const QVideos = () => {
               <div
                 className="col-12 col-sm-6 col-lg-4 col-xl-3 mb-3"
                 key={index}
-                onClick={() =>
-                  navigate(`/videos/${encodeURIComponent(video.video_id)}`, {
-                    state: { video },
-                  })
-                }
+                onClick={() => handleVideoClick(video)}
                 style={{ cursor: "pointer" }}
               >
                 <div
-                  className="card position-relative"
+                  className="card border-0"
                   style={{
                     borderRadius: "12px",
                     overflow: "hidden",
                     boxShadow: "0 4px 8px rgba(0,0,0,0.1)",
                   }}
                 >
-                  <img
-                    src={video.defaultthumbnail}
-                    className="card-img-top"
-                    alt={video.title || "Video Thumbnail"}
-                    style={{ height: "150px", objectFit: "cover" }}
-                  />
-                  <div className="card-body">
-                    <h6 className="fw-bold">{video.title}</h6>
-                    <p className="text-muted">{video.views} views</p>
+                  {/* Video Thumbnail */}
+                  <div style={{ position: "relative" }}>
+                    <img
+                      src={video.defaultthumbnail}
+                      className="card-img-top"
+                      alt={video.title || "Video Thumbnail"}
+                      style={{
+                        height: "160px",
+                        width: "100%",
+                        objectFit: "cover",
+                      }}
+                    />
+                  </div>
+
+                  {/* Video Info */}
+                  <div className="card-body p-2 d-flex">
+                    {/* Profile Image */}
+                    <img
+                      src={video.user_profile_image || "default_profile.png"}
+                      alt="Uploader"
+                      className="rounded-circle me-2"
+                      style={{
+                        width: "40px",
+                        height: "40px",
+                        objectFit: "cover",
+                      }}
+                    />
+
+                    {/* Video Details */}
+                    <div style={{ flex: 1 }}>
+                      <h6 className="fw-bold mb-1 text-dark">{video.title}</h6>
+                      <p
+                        className="text-muted mb-0"
+                        style={{ fontSize: "13px" }}
+                      >
+                        {video.username}
+                      </p>
+                      <p
+                        className="text-muted mb-0"
+                        style={{ fontSize: "12px" }}
+                      >
+                        {video.views} views • {timeAgo(video.uploaded_datetime)}
+                      </p>
+                    </div>
                   </div>
                 </div>
               </div>

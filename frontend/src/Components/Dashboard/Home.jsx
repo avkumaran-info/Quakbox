@@ -21,7 +21,7 @@ const getCountryDetails = async (countryCode) => {
     const countryData = storedCountries.find(
       (country) => country.code.toLowerCase() === countryCode.toLowerCase()
     );
-    console.log(countryData);
+    // console.log(countryData);
 
     if (!countryData) return { flag: "/default-flag.png", name: "Unknown" };
 
@@ -52,7 +52,7 @@ const Home = () => {
     flag: flag,
   });
 
-  console.log(countryCode);
+  // console.log(countryCode);
 
   // Fetch user data
   const userDataFetch = async () => {
@@ -69,6 +69,8 @@ const Home = () => {
       // console.log(res.data.users.id);
       setUserCountry(res.data.user_details.country);
       localStorage.setItem("user_Id", res.data.users.id);
+      localStorage.setItem("user_Details", JSON.stringify(res.data));
+
       const userDetails = res.data.user_details;
       const defaultCountryCode = userDetails.country; // Default to IN if no country code is present
       const defaultCountryName = "INDIA";
