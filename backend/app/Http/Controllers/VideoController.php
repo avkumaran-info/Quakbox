@@ -315,8 +315,12 @@ class VideoController extends Controller
             ], 404); // 404 Not Found
         }
         //
-        $subscribersCnt = DB::table('m_video_subscriptions')->where('creator_id', '=', $video->user_id)->count();
-        
+        $subscribers = M_Video_Subscription::where('creator_id', $video->user_id)
+                                ->get(['subscriber_id']);
+        $subscribersCnt = $subscribers->count();
+        //
+        $videoInteraction = M_Videos::withCount(['likes', 'dislikes', 'views'])->findOrFail($video->id);
+        $likedUsers = M_Video_Interactions::where('video_id', $video->id)->where('type', 'like')->get(['user_id as video_liked_user_id']);
         // Return the video details with proper URLs
         return response()->json([
             'result' => true,
@@ -329,7 +333,10 @@ class VideoController extends Controller
                 'user_id' => $video->user_id,
                 'user_name' => $video->username,
                 'user_profile_image' => env('APP_URL') . '/api/images/' . $video->profile_image,
+                'subscribers_user_id' => $subscribers,
                 'subscribers_cnt' => $subscribersCnt,
+                'likes_count' => $videoInteraction->likes_count,
+                'liked_user_id' => $likedUsers,
                 'category_id' => $video->category_id,
                 'type' => $video->type,
                 'title_size' => $video->title_size,
