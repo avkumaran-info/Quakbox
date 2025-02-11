@@ -2,6 +2,10 @@ import React, { useEffect, useState } from "react";
 import defaultUserImage from "../../assets/images/vector-users-icon.jpg";
 import userImage from "../../assets/images/vector-users-icon.jpg";
 import axios from "axios";
+import CommentIcon from "@mui/icons-material/Comment";
+import ThumbUpIcon from "@mui/icons-material/ThumbUp";
+import ThumbDownIcon from "@mui/icons-material/ThumbDown";
+import ShareIcon from "@mui/icons-material/Share";
 import { Navigate } from "react-router-dom";
 
 const Feed = ({ countryCode, flag, countryName, handleCountryChange }) => {
@@ -16,12 +20,133 @@ const Feed = ({ countryCode, flag, countryName, handleCountryChange }) => {
   const [userName, setUserName] = useState("");
   const [currentUserId, setCurrentUserId] = useState(null);
   const [userDetails, setUserDetails] = useState([]);
+  const [isDeletePopupOpen, setIsDeletePopupOpen] = useState(false);
+  const [isEditPopupOpen, setIsEditPopupOpen] = useState(false);
+  const [postToDelete, setPostToDelete] = useState(null);
+  const [postToEdit, setPostToEdit] = useState(null);
+  const [editedMessage, setEditedMessage] = useState("");
+  const [editedMediaFile, setEditedMediaFile] = useState(null);
+  const [editedMediaPreview, setEditedMediaPreview] = useState(null);
 
   const userId = localStorage.getItem("user_Id");
 
   // Functions to handle popup visibility
   const openPopup = () => setIsPopupOpen(true);
   const closePopup = () => setIsPopupOpen(false);
+
+  // Open Delete Popup
+  const openDeletePopup = (post) => {
+    setPostToDelete(post);
+    setIsDeletePopupOpen(true);
+  };
+
+  // Close Delete Popup
+  const closeDeletePopup = () => {
+    setPostToDelete(null);
+    setIsDeletePopupOpen(false);
+  };
+
+  // Open Edit Popup
+  const openEditPopup = (post) => {
+    setPostToEdit(post);
+    setEditedMessage(post.message);
+    setEditedMediaPreview(post.attachments?.data?.[0]?.media?.[0]?.url || null);
+    setIsEditPopupOpen(true);
+  };
+
+  // Close Edit Popup
+  const closeEditPopup = () => {
+    setPostToEdit(null);
+    setEditedMessage("");
+    setEditedMediaFile(null);
+    setEditedMediaPreview(null);
+    setIsEditPopupOpen(false);
+  };
+
+  // Handle Edit Media Change
+  const handleEditFileChange = (event) => {
+    const file = event.target.files[0];
+    setEditedMediaFile(file);
+    if (file) {
+      const previewURL = URL.createObjectURL(file);
+      setEditedMediaPreview(previewURL);
+    }
+  };
+
+  // Handle Delete Confirmation
+  const handleDeletePost = async () => {
+    if (!postToDelete) return;
+    const token = localStorage.getItem("api_token");
+    if (!token) return;
+    try {
+      const res = await axios.delete(
+        `https://develop.quakbox.com/admin/api/del_posts/${postToDelete.id}`,
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+
+      if (res.status === 200) {
+        setData((prevData) => ({
+          ...prevData,
+          posts: prevData.posts.filter((post) => post.id !== postToDelete.id),
+        }));
+        closeDeletePopup();
+      } else {
+        alert("Failed to delete post");
+      }
+    } catch (error) {
+      console.error("Error deleting post:", error);
+      alert("An error occurred while deleting the post");
+    }
+  };
+
+  // Handle Edit Post Submission
+  const handleEditSubmit = async () => {
+    if (!postToEdit) return;
+
+    const token = localStorage.getItem("api_token");
+    if (!token) {
+      alert("Authorization token missing. Please log in.");
+      return;
+    }
+
+    // ✅ Log the edited message to check if it's updating
+    console.log("Edited message:", editedMessage);
+
+    try {
+      const res = await axios.put(
+        `https://develop.quakbox.com/admin/api/put_posts/${postToEdit.id}`,
+        { message: editedMessage }, // ✅ Sending message as JSON instead of FormData
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "application/json", // ✅ API might expect JSON, not FormData
+          },
+        }
+      );
+
+      if (res.status === 200 && res.data.post) {
+        // ✅ Ensure the new message from response is used
+        setData((prevData) => ({
+          ...prevData,
+          posts: prevData.posts.map((post) =>
+            post.id === postToEdit.id
+              ? {
+                  ...post,
+                  message: res.data.post.message, // ✅ Use updated message from API response
+                }
+              : post
+          ),
+        }));
+
+        closeEditPopup();
+      } else {
+        alert("Failed to edit post.");
+      }
+    } catch (error) {
+      console.error("Error editing post:", error);
+      alert("An error occurred while editing the post.");
+    }
+  };
 
   // Function to calculate relative time
   const getTimeAgo = (timestamp) => {
@@ -87,6 +212,7 @@ const Feed = ({ countryCode, flag, countryName, handleCountryChange }) => {
     if (mediaFile) {
       formData.append("media", mediaFile);
     }
+    console.log(formData);
 
     try {
       const response = await axios.post(
@@ -151,12 +277,100 @@ const Feed = ({ countryCode, flag, countryName, handleCountryChange }) => {
     }
   };
 
-  // Handle Like Click
+  // // Handle Like Click
+  // const handleLikeClick = async (postId) => {
+  //   const token = localStorage.getItem("api_token");
+
+  //   const currentUser = {
+  //     id: currentUserId,
+  //     name: userName.username || "Unknown User",
+  //   };
+
+  //   setData((prevData) =>
+  //     Array.isArray(prevData.posts)
+  //       ? {
+  //           ...prevData,
+  //           posts: prevData.posts.map((post) =>
+  //             post.id === postId
+  //               ? {
+  //                   ...post,
+  //                   likes: {
+  //                     count: (post.likes?.count || 0) + 1,
+  //                   },
+  //                   liked_users: [...(post.liked_users || []), currentUser],
+  //                 }
+  //               : post
+  //           ),
+  //         }
+  //       : prevData
+  //   );
+
+  //   try {
+  //     const res = await axios.post(
+  //       `https://develop.quakbox.com/admin/api/set_posts_like/${postId}/like`,
+  //       {},
+  //       {
+  //         headers: { Authorization: `Bearer ${token}` },
+  //       }
+  //     );
+
+  //     if (res.status !== 200) {
+  //       console.error("Failed to save the like in the database.");
+  //       revertLike(postId);
+  //     }
+  //   } catch (error) {
+  //     console.error("Error liking the post:", error);
+  //     revertLike(postId);
+  //   }
+  // };
+  // // handleDislikeClick
+  // ///////////////////////////
+  // // Helper function to revert the like action
+  // const revertLike = (postId) => {
+  //   setData((prevData) =>
+  //     Array.isArray(prevData.posts)
+  //       ? {
+  //           ...prevData,
+  //           posts: prevData.posts.map((post) =>
+  //             post.id === postId
+  //               ? {
+  //                   ...post,
+  //                   likes: {
+  //                     count: Math.max((post.likes?.count || 0) - 1, 0),
+  //                   },
+  //                   liked_users: (post.liked_users || []).filter(
+  //                     (user) => user.id !== currentUserId
+  //                   ),
+  //                 }
+  //               : post
+  //           ),
+  //         }
+  //       : prevData
+  //   );
+  // };
+
+  // // Handle dislike Click
+
+  // const handleDislikeClick = (postId) => {
+  //   if (dislikedPosts.includes(postId)) {
+  //     // Remove from dislikedPosts if already disliked
+  //     setDislikedPosts(dislikedPosts.filter((id) => id !== postId));
+  //   } else {
+  //     // Add to dislikedPosts
+  //     setDislikedPosts([...dislikedPosts, postId]);
+
+  //     // Optional: Remove from likedPosts if it's there
+  //     if (likedPosts.includes(postId)) {
+  //       setLikedPosts(likedPosts.filter((id) => id !== postId));
+  //     }
+  //   }
+  // };
+
   const handleLikeClick = async (postId) => {
     const token = localStorage.getItem("api_token");
 
     const currentUser = {
-      id: currentUserId,
+      user_id: currentUserId, // Correct field name based on your API response
       name: userName.username || "Unknown User",
     };
 
@@ -170,8 +384,15 @@ const Feed = ({ countryCode, flag, countryName, handleCountryChange }) => {
                     ...post,
                     likes: {
                       count: (post.likes?.count || 0) + 1,
+                      liked_users: [
+                        ...(post.likes?.liked_users || []),
+                        currentUser,
+                      ],
                     },
-                    liked_users: [...(post.liked_users || []), currentUser],
+                    // Remove dislike if user had disliked before
+                    disliked_users: (post.disliked_users || []).filter(
+                      (user) => user.user_id !== currentUserId
+                    ),
                   }
                 : post
             ),
@@ -197,9 +418,8 @@ const Feed = ({ countryCode, flag, countryName, handleCountryChange }) => {
       revertLike(postId);
     }
   };
-  // handleDislikeClick
-  ///////////////////////////
-  // Helper function to revert the like action
+
+  // Revert Like (Rollback if API call fails)
   const revertLike = (postId) => {
     setData((prevData) =>
       Array.isArray(prevData.posts)
@@ -211,10 +431,10 @@ const Feed = ({ countryCode, flag, countryName, handleCountryChange }) => {
                     ...post,
                     likes: {
                       count: Math.max((post.likes?.count || 0) - 1, 0),
+                      liked_users: (post.likes?.liked_users || []).filter(
+                        (user) => user.user_id !== currentUserId
+                      ),
                     },
-                    liked_users: (post.liked_users || []).filter(
-                      (user) => user.id !== currentUserId
-                    ),
                   }
                 : post
             ),
@@ -223,21 +443,79 @@ const Feed = ({ countryCode, flag, countryName, handleCountryChange }) => {
     );
   };
 
-  // Handle dislike Click
+  // // Handle Dislike Click
+  const handleDislikeClick = async (postId) => {
+    const token = localStorage.getItem("api_token");
 
-  const handleDislikeClick = (postId) => {
-    if (dislikedPosts.includes(postId)) {
-      // Remove from dislikedPosts if already disliked
-      setDislikedPosts(dislikedPosts.filter((id) => id !== postId));
-    } else {
-      // Add to dislikedPosts
-      setDislikedPosts([...dislikedPosts, postId]);
+    const currentUser = {
+      user_id: currentUserId,
+      name: userName.username || "Unknown User",
+    };
 
-      // Optional: Remove from likedPosts if it's there
-      if (likedPosts.includes(postId)) {
-        setLikedPosts(likedPosts.filter((id) => id !== postId));
+    setData((prevData) =>
+      Array.isArray(prevData.posts)
+        ? {
+            ...prevData,
+            posts: prevData.posts.map((post) =>
+              post.id === postId
+                ? {
+                    ...post,
+                    disliked_users: [
+                      ...(post.disliked_users || []),
+                      currentUser,
+                    ],
+                    // Remove like if user had liked before
+                    likes: {
+                      count: Math.max((post.likes?.count || 0) - 1, 0),
+                      liked_users: (post.likes?.liked_users || []).filter(
+                        (user) => user.user_id !== currentUserId
+                      ),
+                    },
+                  }
+                : post
+            ),
+          }
+        : prevData
+    );
+
+    try {
+      const res = await axios.post(
+        `https://develop.quakbox.com/admin/api/set_posts_like/${postId}/dislike`,
+        {},
+        {
+          headers: { Authorization: `Bearer ${token}` },
+        }
+      );
+
+      if (res.status !== 200) {
+        console.error("Failed to save the dislike in the database.");
+        revertDislike(postId);
       }
+    } catch (error) {
+      console.error("Error disliking the post:", error);
+      revertDislike(postId);
     }
+  };
+
+  // Revert Dislike (Rollback if API call fails)
+  const revertDislike = (postId) => {
+    setData((prevData) =>
+      Array.isArray(prevData.posts)
+        ? {
+            ...prevData,
+            posts: prevData.posts.map((post) =>
+              post.id === postId
+                ? {
+                    ...post,
+                    disliked_users: (post.disliked_users || []).filter(
+                      (user) => user.user_id !== currentUserId
+                    ),
+                  }
+                : post
+            ),
+          }
+        : prevData
+    );
   };
 
   // const getPost = async () => {
@@ -505,6 +783,155 @@ const Feed = ({ countryCode, flag, countryName, handleCountryChange }) => {
                 </div>
               </div>
             )}
+
+            {/* Edit Post Popup */}
+            {isEditPopupOpen && (
+              <div
+                className="modal fade show d-block"
+                style={{ background: "rgba(0, 0, 0, 0.5)" }}
+              >
+                <div className="modal-dialog modal-dialog-centered modal-md">
+                  <div className="modal-content">
+                    {/* Header */}
+                    <div className="modal-header">
+                      <h5 className="modal-title">Edit Post</h5>
+                      <button
+                        className="btn-close"
+                        onClick={closeEditPopup}
+                      ></button>
+                    </div>
+
+                    {/* Body */}
+                    <div className="modal-body">
+                      <textarea
+                        className="form-control mb-3"
+                        rows="3"
+                        value={editedMessage}
+                        onChange={(e) => setEditedMessage(e.target.value)}
+                      ></textarea>
+
+                      {/* Media Preview (Image or Video) */}
+                      {editedMediaPreview && (
+                        <div className="position-relative text-center">
+                          {editedMediaPreview.endsWith(".mp4") ? (
+                            <video
+                              controls
+                              className="w-100 rounded"
+                              style={{ maxHeight: "250px" }}
+                            >
+                              <source
+                                src={editedMediaPreview}
+                                type="video/mp4"
+                              />
+                              Your browser does not support the video tag.
+                            </video>
+                          ) : (
+                            <img
+                              src={editedMediaPreview}
+                              alt="Preview"
+                              className="img-fluid rounded"
+                              style={{ maxHeight: "250px", maxWidth: "100%" }}
+                            />
+                          )}
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Footer */}
+                    <div className="modal-footer">
+                      <button
+                        className="btn btn-secondary"
+                        onClick={closeEditPopup}
+                      >
+                        Cancel
+                      </button>
+                      <button
+                        className="btn btn-primary"
+                        onClick={handleEditSubmit}
+                      >
+                        Save Changes
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* Deleted Post Popup */}
+            {isDeletePopupOpen && postToDelete && (
+              <div
+                className="modal fade show d-block"
+                style={{ background: "rgba(0, 0, 0, 0.5)" }}
+              >
+                <div className="modal-dialog modal-dialog-centered">
+                  <div className="modal-content">
+                    <div className="modal-header">
+                      <h5 className="modal-title">Confirm Deletion</h5>
+                      <button
+                        className="btn-close"
+                        onClick={closeDeletePopup}
+                      ></button>
+                    </div>
+                    <div className="modal-body text-center">
+                      <p className="mb-3">
+                        Are you sure you want to delete this post?
+                      </p>
+
+                      {/* Show Post Message */}
+                      {postToDelete.message && (
+                        <p className="fw-bold">{postToDelete.message}</p>
+                      )}
+
+                      {/* Show Media Preview (Image or Video) */}
+                      {postToDelete.attachments &&
+                        postToDelete.attachments.data.map(
+                          (attachment, index) => (
+                            <div key={index} className="mt-2">
+                              {attachment.type === "image" ? (
+                                <img
+                                  src={attachment.media[0].url}
+                                  alt="Post Image"
+                                  className="img-fluid rounded"
+                                  style={{
+                                    maxHeight: "300px",
+                                    maxWidth: "100%",
+                                  }}
+                                />
+                              ) : attachment.type === "video" ? (
+                                <video
+                                  controls
+                                  className="w-100 rounded"
+                                  style={{ maxHeight: "300px" }}
+                                >
+                                  <source
+                                    src={attachment.media[0].url}
+                                    type="video/mp4"
+                                  />
+                                  Your browser does not support the video tag.
+                                </video>
+                              ) : null}
+                            </div>
+                          )
+                        )}
+                    </div>
+                    <div className="modal-footer">
+                      <button
+                        className="btn btn-secondary"
+                        onClick={closeDeletePopup}
+                      >
+                        Cancel
+                      </button>
+                      <button
+                        className="btn btn-danger"
+                        onClick={handleDeletePost}
+                      >
+                        Confirm
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
           </div>
         </div>
 
@@ -516,8 +943,9 @@ const Feed = ({ countryCode, flag, countryName, handleCountryChange }) => {
             data.posts.map((post) => {
               const loggedInUserId = localStorage.getItem("user_Id"); // Get logged-in user ID
               // console.log(loggedInUserId);
+              // console.log(post.from.user_id);
 
-              const isOwner = loggedInUserId === "31"; // Check if the logged-in user is the post owner
+              const isOwner = loggedInUserId == post.from.user_id; // Check if the logged-in user is the post owner
               // console.log(isOwner);
 
               return (
@@ -545,19 +973,22 @@ const Feed = ({ countryCode, flag, countryName, handleCountryChange }) => {
                     {/* Edit & Delete Buttons - Positioned to the Right */}
                     {isOwner && (
                       <div
-                        className="ms-auto"
+                        className="ms-auto d-flex align-items-center"
                         style={{
                           position: "absolute",
                           right: "15px",
                           top: "10px",
+                          gap: "20px", // Adjust space between icons
                         }}
                       >
-                        <button className="btn btn-primary btn-sm me-2">
-                          <i className="bi bi-pencil"></i> Edit
-                        </button>
-                        <button className="btn btn-danger btn-sm">
-                          <i className="bi bi-trash"></i> Delete
-                        </button>
+                        <i
+                          className="bi bi-pencil"
+                          onClick={() => openEditPopup(post)}
+                        ></i>
+                        <i
+                          className="bi bi-trash"
+                          onClick={() => openDeletePopup(post)}
+                        ></i>
                       </div>
                     )}
                   </div>
@@ -613,63 +1044,79 @@ const Feed = ({ countryCode, flag, countryName, handleCountryChange }) => {
                   </div>
                   {/* Post Footer */}
                   <div className="card-footer bg-white d-flex justify-content-between align-items-center border-0">
+                    {/* Likes Count */}
                     <span className="text-muted">
                       {post.likes && post.likes.count !== undefined
                         ? `${post.likes.count} likes`
                         : "0 likes"}
                     </span>
+
                     <div className="d-flex">
+                      {/* Like Button */}
                       <button
                         className={`btn btn-sm me-2 ${
-                          post.liked_users?.some(
-                            (user) => user.id === currentUserId
+                          post.likes?.liked_users?.some(
+                            (user) => user.user_id == loggedInUserId
                           )
                             ? "btn-primary text-white"
                             : "btn-light"
                         }`}
                         onClick={() => handleLikeClick(post.id)}
                       >
-                        <i
-                          className={`bi ${
-                            post.liked_users?.some(
-                              (user) => user.id === currentUserId
+                        <ThumbUpIcon
+                          sx={{
+                            fontSize: 18,
+                            marginRight: "5px",
+                            color: post.likes?.liked_users?.some(
+                              (user) => user.user_id == loggedInUserId
                             )
-                              ? "bi-hand-thumbs-up-fill"
-                              : "bi-hand-thumbs-up"
-                          }`}
-                        ></i>{" "}
+                              ? "white"
+                              : "inherit",
+                          }}
+                        />{" "}
                         Like
                       </button>
+
                       {/* Dislike Button */}
                       <button
                         className={`btn btn-sm me-2 ${
                           post.disliked_users?.some(
-                            (user) => user.id === currentUserId
+                            (user) => user.user_id === loggedInUserId
                           )
                             ? "btn-danger text-white"
                             : "btn-light"
                         }`}
                         onClick={() => handleDislikeClick(post.id)}
                       >
-                        <i
-                          className={`bi ${
-                            post.disliked_users?.some(
-                              (user) => user.id === currentUserId
+                        <ThumbDownIcon
+                          sx={{
+                            fontSize: 18,
+                            marginRight: "5px",
+                            color: post.disliked_users?.some(
+                              (user) => user.user_id === loggedInUserId
                             )
-                              ? "bi-hand-thumbs-down-fill"
-                              : "bi-hand-thumbs-down"
-                          }`}
-                        ></i>{" "}
+                              ? "white"
+                              : "inherit",
+                          }}
+                        />{" "}
                         Dislike
                       </button>
+
+                      {/* Comment Button */}
                       <button className="btn btn-light btn-sm me-2">
-                        <i className="bi bi-chat"></i> Comment{" "}
+                        <CommentIcon
+                          sx={{ fontSize: 18, marginRight: "5px" }}
+                        />{" "}
+                        Comment{" "}
                         <span className="text-muted">
-                          {post.comments && post.comments.count}
+                          {post.comments?.count}
                         </span>
                       </button>
+
+                      {/* Share Button */}
                       <button className="btn btn-light btn-sm">
-                        <i className="bi bi-share"></i> Share
+                        <ShareIcon sx={{ fontSize: 18, marginRight: "5px" }} />{" "}
+                        Share
                       </button>
                     </div>
                   </div>

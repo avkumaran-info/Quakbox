@@ -74,6 +74,8 @@ const RightSidebar = ({ countryCode, flag, countryName }) => {
     shares: 0,
   });
 
+  
+
   const [favCountries, setFavCountries] = useState([]);
   const [fanCountries, setFanCountries] = useState([]);
 

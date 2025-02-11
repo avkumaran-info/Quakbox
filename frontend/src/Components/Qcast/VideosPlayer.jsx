@@ -11,6 +11,7 @@ import FavoriteSharpIcon from "@mui/icons-material/FavoriteSharp";
 import GroupIcon from "@mui/icons-material/Group";
 import ScreenShareIcon from "@mui/icons-material/ScreenShare";
 import ReportIcon from "@mui/icons-material/Report";
+import loading from "../../assets/images/loading.gif";
 
 const defaultComments = [
   {
@@ -46,15 +47,15 @@ const VideosPlayer = () => {
   console.log(passedVideo);
   const [likes, setLikes] = useState(passedVideo?.likes || 0);
   const [dislikes, setDislikes] = useState(passedVideo?.dislikes || 0);
+
+  const currentUserId = parseInt(localStorage.getItem("user_Id")); // Get logged-in user ID
+
   const [isLiked, setIsLiked] = useState(false);
   const [isDisliked, setIsDisliked] = useState(false);
-
-  const handleUpload = () => {
-    navigate("/upload");
-  };
+  const [isSubscribed, setIsSubscribed] = useState(false);
 
   const handleLike = async () => {
-    if (!passedVideo) return;
+    if (!video) return;
 
     try {
       const token = localStorage.getItem("api_token");
@@ -64,13 +65,13 @@ const VideosPlayer = () => {
       }
 
       const response = await axios.post(
-        `https://develop.quakbox.com/admin/api/videos/${passedVideo.video_id}/like`,
+        `https://develop.quakbox.com/admin/api/videos/${video.video_id}/like`,
         {},
         { headers: { Authorization: `Bearer ${token}` } }
       );
 
       if (response.status === 200) {
-        setLikes((prev) => prev + (isLiked ? -1 : 1)); // Toggle like count
+        setLikes((prev) => prev + (isLiked ? -1 : 1));
         setIsLiked(!isLiked);
 
         if (isDisliked) {
@@ -84,7 +85,7 @@ const VideosPlayer = () => {
   };
 
   const handleDislike = async () => {
-    if (!passedVideo) return;
+    if (!video) return;
 
     try {
       const token = localStorage.getItem("api_token");
@@ -94,13 +95,13 @@ const VideosPlayer = () => {
       }
 
       const response = await axios.post(
-        `https://develop.quakbox.com/admin/api/videos/${passedVideo.video_id}/dislike`,
+        `https://develop.quakbox.com/admin/api/videos/${video.video_id}/dislike`,
         {},
         { headers: { Authorization: `Bearer ${token}` } }
       );
 
       if (response.status === 200) {
-        setDislikes((prev) => prev + (isDisliked ? -1 : 1)); // Toggle dislike count
+        setDislikes((prev) => prev + (isDisliked ? -1 : 1));
         setIsDisliked(!isDisliked);
 
         if (isLiked) {
@@ -113,9 +114,38 @@ const VideosPlayer = () => {
     }
   };
 
+  const handleSubscribe = async () => {
+    if (isSubscribed) return; // Prevent unnecessary API calls if already subscribed
+  
+    setIsSubscribed(true); // Optimistically update UI
+  
+    try {
+      const token = localStorage.getItem("api_token");
+      if (!token) {
+        console.error("❌ Authorization token missing. Please log in.");
+        setIsSubscribed(false); // Revert UI if no token
+        return;
+      }
+  
+      const response = await axios.post(
+        `https://develop.quakbox.com/admin/api/videos/subscribe/${video.user_id}`,
+        {},
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+  
+      if (response.status !== 200) {
+        throw new Error("Subscription failed");
+      }
+    } catch (error) {
+      console.error("❌ Error subscribing:", error.response?.data || error.message);
+      setIsSubscribed(false); // Revert UI on error
+    }
+  };
+  
+
   useEffect(() => {
     const fetchVideo = async () => {
-      setVideo(null); // ✅ Force re-render before fetching new video
+      setVideo(null); // Clear previous video
 
       try {
         const token = localStorage.getItem("api_token");
@@ -128,15 +158,40 @@ const VideosPlayer = () => {
           `https://develop.quakbox.com/admin/api/videos/${videoId}/show`,
           { headers: { Authorization: `Bearer ${token}` } }
         );
-        setVideo(response.data.data);
-        // console.log(response.data.data);
+
+        const fetchedVideo = response.data.data;
+        setVideo(fetchedVideo);
+
+        // ✅ Update Likes & Dislikes
+        setLikes(fetchedVideo.likes_count || 0);
+        setDislikes(fetchedVideo.dislikes_count || 0);
+
+        // ✅ Check if user already liked/disliked
+        setIsLiked(
+          fetchedVideo.liked_user_id?.some(
+            (user) => user.video_liked_user_id === currentUserId
+          ) || false
+        );
+
+        setIsDisliked(
+          fetchedVideo.disliked_user_id?.some(
+            (user) => user.video_disliked_user_id === currentUserId
+          ) || false
+        );
+
+        // ✅ Check if user already subscribed
+        setIsSubscribed(
+          fetchedVideo.subscribers_user_id?.some(
+            (user) => user.subscriber_id === currentUserId
+          ) || false
+        );
       } catch (error) {
         console.error("Error fetching video:", error);
       }
     };
 
     fetchVideo();
-  }, [videoId]); // ✅ Refetch video when `videoId` changes
+  }, [videoId]); // ✅ Refetch video when videoId changes
 
   useEffect(() => {
     const fetchVideos = async () => {
@@ -187,7 +242,11 @@ const VideosPlayer = () => {
   };
 
   if (!video) {
-    return <h2 className="text-center mt-5">Loading video...</h2>;
+    return (
+      <div style={overlayStyle}>
+        <img src={loading} alt="Loading..." style={gifStyle} />
+      </div>
+    );
   }
 
   const timeAgo = (dateString) => {
@@ -242,107 +301,150 @@ const VideosPlayer = () => {
             {/* Video Title & Views */}
             <div className="d-flex align-items-center">
               {/* Left Side: Title & Views */}
-              <div className="flex-grow-1">
+              <div className="flex-grow-1 mt-2" style={{ marginLeft: "10px" }}>
                 <h5 className="fw-bold text-truncate">{video.title}</h5>
                 <p className="text-muted small m-0">
                   {passedVideo.views} views •{" "}
                   {timeAgo(passedVideo.uploaded_datetime)}{" "}
                 </p>
               </div>
-              <div className="d-flex gap-2">
+              <div className="d-flex gap-3">
                 <Tooltip title="Like" arrow disableInteractive>
-                  <div style={{ textAlign: "center" }} onClick={handleLike}>
+                  <div
+                    style={{
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      gap: "12px",
+                      cursor: "pointer",
+                    }}
+                    onClick={handleLike}
+                  >
+                    <div
+                      style={{
+                        fontSize: "18px",
+                        fontWeight: "bold",
+                        textAlign: "center",
+                      }}
+                    >
+                      {likes}
+                    </div>
                     <ThumbUpIcon
                       sx={{
-                        fontSize: 30,
+                        fontSize: 36,
                         color: isLiked ? "blue" : "#263238",
                         "&:hover": { transform: "scale(1.2)" },
                         transition: "all 0.3s ease",
-                        cursor: "pointer",
                       }}
                     />
-                    <div style={{ fontSize: "16px", marginTop: "4px" }}>
-                      {likes}
-                    </div>
                   </div>
                 </Tooltip>
 
                 <Tooltip title="Dislike" arrow disableInteractive>
-                  <div style={{ textAlign: "center" }} onClick={handleDislike}>
+                  <div
+                    style={{
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      gap: "12px",
+                      cursor: "pointer",
+                    }}
+                    onClick={handleDislike}
+                  >
+                    <div
+                      style={{
+                        fontSize: "18px",
+                        fontWeight: "bold",
+                        textAlign: "center",
+                      }}
+                    >
+                      {}
+                    </div>
                     <ThumbDownIcon
                       sx={{
-                        fontSize: 30,
+                        fontSize: 36,
                         color: isDisliked ? "red" : "#263238",
                         "&:hover": { transform: "scale(1.2)" },
                         transition: "all 0.3s ease",
-                        cursor: "pointer",
                       }}
                     />
-                    <div style={{ fontSize: "16px", marginTop: "4px" }}>
-                      {dislikes}
-                    </div>
                   </div>
                 </Tooltip>
 
                 <Tooltip title="Comment" arrow disableInteractive>
-                  <div style={{ textAlign: "center" }}>
+                  <div
+                    style={{
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      gap: "12px",
+                      cursor: "pointer",
+                    }}
+                    onClick={toggleComments}
+                  >
+                    <div
+                      style={{
+                        fontSize: "18px",
+                        fontWeight: "bold",
+                        textAlign: "center",
+                      }}
+                    >
+                      {/* {commentsCount} */}
+                    </div>
                     <CommentIcon
                       sx={{
-                        fontSize: 30,
+                        fontSize: 36, // Bigger icon
                         color: "#263238",
-                        "&:hover": {
-                          //color: "red",
-                          transform: "scale(1.2)",
-                        },
+                        "&:hover": { transform: "scale(1.2)" },
                         transition: "all 0.3s ease",
-                        fontWeight: "bold",
-                        opacity: 0.8,
-                        cursor: "pointer",
                       }}
-                      onClick={toggleComments}
                     />
-                    <div style={{ fontSize: "16px", marginTop: "4px" }}>1</div>
                   </div>
                 </Tooltip>
 
                 <Tooltip title="Share" arrow disableInteractive>
-                  <div style={{ textAlign: "center" }}>
+                  <div
+                    style={{
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      gap: "12px",
+                      cursor: "pointer",
+                    }}
+                  >
                     <ScreenShareIcon
                       sx={{
-                        fontSize: 30,
+                        fontSize: 36, // Bigger icon
                         color: "#263238",
-                        "&:hover": {
-                          //color: "red",
-                          transform: "scale(1.2)",
-                        },
+                        "&:hover": { transform: "scale(1.2)" },
                         transition: "all 0.3s ease",
-                        fontWeight: "bold",
-                        opacity: 0.8,
-                        cursor: "pointer",
                       }}
                     />
-                    <div style={{ fontSize: "16px", marginTop: "4px" }}>1</div>
                   </div>
                 </Tooltip>
+
                 <Tooltip title="Report" arrow disableInteractive>
-                  <div style={{ textAlign: "center" }}>
+                  <div
+                    style={{
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      gap: "12px",
+                      cursor: "pointer",
+                    }}
+                  >
                     <ReportIcon
                       sx={{
-                        fontSize: 30,
-                        color: "#263238", // Red color for report
-                        "&:hover": {
-                          transform: "scale(1.2)",
-                        },
+                        fontSize: 36, // Bigger icon
+                        color: "#263238",
+                        "&:hover": { transform: "scale(1.2)" },
                         transition: "all 0.3s ease",
-                        fontWeight: "bold",
-                        opacity: 0.8,
-                        cursor: "pointer",
                       }}
                     />
-                    <div style={{ fontSize: "16px", marginTop: "4px" }}>1</div>
                   </div>
                 </Tooltip>
               </div>
+
               {/* Right Side: Action Buttons */}
               {/* <div className="d-flex gap-2">
                 <button className="btn btn-outline-secondary">
@@ -361,10 +463,15 @@ const VideosPlayer = () => {
             </div>
 
             {/* Video Description */}
-            <p className="text-muted">{video.description}</p>
+            <p className="text-muted" style={{ marginLeft: "10px" }}>
+              {video.description}
+            </p>
 
             {/* Channel Info & Subscribe Button */}
-            <div className="d-flex justify-content-between align-items-center  border-top">
+            <div
+              className="d-flex justify-content-between align-items-center  border-top"
+              style={{ marginLeft: "10px" }}
+            >
               <div className="d-flex align-items-center mt-1">
                 <img
                   src={passedVideo.user_profile_image}
@@ -381,7 +488,14 @@ const VideosPlayer = () => {
                   </small>
                 </div>
               </div>
-              <button className="btn btn-danger fw-bold">Subscribe</button>
+              <button
+                className={`btn ${
+                  isSubscribed ? "btn-secondary" : "btn-danger"
+                } fw-bold`}
+                onClick={handleSubscribe}
+              >
+                {isSubscribed ? "Subscribed" : "Subscribe"}
+              </button>
             </div>
 
             {/* Comments Section */}
@@ -418,7 +532,7 @@ const VideosPlayer = () => {
 
           {/* Right Sidebar - Recommended Videos */}
           <div className="col-lg-3 bg-white p-3 overflow-hidden">
-            <h6 className="text-muted">Recommended Videos</h6>
+            <h4 className="text-muted">Recommended Videos</h4>
             {recommendedVideos.length > 0 ? (
               recommendedVideos.map((recVideo) => (
                 <div
@@ -455,6 +569,25 @@ const VideosPlayer = () => {
       </div>
     </>
   );
+};
+
+export const overlayStyle = {
+  position: "fixed",
+  top: 0,
+  left: 0,
+  width: "100%",
+  height: "100%",
+  backgroundColor: "rgba(0, 0, 0, 0.5)", // Semi-transparent black background
+  display: "flex",
+  justifyContent: "center",
+  alignItems: "center",
+  zIndex: 9999, // Ensures it's above all other elements
+};
+
+export const gifStyle = {
+  width: "200px",
+  height: "100px",
+  opacity: 0.5,
 };
 
 export default VideosPlayer;
