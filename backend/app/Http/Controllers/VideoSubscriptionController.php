@@ -77,6 +77,34 @@ class VideoSubscriptionController extends Controller
         ], 200);
     }
 
+    public function listbrowsestations(Request $request)
+    {
+        $user = $request->user();
+
+        // My Subscriptions
+        $browsestations = M_Video_Subscription::join('users', 'm_video_subscriptions.creator_id', '=', 'users.id')
+            ->select('m_video_subscriptions.*',
+                        'users.username as username', 'users.profile_image as profile_image')
+            ->get();
+
+        // Return response
+        $stationsList = $browsestations->map(function ($mySubscriber) {
+            return [
+                'station_admin_name' => $mySubscriber->username,
+                'station_admin_profile_image' => env('APP_URL') . '/api/images/' . $mySubscriber->profile_image,
+                'station_subscribers_count' => 10,
+                'station_videos_count' => 5,
+            ];
+        });
+
+        // Return response
+        return response()->json([
+            'result' => true,
+            'message' => 'MY Subscribsion List fetched successfully',
+            'data' => $stationsList,
+        ], 200);
+    }
+
     // Get all subscribers of a creator
     public function getSubscribers($creator_id)
     {

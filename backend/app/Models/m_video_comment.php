@@ -5,13 +5,14 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
-class m_video_Comment extends Model
+class M_Video_Comment extends Model
 {
-    protected $fillable = ['content', 'video_id', 'user_id'];
+    protected $table = 'm_video_comments';
+    protected $fillable = ['user_id','video_id','content'];
 
     public function video()
     {
-        return $this->belongsTo(m_video::class);
+        return $this->belongsTo(M_Videos::class);
     }
 
     public function user()

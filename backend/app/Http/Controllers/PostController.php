@@ -105,21 +105,7 @@ class PostController extends Controller
 
         $request->validate([
             'message' => 'nullable|string|max:255',
-            'media' => 'nullable|file|mimes:jpeg,png,jpg,mp4,mov|max:20480',
         ]);
-
-        if ($request->hasFile('media')) {
-            // Delete old media
-            if ($post->media_path) {
-                Storage::disk('public')->delete($post->media_path);
-            }
-
-            $file = $request->file('media');
-            $mediaType = in_array($file->getMimeType(), ['video/mp4', 'video/quicktime']) ? 'video' : 'image';
-            $mediaPath = $file->store('uploads/posts', 'public');
-
-            $post->update(['media_path' => $mediaPath, 'media_type' => $mediaType]);
-        }
 
         if ($request->message) {
             $post->update(['message' => $request->message]);
