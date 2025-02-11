@@ -16,7 +16,7 @@ return new class extends Migration
             $table->unsignedBigInteger('user_id');  // For user association
             $table->string('title');
             $table->string('description')->nullable();
-            $table->string('file_path');
+            $table->json('file_path');
             $table->integer('views')->default(0);
             $table->timestamps();
             $table->integer('category_id')->nullable();
