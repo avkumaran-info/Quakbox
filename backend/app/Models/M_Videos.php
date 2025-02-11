@@ -29,7 +29,7 @@ class M_Videos extends Model
 
     public function comments()
     {
-        return $this->hasMany(m_video_Comment::class);
+        return $this->hasMany(M_Video_Comment::class, 'video_id');
     }
 
     public function interactions()

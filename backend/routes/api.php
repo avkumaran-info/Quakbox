@@ -15,9 +15,9 @@ use Laravel\Socialite\Facades\Socialite;
 use App\Http\Controllers\VideoController;
 use App\Http\Controllers\VideoInteractionController;
 use App\Http\Controllers\VideoSubscriptionController;
+use App\Http\Controllers\VideoCommentController;
 use FFMpeg\Media\Video;
 
-// use App\Http\Controllers\VideoCommentController;
 // use App\Http\Controllers\VideoChannelController;
 
 /*
@@ -103,11 +103,25 @@ Route::middleware('auth:api')->group(function () {
 
 });
 
+// Video Subscriptions Management
 Route::middleware('auth:api')->prefix('videos')->group(function () {
     Route::post('subscribe/{creator_id}', [VideoSubscriptionController::class, 'subscribe']);
     Route::delete('unsubscribe/{creator_id}', [VideoSubscriptionController::class, 'unsubscribe']);
     Route::get('mysubscriptions', [VideoSubscriptionController::class, 'listsubscriptions']);
+    Route::get('browsestations', [VideoSubscriptionController::class, 'listbrowsestations']);
     Route::get('subscribers/{creator_id}', [VideoSubscriptionController::class, 'getSubscribers']);
+});
+
+// Video Comments Management
+Route::middleware('auth:api')->group(function () {
+    // Fetch comments for a specific video
+    Route::get('/videos/{videoId}/comments', [VideoCommentController::class, 'index']);
+    // Add a comment to a video
+    Route::post('/videos/{videoId}/comments', [VideoCommentController::class, 'store']);
+    // Update a comment
+    Route::post('/videos/comments/{id}', [VideoCommentController::class, 'update']);
+    // Delete a comment
+    Route::delete('/videos/comments/{id}', [VideoCommentController::class, 'destroy']);
 });
 
 // // Video Channel Management
@@ -120,36 +134,6 @@ Route::middleware('auth:api')->prefix('videos')->group(function () {
 //     Route::post('{id}/add-video/{videoId}', [VideoChannelController::class, 'addVideo']);
 //     Route::delete('{id}/remove-video/{videoId}', [VideoChannelController::class, 'removeVideo']);
 // });
-
-// // Video Comments Management
-// Route::middleware('auth:api')->group(function () {
-//     // Fetch comments for a specific video
-//     Route::get('/videos/{videoId}/comments', [VideoCommentController::class, 'index']);
-//     // Add a comment to a video
-//     Route::post('/videos/{videoId}/comments', [VideoCommentController::class, 'store']);
-//     // Update a comment
-//     Route::put('/comments/{id}', [VideoCommentController::class, 'update']);
-//     // Delete a comment
-//     Route::delete('/comments/{id}', [VideoCommentController::class, 'destroy']);
-// });
-
-
-
-// // Video Subscriptions Management
-// Route::middleware('auth:api')->group(function () {
-//     // Subscribe to a channel
-//     Route::post('/channels/{channelId}/subscribe', [VideoSubscriptionController::class, 'subscribe']);
-//     // Unsubscribe from a channel
-//     Route::delete('/channels/{channelId}/unsubscribe', [VideoSubscriptionController::class, 'unsubscribe']);
-//     // Get subscriptions of the authenticated user
-//     Route::get('/subscriptions', [VideoSubscriptionController::class, 'mySubscriptions']);
-//     // Get subscribers of a specific channel
-//     Route::get('/channels/{channelId}/subscribers', [VideoSubscriptionController::class, 'channelSubscribers']);
-// });
-
-// // Video Analytics Management
-
-// // Video Moderation Management
 
 Route::get('images/uploads/profile/image/{filename}', function ($filename) {
     $path = storage_path('app/public/uploads/profile/image/' . $filename);

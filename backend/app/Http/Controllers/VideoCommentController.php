@@ -2,18 +2,34 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Comment;
-use App\Models\Video;
+use App\Models\M_Video_Comment;
+use App\Models\M_Videos;
 use Illuminate\Http\Request;
 
 class VideoCommentController extends Controller
 {
     public function index($videoId)
     {
-        $video = Video::findOrFail($videoId);
-        $comments = $video->comments()->with('user')->get();
+        $video = M_Videos::findOrFail($videoId);
+        $comments = $video->comments()->with('user')->latest()->get();
 
-        return response()->json($comments);
+        $formattedcomments = $comments->map(function ($comment) {
+            return [
+                        'comment_id' => $comment->id,
+                        'comment_video_id' => $comment->video_id,
+                        'comment_content' => $comment->content,
+                        'comment_user_id' => $comment->user_id,
+                        'comment_user_name' => $comment->user->username,
+                        'comment_user_profile_picture' => $comment->user->profile_image,
+                    ];
+        });
+
+        // Return response
+        return response()->json([
+            'result' => true,
+            'message' => 'Video Comments Fetched Successfully',
+            'data' => $formattedcomments,
+        ], 200);
     }
 
     public function store(Request $request, $videoId)
@@ -22,14 +38,24 @@ class VideoCommentController extends Controller
             'content' => 'required|string|max:500',
         ]);
 
-        $video = Video::findOrFail($videoId);
+        $video = M_Videos::findOrFail($videoId);
 
-        $comment = $video->comments()->create([
+        $comment = M_Video_Comment::create([
             'content' => $request->content,
             'user_id' => $request->user()->id,
+            'video_id' => $video->id,
         ]);
 
-        return response()->json($comment, 201);
+        return response()->json([
+            'result' => true,
+            'message' => 'Video Comment Registered successfully',
+            'data' => [
+                'comment_id' => $comment->id,
+                'comment_content' => $comment->content,
+                'comment_video_id' => $comment->video_id,
+                'comment_user_id' => $comment->user_id,
+            ]
+        ], 201);
     }
 
     public function update(Request $request, $id)
@@ -38,7 +64,7 @@ class VideoCommentController extends Controller
             'content' => 'required|string|max:500',
         ]);
 
-        $comment = Comment::findOrFail($id);
+        $comment = M_Video_Comment::findOrFail($id);
 
         // Ensure the logged-in user owns the comment
         if ($request->user()->id !== $comment->user_id) {
@@ -49,12 +75,21 @@ class VideoCommentController extends Controller
             'content' => $request->content,
         ]);
 
-        return response()->json($comment);
+        return response()->json([
+            'result' => true,
+            'message' => 'Video Comment Updated successfully',
+            'data' => [
+                'comment_id' => $comment->id,
+                'comment_content' => $comment->content,
+                'comment_video_id' => $comment->video_id,
+                'comment_user_id' => $comment->user_id,
+            ]
+        ], 201);
     }
 
     public function destroy(Request $request, $id)
     {
-        $comment = Comment::findOrFail($id);
+        $comment = M_Video_Comment::findOrFail($id);
 
         // Ensure the logged-in user owns the comment
         if ($request->user()->id !== $comment->user_id) {
@@ -63,6 +98,6 @@ class VideoCommentController extends Controller
 
         $comment->delete();
 
-        return response()->json(['message' => 'Comment deleted successfully.']);
+        return response()->json(["status" => true, 'message' => 'Video Comment Deleted successfully']);
     }
 }
