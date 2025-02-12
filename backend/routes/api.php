@@ -184,4 +184,5 @@ Route::get('images/uploads/videos/permanent/{filename}', function ($filename) {
     return response()->file(Storage::disk('public')->path("uploads/videos/permanent/$filename"));
 });
 
-
+Route::post('/send-otp', [AuthController::class, 'sendOtpMob']);
+Route::post('/verify-otp', [AuthController::class, 'verifyOtpMob']);
