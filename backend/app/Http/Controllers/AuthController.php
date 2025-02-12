@@ -25,6 +25,10 @@ use App\Models\OtpVerification;
 use GuzzleHttp\Client;
 use Carbon\Carbon;
 
+use App\Models\PasswordResetOtp;
+use App\Mail\QuakboxMail;
+use Illuminate\Support\Facades\Mail;
+
 class AuthController extends Controller
 {
     public function handleFacebookAccessToken(Request $request)
@@ -360,4 +364,87 @@ class AuthController extends Controller
         ], 200);
     }
     
+    public function sendOtpMail(Request $request)
+    {
+        // Validate email
+        $validator = Validator::make($request->all(), [
+            'email' => 'required|email',
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json([
+                "status" => false,
+                "code" => 422,
+                "message" => "Invalid Input data",
+                "errors" => $validator->errors()
+            ], 422);
+        }
+
+        $email = $request->email;
+
+        // Generate OTP
+        $otp = rand(100000, 999999);
+
+        // Save OTP to the database
+        PasswordResetOtp::updateOrCreate(
+            ['email' => $email],
+            [
+                'otp' => $otp,
+                'expires_at' => Carbon::now()->addMinutes(10),
+            ]
+        );
+
+        // Send OTP via email
+        $data = [
+            'subject' => 'Password Reset OTP',
+            'title' => 'Password Reset Mail',
+            'message' => 'Your OTP is:'. $otp
+        ];
+
+        Mail::to($email)->send(new QuakboxMail($data));
+
+        return response()->json([
+            "status" => true,
+            "code" => 200,
+            "message" => "OTP sent successfully"
+        ], 200);
+    }
+
+    public function verifyOtpMail(Request $request)
+    {
+        // Validate input
+        $validator = Validator::make($request->all(), [
+            'email' => 'required|email',
+            'otp' => 'required|digits:6',
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json([
+                "status" => false,
+                "code" => 422,
+                "message" => "Invalid Input data",
+                "errors" => $validator->errors()
+            ], 422);
+        }
+
+        $otpRecord = PasswordResetOtp::where('email', $request->email)
+            ->where('otp', $request->otp)
+            ->first();
+
+        if (!$otpRecord || Carbon::now()->isAfter($otpRecord->expires_at)) {
+            return response()->json([
+                "status" => false,
+                "code" => 422,
+                "message" => "Invalid or expired OTP",
+                "errors" => $validator->errors()
+            ], 422);
+        }
+
+        // OTP is valid
+        return response()->json([
+            "status" => true,
+            "code" => 200,
+            "message" => "OTP verified successfully"
+        ], 200);
+    }
 }
