@@ -20,8 +20,10 @@ use Illuminate\Support\Facades\DB;
 use App\Models\User;
 use App\Models\Members;
 use App\Models\GeoCountry;
+use App\Models\OtpVerification;
 
 use GuzzleHttp\Client;
+use Carbon\Carbon;
 
 class AuthController extends Controller
 {
@@ -249,4 +251,113 @@ class AuthController extends Controller
 
         return "";
     }
+    /**
+     * Send OTP for phone number verification
+     */
+    public function sendOtpMob(Request $request)
+    {
+        // Validate phone number (should not exist in users table)
+        $validator = Validator::make($request->all(), [
+            'mobile_number' => 'required|digits:10|unique:users,phone',
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json([
+                "status" => false,
+                "code" => 422,
+                "message" => "Invalid input data",
+                "errors" => $validator->errors()
+            ], 422);
+        }
+
+        $mobile_number = $request->mobile_number;
+
+        // Generate OTP
+        $otp = rand(100000, 999999);
+
+        // Save OTP in database
+        OtpVerification::updateOrCreate(
+            ['mobile_number' => $mobile_number],
+            [
+                'otp' => $otp,
+                'expires_at' => Carbon::now()->addMinutes(10),
+            ]
+        );
+
+        // Send OTP via Twilio
+        try {
+            $twilio = new Client(env('TWILIO_SID'), env('TWILIO_AUTH_TOKEN'));
+            $twilio->messages()->create(
+                '+91' . $mobile_number,
+                [
+                    'from' => env('TWILIO_PHONE_NUMBER'),
+                    'body' => "Your OTP for registration is: $otp. It is valid for 10 minutes."
+                ]
+            );
+        } catch (\Exception $e) {
+            return response()->json([
+                "status" => false,
+                "code" => 500,
+                "message" => "Failed to send OTP",
+                "error" => $e->getMessage()
+            ], 500);
+        }
+
+        return response()->json([
+            "status" => true,
+            "code" => 200,
+            "message" => "OTP sent successfully"
+        ], 200);
+    }
+
+    /**
+     * Verify OTP and register user
+     */
+    public function verifyOtpMob(Request $request)
+    {
+        // Validate the request
+        $validator = Validator::make($request->all(), [
+            'mobile_number' => 'required|digits:10',
+            'otp' => 'required|digits:6',
+        ]);
+    
+        if ($validator->fails()) {
+            return response()->json([
+                "status" => false,
+                "code" => 422,
+                "message" => "Invalid input data",
+                "errors" => $validator->errors()
+            ], 422);
+        }
+    
+        // Retrieve OTP from the database
+        $otpRecord = OtpVerification::where('mobile_number', $request->mobile_number)
+            ->where('otp', $request->otp)
+            ->first();
+    
+        if (!$otpRecord) {
+            return response()->json([
+                "status" => false,
+                "code" => 422,
+                "message" => "Invalid OTP"
+            ], 422);
+        }
+    
+        // Check if OTP is expired
+        if (Carbon::now()->isAfter($otpRecord->expires_at)) {
+            return response()->json([
+                "status" => false,
+                "code" => 422,
+                "message" => "OTP has expired"
+            ], 422);
+        }
+    
+        // If OTP is correct, return success response
+        return response()->json([
+            "status" => true,
+            "code" => 200,
+            "message" => "OTP verified successfully"
+        ], 200);
+    }
+    
 }
