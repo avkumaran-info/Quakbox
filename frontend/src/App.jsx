@@ -21,6 +21,7 @@ import VideoPlayer from "./Components/Qcast/VideoPlayer";
 import Chatroom from "./Components/ChatRoom/Chatroom";
 import VideosPlayer from "./Components/Qcast/VideosPlayer";
 import BrowseStation from "./Components/Qcast/BrowseStation";
+import MySubscriptions from "./Components/Qcast/MySubscriptions";
 const App = () => {
   return (
     <Provider store={store}>
@@ -43,6 +44,7 @@ const App = () => {
           <Route path="/addvideo" element={<AddVideo />} />
           <Route path="/test" element={<Chatroom />} />
           <Route path="/browse_channel" element={<BrowseStation />} />
+          <Route path="/my_subscriptions" element={<MySubscriptions />} />
         </Routes>
       </Router>
     </Provider>

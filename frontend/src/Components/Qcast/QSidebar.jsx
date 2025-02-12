@@ -136,7 +136,7 @@ const QSidebar = ({ isOpen, toggleSidebar }) => {
                   "opacity 0.3s ease-in-out, transform 0.3s ease-in-out",
               }}
             >
-              <NavLink to="/" className="text-white text-decoration-none">
+              <NavLink to="/my_subscriptions" className="text-white text-decoration-none">
                 My Subscription
               </NavLink>
             </span>
