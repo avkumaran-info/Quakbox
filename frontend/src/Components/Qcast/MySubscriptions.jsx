@@ -2,18 +2,16 @@ import React, { useState, useEffect } from "react";
 import axios from "axios";
 import NavBar from "../Dashboard/NavBar";
 import QSidebar from "./QSidebar";
-import user from "../../assets/images/user1.png";
 import loading from "../../assets/images/loading.gif"; // Import loading GIF
 
-const BrowseStation = () => {
-  const [stations, setStations] = useState([]);
+const MySubscriptions = () => {
+  const [subscriptions, setSubscriptions] = useState([]);
   const [searchQuery, setSearchQuery] = useState("");
   const [sidebarOpen, setSidebarOpen] = useState(true);
-  const [isLoading, setIsLoading] = useState(false); // Add loading state
+  const [isLoading, setIsLoading] = useState(true);
 
-  // Function to fetch stations from API
-  const fetchStations = async (query = "") => {
-    setIsLoading(true);
+  // Function to fetch subscriptions
+  const fetchSubscriptions = async (search = "") => {
     try {
       const token = localStorage.getItem("api_token");
       if (!token) {
@@ -21,42 +19,43 @@ const BrowseStation = () => {
         return;
       }
 
-      // Append search query to API URL
-      const response = await axios.get(
-        `https://develop.quakbox.com/admin/api/videos/browsestations?search=${query}`,
-        {
-          headers: { Authorization: `Bearer ${token}` },
-        }
-      );
+      // Use the search API if there's a query, otherwise, fetch all
+      const url = search
+        ? `https://develop.quakbox.com/admin/api/videos/search-mysubscriptions?search=${search}`
+        : "https://develop.quakbox.com/admin/api/videos/mysubscriptions";
+
+      const response = await axios.get(url, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
 
       if (response.status === 200 && response.data.data) {
-        // Transform API data into required format
-        const formattedStations = response.data.data.map((station) => ({
-          name: station.station_admin_name,
-          profileImage: station.station_admin_profile_image || user, // Use API image or default
-          subscribers: station.station_subscribers_count || 0,
-          uploads: station.station_videos_count || 0,
-        }));
-
-        setStations(formattedStations);
+        setSubscriptions(response.data.data);
       } else {
-        console.error("⚠️ No stations found.");
+        console.error("⚠️ No subscriptions found.");
+        setSubscriptions([]);
       }
     } catch (error) {
-      console.error("❌ Error fetching stations:", error);
+      console.error("❌ Error fetching subscriptions:", error);
+      setSubscriptions([]);
     } finally {
-      setIsLoading(false); // Stop loading when data is fetched
+      setIsLoading(false);
     }
   };
 
-  // Fetch all stations on component mount
+  // Fetch subscriptions on mount
   useEffect(() => {
-    fetchStations();
+    fetchSubscriptions();
   }, []);
 
-  // Function to handle search button click
+  // Handle search input change
+  const handleSearchChange = (e) => {
+    setSearchQuery(e.target.value);
+  };
+
+  // Trigger search when clicking "Go" button
   const handleSearch = () => {
-    fetchStations(searchQuery);
+    setIsLoading(true);
+    fetchSubscriptions(searchQuery);
   };
 
   return (
@@ -86,21 +85,14 @@ const BrowseStation = () => {
               width: "100%",
             }}
           >
-          <input
+             <input
               type="text"
               className="form-control"
-              placeholder="Search stations..."
+              placeholder="Search subscriptions..."
               value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              style={{
-                width: "50%",
-                maxWidth: "500px",
-                marginRight: "10px",
-                height: "38px",
-              }}
+              onChange={handleSearchChange}
+              style={{ width: "50%", maxWidth: "500px", marginRight: "10px", height: "38px" }}
             />
-
-            {/* Go Button */}
             <button
               onClick={handleSearch}
               style={{
@@ -118,10 +110,8 @@ const BrowseStation = () => {
             </button>
           </div>
 
-          
-
-          {/* Browse Stations */}
-          <h2 className="text-lg font-semibold">Browse Stations</h2>
+          {/* My Subscriptions */}
+          <h2 className="text-lg font-semibold">My Subscriptions</h2>
 
           {/* Loading Indicator */}
           {isLoading ? (
@@ -130,7 +120,7 @@ const BrowseStation = () => {
             </div>
           ) : (
             <div
-              className="station-list"
+              className="subscription-list"
               style={{
                 border: "1px solid #ddd",
                 padding: "12px",
@@ -140,11 +130,11 @@ const BrowseStation = () => {
                 overflowY: "auto",
               }}
             >
-              {stations.length > 0 ? (
-                stations.map((station, index) => (
+              {subscriptions.length > 0 ? (
+                subscriptions.map((sub, index) => (
                   <div
                     key={index}
-                    className="station-card p-3 border rounded-lg shadow-md mb-3 flex items-center"
+                    className="subscription-card p-3 border rounded-lg shadow-md mb-3 flex items-center"
                     style={{
                       background: "#f9f9f9",
                       borderRadius: "8px",
@@ -152,27 +142,19 @@ const BrowseStation = () => {
                     }}
                   >
                     <img
-                      src={station.profileImage}
-                      alt={station.name}
-                      onError={(e) => (e.target.src = user)} // Fallback if image fails to load
-                      style={{
-                        width: "50px",
-                        height: "50px",
-                        borderRadius: "50%",
-                      }}
+                      src={sub.my_subscriber_profile_image}
+                      alt={`Subscriber ${sub.my_subscriber_id}`}
+                      style={{ width: "50px", height: "50px", borderRadius: "50%" }}
                     />
                     <div className="ml-3">
-                      <h6 className="font-medium">{station.name}</h6>
-                      <div style={{ display: "flex", gap: "16px", fontSize: "14px" }}>
-                        <p>Subscribers: {station.subscribers}</p>
-                        <p>Uploads: {station.uploads}</p>
-                      </div>
+                      <h6 className="font-medium">Subscriber ID: {sub.my_subscriber_id}</h6>
+                      <p style={{ fontSize: "14px" }}>User Name: {sub.my_subscriber_username}</p>
                     </div>
                   </div>
                 ))
               ) : (
                 <p style={{ textAlign: "center", fontWeight: "bold", padding: "10px" }}>
-                  ⚠️ No stations available.
+                  ⚠️ No subscriptions available.
                 </p>
               )}
             </div>
@@ -183,25 +165,24 @@ const BrowseStation = () => {
   );
 };
 
-// Loading Overlay Styles
+// Styles
 export const overlayStyle = {
   position: "fixed",
   top: 0,
   left: 0,
   width: "100%",
   height: "100%",
-  backgroundColor: "rgba(0, 0, 0, 0.5)", // Semi-transparent black background
+  backgroundColor: "rgba(0, 0, 0, 0.5)",
   display: "flex",
   justifyContent: "center",
   alignItems: "center",
-  zIndex: 9999, // Ensures it's above all other elements
+  zIndex: 9999,
 };
 
-// Loading GIF Styles
 export const gifStyle = {
   width: "200px",
   height: "100px",
   opacity: 0.5,
 };
 
-export default BrowseStation;
+export default MySubscriptions;

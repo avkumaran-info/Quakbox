@@ -121,10 +121,23 @@ class VideoController extends Controller
         
             // Check if thumbnail is provided
             $defaultThumbnailPath = $request->defaultthumbnail ?? null;
-            if (!$defaultThumbnailPath) {
+            if ($request->hasFile('defaultthumbnail')) {
+                $thumbnail = $request->file('defaultthumbnail');
+                $thumbnailName = time() . '_' . uniqid() . '.' . $thumbnail->getClientOriginalExtension();
+                $thumbnailPath = 'uploads/videos/thumbnails/' . $thumbnailName;
+            
+                // Move the thumbnail to the correct storage
+                $thumbnail->move(public_path('uploads/videos/thumbnails/'), $thumbnailName);
+            
+                // Generate the correct URL
+                $defaultThumbnailPath = env('APP_URL') . '/' . $thumbnailPath;
+            } elseif ($request->defaultthumbnail && filter_var($request->defaultthumbnail, FILTER_VALIDATE_URL)) {
+                // If the thumbnail is already a valid URL, use it directly
+                $defaultThumbnailPath = $request->defaultthumbnail;
+            } else {
                 return response()->json([
                     'result' => false,
-                    'message' => 'Thumbnail is required.',
+                    'message' => 'Valid thumbnail is required.',
                 ], 400);
             }
         
