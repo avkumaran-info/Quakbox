@@ -144,6 +144,20 @@ class PostController extends Controller
         return response()->json(["status" => true, 'message' => $isLike ? 'Liked' : 'Disliked', 'like' => $like]);
     }
 
+    public function postDislike(Request $request, $id)
+    {
+        $post = Post::findOrFail($id);
+
+        $isLike = $request->input('is_like', false);
+
+        $like = Like::updateOrCreate(
+            ['user_id' => $request->user()->id, 'post_id' => $id],
+            ['is_like' => $isLike]
+        );
+
+        return response()->json(["status" => true, 'message' => $isLike ? 'Liked' : 'Disliked', 'like' => $like]);
+    }
+
     // Comment on a post
     public function postComment(Request $request, $id)
     {

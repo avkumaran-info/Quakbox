@@ -28,6 +28,7 @@ import menProfilePic from "../assets/images/man-user-color-icon.svg";
 import menProfilePicTwo from "../assets/images/man-user-circle-icon.svg";
 import womenProfilePic from "../assets/images/woman-user-color-icon.svg";
 import womenProfilePicTwo from "../assets/images/woman-user-circle-icon.svg";
+import LiveVideoStream from "LiveStream";
 // Animation for floating icons
 const floatUp = keyframes`
   0% {
