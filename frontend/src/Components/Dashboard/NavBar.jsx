@@ -31,9 +31,6 @@ const NavBar = () => {
       JSON.parse(localStorage.getItem("geo_country")) || [];
     setCountries(storedCountries);
     // console.log(storedCountries);
-    
-    
-    
 
     if (!token) {
       return;
@@ -757,9 +754,10 @@ const NavBar = () => {
                         color: "#333",
                         fontSize: "0.9rem",
                       }}
-                      onClick={() =>
-                        console.log("Change Profile Picture clicked")
-                      }
+                      onClick={(e) => {
+                        e.preventDefault();
+                        navigate("/dashboard");
+                      }}
                     >
                       {userDetails.users.username}
                     </a>

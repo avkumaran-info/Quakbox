@@ -115,33 +115,37 @@ const VideosPlayer = () => {
   };
 
   const handleSubscribe = async () => {
-    if (isSubscribed) return; // Prevent unnecessary API calls if already subscribed
-  
-    setIsSubscribed(true); // Optimistically update UI
-  
     try {
       const token = localStorage.getItem("api_token");
       if (!token) {
         console.error("❌ Authorization token missing. Please log in.");
-        setIsSubscribed(false); // Revert UI if no token
         return;
       }
-  
-      const response = await axios.post(
-        `https://develop.quakbox.com/admin/api/videos/subscribe/${video.user_id}`,
-        {},
-        { headers: { Authorization: `Bearer ${token}` } }
-      );
-  
-      if (response.status !== 200) {
-        throw new Error("Subscription failed");
+
+      const url = `https://develop.quakbox.com/admin/api/videos/${
+        isSubscribed
+          ? `unsubscribe/${video.user_id}`
+          : `subscribe/${video.user_id}`
+      }`;
+
+      const method = isSubscribed ? "delete" : "post"; // Use DELETE for unsubscribe
+
+      const response = await axios({
+        method,
+        url,
+        headers: { Authorization: `Bearer ${token}` },
+      });
+
+      if (response.status === 200) {
+        setIsSubscribed(!isSubscribed); // Toggle state
       }
     } catch (error) {
-      console.error("❌ Error subscribing:", error.response?.data || error.message);
-      setIsSubscribed(false); // Revert UI on error
+      console.error(
+        "❌ Error updating subscription:",
+        error.response?.data || error.message
+      );
     }
   };
-  
 
   useEffect(() => {
     const fetchVideo = async () => {
@@ -490,11 +494,11 @@ const VideosPlayer = () => {
               </div>
               <button
                 className={`btn ${
-                  isSubscribed ? "btn-secondary" : "btn-danger"
+                  isSubscribed ? "btn-outline-secondary" : "btn-danger"
                 } fw-bold`}
                 onClick={handleSubscribe}
               >
-                {isSubscribed ? "Subscribed" : "Subscribe"}
+                {isSubscribed ? "Unsubscribed" : "Subscribe"}
               </button>
             </div>
 

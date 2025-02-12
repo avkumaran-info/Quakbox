@@ -64,8 +64,10 @@ const updates = [
   },
 ];
 
+// const userDatas = JSON.parse(localStorage.getItem("user_Details")) || [];
+
 const dummyProfilePic = "https://via.placeholder.com/40";
-const RightSidebar = ({ countryCode, flag, countryName }) => {
+const RightSidebar = ({ countryCode, flag, countryName,userDetails }) => {
   const [countryData, setCountryData] = useState(null);
   const [counts, setCounts] = useState({
     comments: 0,
@@ -73,8 +75,6 @@ const RightSidebar = ({ countryCode, flag, countryName }) => {
     dislikes: 0,
     shares: 0,
   });
-
-  
 
   const [favCountries, setFavCountries] = useState([]);
   const [fanCountries, setFanCountries] = useState([]);
@@ -138,7 +138,7 @@ const RightSidebar = ({ countryCode, flag, countryName }) => {
   // );
 
   const isWorld = location.pathname === "/world"; // Determines if we're in the "world" section
-
+  const isDashboaed = location.pathname === "/dashboard";
   // useEffect(() => {
   //   // Mock API call to get comments
   //   const fetchComments = () => {
@@ -340,159 +340,210 @@ const RightSidebar = ({ countryCode, flag, countryName }) => {
               position: "sticky",
             }}
           >
-            <img
-              src={flag}
-              alt={countryName}
-              className="img-fluid"
-              style={{
-                width: "100%",
-                height: "200px",
-                objectFit: "cover",
-              }}
-            />
-            <h5 className="mt-2 mb-2 text-secondary">{countryName}</h5>
-            {/* Like, Dislike, Comment, Share Icons */}
-            <div className="d-flex justify-content-around">
-              <Tooltip title="Like" arrow disableInteractive>
-                <div style={{ textAlign: "center" }}>
-                  <ThumbUpIcon
-                    sx={{
-                      fontSize: 30,
-                      color: "#263238",
-                      "&:hover": {
-                        transform: "scale(1.2)",
-                      },
-                      transition: "all 0.3s ease",
-                      fontWeight: "bold",
-                      opacity: 0.8,
-                      cursor: "pointer",
+            {isDashboaed ? (
+              <>
+                <div
+                  className="text-center d-flex flex-column align-items-center"
+                  style={{
+                    backgroundColor: "#fff",
+                    boxShadow: "0px 4px 6px rgba(0, 0, 0, 0.1)",
+                    padding: "20px",
+                    borderRadius: "10px",
+                  }}
+                >
+                  <div
+                    style={{
+                      width: "75%", // Keeps image size proportional
+                      maxWidth: "150px", // Prevents it from becoming too large
+                      aspectRatio: "1/1", // Ensures a perfect square
+                      borderRadius: "50%",
+                      overflow: "hidden",
+                      border: "4px solid white",
+                      boxShadow: "0px 0px 10px rgba(0, 0, 0, 0.1)",
+                      display: "flex",
+                      justifyContent: "center",
+                      alignItems: "center",
+                      margin: "auto", // Centers the div horizontally
                     }}
-                    onClick={() => handleLikeDislike(`${countryCode}`, true)}
-                  />
-                  <div style={{ fontSize: "16px", marginTop: "4px" }}>
-                    {counts.likes}
+                  >
+                    <img
+                      src={userDetails.profile_image_url}
+                      alt="User Profile"
+                      className="img-fluid"
+                      style={{
+                        width: "100%", // Ensures the image takes up the full container
+                        height: "100%",
+                        objectFit: "cover",
+                      }}
+                    />
                   </div>
+                  <h5 className="mt-2 text-dark">{userDetails.name}</h5>
+                  <button className="btn btn-primary mt-2">
+                    Change Picture
+                  </button>
                 </div>
-              </Tooltip>
-              <Tooltip title="Dislike" arrow disableInteractive>
-                <div style={{ textAlign: "center" }}>
-                  <ThumbDownIcon
-                    sx={{
-                      fontSize: 30,
-                      color: "#263238",
-                      "&:hover": {
-                        //color: "red",
-                        transform: "scale(1.2)",
-                      },
-                      transition: "all 0.3s ease",
-                      fontWeight: "bold",
-                      opacity: 0.8,
-                      cursor: "pointer",
-                    }}
-                    onClick={() => handleLikeDislike(`${countryCode}`, false)}
-                  />
-                  <div style={{ fontSize: "16px", marginTop: "4px" }}>
-                    {counts.dislikes}
-                  </div>
+              </>
+            ) : (
+              <>
+                <img
+                  src={flag}
+                  alt={countryName}
+                  className="img-fluid"
+                  style={{
+                    width: "100%",
+                    height: "200px",
+                    objectFit: "cover",
+                  }}
+                />
+                <h5 className="mt-2 mb-2 text-secondary">{countryName}</h5>
+                {/* Like, Dislike, Comment, Share Icons */}
+                <div className="d-flex justify-content-around">
+                  <Tooltip title="Like" arrow disableInteractive>
+                    <div style={{ textAlign: "center" }}>
+                      <ThumbUpIcon
+                        sx={{
+                          fontSize: 30,
+                          color: "#263238",
+                          "&:hover": {
+                            transform: "scale(1.2)",
+                          },
+                          transition: "all 0.3s ease",
+                          fontWeight: "bold",
+                          opacity: 0.8,
+                          cursor: "pointer",
+                        }}
+                        onClick={() =>
+                          handleLikeDislike(`${countryCode}`, true)
+                        }
+                      />
+                      <div style={{ fontSize: "16px", marginTop: "4px" }}>
+                        {counts.likes}
+                      </div>
+                    </div>
+                  </Tooltip>
+                  <Tooltip title="Dislike" arrow disableInteractive>
+                    <div style={{ textAlign: "center" }}>
+                      <ThumbDownIcon
+                        sx={{
+                          fontSize: 30,
+                          color: "#263238",
+                          "&:hover": {
+                            //color: "red",
+                            transform: "scale(1.2)",
+                          },
+                          transition: "all 0.3s ease",
+                          fontWeight: "bold",
+                          opacity: 0.8,
+                          cursor: "pointer",
+                        }}
+                        onClick={() =>
+                          handleLikeDislike(`${countryCode}`, false)
+                        }
+                      />
+                      <div style={{ fontSize: "16px", marginTop: "4px" }}>
+                        {counts.dislikes}
+                      </div>
+                    </div>
+                  </Tooltip>
+                  <Tooltip title="Comment" arrow disableInteractive>
+                    <div style={{ textAlign: "center" }}>
+                      <CommentIcon
+                        sx={{
+                          fontSize: 30,
+                          color: "#263238",
+                          "&:hover": {
+                            //color: "red",
+                            transform: "scale(1.2)",
+                          },
+                          transition: "all 0.3s ease",
+                          fontWeight: "bold",
+                          opacity: 0.8,
+                          cursor: "pointer",
+                        }}
+                        onClick={handleCommentClick}
+                      />
+                      <div style={{ fontSize: "16px", marginTop: "4px" }}>
+                        {counts.comments}
+                      </div>
+                    </div>
+                  </Tooltip>
+                  <Tooltip title="Favourite" arrow disableInteractive>
+                    <div style={{ textAlign: "center" }}>
+                      <FavoriteSharpIcon
+                        sx={{
+                          fontSize: 30,
+                          color: favCountries.some(
+                            (c) => c.country_code === countryCode
+                          )
+                            ? "red"
+                            : "#263238",
+                          "&:hover": {
+                            //color: "red",
+                            transform: "scale(1.2)",
+                          },
+                          transition: "all 0.3s ease",
+                          fontWeight: "bold",
+                          opacity: 0.8,
+                          cursor: "pointer",
+                        }}
+                        onClick={handleFavouriteToggle}
+                      />
+                      <div style={{ fontSize: "16px", marginTop: "4px" }}>
+                        {favCountries.length}
+                      </div>
+                    </div>
+                  </Tooltip>
+                  <Tooltip title="Fan" arrow disableInteractive>
+                    <div style={{ textAlign: "center" }}>
+                      <GroupIcon
+                        sx={{
+                          fontSize: 30,
+                          color: fanCountries.some(
+                            (c) => c.country_code === countryCode
+                          )
+                            ? "blue"
+                            : "#263238",
+                          "&:hover": {
+                            //color: "red",
+                            transform: "scale(1.2)",
+                          },
+                          transition: "all 0.3s ease",
+                          fontWeight: "bold",
+                          opacity: 0.8,
+                          cursor: "pointer",
+                        }}
+                        onClick={handleFanToggle}
+                      />
+                      <div style={{ fontSize: "16px", marginTop: "4px" }}>
+                        {fanCountries.length}
+                      </div>
+                    </div>
+                  </Tooltip>
+                  <Tooltip title="Share" arrow disableInteractive>
+                    <div style={{ textAlign: "center" }}>
+                      <ScreenShareIcon
+                        sx={{
+                          fontSize: 30,
+                          color: "#263238",
+                          "&:hover": {
+                            //color: "red",
+                            transform: "scale(1.2)",
+                          },
+                          transition: "all 0.3s ease",
+                          fontWeight: "bold",
+                          opacity: 0.8,
+                          cursor: "pointer",
+                        }}
+                        onClick={handleShareToggle}
+                      />
+                      <div style={{ fontSize: "16px", marginTop: "4px" }}>
+                        {counts.shares}
+                      </div>
+                    </div>
+                  </Tooltip>
                 </div>
-              </Tooltip>
-              <Tooltip title="Comment" arrow disableInteractive>
-                <div style={{ textAlign: "center" }}>
-                  <CommentIcon
-                    sx={{
-                      fontSize: 30,
-                      color: "#263238",
-                      "&:hover": {
-                        //color: "red",
-                        transform: "scale(1.2)",
-                      },
-                      transition: "all 0.3s ease",
-                      fontWeight: "bold",
-                      opacity: 0.8,
-                      cursor: "pointer",
-                    }}
-                    onClick={handleCommentClick}
-                  />
-                  <div style={{ fontSize: "16px", marginTop: "4px" }}>
-                    {counts.comments}
-                  </div>
-                </div>
-              </Tooltip>
-              <Tooltip title="Favourite" arrow disableInteractive>
-                <div style={{ textAlign: "center" }}>
-                  <FavoriteSharpIcon
-                    sx={{
-                      fontSize: 30,
-                      color: favCountries.some(
-                        (c) => c.country_code === countryCode
-                      )
-                        ? "red"
-                        : "#263238",
-                      "&:hover": {
-                        //color: "red",
-                        transform: "scale(1.2)",
-                      },
-                      transition: "all 0.3s ease",
-                      fontWeight: "bold",
-                      opacity: 0.8,
-                      cursor: "pointer",
-                    }}
-                    onClick={handleFavouriteToggle}
-                  />
-                  <div style={{ fontSize: "16px", marginTop: "4px" }}>
-                    {favCountries.length}
-                  </div>
-                </div>
-              </Tooltip>
-              <Tooltip title="Fan" arrow disableInteractive>
-                <div style={{ textAlign: "center" }}>
-                  <GroupIcon
-                    sx={{
-                      fontSize: 30,
-                      color: fanCountries.some(
-                        (c) => c.country_code === countryCode
-                      )
-                        ? "blue"
-                        : "#263238",
-                      "&:hover": {
-                        //color: "red",
-                        transform: "scale(1.2)",
-                      },
-                      transition: "all 0.3s ease",
-                      fontWeight: "bold",
-                      opacity: 0.8,
-                      cursor: "pointer",
-                    }}
-                    onClick={handleFanToggle}
-                  />
-                  <div style={{ fontSize: "16px", marginTop: "4px" }}>
-                    {fanCountries.length}
-                  </div>
-                </div>
-              </Tooltip>
-              <Tooltip title="Share" arrow disableInteractive>
-                <div style={{ textAlign: "center" }}>
-                  <ScreenShareIcon
-                    sx={{
-                      fontSize: 30,
-                      color: "#263238",
-                      "&:hover": {
-                        //color: "red",
-                        transform: "scale(1.2)",
-                      },
-                      transition: "all 0.3s ease",
-                      fontWeight: "bold",
-                      opacity: 0.8,
-                      cursor: "pointer",
-                    }}
-                    onClick={handleShareToggle}
-                  />
-                  <div style={{ fontSize: "16px", marginTop: "4px" }}>
-                    {counts.shares}
-                  </div>
-                </div>
-              </Tooltip>
-            </div>
+              </>
+            )}
           </div>
           <div
             style={{
