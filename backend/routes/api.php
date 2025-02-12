@@ -186,3 +186,5 @@ Route::get('images/uploads/videos/permanent/{filename}', function ($filename) {
 
 Route::post('/send-otp', [AuthController::class, 'sendOtpMob']);
 Route::post('/verify-otp', [AuthController::class, 'verifyOtpMob']);
+Route::post('/send-otp-mail', [AuthController::class, 'sendOtpMail']);
+Route::post('/verify-otp-mail', [AuthController::class, 'verifyOtpMail']);
