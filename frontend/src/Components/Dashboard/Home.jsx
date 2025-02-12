@@ -45,7 +45,7 @@ const Home = () => {
   const [userDetail, setUserDetail] = useState("");
   const [userData, setUserData] = useState(null);
   const [userCountry, setUserCountry] = useState("");
-
+  const [userDetails, setUserDetails] = useState([]);
   const [currentCountry, setCurrentCountry] = useState({
     code: countryCode,
     name: countryName,
@@ -69,8 +69,8 @@ const Home = () => {
       // console.log(res.data.users.id);
       setUserCountry(res.data.user_details.country);
       localStorage.setItem("user_Id", res.data.users.id);
-      localStorage.setItem("user_Details", JSON.stringify(res.data));
-
+      // localStorage.setItem("user_Details", JSON.stringify(res.data));
+      setUserDetails(res.data);
       const userDetails = res.data.user_details;
       const defaultCountryCode = userDetails.country; // Default to IN if no country code is present
       const defaultCountryName = "INDIA";
@@ -140,6 +140,7 @@ const Home = () => {
           countryCode={currentCountry.code}
           flag={currentCountry.flag}
           countryName={currentCountry.name}
+          userDetails={userDetails}
         />
       </div>
       {/* <Footer /> */}

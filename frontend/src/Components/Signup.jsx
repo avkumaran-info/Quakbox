@@ -18,6 +18,11 @@ const Signup = () => {
   const [countries, setCountries] = useState([]);
   const [profileImage, setProfileImage] = useState();
   const [profilePreview, setProfilePreview] = useState(DEFAULT_PROFILE_IMAGE);
+  const [showOTPModal, setShowOTPModal] = useState(false);
+  const [emailOTP, setEmailOTP] = useState("");
+  const [mobileOTP, setMobileOTP] = useState("");
+  const [countdown, setCountdown] = useState(30);
+  const [timer, setTimer] = useState(null);
 
   const [userField, setUserField] = useState({
     email: "",
@@ -38,23 +43,111 @@ const Signup = () => {
     setIsChecked(event.target.checked);
   };
 
-  const handleSubmit = (event) => {
-    event.preventDefault();
-    const errors = validateFields();
-    if (errors.length > 0) {
-      toast.error(errors[0].message, {
-        position: "top-center",
-        autoClose: 5000,
-        hideProgressBar: false,
-        closeOnClick: true,
-        pauseOnHover: true,
-        draggable: true,
-        theme: "light",
-        transition: Bounce,
-      });
+  // const handleSubmit = (event) => {
+  //   event.preventDefault();
+  //   const errors = validateFields();
+  //   if (errors.length > 0) {
+  //     toast.error(errors[0].message, {
+  //       position: "top-center",
+  //       autoClose: 5000,
+  //       hideProgressBar: false,
+  //       closeOnClick: true,
+  //       pauseOnHover: true,
+  //       draggable: true,
+  //       theme: "light",
+  //       transition: Bounce,
+  //     });
+  //   } else {
+  //     signup();
+  //   }
+  // };
+
+  // Start countdown on OTP submit
+  // Start countdown when modal is opened
+  useEffect(() => {
+    if (showOTPModal) {
+      startCountdown();
     } else {
-      signup();
+      clearTimer(); // Ensure the timer stops when modal is closed
     }
+  }, [showOTPModal]);
+
+  // Function to start countdown
+  const startCountdown = () => {
+    setCountdown(30);
+    clearTimer(); // Clear any existing timer before starting a new one
+    const newTimer = setInterval(() => {
+      setCountdown((prev) => {
+        if (prev <= 1) {
+          clearTimer();
+          return 0;
+        }
+        return prev - 1;
+      });
+    }, 1000);
+    setTimer(newTimer);
+  };
+
+  // Function to clear the timer
+  const clearTimer = () => {
+    if (timer) clearInterval(timer);
+  };
+
+  const handleSubmit = (e) => {
+    e.preventDefault();
+    setShowOTPModal(true); // Show OTP modal on form submission
+  };
+
+  // const handleSubmit = (event) => {
+  //   event.preventDefault();
+  //   const errors = validateFields();
+  //   if (errors.length > 0) {
+  //     toast.error(errors[0].message, {
+  //       position: "top-center",
+  //       autoClose: 5000,
+  //       hideProgressBar: false,
+  //       closeOnClick: true,
+  //       pauseOnHover: true,
+  //       draggable: true,
+  //       theme: "light",
+  //       transition: Bounce,
+  //     });
+  //   } else {
+  //     signup();
+  //   }
+  // };
+
+  const handleOTPInput = (e, index, type) => {
+    let value = e.target.value.replace(/[^0-9]/g, ""); // Allow only numbers
+    if (type === "email") {
+      let newOTP = [...emailOTP];
+      newOTP[index] = value;
+      setEmailOTP(newOTP);
+      if (value && index < 5)
+        document.querySelectorAll("input")[index + 1].focus();
+    } else {
+      let newOTP = [...mobileOTP];
+      newOTP[index] = value;
+      setMobileOTP(newOTP);
+      if (value && index < 5)
+        document.querySelectorAll("input")[index + 7].focus();
+    }
+  };
+
+  const handleOTPSubmit = () => {
+    if (emailOTP.length === 6 && mobileOTP.length === 6) {
+      alert("OTP Verified Successfully!");
+      setShowOTPModal(false);
+    } else {
+      alert("Invalid OTP. Please try again.");
+    }
+  };
+
+  const handleCloseOTPModal = () => {
+    setShowOTPModal(false);
+    setEmailOTP(""); // Clear email OTP
+    setMobileOTP(""); // Clear mobile OTP
+    clearTimer();
   };
 
   const changeUserFieldHandler = (e) => {
@@ -330,6 +423,104 @@ const Signup = () => {
 
   return (
     <div className="container-fluid vh-100 d-flex flex-column flex-md-row p-0">
+      {/* OTP Verification Modal */}
+      {showOTPModal && (
+        <div
+          className="position-fixed top-0 start-0 w-100 h-100 d-flex justify-content-center align-items-center"
+          style={{ backgroundColor: "rgba(0, 0, 0, 0.5)", zIndex: 1050 }}
+        >
+          <div className="modal fade show d-block" tabIndex="1">
+            <div className="modal-dialog modal-dialog-centered">
+              <div className="modal-content p-4 text-center rounded-3">
+                <div className="modal-header border-0 justify-content-center">
+                  <h4 className="fw-bold mb-2">OTP Verification</h4>
+                  <button
+                    type="button"
+                    className="btn-close position-absolute end-0 me-3"
+                    onClick={handleCloseOTPModal}
+                  ></button>
+                </div>
+                <div className="modal-body">
+                  <p className="text-secondary fs-6">
+                    Please enter the OTP sent to your email and mobile.
+                  </p>
+
+                  {/* Email Section */}
+                  <div className="text-start mb-3">
+                    <label className="fw-bold fs-6">
+                      Email: {userField.email}
+                    </label>
+                    {/* <p className="fw-bold text-dark mb-1">{userField.email}</p> */}
+                  </div>
+
+                  {/* Email OTP Input */}
+                  <div className="d-flex justify-content-center gap-2 mb-3">
+                    {[...Array(6)].map((_, index) => (
+                      <input
+                        key={index}
+                        type="text"
+                        maxLength="1"
+                        value={emailOTP[index] || ""}
+                        onChange={(e) => handleOTPInput(e, index, "email")}
+                        className="form-control text-center fw-bold fs-4 border rounded-2"
+                        style={{ width: "50px", height: "50px" }}
+                      />
+                    ))}
+                  </div>
+
+                  {/* Mobile Section */}
+                  <div className="text-start mb-3">
+                    <label className="fw-bold fs-6">
+                      Mobile Number:{userField.countryCode} {userField.phone}
+                    </label>
+                    {/* <p className="fw-bold text-dark mb-1">{userField.phone}</p> */}
+                  </div>
+
+                  {/* Mobile OTP Input */}
+                  <div className="d-flex justify-content-center gap-2 mb-4">
+                    {[...Array(6)].map((_, index) => (
+                      <input
+                        key={index}
+                        type="text"
+                        maxLength="1"
+                        value={mobileOTP[index] || ""}
+                        onChange={(e) => handleOTPInput(e, index, "mobile")}
+                        className="form-control text-center fw-bold fs-4 border rounded-2"
+                        style={{ width: "50px", height: "50px" }}
+                      />
+                    ))}
+                  </div>
+
+                  {/* Verify Button */}
+                  <button
+                    className="btn btn-primary w-100 py-2 fw-bold fs-5"
+                    onClick={handleOTPSubmit}
+                  >
+                    Verify OTP
+                  </button>
+
+                  {/* Resend Option with Countdown */}
+                  <p className="mt-3 text-secondary fs-6">
+                    Didn't receive the code?{" "}
+                    {countdown > 0 ? (
+                      <span className="fw-bold text-dark">{`Resend in ${countdown}s`}</span>
+                    ) : (
+                      <span
+                        className="text-primary fw-bold"
+                        style={{ cursor: "pointer" }}
+                        onClick={startCountdown}
+                      >
+                        Resend
+                      </span>
+                    )}
+                  </p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Left Section */}
       <div
         className="bg-light col-12 col-md-8 position-relative d-none d-md-block"
@@ -549,6 +740,44 @@ const Signup = () => {
               </div>
 
               <div className="form-group mb-1">
+                <label htmlFor="phone" className="fs-6">
+                  Mobile Number
+                </label>
+                <div className="d-flex">
+                  {/* Country Code Dropdown */}
+                  <select
+                    className="form-select me-2"
+                    style={{ width: "130px" }} // Adjust width as needed
+                    value={userField.countryCode}
+                    onChange={(e) =>
+                      setUserField({
+                        ...userField,
+                        countryCode: e.target.value,
+                      })
+                    }
+                  >
+                    {countries.map((country) => (
+                      <option key={country.code} value={country.phone_code}>
+                        {country.country_name} ({country.phone_code})
+                      </option>
+                    ))}
+                  </select>
+
+                  {/* Mobile Number Input */}
+                  <input
+                    type="tel"
+                    id="phone"
+                    name="phone"
+                    value={userField.phone}
+                    className="form-control"
+                    placeholder="Enter mobile number"
+                    onChange={(e) =>
+                      setUserField({ ...userField, phone: e.target.value })
+                    }
+                  />
+                </div>
+              </div>
+              <div className="form-group mb-1">
                 <label htmlFor="email" className="fs-6">
                   Your Current Email
                 </label>
@@ -627,45 +856,6 @@ const Signup = () => {
                       </select>
                     </div>
                   </div>
-                </div>
-              </div>
-
-              <div className="form-group mb-3">
-                <label htmlFor="phone" className="fs-6">
-                  Mobile Number
-                </label>
-                <div className="d-flex">
-                  {/* Country Code Dropdown */}
-                  <select
-                    className="form-select me-2"
-                    style={{ width: "130px" }} // Adjust width as needed
-                    value={userField.countryCode}
-                    onChange={(e) =>
-                      setUserField({
-                        ...userField,
-                        countryCode: e.target.value,
-                      })
-                    }
-                  >
-                    {countries.map((country) => (
-                      <option key={country.code} value={country.phone_code}>
-                        {country.country_name} ({country.phone_code})
-                      </option>
-                    ))}
-                  </select>
-
-                  {/* Mobile Number Input */}
-                  <input
-                    type="tel"
-                    id="phone"
-                    name="phone"
-                    value={userField.phone}
-                    className="form-control"
-                    placeholder="Enter mobile number"
-                    onChange={(e) =>
-                      setUserField({ ...userField, phone: e.target.value })
-                    }
-                  />
                 </div>
               </div>
 

@@ -360,7 +360,7 @@ const Login = () => {
 
                 <GoogleAuth />
 
-                <FacebookSignIn />
+                {/* <FacebookSignIn /> */}
               </form>
               <p className="text-center mt-3 text-sm">
                 Don't have an account?{" "}
