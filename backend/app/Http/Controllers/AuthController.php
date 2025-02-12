@@ -26,7 +26,7 @@ use GuzzleHttp\Client;
 use Carbon\Carbon;
 
 use App\Models\PasswordResetOtp;
-use App\Mail\QuakboxMail;
+use App\Mail\QuakboxMailVerification;
 use Illuminate\Support\Facades\Mail;
 
 class AuthController extends Controller
@@ -404,12 +404,12 @@ class AuthController extends Controller
 
         // Send OTP via email
         $data = [
-            'subject' => 'Password Reset OTP',
-            'title' => 'Password Reset Mail',
+            'subject' => 'Quakbox Mail Verification',
+            'title' => 'Quakbox Mail Verification',
             'message' => 'Your OTP is:'. $otp
         ];
 
-        Mail::to($email)->send(new QuakboxMail($data));
+        Mail::to($email)->send(new QuakboxMailVerification($data));
 
         return response()->json([
             "status" => true,
