@@ -8,7 +8,7 @@ const LiveStream = () => {
     const peerConnection = useRef(new RTCPeerConnection());
 
     useEffect(() => {
-        socket.current = io("http://localhost:3002");
+        socket.current = io("https://develop.quakbox.com");
 
         navigator.mediaDevices.getUserMedia({ video: true, audio: true })
             .then((stream) => {

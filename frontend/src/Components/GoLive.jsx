@@ -84,7 +84,7 @@ const GoLiveTwo = () => {
   // Handlers for live stream state
   const handleGoLive = async () => {
     try {
-      const response = await fetch("http://localhost:8000/api/start-live-stream", {
+      const response = await fetch("https://develop.quakbox.com/admin/api/start-live-stream", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -108,7 +108,7 @@ const GoLiveTwo = () => {
   
   const handleEndLive = async () => {
     try {
-      await fetch("http://localhost:8000/api/end-stream", {
+      await fetch("https://develop.quakbox.com/admin/api/end-stream", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
