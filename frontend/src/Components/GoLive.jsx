@@ -88,22 +88,21 @@ const GoLiveTwo = () => {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          Authorization: `Bearer ${localStorage.getItem("api_token")}`, // Assuming you're using a token
+          Authorization: `Bearer ${localStorage.getItem("api_token")}`,
         },
-        body: JSON.stringify({ userId: 123 }), // Replace with actual user ID
       });
-  
+
       const data = await response.json();
       if (response.ok) {
-        setIsLive(true);
         console.log("Live stream started:", data);
+        alert(`Your stream URL: ${data.watch_url}`);
       } else {
         console.error("Error starting stream:", data);
       }
     } catch (error) {
       console.error("Network error:", error);
     }
-  };
+};
 
   
   const handleEndLive = async () => {
