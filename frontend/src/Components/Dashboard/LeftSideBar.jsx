@@ -17,8 +17,10 @@ import {
 } from "react-icons/fa"; // Import icons
 import "./LeftsideBar.css";
 import { useNavigate } from "react-router-dom";
+import axios from "axios";
 const LeftSidebar = ({ countryCode, flag, countryName }) => {
-  const videos = [video4, video1, video2, video3];
+  // const videos = [video4, video1, video2, video3];
+  const [videos, setVideos] = useState([]);
   const [currentVideoIndex, setCurrentVideoIndex] = useState(0);
   const [isHovered, setIsHovered] = useState(false);
   const [isPlaying, setIsPlaying] = useState(false);
@@ -32,8 +34,48 @@ const LeftSidebar = ({ countryCode, flag, countryName }) => {
   const [title, setTitle] = useState("");
   const [allowChat, setAllowChat] = useState(false);
   const [userId, setUserId] = useState("");
+  const videoIds = [48]; // Allowed video IDs
 
   const navigate = useNavigate();
+
+  const fetchVideos = async () => {
+    try {
+      const token = localStorage.getItem("api_token");
+      if (!token) {
+        console.error("❌ Authorization token missing. Please log in.");
+        return;
+      }
+
+      const allowedVideoIds = [54, 41, 42, 48]; // ✅ Only these videos should be played
+
+      const fetchedVideos = await Promise.all(
+        allowedVideoIds.map(async (id) => {
+          const response = await axios.get(
+            `https://develop.quakbox.com/admin/api/videos/${id}/show`,
+            {
+              headers: {
+                Authorization: `Bearer ${token}`,
+              },
+            }
+          );
+          console.log(response);
+
+          return response.data.data.file_path; // ✅ Assuming API returns file_path for video
+        })
+      );
+
+      setVideos(fetchedVideos); // ✅ Store only allowed video URLs in state
+    } catch (error) {
+      console.error(
+        "Error fetching videos:",
+        error.response?.data || error.message
+      );
+    }
+  };
+
+  useEffect(() => {
+    fetchVideos();
+  }, []);
 
   // Function to handle icon click
   const handleIconClick = (privacy, icon) => {

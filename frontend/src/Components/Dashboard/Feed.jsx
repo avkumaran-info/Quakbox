@@ -34,6 +34,25 @@ const Feed = ({ countryCode, flag, countryName, handleCountryChange }) => {
   const openPopup = () => setIsPopupOpen(true);
   const closePopup = () => setIsPopupOpen(false);
 
+  const [isCommentPopupOpen, setCommentPopupOpen] = useState(false);
+  const [selectedPost, setSelectedPost] = useState(null);
+
+  const openCommentPopup = (post) => {
+    setSelectedPost(post);
+    setCommentPopupOpen(true);
+  };
+
+  const closeCommentPopup = () => {
+    setSelectedPost(null);
+    setCommentPopupOpen(false);
+  };
+
+  const [visibleComments, setVisibleComments] = useState(10);
+
+  const loadMoreComments = () => {
+    setVisibleComments((prev) => prev + 10); // Load 10 more comments on click
+  };
+
   // Open Delete Popup
   const openDeletePopup = (post) => {
     setPostToDelete(post);
@@ -932,6 +951,206 @@ const Feed = ({ countryCode, flag, countryName, handleCountryChange }) => {
                 </div>
               </div>
             )}
+
+            {isCommentPopupOpen && selectedPost && (
+              <div
+                className="modal fade show d-block"
+                style={{ background: "rgba(0, 0, 0, 0.5)" }}
+              >
+                <div className="modal-dialog modal-dialog-centered modal-md">
+                  <div className="modal-content">
+                    {/* Header */}
+                    <div className="modal-header">
+                      <h5 className="modal-title">Post & Comments</h5>
+                      <button
+                        className="btn-close"
+                        onClick={closeCommentPopup}
+                      ></button>
+                    </div>
+
+                    {/* Body */}
+                    <div
+                      className="modal-body d-flex flex-column"
+                      style={{ maxHeight: "80vh" }}
+                    >
+                      {/* Fixed Post Content */}
+                      <div className="post-preview" style={{ flexShrink: 0 }}>
+                        {/* User Info */}
+                        <div className="d-flex align-items-center">
+                          <img
+                            src={
+                              selectedPost.from?.profile_image ||
+                              defaultUserImage
+                            }
+                            alt="User Avatar"
+                            className="rounded-circle me-2"
+                            style={{ width: "40px", height: "40px" }}
+                          />
+                          <div>
+                            <h6 className="mb-0">
+                              {selectedPost.from?.name || "Unknown User"}
+                            </h6>
+                            <small>{selectedPost.timeAgo}</small>
+                          </div>
+                        </div>
+
+                        {/* Post Text */}
+                        {selectedPost.message && (
+                          <p className="mt-2">{selectedPost.message}</p>
+                        )}
+
+                        {/* Post Image or Video */}
+                        {selectedPost.attachments &&
+                          selectedPost.attachments.data.map(
+                            (attachment, index) => {
+                              if (attachment.type === "image") {
+                                return (
+                                  <img
+                                    key={index}
+                                    src={attachment.media[0].url}
+                                    alt="Post image"
+                                    className="img-fluid rounded w-100"
+                                    style={{
+                                      maxHeight: "120px",
+                                      objectFit: "cover",
+                                    }}
+                                  />
+                                );
+                              }
+                              if (attachment.type === "video") {
+                                return (
+                                  <video
+                                    key={index}
+                                    controls
+                                    className="w-100 rounded"
+                                    style={{
+                                      maxHeight: "120px",
+                                      objectFit: "contain",
+                                      backgroundColor: "black",
+                                    }}
+                                  >
+                                    <source
+                                      src={attachment.media[0].url}
+                                      type="video/mp4"
+                                    />
+                                    Your browser does not support the video tag.
+                                  </video>
+                                );
+                              }
+                              return null;
+                            }
+                          )}
+                      </div>
+
+                      {/* Divider */}
+                      <hr />
+
+                      {/* Scrollable Comments Section */}
+                      <div
+                        className="comments-section flex-grow-1 overflow-auto"
+                        style={{ maxHeight: "40vh", paddingRight: "10px" }}
+                      >
+                        <h6>Comments</h6>
+
+                        {/* If comments exist, show them */}
+                        {selectedPost?.comments?.data?.length > 0 ? (
+                          selectedPost.comments.data
+                            .slice(0, visibleComments)
+                            .map((comment, index) => (
+                              <div
+                                key={index}
+                                className="d-flex align-items-start mb-3"
+                              >
+                                <img
+                                  src={
+                                    comment.user?.profile_image ||
+                                    defaultUserImage
+                                  }
+                                  alt="User Avatar"
+                                  className="rounded-circle me-2"
+                                  style={{ width: "35px", height: "35px" }}
+                                />
+                                <div>
+                                  <h6 className="mb-0">
+                                    {comment.user?.name || "Anonymous"}
+                                  </h6>
+                                  <p className="mb-1">{comment.message}</p>
+                                  <small className="text-muted">
+                                    {comment.timeAgo}
+                                  </small>
+                                </div>
+                              </div>
+                            ))
+                        ) : (
+                          // Mock Comments for Testing
+                          <>
+                            <div className="d-flex align-items-start mb-3">
+                              <img
+                                src={defaultUserImage}
+                                alt="User Avatar"
+                                className="rounded-circle me-2"
+                                style={{ width: "35px", height: "35px" }}
+                              />
+                              <div>
+                                <h6 className="mb-0">John Doe</h6>
+                                <p className="mb-1">This is a great post! 👍</p>
+                                <small className="text-muted">
+                                  2 hours ago
+                                </small>
+                              </div>
+                            </div>
+
+                            <div className="d-flex align-items-start mb-3">
+                              <img
+                                src={defaultUserImage}
+                                alt="User Avatar"
+                                className="rounded-circle me-2"
+                                style={{ width: "35px", height: "35px" }}
+                              />
+                              <div>
+                                <h6 className="mb-0">Jane Smith</h6>
+                                <p className="mb-1">I totally agree! 🔥</p>
+                                <small className="text-muted">1 hour ago</small>
+                              </div>
+                            </div>
+
+                            <div className="d-flex align-items-start mb-3">
+                              <img
+                                src={defaultUserImage}
+                                alt="User Avatar"
+                                className="rounded-circle me-2"
+                                style={{ width: "35px", height: "35px" }}
+                              />
+                              <div>
+                                <h6 className="mb-0">Alex Johnson</h6>
+                                <p className="mb-1">
+                                  Awesome content, keep it up! 🚀
+                                </p>
+                                <small className="text-muted">
+                                  30 mins ago
+                                </small>
+                              </div>
+                            </div>
+                          </>
+                        )}
+                      </div>
+
+                      {/* Add a Comment */}
+                      <div className="mt-3">
+                        <textarea
+                          className="form-control"
+                          rows="2"
+                          placeholder="Write a comment..."
+                        ></textarea>
+                        <button className="btn btn-primary btn-sm mt-2">
+                          Post Comment
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
           </div>
         </div>
 
@@ -1103,7 +1322,10 @@ const Feed = ({ countryCode, flag, countryName, handleCountryChange }) => {
                       </button>
 
                       {/* Comment Button */}
-                      <button className="btn btn-light btn-sm me-2">
+                      <button
+                        className="btn btn-light btn-sm me-2"
+                        onClick={() => openCommentPopup(post)}
+                      >
                         <CommentIcon
                           sx={{ fontSize: 18, marginRight: "5px" }}
                         />{" "}
