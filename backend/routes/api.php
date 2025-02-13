@@ -17,6 +17,7 @@ use App\Http\Controllers\VideoInteractionController;
 use App\Http\Controllers\VideoSubscriptionController;
 use App\Http\Controllers\VideoCommentController;
 use FFMpeg\Media\Video;
+use App\Http\Controllers\LiveStreamController;
 
 // use App\Http\Controllers\VideoChannelController;
 
@@ -30,7 +31,9 @@ use FFMpeg\Media\Video;
 | be assigned to the "api" middleware group. Make something great!
 |
 */
-
+//Live streaming 
+Route::middleware('auth:api')->post('start-live-stream', [LiveStreamController::class, 'startStreaming']);
+Route::middleware('auth:api')->post('end-stream', [LiveStreamController::class, 'endStreaming']);
 
 Route::post('login', [AuthController::class, 'login']);
 Route::post('register', [AuthController::class, 'register']);
