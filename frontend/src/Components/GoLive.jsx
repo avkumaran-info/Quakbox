@@ -28,7 +28,7 @@ import menProfilePic from "../assets/images/man-user-color-icon.svg";
 import menProfilePicTwo from "../assets/images/man-user-circle-icon.svg";
 import womenProfilePic from "../assets/images/woman-user-color-icon.svg";
 import womenProfilePicTwo from "../assets/images/woman-user-circle-icon.svg";
-import LiveVideoStream from "./LiveStream";
+import LiveStreamComponent from "./LiveStream"; // Implement WebRTC Streaming
 // Animation for floating icons
 const floatUp = keyframes`
   0% {
@@ -82,12 +82,48 @@ const GoLiveTwo = () => {
     checkUserSession(); // Validate session on mount
   }, []);
   // Handlers for live stream state
-  const handleGoLive = () => setIsLive(true);
-  const handleEndLive = () => {
-    setIsLive(false);
-    setComments([]);
-    setReactions([]);
+  const handleGoLive = async () => {
+    try {
+      const response = await fetch("http://localhost:8000/api/start-live-stream", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${localStorage.getItem("api_token")}`, // Assuming you're using a token
+        },
+        body: JSON.stringify({ userId: 123 }), // Replace with actual user ID
+      });
+  
+      const data = await response.json();
+      if (response.ok) {
+        setIsLive(true);
+        console.log("Live stream started:", data);
+      } else {
+        console.error("Error starting stream:", data);
+      }
+    } catch (error) {
+      console.error("Network error:", error);
+    }
   };
+
+  
+  const handleEndLive = async () => {
+    try {
+      await fetch("http://localhost:8000/api/end-stream", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${localStorage.getItem("api_token")}`,
+        },
+      });
+  
+      setIsLive(false);
+      setComments([]);
+      setReactions([]);
+    } catch (error) {
+      console.error("Error ending stream:", error);
+    }
+  };
+  
 
   // Handler for comment submission
   const handleCommentSubmit = () => {
@@ -221,7 +257,7 @@ const GoLiveTwo = () => {
           }}
         >
           {/* Video Section */}
-          <Webcam
+          <LiveStreamComponent
             audio={true}
             mirrored={true}
             style={{
