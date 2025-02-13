@@ -34,6 +34,7 @@ use App\Http\Controllers\LiveStreamController;
 //Live streaming 
 Route::middleware('auth:api')->post('start-live-stream', [LiveStreamController::class, 'startStreaming']);
 Route::middleware('auth:api')->post('end-stream', [LiveStreamController::class, 'endStreaming']);
+Route::get('/live/{streamKey}', [LiveStreamController::class, 'watchLiveStream']);
 
 Route::post('login', [AuthController::class, 'login']);
 Route::post('register', [AuthController::class, 'register']);

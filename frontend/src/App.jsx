@@ -35,7 +35,7 @@ const App = () => {
           <Route path="/world" element={<Home />} />
           <Route path="/chatroom" element={<ChatPage />} />
           <Route path="/golive" element={<GoLive />} />
-          <Route path="/livestream" element={<LiveStream />} />
+          <Route path="/live/:streamKey" element={<LiveStream />} />
           {/* <Route path="/test" element={<FanCountry />} /> */}
           <Route path="/favouriteCountires" element={<FanCountry />} />
           <Route path="/qcast" element={<QHomw />} />
