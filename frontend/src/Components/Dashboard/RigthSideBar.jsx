@@ -67,7 +67,7 @@ const updates = [
 // const userDatas = JSON.parse(localStorage.getItem("user_Details")) || [];
 
 const dummyProfilePic = "https://via.placeholder.com/40";
-const RightSidebar = ({ countryCode, flag, countryName,userDetails }) => {
+const RightSidebar = ({ countryCode, flag, countryName, userDetails }) => {
   const [countryData, setCountryData] = useState(null);
   const [counts, setCounts] = useState({
     comments: 0,
@@ -421,7 +421,7 @@ const RightSidebar = ({ countryCode, flag, countryName,userDetails }) => {
                       </div>
                     </div>
                   </Tooltip>
-                  <Tooltip title="Dislike" arrow disableInteractive>
+                  {/* <Tooltip title="Dislike" arrow disableInteractive>
                     <div style={{ textAlign: "center" }}>
                       <ThumbDownIcon
                         sx={{
@@ -444,7 +444,7 @@ const RightSidebar = ({ countryCode, flag, countryName,userDetails }) => {
                         {counts.dislikes}
                       </div>
                     </div>
-                  </Tooltip>
+                  </Tooltip> */}
                   <Tooltip title="Comment" arrow disableInteractive>
                     <div style={{ textAlign: "center" }}>
                       <CommentIcon
@@ -553,7 +553,8 @@ const RightSidebar = ({ countryCode, flag, countryName,userDetails }) => {
             }}
           >
             {/* Comment Section */}
-            {showComments ? (
+            {showComments ? 
+            (
               <div
                 style={{
                   maxHeight: "265px", // Adjust the height as needed
@@ -789,18 +790,7 @@ const RightSidebar = ({ countryCode, flag, countryName,userDetails }) => {
                 </div>
               </div>
             ) : (
-              <div
-                className="mt-3"
-                // style={{
-                //   overflowY: "auto",
-                //   maxHeight: "calc(100vh - 56px - 200px - 54px)",
-                // }}
-                style={
-                  {
-                    // backgroundColor: "green",
-                  }
-                }
-              >
+              <div className="mt-3">
                 {/* Activity Section */}
                 {!isWorld && (
                   <div

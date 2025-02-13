@@ -92,6 +92,9 @@ const GoLiveTwo = () => {
         },
       });
 
+      console.log(response);
+      
+
       const data = await response.json();
       if (response.ok) {
         console.log("Live stream started:", data);

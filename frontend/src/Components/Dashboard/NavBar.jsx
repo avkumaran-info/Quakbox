@@ -757,6 +757,7 @@ const NavBar = () => {
                       onClick={(e) => {
                         e.preventDefault();
                         navigate("/dashboard");
+                        setShowDropdown((prev) => !prev);
                       }}
                     >
                       {userDetails.users.username}

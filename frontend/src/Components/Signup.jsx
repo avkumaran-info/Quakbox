@@ -74,7 +74,7 @@ const Signup = () => {
 
   // Function to start countdown
   const startCountdown = () => {
-    setCountdown(30);
+    setCountdown(5);
     clearTimer(); // Clear any existing timer before starting a new one
     const newTimer = setInterval(() => {
       setCountdown((prev) => {
@@ -93,51 +93,61 @@ const Signup = () => {
     if (timer) clearInterval(timer);
   };
 
-  const handleSubmit = (e) => {
-    e.preventDefault();
-    setShowOTPModal(true); // Show OTP modal on form submission
-  };
-
-  // const handleSubmit = (event) => {
-  //   event.preventDefault();
-  //   const errors = validateFields();
-  //   if (errors.length > 0) {
-  //     toast.error(errors[0].message, {
-  //       position: "top-center",
-  //       autoClose: 5000,
-  //       hideProgressBar: false,
-  //       closeOnClick: true,
-  //       pauseOnHover: true,
-  //       draggable: true,
-  //       theme: "light",
-  //       transition: Bounce,
-  //     });
-  //   } else {
-  //     signup();
-  //   }
+  // const handleSubmit = (e) => {
+  //   e.preventDefault();
+  //   sendOTP();
+  //   setShowOTPModal(true); // Show OTP modal on form submission
   // };
+
+  const handleSubmit = (event) => {
+    event.preventDefault();
+    const errors = validateFields();
+    if (errors.length > 0) {
+      toast.error(errors[0].message, {
+        position: "top-center",
+        autoClose: 5000,
+        hideProgressBar: false,
+        closeOnClick: true,
+        pauseOnHover: true,
+        draggable: true,
+        theme: "light",
+        transition: Bounce,
+      });
+    } else {
+      // signup();
+      sendOTP();
+      setShowOTPModal(true);
+    }
+  };
 
   const handleOTPInput = (e, index, type) => {
     let value = e.target.value.replace(/[^0-9]/g, ""); // Allow only numbers
+
     if (type === "email") {
-      let newOTP = [...emailOTP];
-      newOTP[index] = value;
-      setEmailOTP(newOTP);
+      let newOTPArray = emailOTP.split(""); // Convert string to array
+      newOTPArray[index] = value; // Update the value at the given index
+      let newOTPString = newOTPArray.join(""); // Convert array back to string
+      setEmailOTP(newOTPString);
+
       if (value && index < 5)
         document.querySelectorAll("input")[index + 1].focus();
     } else {
-      let newOTP = [...mobileOTP];
-      newOTP[index] = value;
-      setMobileOTP(newOTP);
+      let newOTPArray = mobileOTP.split("");
+      newOTPArray[index] = value;
+      let newOTPString = newOTPArray.join("");
+      setMobileOTP(newOTPString);
+
       if (value && index < 5)
         document.querySelectorAll("input")[index + 7].focus();
     }
   };
 
-  const handleOTPSubmit = () => {
+  const handleOTPSubmit = async () => {
+    console.log(emailOTP);
+    console.log(mobileOTP);
+
     if (emailOTP.length === 6 && mobileOTP.length === 6) {
-      alert("OTP Verified Successfully!");
-      setShowOTPModal(false);
+      await verifyOTP();
     } else {
       alert("Invalid OTP. Please try again.");
     }
@@ -148,6 +158,125 @@ const Signup = () => {
     setEmailOTP(""); // Clear email OTP
     setMobileOTP(""); // Clear mobile OTP
     clearTimer();
+  };
+
+  const sendOTP = async () => {
+    try {
+      const emailVerifyResponse = await axios.post(
+        "https://develop.quakbox.com/admin/api/send-otp-mail",
+        { email: userField.email }
+      );
+
+      const mobileVerifyResponse = await axios.post(
+        "https://develop.quakbox.com/admin/api/send-otp-mobile",
+        { mobile_number: userField.phone }
+      );
+
+      console.log(emailVerifyResponse);
+      console.log(mobileVerifyResponse);
+    } catch (error) {
+      console.log(error);
+    }
+  };
+
+  const verifyOTP = async () => {
+    try {
+      // Send OTP verification requests
+      const emailVerifyResponse = await axios.post(
+        "https://develop.quakbox.com/admin/api/verify-otp-mail",
+        { email: userField.email, otp: emailOTP }
+      );
+
+      const mobileVerifyResponse = await axios.post(
+        "https://develop.quakbox.com/admin/api/verify-otp-mobile",
+        { mobile_number: userField.phone, otp: mobileOTP }
+      );
+
+      // Extract status from responses
+      const emailSuccess = emailVerifyResponse.data.status; // Expecting true/false from API
+      const mobileSuccess = mobileVerifyResponse.data.status;
+
+      // Handle different cases
+      if (emailSuccess && mobileSuccess) {
+        toast.success("✅ OTP Verified Successfully! 🎉", {
+          position: "top-center",
+          autoClose: 5000,
+          hideProgressBar: false,
+          closeOnClick: true,
+          pauseOnHover: true,
+          draggable: true,
+          theme: "light",
+          transition: Bounce,
+        });
+        console.log("HAPPY LOGIN");
+        signup();
+      } else if (emailSuccess && !mobileSuccess) {
+        toast.error(
+          mobileVerifyResponse.data.message || "❌ Incorrect Mobile OTP!",
+          {
+            position: "top-center",
+            autoClose: 5000,
+            hideProgressBar: false,
+            closeOnClick: true,
+            pauseOnHover: true,
+            draggable: true,
+            theme: "light",
+            transition: Bounce,
+          }
+        );
+        console.log("Enter the correct OTP for mobile");
+      } else if (!emailSuccess && mobileSuccess) {
+        toast.error(
+          emailVerifyResponse.data.message || "❌ Incorrect Email OTP!",
+          {
+            position: "top-center",
+            autoClose: 5000,
+            hideProgressBar: false,
+            closeOnClick: true,
+            pauseOnHover: true,
+            draggable: true,
+            theme: "light",
+            transition: Bounce,
+          }
+        );
+        console.log("Email OTP is incorrect");
+      } else {
+        toast.error("❌ Invalid or expired OTP for both email and mobile!", {
+          position: "top-center",
+          autoClose: 5000,
+          hideProgressBar: false,
+          closeOnClick: true,
+          pauseOnHover: true,
+          draggable: true,
+          theme: "light",
+          transition: Bounce,
+        });
+        console.log("Wrong OTP in both email and mobile");
+      }
+
+      setShowOTPModal(false);
+    } catch (error) {
+      // Handle API error response
+      const errorMessage =
+        error.response?.data?.message ||
+        "⚠️ OTP Verification Failed! Try again.";
+
+      toast.error(errorMessage, {
+        position: "top-center",
+        autoClose: 5000,
+        hideProgressBar: false,
+        closeOnClick: true,
+        pauseOnHover: true,
+        draggable: true,
+        theme: "light",
+        transition: Bounce,
+      });
+
+      console.error(
+        "OTP Verification Error:",
+        error.response?.data || error.message
+      );
+    }
   };
 
   const changeUserFieldHandler = (e) => {
@@ -342,6 +471,16 @@ const Signup = () => {
       errors.push({
         field: "quakboxEmail",
         message: "Valid QuakBox email prefix is required.",
+      });
+    }
+
+    // ✅ Mobile Number Validation
+    if (!userField.phone.trim()) {
+      errors.push({ field: "phone", message: "Mobile number is required." });
+    } else if (!/^\d{10}$/.test(userField.phone)) {
+      errors.push({
+        field: "phone",
+        message: "Mobile number must be exactly 10 digits.",
       });
     }
 
