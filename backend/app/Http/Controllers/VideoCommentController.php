@@ -20,7 +20,8 @@ class VideoCommentController extends Controller
                         'comment_content' => $comment->content,
                         'comment_user_id' => $comment->user_id,
                         'comment_user_name' => $comment->user->username,
-                        'comment_user_profile_picture' => $comment->user->profile_image,
+                        'comment_user_profile_picture' => env('APP_URL') . '/api/images/' . $comment->user->profile_image,
+                        'comment_updated_datetime' => $comment->updated_at
                     ];
         });
 

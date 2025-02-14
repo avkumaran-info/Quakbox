@@ -158,6 +158,28 @@ class PostController extends Controller
         return response()->json(["status" => true, 'message' => $isLike ? 'Liked' : 'Disliked', 'like' => $like]);
     }
 
+    public function getComment(Request $request, $pid)
+    {
+        $post = Post::findOrFail($pid);
+        $postComment = $post->Comments()->with('user')->latest()->get();
+        $formattedcomments = $postComment->map(function ($comment) {
+            return [
+                        'comment_id' => $comment->id,
+                        'comment_post_id' => $comment->post_id,
+                        'comment_content' => $comment->comment,
+                        'comment_user_id' => $comment->user_id,
+                        'comment_user_name' => $comment->user->username,
+                        'comment_user_profile_picture' => env('APP_URL') . '/api/images/' . $comment->user->profile_image,
+                        'comment_updated_datetime' => $comment->updated_at
+                    ];
+        });
+
+        return response()->json(["status" => true, 
+                                    'message' => 'Post Comment Fetched', 
+                                    'data' => $formattedcomments
+                                ]);
+    }
+
     // Comment on a post
     public function postComment(Request $request, $id)
     {
@@ -171,7 +193,16 @@ class PostController extends Controller
             'comment' => $request->comment,
         ]);
 
-        return response()->json(["status" => true, 'message' => 'Comment added successfully', 'comment' => $comment]);
+        return response()->json([
+            'result' => true,
+            'message' => 'Comment Added Successfully',
+            'data' => [
+                'comment_id' => $comment->id,
+                'post_id' => $comment->post_id,
+                'comment' => $comment->comment,
+                'user_id' => $comment->user_id
+            ]
+        ]);
     }
 
     // Share a post
