@@ -17,209 +17,347 @@ use FFMpeg\Coordinate\TimeCode;
 use FFMpeg\FFProbe;
 
 class VideoController extends Controller
-{
+{   
     public function videoUpload(Request $request)
     {
-        Log::info('Video upload request received', ['request' => $request->all()]);
+        $userId = $request->user()->id;
+        $videoType = $request->video_type;
+        if ($request->video_type == 1) {
+            // Step 1: Upload video temporarily and generate thumbnails
+            if ($request->hasFile('video_file') && filter_var($request->temp_upload, FILTER_VALIDATE_BOOLEAN)) {
+                $validator = Validator::make($request->all(), [
+                    'video_file' => 'required',
+                    'video_file.*' => 'file|mimes:mp4,mp3,mov,avi,mkv,jpeg,png,jpg,gif',
+                ]);
+            
+                if ($validator->fails()) {
+                    return response()->json([
+                        'result' => false,
+                        'message' => 'Validation failed',
+                        'errors' => $validator->errors(),
+                    ], 422);
+                }
+                
 
-        // Step 1: Upload video temporarily and generate thumbnails
-        if ($request->hasFile('video_file') && filter_var($request->temp_upload, FILTER_VALIDATE_BOOLEAN)) {
-            $validator = Validator::make($request->all(), [
-                'video_file' => 'required',
-                'video_file.*' => 'file|mimes:mp4,mp3,mov,avi,mkv,jpeg,png,jpg,gif',
-            ]);
-        
-            if ($validator->fails()) {
-                return response()->json([
-                    'result' => false,
-                    'message' => 'Validation failed',
-                    'errors' => $validator->errors(),
-                ], 422);
-            }
-        
-            $files = is_array($request->file('video_file')) ? $request->file('video_file') : [$request->file('video_file')];
-            $userId = $request->user()->id;
-        
-            $photoUrls = []; // ✅ Initialize array for photos
-            $thumbnails = []; // ✅ Initialize array for all thumbnails
-            $filePath = null;
-        
-            foreach ($files as $file) {
+                $file = $request->file('video_file');
+
+                // ✅ Determine the upload path
                 $tempFolder = 'uploads/videos/temp';
+                // Ensure temp folder exists
+                if (!file_exists(storage_path($tempFolder))) {
+                    mkdir(storage_path($tempFolder), 0775, true);
+                }
                 $uniqueFileName = uniqid() . '.' . $file->getClientOriginalExtension();
                 $mediaPath = $file->storeAs($tempFolder, $uniqueFileName, 'public');
                 $videoPath = Storage::disk('public')->path($mediaPath);
                 $singleFilePath = env('APP_URL') . '/api/images/' . $mediaPath;
-        
-                // **Detect the file type**
-                $mimeType = $file->getMimeType();
-                if (str_starts_with($mimeType, 'video/')) {
-                    $fileType = 1; // Video
-                    // ✅ Generate video thumbnail
-                    $videoThumbnails = $this->generateThumbnails($videoPath, $uniqueFileName);
-                    if (is_array($videoThumbnails)) {
-                        $thumbnails = array_merge($thumbnails, $videoThumbnails);
-                    } else {
-                        $thumbnails[] = $videoThumbnails;
-                    }
-                } elseif (str_starts_with($mimeType, 'audio/')) {
-                    $fileType = 2; // Audio
-                    $thumbnails = $this->generateThumbnails($videoPath, $uniqueFileName);
-                } elseif (str_starts_with($mimeType, 'image/')) {
-                    $fileType = 3; // Photo
+                $thumbnails = [];
+                // ✅ Generate video thumbnail
+                $videoThumbnails = $this->generateThumbnails($videoPath, $uniqueFileName);
+                if (is_array($videoThumbnails)) {
+                    $thumbnails = array_merge($thumbnails, $videoThumbnails);
                 } else {
-                    $fileType = 4; // Webcam (assuming unknown type as webcam)
+                    $thumbnails[] = $videoThumbnails;
                 }
-        
-                // If it's a photo, store it in a unique folder inside the gallery
-                if ($fileType === 3) {
-                    static $randomFolder = null;
-                    if ($randomFolder === null) {
-                        $randomFolder = strtoupper(substr(md5(uniqid()), 0, 8));
-                    }
-        
-                    $galleryFolder = "api/images/uploads/videos/temp/{$randomFolder}/";
-        
-                    if (!file_exists(public_path($galleryFolder))) {
-                        mkdir(public_path($galleryFolder), 0777, true);
-                    }
-        
-                    $photoFileName = uniqid() . '.' . $file->getClientOriginalExtension();
-                    $file->move(public_path($galleryFolder), $photoFileName);
-        
-                    $photoUrl = env('APP_URL') . '/' . $galleryFolder . $photoFileName;
-                    $photoUrls[] = $photoUrl;
-        
-                    // ✅ Generate image thumbnail(s)
-                    $imageThumbnails = $this->generateThumbnails(public_path($galleryFolder . $photoFileName), $photoFileName);
-        
-                    // Ensure all generated thumbnails are stored correctly
-                    if (is_array($imageThumbnails)) {
-                        $thumbnails = array_merge($thumbnails, $imageThumbnails);
-                    } else {
-                        $thumbnails[] = $imageThumbnails;
-                    }
-        
-                    Log::info('Photo upload processed', ['photo_url' => $photoUrl, 'thumbnails' => $thumbnails]);
-                } else {
-                    $filePath = $singleFilePath; // Assign filePath for non-image files
-                }
-            }
-        
-            // ✅ Ensure `file_path` includes all photos
-            if (!empty($photoUrls)) {
-                $filePath = count($photoUrls) === 1 ? $photoUrls[0] : $photoUrls; // **Return array if multiple images**
-            }
-        
-            Log::info('File(s) uploaded', ['file_path' => $filePath]);
-            Log::info('Generated Thumbnails', ['thumbnails' => $thumbnails]);
-        
-            // ✅ **Return response with multiple image URLs**
-            return response()->json([
-                'result' => true,
-                'message' => 'File uploaded successfully',
-                'file_path' => $filePath, // **Now supports multiple photos**
-                'video_type' => $fileType,
-                'thumbnails' => $thumbnails, // ✅ **Returns all thumbnails correctly**
-            ], 201);
-        }
-        // Step 2: Process permanent storage for video and photos
-        if ($request->has('file_path') && $request->has('title') && !filter_var($request->temp_upload, FILTER_VALIDATE_BOOLEAN)) {
-            Log::info('Processing permanent storage for video/photos', ['temp_upload' => $request->temp_upload]);
-
-            $filePaths = is_array($request->file_path) ? $request->file_path : [$request->file_path];
-            $userId = $request->user()->id;
-            $permanentFolder = 'uploads/videos/permanent';
-            $tempFolder = 'uploads/videos/temp';
-            $storedPaths = [];
-
-            foreach ($filePaths as $path) {
-                // Convert full URL to relative path
-                $relativeFilePath = str_replace(env('APP_URL') . '/api/images/', '', parse_url($path, PHP_URL_PATH));
-
-                // Debugging: Log the full storage path
-                $fullStoragePath = storage_path("app/public/$relativeFilePath");
-                Log::info("Checking file existence: $fullStoragePath");
-
-                if (!Storage::disk('public')->exists($relativeFilePath)) {
-                    Log::error("File not found: " . $relativeFilePath);
-                    return response()->json([
-                        'result' => false,
-                        'message' => "File not found in temporary storage: $relativeFilePath",
-                    ], 404);
-                }
-
-                // Ensure directories exist
-                Storage::disk('public')->makeDirectory($permanentFolder);
-
-                // Move file to permanent storage
-                $fileName = basename($relativeFilePath);
-                $newFilePath = $permanentFolder . '/' . $fileName;
-                Storage::disk('public')->move($relativeFilePath, $newFilePath);
-
-                // Delete the file from temp storage after moving
-                Storage::disk('public')->delete($relativeFilePath);
-
-                // Store new file path
-                $storedPaths[] = env('APP_URL') . '/' . $newFilePath;
-            }
-
-            // ✅ Detect file type
-            $videoType = 3; // Default to Photo
-            if (count($storedPaths) === 1) {
-                $extension = pathinfo($storedPaths[0], PATHINFO_EXTENSION);
-                if (in_array($extension, ['mp4', 'mkv', 'avi', 'mov'])) {
-                    $videoType = 1; // Video
-                } elseif (in_array($extension, ['mp3', 'wav', 'm4a'])) {
-                    $videoType = 2; // Audio
-                } elseif (in_array($extension, ['jpeg', 'png', 'jpg', 'gif'])) {
-                    $videoType = 3; // Photo
-                }
-            }
-
-            // Check if thumbnail is provided
-            $defaultThumbnailPath = $request->defaultthumbnail ?? null;
-            if (!$defaultThumbnailPath) {
-                return response()->json([
-                    'result' => false,
-                    'message' => 'Thumbnail is required.',
-                ], 400);
-            }
-
-            // ✅ Convert tags to array
-            $tagsArray = array_map('trim', explode(',', $request->tags ?? ''));
-
-            try {
-                // ✅ Save to Database
-                $video = M_Videos::create([
-                    'user_id' => $userId,
-                    'title' => $request->title,
-                    'description' => $request->description,
-                    'file_path' => json_encode($newFilePath), // ✅ Fixed here
-                    'category_id' => (int) $request->category_id,
-                    'type' => (int) $request->type,
-                    'title_size' => $request->title_size,
-                    'title_colour' => $request->title_colour,
-                    'defaultthumbnail' => env('APP_URL') . '/api/images/' . $defaultThumbnailPath,
-                    'country_code' => (int) $request->country_code,
-                    'video_type' => $videoType, // ✅ Save correct `video_type`
-                    'tags' => json_encode($tagsArray),
-                    'temp_upload' => false,
-                ]);
-
-                Log::info('Video/photo metadata saved', ['video_id' => $video->id]);
 
                 return response()->json([
                     'result' => true,
-                    'message' => 'File(s) uploaded successfully',
-                    'video_id' => $video->id, // ✅ Return video_id
+                    'message' => 'File uploaded successfully',
+                    'file_path' => $singleFilePath,
+                    'video_type' => $request->video_type,
+                    'thumbnails' => $thumbnails,
                 ], 201);
-            } catch (\Exception $e) {
-                Log::error('Database Error: ' . $e->getMessage());
+            }
+
+            // Step 2: Process permanent storage for video and photos
+            if ($request->has('file_path') && $request->has('title') && !filter_var($request->temp_upload, FILTER_VALIDATE_BOOLEAN)) {
+
+                // Check if thumbnail is provided
+                $defaultThumbnailPath = $request->defaultthumbnail;
+                if (!$defaultThumbnailPath) {
+                    return response()->json([
+                        'result' => false,
+                        'message' => 'Thumbnail is required.',
+                    ], 400);
+                }
+                $filePath = $request->file_path;
+                $thumbnailPath = $request->defaultthumbnail;
+                // temp storage path
+                $tempFolder = 'uploads/videos/temp/';
+                $tempThumbnailFolder = 'uploads/videos/temp/thumbnails/';
+                // Define permanent storage paths
+                $permanentVideoFolder = 'uploads/videos/permanent/';
+                $permanentThumbnailFolder = 'uploads/videos/permanent/thumbnails/';
+                // Extract file names from URLs
+                $videoFileName = basename($filePath);
+                $thumbnailFileName = basename($thumbnailPath);
+                // Move the video file
+                if (Storage::disk('public')->exists(str_replace(env('APP_URL') . '/api/images/', '', $filePath))) {
+                    Storage::disk('public')->move(
+                        str_replace(env('APP_URL') . '/api/images/', '', $filePath),
+                        $permanentVideoFolder . $videoFileName
+                    );
+                    $filePath = env('APP_URL') . '/api/images/' . $permanentVideoFolder . $videoFileName;
+                }
+                // Move the thumbnail file
+                if (Storage::disk('public')->exists(str_replace(env('APP_URL') . '/api/images/', '', $thumbnailPath))) {
+                    Storage::disk('public')->move(
+                        str_replace(env('APP_URL') . '/api/images/', '', $thumbnailPath),
+                        $permanentThumbnailFolder . $thumbnailFileName
+                    );
+                    $thumbnailPath = env('APP_URL') . '/api/images/' . $permanentThumbnailFolder . $thumbnailFileName;
+                }
+                // ✅ **Remove all other files in the temp folder**
+                $allTempFiles = Storage::disk('public')->files($tempFolder);
+                foreach ($allTempFiles as $tempFile) {
+                    if (basename($tempFile) !== $videoFileName) {
+                        Storage::disk('public')->delete($tempFile);
+                    }
+                }
+                $allTempThumbnails = Storage::disk('public')->files($tempThumbnailFolder);
+                foreach ($allTempThumbnails as $tempThumbnail) {
+                    if (basename($tempThumbnail) !== $thumbnailFileName) {
+                        Storage::disk('public')->delete($tempThumbnail);
+                    }
+                }
+
+                // ✅ Convert tags to array
+                $tagsArray = array_map('trim', explode(',', $request->tags ?? ''));
+
+                try {
+                    // ✅ Save to Database
+                    $video = M_Videos::create([
+                        'user_id' => $userId,
+                        'title' => $request->title,
+                        'description' => $request->description,
+                        'file_path' => $filePath,
+                        'category_id' => (int) $request->category_id,
+                        'type' => (int) $request->type,
+                        'title_size' => $request->title_size,
+                        'title_colour' => $request->title_colour,
+                        'defaultthumbnail' => $thumbnailPath,
+                        'country_code' => (int) $request->country_code,
+                        'video_type' => $videoType,
+                        'tags' => json_encode($tagsArray),
+                        'temp_upload' => false,
+                    ]);
+
+                    Log::info('Video/photo metadata saved', ['video_id' => $video->id]);
+
+                    return response()->json([
+                        'result' => true,
+                        'message' => 'File(s) uploaded successfully',
+                        'video_id' => $video->id, // ✅ Return video_id
+                    ], 201);
+                } catch (\Exception $e) {
+                    Log::error('Database Error: ' . $e->getMessage());
+                    return response()->json([
+                        'result' => false,
+                        'message' => 'Database error: ' . $e->getMessage(),
+                    ], 500);
+                }
+            }
+
+            // If request is invalid
+            return response()->json([
+                'result' => false,
+                'message' => 'Invalid request',
+            ], 422);
+        }
+        if ($request->video_type == 3) {
+            if ($request->hasFile('video_file') && filter_var($request->temp_upload, FILTER_VALIDATE_BOOLEAN)) {
+                $validator = Validator::make($request->all(), [
+                                'video_file' => 'required|array',
+                                'video_file.*' => 'file|mimes:jpeg,png,jpg,gif',
+                            ]);
+            
+                if ($validator->fails()) {
+                    return response()->json([
+                        'result' => false,
+                        'message' => 'Validation failed',
+                        'errors' => $validator->errors(),
+                    ], 422);
+                }
+
+                $uploadedImages = [];
+                $uploadedThumbnailImages = [];
+                // ✅ Determine the upload path
+                $tempFolder = 'uploads/videos/temp';
+                $tempThumbnailFolder = 'uploads/videos/temp/thumbnails';
+                // Ensure temp folder exists
+                if (!file_exists(storage_path($tempFolder))) {
+                    mkdir(storage_path($tempFolder), 0775, true);
+                }
+                $imageUniqueName = uniqid();
+                $i = 1;
+                $files = is_array($request->file('video_file')) ? $request->file('video_file') : [$request->file('video_file')];
+                foreach ($files as $image) {
+                    // Generate unique file name
+                    $fileName =  $imageUniqueName.'_'.$i. '.' . $image->getClientOriginalExtension();
+
+                    // Store image in the public disk
+                    $filePath = $image->storeAs($tempFolder, $fileName, 'public');
+                    $filePathThumbnail = $image->storeAs($tempThumbnailFolder, $fileName, 'public');
+
+                    // Get the full URL
+                    $uploadedImages[] = env('APP_URL') . '/api/images/' . $filePath;
+                    $uploadedThumbnailImages[] = env('APP_URL') . '/api/images/' . $filePathThumbnail;
+                    $i++;
+                }
+
                 return response()->json([
-                    'result' => false,
-                    'message' => 'Database error: ' . $e->getMessage(),
-                ], 500);
+                    'result' => true,
+                    'message' => 'File uploaded successfully',
+                    'file_path' => $uploadedImages,
+                    'video_type' => $request->video_type,
+                    'thumbnails' => $uploadedThumbnailImages,
+                ], 201);
+            }
+        }
+
+
+
+
+
+        // Audio Format File Upload
+        if ($request->video_type == 2) {
+            if ($request->hasFile('video_file') && filter_var($request->temp_upload, FILTER_VALIDATE_BOOLEAN)) {
+                
+                $validator = Validator::make($request->all(), [
+                                'video_file' => 'required|file|mimes:mp3,wav,aac,ogg',
+                            ]);
+            
+                if ($validator->fails()) {
+                    return response()->json([
+                        'result' => false,
+                        'message' => 'Validation failed',
+                        'errors' => $validator->errors(),
+                    ], 422);
+                }
+
+                $file = $request->file('video_file');
+
+                // ✅ Determine the upload path
+                $tempFolder = 'uploads/videos/temp';
+                // Ensure temp folder exists
+                if (!file_exists(storage_path($tempFolder))) {
+                    mkdir(storage_path($tempFolder), 0775, true);
+                }
+                $uniqueAudioName = uniqid();
+                $uniqueFileName = $uniqueAudioName . '.' . $file->getClientOriginalExtension();
+                $mediaPath = $file->storeAs($tempFolder, $uniqueFileName, 'public');
+                $videoPath = Storage::disk('public')->path($mediaPath);
+                $audioFilePath = env('APP_URL') . '/api/images/' . $mediaPath;
+                
+
+                // ✅ Predefined thumbnail
+                $defaultThumbnailPath = 'uploads/videos/temp/thumbnails/audio/default-audio-thumbnail.png';
+                $newThumbnailName = $uniqueAudioName . '.png';
+                $newThumbnailPath = 'uploads/videos/temp/thumbnails/' . $newThumbnailName;
+
+                // ✅ Copy the default thumbnail and rename it
+                Storage::disk('public')->copy($defaultThumbnailPath, $newThumbnailPath);
+
+                // ✅ Get the new thumbnail URL
+                $defaultThumbnail = env('APP_URL') . '/api/images/' . $newThumbnailPath;
+
+                $thumbnails[] = $defaultThumbnail;
+
+                return response()->json([
+                    'result' => true,
+                    'message' => 'File uploaded successfully',
+                    'file_path' => $audioFilePath,
+                    'video_type' => $request->video_type,
+                    'thumbnails' => $thumbnails,
+                ], 201);
+            }
+            // Step 2: Process permanent storage for video and photos
+            if ($request->has('file_path') && $request->has('title') && !filter_var($request->temp_upload, FILTER_VALIDATE_BOOLEAN)) {
+
+                // Check if thumbnail is provided
+                $defaultThumbnailPath = $request->defaultthumbnail;
+                if (!$defaultThumbnailPath) {
+                    return response()->json([
+                        'result' => false,
+                        'message' => 'Thumbnail is required.',
+                    ], 400);
+                }
+                $filePath = $request->file_path;
+                $thumbnailPath = $request->defaultthumbnail;
+                // temp storage path
+                $tempFolder = 'uploads/videos/temp/';
+                $tempThumbnailFolder = 'uploads/videos/temp/thumbnails/';
+                // Define permanent storage paths
+                $permanentVideoFolder = 'uploads/videos/permanent/';
+                $permanentThumbnailFolder = 'uploads/videos/permanent/thumbnails/';
+                // Extract file names from URLs
+                $videoFileName = basename($filePath);
+                $thumbnailFileName = basename($thumbnailPath);
+                // Move the video file
+                if (Storage::disk('public')->exists(str_replace(env('APP_URL') . '/api/images/', '', $filePath))) {
+                    Storage::disk('public')->move(
+                        str_replace(env('APP_URL') . '/api/images/', '', $filePath),
+                        $permanentVideoFolder . $videoFileName
+                    );
+                    $filePath = env('APP_URL') . '/api/images/' . $permanentVideoFolder . $videoFileName;
+                }
+                // Move the thumbnail file
+                if (Storage::disk('public')->exists(str_replace(env('APP_URL') . '/api/images/', '', $thumbnailPath))) {
+                    Storage::disk('public')->move(
+                        str_replace(env('APP_URL') . '/api/images/', '', $thumbnailPath),
+                        $permanentThumbnailFolder . $thumbnailFileName
+                    );
+                    $thumbnailPath = env('APP_URL') . '/api/images/' . $permanentThumbnailFolder . $thumbnailFileName;
+                }
+                // ✅ **Remove all other files in the temp folder**
+                $allTempFiles = Storage::disk('public')->files($tempFolder);
+                foreach ($allTempFiles as $tempFile) {
+                    if (basename($tempFile) !== $videoFileName) {
+                        Storage::disk('public')->delete($tempFile);
+                    }
+                }
+                $allTempThumbnails = Storage::disk('public')->files($tempThumbnailFolder);
+                foreach ($allTempThumbnails as $tempThumbnail) {
+                    if (basename($tempThumbnail) !== $thumbnailFileName) {
+                        Storage::disk('public')->delete($tempThumbnail);
+                    }
+                }
+
+                // ✅ Convert tags to array
+                $tagsArray = array_map('trim', explode(',', $request->tags ?? ''));
+
+                try {
+                    // ✅ Save to Database
+                    $video = M_Videos::create([
+                        'user_id' => $userId,
+                        'title' => $request->title,
+                        'description' => $request->description,
+                        'file_path' => $filePath,
+                        'category_id' => (int) $request->category_id,
+                        'type' => (int) $request->type,
+                        'title_size' => $request->title_size,
+                        'title_colour' => $request->title_colour,
+                        'defaultthumbnail' => $thumbnailPath,
+                        'country_code' => (int) $request->country_code,
+                        'video_type' => $videoType,
+                        'tags' => json_encode($tagsArray),
+                        'temp_upload' => false,
+                    ]);
+
+                    Log::info('Video/photo metadata saved', ['video_id' => $video->id]);
+
+                    return response()->json([
+                        'result' => true,
+                        'message' => 'File(s) uploaded successfully',
+                        'video_id' => $video->id, // ✅ Return video_id
+                    ], 201);
+                } catch (\Exception $e) {
+                    Log::error('Database Error: ' . $e->getMessage());
+                    return response()->json([
+                        'result' => false,
+                        'message' => 'Database error: ' . $e->getMessage(),
+                    ], 500);
+                }
             }
         }
 
@@ -229,75 +367,33 @@ class VideoController extends Controller
             'message' => 'Invalid request',
         ], 422);
     }
-    public function generateThumbnails($filePath, $uniqueFileName)
+
+    public function generateThumbnails($filePath, $uniqueFileName) 
     {
         try {
-            // Initialize FFMpeg and FFProbe
             $ffmpeg = FFMpeg::create();
-            $ffprobe = FFProbe::create();
-    
-            // Check the file type
-            $extension = pathinfo($filePath, PATHINFO_EXTENSION);
-            $thumbnailFolder = 'uploads/thumbnails';
-    
-            if (!Storage::disk('public')->exists($thumbnailFolder)) {
-                Storage::disk('public')->makeDirectory($thumbnailFolder);
-            }
-    
+            $video = $ffmpeg->open($filePath);
             $thumbnails = [];
-    
-            if (in_array($extension, ['mp4', 'avi', 'mov', 'mkv'])) {
-                // 📌 Generate 4 thumbnails for videos
-                $media = $ffmpeg->open($filePath);
-                // Ensure the file has video streams
-                try {
-                    $videoStreams = $ffprobe->streams($filePath)->videos();
-                    if (count($videoStreams) === 0) {
-                        throw new \Exception("No video streams found in file.");
-                    }
-                } catch (\Exception $e) {
-                    Log::error("FFProbe error: " . $e->getMessage());
-                    return ['error' => "Invalid video file"];
-                }
-                $duration = $ffprobe->format($filePath)->get('duration');
-                for ($i = 1; $i <= 4; $i++) {
-                    $timestamp = round(($i * $duration) / 5); // Capture at different positions
-                    $thumbnailFileName = $uniqueFileName . "-video-$i.jpg";
-                    $thumbnailPath = $thumbnailFolder . '/' . $thumbnailFileName;
-                    $media->frame(TimeCode::fromSeconds($timestamp))
-                        ->save(Storage::disk('public')->path($thumbnailPath));
-    
-                    $thumbnails[] = env('APP_URL') . '/api/images/' . $thumbnailPath;
-                }
-            } elseif (in_array($extension, ['mp3', 'wav', 'ogg'])) {
-                // 📌 Use default audio thumbnail but rename it
-                $defaultAudioThumbnail = public_path('/img/Audioicon.jpeg');
-                $thumbnailFileName = $uniqueFileName . '-audio.jpg';
-                $thumbnailPath = $thumbnailFolder . '/' . $thumbnailFileName;
-    
-                if (file_exists($defaultAudioThumbnail)) {
-                    Storage::disk('public')->put($thumbnailPath, file_get_contents($defaultAudioThumbnail));
-                    $thumbnails[] = env('APP_URL') . '/api/images/' . $thumbnailPath;
-                } else {
-                    Log::error('Default audio thumbnail not found: ' . $defaultAudioThumbnail);
-                    return ['error' => 'Default audio thumbnail not found'];
-                }
-            } elseif (in_array($extension, ['png', 'jpg', 'jpeg', 'gif'])) {
-                // 📌 Directly use the image as a thumbnail
-                $thumbnailFileName = $uniqueFileName . '-photo.jpg';
-                $thumbnailPath = $thumbnailFolder . '/' . $thumbnailFileName;
-    
-                Storage::disk('public')->put($thumbnailPath, file_get_contents($filePath));
+            $timestamps = [1, 5, 10, 15]; // Capture at 1s, 5s, 10s, 15s
+
+            // Define the storage path
+            $thumbnailFolder = 'uploads/videos/temp/thumbnails/';
+            Storage::disk('public')->makeDirectory($thumbnailFolder); // Ensure folder exists
+
+            $duration = $ffprobe->format($filePath)->get('duration');
+            for ($i = 1; $i <= 4; $i++) {
+                $timestamp = round(($i * $duration) / 5); // Capture at different positions
+                $thumbnailFileName = pathinfo($uniqueFileName, PATHINFO_FILENAME) . "-$timestamp.jpg";
+                $thumbnailPath = $thumbnailFolder . $thumbnailFileName;
+                $media->frame(TimeCode::fromSeconds($timestamp))
+                    ->save(Storage::disk('public')->path($thumbnailPath));
+
                 $thumbnails[] = env('APP_URL') . '/api/images/' . $thumbnailPath;
-            } else {
-                Log::error('Unsupported file format: ' . $extension);
-                return ['error' => 'Unsupported file format'];
             }
-    
             return $thumbnails;
         } catch (\Exception $e) {
             Log::error('Thumbnail generation failed: ' . $e->getMessage());
-            return ['error' => $e->getMessage()];
+            return [];
         }
     }
     
