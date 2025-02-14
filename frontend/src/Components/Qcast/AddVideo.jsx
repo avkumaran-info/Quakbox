@@ -137,7 +137,7 @@ const AddVideo = () => {
             tags: tagsArray.join(","), // ✅ Convert array to a string
             temp_upload: false,
         };
-    
+         
         try {
             setLoading(true);
             const token = localStorage.getItem("api_token");
@@ -189,11 +189,11 @@ const AddVideo = () => {
     const file = event.target.files[0];
     if (file) {
       const imageUrl = URL.createObjectURL(file);
-      setCustomThumbnail(imageUrl);
-      setSelectedThumbnail(imageUrl); // Set the uploaded thumbnail as the selected one
+      setCustomThumbnail(file);
+      setSelectedThumbnail(imageUrl); // Set uploaded thumbnail as selected
+      console.log("Selected Custom Thumbnail:", file);
     }
-  };
-  
+  };  
 
   const openFilePicker = () => {
     if (fileInputRef.current) {
