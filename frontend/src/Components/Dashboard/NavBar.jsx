@@ -103,14 +103,14 @@ const NavBar = () => {
           }
         );
   
-        console.log("API Response:", favCountriesRes.data); // Debugging
+        // console.log("API Response:", favCountriesRes.data); // Debugging
   
         const favouriteCountries =
           favCountriesRes.data.favourite_country?.filter(
             (fav) => fav.favourite_country === "1"
           ) || [];
   
-        console.log("Filtered Favorites:", favouriteCountries); // Debugging
+        // console.log("Filtered Favorites:", favouriteCountries); // Debugging
   
         setFavCountries(favouriteCountries);
       } catch (error) {

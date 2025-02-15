@@ -35,7 +35,7 @@ const LeftSidebar = ({ countryCode, flag, countryName }) => {
         console.error("❌ Authorization token missing. Please log in.");
         return;
       }
-  
+
       // 🔹 Step 1: Fetch allowed video IDs from the 'dashboard/popular' API
       const allowedResponse = await axios.get(
         "https://develop.quakbox.com/admin/api/dashboard/popular",
@@ -43,15 +43,16 @@ const LeftSidebar = ({ countryCode, flag, countryName }) => {
           headers: { Authorization: `Bearer ${token}` },
         }
       );
-  
+
+      // console.log(allowedResponse);
+
       const allowedVideoIds = allowedResponse.data.allowed_video_ids; // ✅ Extract video IDs
-  
       if (!allowedVideoIds || allowedVideoIds.length === 0) {
         console.warn("⚠️ No popular videos found.");
         setVideos([]); // Set empty videos if none found
         return;
       }
-  
+
       // 🔹 Step 2: Fetch details for each allowed video
       const fetchedVideos = await Promise.all(
         allowedVideoIds.map(async (id) => {
@@ -62,6 +63,8 @@ const LeftSidebar = ({ countryCode, flag, countryName }) => {
                 headers: { Authorization: `Bearer ${token}` },
               }
             );
+            // console.log(response.data.data);
+
             return response.data.data.file_path; // ✅ Extract video URL
           } catch (error) {
             console.error(`Error fetching video ${id}:`, error.message);
@@ -69,18 +72,21 @@ const LeftSidebar = ({ countryCode, flag, countryName }) => {
           }
         })
       );
-  
+
       // 🔹 Step 3: Filter out failed video fetches (null values)
       setVideos(fetchedVideos.filter((video) => video !== null));
-  
+      // console.log(videos);
     } catch (error) {
-      console.error("❌ Error fetching allowed videos:", error.response?.data || error.message);
+      console.error(
+        "❌ Error fetching allowed videos:",
+        error.response?.data || error.message
+      );
     }
   };
-  
+
   useEffect(() => {
     fetchVideos();
-  }, []);  
+  }, []);
 
   // Function to handle icon click
   const handleIconClick = (privacy, icon) => {
@@ -102,7 +108,7 @@ const LeftSidebar = ({ countryCode, flag, countryName }) => {
       selectIcon,
       userId,
     };
-    console.log(formData);
+    // console.log(formData);
     navigate("/test", { state: formData });
   };
 
@@ -133,7 +139,7 @@ const LeftSidebar = ({ countryCode, flag, countryName }) => {
   ]);
 
   const handleGroupClick = (groupId) => {
-    console.log(groupId);
+    // console.log(groupId);
 
     setGroups((prevGroups) =>
       prevGroups.map((group) =>

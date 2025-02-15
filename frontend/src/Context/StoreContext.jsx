@@ -24,7 +24,7 @@ const StoreContextProvider = (props) => {
       );
       localStorage.setItem("user_Details", JSON.stringify(res.data));
       setUserData(res.data);
-    //   console.log(res.data);
+      //   console.log(res.data);
     } catch (error) {
       console.error("Error fetching user data:", error);
     } finally {
