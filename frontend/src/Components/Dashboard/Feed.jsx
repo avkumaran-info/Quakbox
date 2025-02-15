@@ -289,6 +289,11 @@ const Feed = ({ countryCode, flag, countryName, handleCountryChange }) => {
   const handleSubmit = async () => {
     const token = localStorage.getItem("api_token");
 
+    if (!message && !mediaFile) {
+      alert("Empty post not created");
+      return;
+    }
+
     const formData = new FormData();
     formData.append("message", message);
     formData.append("country_code", countryCode);
@@ -342,10 +347,11 @@ const Feed = ({ countryCode, flag, countryName, handleCountryChange }) => {
           shares: { count: 0 },
         };
 
-        setData((prevData) => ({
-          ...prevData,
-          posts: [newPost, ...prevData.posts],
-        }));
+        // setData((prevData) => ({
+        //   ...prevData,
+        //   posts: [newPost, ...prevData.posts],
+        // }));
+        getPost();
 
         setMessage("");
         setMediaFile(null);
@@ -1236,13 +1242,15 @@ const Feed = ({ countryCode, flag, countryName, handleCountryChange }) => {
             data.posts.map((post) => {
               const loggedInUserId = localStorage.getItem("user_Id"); // Get logged-in user ID
               const isOwner = loggedInUserId == post.from.user_id; // Check if the logged-in user is the post owner
+              // console.log(post);
 
               return (
                 <div
                   className="card mb-1"
                   key={post.id}
                   style={{
-                    height: "550px",
+                    height:
+                      post.attachments.data.length === 0 ? "auto" : "550px",
                     display: "flex",
                     flexDirection: "column",
                   }}
@@ -1289,7 +1297,7 @@ const Feed = ({ countryCode, flag, countryName, handleCountryChange }) => {
                   </div>
 
                   {/* Post Content */}
-                  {post.message && <p className="px-3">{post.message}</p>}
+                  {post.message && <p className="px-3 mb-1">{post.message}</p>}
                   <div
                     className="card-body p-0 d-flex align-items-center justify-content-center"
                     style={{
@@ -1300,7 +1308,7 @@ const Feed = ({ countryCode, flag, countryName, handleCountryChange }) => {
                   >
                     {post.attachments &&
                       post.attachments.data.map((attachment, index) => {
-                        console.log(attachment);
+                        // console.log(attachment);
 
                         if (attachment.type === "image") {
                           return (

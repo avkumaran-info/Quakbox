@@ -52,10 +52,10 @@ const QSidebar = ({ isOpen, toggleSidebar }) => {
         }}
       >
         {[
-          { to: "/", icon: "fa-solid fa-user", label: "My Stations" },
+          { to: "#", icon: "fa-solid fa-user", label: "My Stations" },
           { to: "/myvideo", icon: "fa-solid fa-video", label: "My Video" },
           {
-            to: "/livevideo",
+            to: "#",
             icon: "fa-solid fa-camera",
             label: "My Live Video",
           },
@@ -136,7 +136,10 @@ const QSidebar = ({ isOpen, toggleSidebar }) => {
                   "opacity 0.3s ease-in-out, transform 0.3s ease-in-out",
               }}
             >
-              <NavLink to="/my_subscriptions" className="text-white text-decoration-none">
+              <NavLink
+                to="/my_subscriptions"
+                className="text-white text-decoration-none"
+              >
                 My Subscription
               </NavLink>
             </span>
@@ -174,13 +177,13 @@ const QSidebar = ({ isOpen, toggleSidebar }) => {
                   "opacity 0.3s ease-in-out, transform 0.3s ease-in-out",
               }}
             >
-            <NavLink
-              to="/browse_channel"
-              className="text-white text-decoration-none"
-              style={{ display: "inline-block" }}
-            >
-              Browse Stations
-            </NavLink>
+              <NavLink
+                to="/browse_channel"
+                className="text-white text-decoration-none"
+                style={{ display: "inline-block" }}
+              >
+                Browse Stations
+              </NavLink>
             </span>
           )}
         </li>

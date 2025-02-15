@@ -519,13 +519,13 @@ const VideosPlayer = () => {
 
                           {/* Dark Next Button */}
                           <button
-                            className="carousel-control-next"
+                            className="carousel-control-next "
                             type="button"
                             data-bs-target={`#carousel-${video.video_id}`}
                             data-bs-slide="next"
                           >
                             <span
-                              className="carousel-control-next-icon"
+                              className="carousel-control-next-icon "
                               aria-hidden="true"
                               style={{ filter: "invert(1)" }} // Makes button dark
                             ></span>
