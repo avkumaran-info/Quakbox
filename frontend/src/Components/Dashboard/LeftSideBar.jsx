@@ -1,21 +1,11 @@
 import React, { useState, useRef, useEffect } from "react";
-import video1 from "../../assets/images/leftside videos/v1.mp4";
-import video2 from "../../assets/images/leftside videos/v2.mp4";
-import video3 from "../../assets/images/leftside videos/v3.mp4";
-import video4 from "../../assets/images/leftside videos/v4.mp4";
 import user1 from "../../assets/images/Rigth side property/user.jpg";
 import user3 from "../../assets/images/Rigth side property/user3.jpg";
 import user2 from "../../assets/images/Rigth side property/user2.jpeg";
 import user from "../../assets/images/Rigth side property/user.png";
 import { Box, Typography } from "@mui/material";
 import { FaThumbsUp, FaThumbsDown, FaComment, FaShare } from "react-icons/fa";
-import {
-  FaGlobe,
-  FaHandPaper,
-  FaUserPlus,
-  FaBroadcastTower,
-} from "react-icons/fa"; // Import icons
-import "./LeftsideBar.css";
+
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
 const LeftSidebar = ({ countryCode, flag, countryName }) => {

@@ -1,12 +1,10 @@
 import React, { useEffect, useState } from "react";
 import defaultUserImage from "../../assets/images/vector-users-icon.jpg";
-import userImage from "../../assets/images/vector-users-icon.jpg";
 import axios from "axios";
 import CommentIcon from "@mui/icons-material/Comment";
 import ThumbUpIcon from "@mui/icons-material/ThumbUp";
 import ThumbDownIcon from "@mui/icons-material/ThumbDown";
 import ShareIcon from "@mui/icons-material/Share";
-import { Navigate } from "react-router-dom";
 
 const Feed = ({ countryCode, flag, countryName, handleCountryChange }) => {
   const [navbarHeight, setNavbarHeight] = useState(56);
@@ -36,8 +34,76 @@ const Feed = ({ countryCode, flag, countryName, handleCountryChange }) => {
 
   const [isCommentPopupOpen, setCommentPopupOpen] = useState(false);
   const [selectedPost, setSelectedPost] = useState(null);
+  const [visibleComments, setVisibleComments] = useState(10);
+  const [comments, setComments] = useState([]); // Store comments
+  const [newComment, setNewComment] = useState(""); // Store new comment input
+  const [loading, setLoading] = useState(false);
 
-  const openCommentPopup = (post) => {
+  const [commentText, setCommentText] = useState("");
+
+  const getCommets = async (post) => {
+    try {
+      const token = localStorage.getItem("api_token");
+
+      const response = await axios.get(
+        `https://develop.quakbox.com/admin/api/get_posts_comment/${post.id}/comment`,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`, // Add token to header
+          },
+        }
+      );
+      setComments(response.data.data || []);
+      console.log(response.data.data);
+    } catch (error) {
+      console.error("Error fetching comments:", error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const postComment = async (postId, commentText) => {
+    try {
+      const token = localStorage.getItem("api_token");
+      if (!token) {
+        console.error("No API token found");
+        return;
+      }
+
+      const response = await axios.post(
+        `https://develop.quakbox.com/admin/api/set_posts_comment/${postId}/comment`,
+        {
+          comment: commentText,
+        },
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "application/json",
+          },
+        }
+      );
+
+      // console.log("Comment posted successfully:", response.data);
+      return response.data;
+    } catch (error) {
+      console.error("Error posting comment:", error);
+    }
+  };
+
+  // Calling the function inside the comment modal
+  const handlePostComment = async () => {
+    // console.log("hi");
+    // console.log(selectedPost.id);
+    // console.log(commentText);
+
+    if (!selectedPost || !commentText.trim()) return;
+    await postComment(selectedPost.id, commentText);
+    setCommentText(""); // Clear the input after posting
+    getCommets(selectedPost); // Refresh comments
+  };
+
+  const openCommentPopup = async (post) => {
+    await getCommets(post);
     setSelectedPost(post);
     setCommentPopupOpen(true);
   };
@@ -46,8 +112,6 @@ const Feed = ({ countryCode, flag, countryName, handleCountryChange }) => {
     setSelectedPost(null);
     setCommentPopupOpen(false);
   };
-
-  const [visibleComments, setVisibleComments] = useState(10);
 
   const loadMoreComments = () => {
     setVisibleComments((prev) => prev + 10); // Load 10 more comments on click
@@ -1053,8 +1117,8 @@ const Feed = ({ countryCode, flag, countryName, handleCountryChange }) => {
                         <h6>Comments</h6>
 
                         {/* If comments exist, show them */}
-                        {selectedPost?.comments?.data?.length > 0 ? (
-                          selectedPost.comments.data
+                        {comments?.length > 0 ? (
+                          comments
                             .slice(0, visibleComments)
                             .map((comment, index) => (
                               <div
@@ -1063,7 +1127,7 @@ const Feed = ({ countryCode, flag, countryName, handleCountryChange }) => {
                               >
                                 <img
                                   src={
-                                    comment.user?.profile_image ||
+                                    comment.comment_user_profile_picture ||
                                     defaultUserImage
                                   }
                                   alt="User Avatar"
@@ -1072,11 +1136,11 @@ const Feed = ({ countryCode, flag, countryName, handleCountryChange }) => {
                                 />
                                 <div>
                                   <h6 className="mb-0">
-                                    {comment.user?.name || "Anonymous"}
+                                    {comment.comment_user_name || "Anonymous"}
                                   </h6>
-                                  <p className="mb-1">{comment.message}</p>
+                                  <p className="mb-1">{comment.comment_content}</p>
                                   <small className="text-muted">
-                                    {comment.timeAgo}
+                                    {getTimeAgo(comment.comment_updated_datetime)}
                                   </small>
                                 </div>
                               </div>
@@ -1084,7 +1148,7 @@ const Feed = ({ countryCode, flag, countryName, handleCountryChange }) => {
                         ) : (
                           // Mock Comments for Testing
                           <>
-                            <div className="d-flex align-items-start mb-3">
+                            {/* <div className="d-flex align-items-start mb-3">
                               <img
                                 src={defaultUserImage}
                                 alt="User Avatar"
@@ -1130,7 +1194,8 @@ const Feed = ({ countryCode, flag, countryName, handleCountryChange }) => {
                                   30 mins ago
                                 </small>
                               </div>
-                            </div>
+                            </div> */}
+                            no Comments
                           </>
                         )}
                       </div>
@@ -1141,8 +1206,13 @@ const Feed = ({ countryCode, flag, countryName, handleCountryChange }) => {
                           className="form-control"
                           rows="2"
                           placeholder="Write a comment..."
+                          value={commentText}
+                          onChange={(e) => setCommentText(e.target.value)}
                         ></textarea>
-                        <button className="btn btn-primary btn-sm mt-2">
+                        <button
+                          className="btn btn-primary btn-sm mt-2"
+                          onClick={handlePostComment}
+                        >
                           Post Comment
                         </button>
                       </div>

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useContext } from "react";
 import logo from "../assets/logo/quak_logo.png";
 import { ToastContainer, toast, Bounce, Zoom } from "react-toastify";
 import bg from "../assets/images/blurred-empty-open-space-office-600nw-2411635125.webp";
@@ -9,6 +9,7 @@ import i18n from "../i18n.js";
 import axios from "axios";
 import GoogleAuth from "./socialLogin/GoogleAuth";
 import FacebookSignIn from "./socialLogin/FacebookAuth";
+import { StoreContext } from "../Context/StoreContext.jsx";
 
 const Login = () => {
   const navigate = useNavigate();
@@ -17,6 +18,7 @@ const Login = () => {
     email: "",
     password: "",
   });
+  const { setUserData } = useContext(StoreContext);
 
   const changeLanguage = (lng) => {
     i18n.changeLanguage(lng);
@@ -62,6 +64,31 @@ const Login = () => {
     }
     return true;
   };
+
+  const fetchUserData = async () => {
+    const token = localStorage.getItem("api_token");
+    if (!token) {
+      setLoading(false);
+      return;
+    }
+
+    try {
+      const res = await axios.get(
+        "https://develop.quakbox.com/admin/api/user",
+        {
+          headers: { Authorization: `Bearer ${token}` },
+        }
+      );
+      localStorage.setItem("user_Details", JSON.stringify(res.data));
+      setUserData(res.data); // Updates state and stores in localStorage immediately
+      navigate("/dashboard", {});
+    } catch (error) {
+      console.error("Error fetching user data:", error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const mailLogin = async () => {
     if (!validateForm()) return;
     try {
@@ -75,7 +102,7 @@ const Login = () => {
       if (response.data.result) {
         // Store the token (optional)
         localStorage.setItem("api_token", response.data.token);
-        navigate("/dashboard", {});
+        await fetchUserData();
       }
       toast.error("Login Unsuccessful! Please Provide Correct Credentials", {
         transition: Bounce,

@@ -1,52 +1,58 @@
-// import axios from "axios";
-// import { createContext, useEffect, useState } from "react";
-// export const StoreContext = createContext(null);
+import axios from "axios";
+import { createContext, useEffect, useState } from "react";
 
-// const StoreContextProvider = (props) => {
-//   const [videos, setVideos] = useState([]); // Store all videos
-//   const [loading, setLoading] = useState(true);
-//   const [message, setMessage] = useState("");
+export const StoreContext = createContext(null);
 
-//   // Fetch all videos
-//   useEffect(() => {
-//     const fetchVideos = async () => {
-//       try {
-//         setLoading(true);
-//         const token = localStorage.getItem("api_token");
-//         if (!token) {
-//           setMessage("❌ Authorization token missing. Please log in.");
-//           return;
-//         }
-//         const response = await axios.get(
-//           "https://develop.quakbox.com/admin/api/videos/qlist",
-//           { headers: { Authorization: `Bearer ${token}` } }
-//         );
+const StoreContextProvider = (props) => {
+  const [userData, setUserData] = useState(null);
+  const [loading, setLoading] = useState(true);
 
-//         if (response.status === 200 && response.data.data) {
-//           setVideos(response.data.data);
-//         } else {
-//           setMessage("⚠️ No videos found.");
-//         }
-//       } catch (error) {
-//         setMessage("❌ Error fetching videos.");
-//       } finally {
-//         setLoading(false);
-//       }
-//     };
+  // Fetch user data when needed
+  const fetchUserData = async () => {
+    const token = localStorage.getItem("api_token");
+    if (!token) {
+      setLoading(false);
+      return;
+    }
 
-//     fetchVideos();
-//   }, []);
+    try {
+      const res = await axios.get(
+        "https://develop.quakbox.com/admin/api/user",
+        {
+          headers: { Authorization: `Bearer ${token}` },
+        }
+      );
+      localStorage.setItem("user_Details", JSON.stringify(res.data));
+      setUserData(res.data);
+    //   console.log(res.data);
+    } catch (error) {
+      console.error("Error fetching user data:", error);
+    } finally {
+      setLoading(false);
+    }
+  };
 
-//   const contextValue = {
-//     videos,
-//     loading,
-//     message,
-//   };
+  useEffect(() => {
+    fetchUserData();
+  }, []); // Runs once when the app loads
 
-//   return (
-//     <StoreContext.Provider value={contextValue}>
-//       {props.children}
-//     </StoreContext.Provider>
-//   );
-// };
-// export default StoreContextProvider;
+  // Function to update userData and store it in localStorage after login
+  const updateUserData = (data) => {
+    localStorage.setItem("user_Details", JSON.stringify(data));
+    setUserData(data);
+  };
+
+  if (loading) {
+    return <div>Loading...</div>; // Show loading state while fetching data
+  }
+
+  const contextValue = { userData, setUserData: updateUserData, fetchUserData };
+
+  return (
+    <StoreContext.Provider value={contextValue}>
+      {props.children}
+    </StoreContext.Provider>
+  );
+};
+
+export default StoreContextProvider;
