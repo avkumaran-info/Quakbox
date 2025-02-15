@@ -134,7 +134,7 @@ const QVideos = () => {
             headers: { Authorization: `Bearer ${token}` },
           }
         );
-
+        console.log("📌 API Response:", response.data); // ✅ Check uploaded_datetime values
         if (response.status === 200 && response.data.data) {
           allVideos = response.data.data;
           setVideos(allVideos); // Store videos globally to avoid refetching
@@ -197,11 +197,15 @@ const QVideos = () => {
 
   // Time formatting function
   const timeAgo = (dateString) => {
+    if (!dateString) return "Unknown"; // ✅ Prevent errors
+  
     const date = new Date(dateString);
+    if (isNaN(date.getTime())) return "Invalid date"; // ✅ Check for invalid timestamps
+  
     const now = new Date();
     const seconds = Math.floor((now - date) / 1000);
-
-    if (seconds < 60) return "now"; // Less than 1 minute
+  
+    if (seconds < 60) return "Just now";
     const minutes = Math.floor(seconds / 60);
     if (minutes < 60) return `${minutes} min ago`;
     const hours = Math.floor(minutes / 60);
@@ -215,7 +219,7 @@ const QVideos = () => {
     const years = Math.floor(days / 365);
     return `${years} year${years > 1 ? "s" : ""} ago`;
   };
-
+  
   return (
     <>
       {/* Navbar with Search Box */}

@@ -478,7 +478,7 @@ class VideoController extends Controller
         $query = DB::table('m_videos')
         ->join('users', 'm_videos.user_id', '=', 'users.id')
         ->join('m_videocategory', 'm_videos.category_id', '=', 'm_videocategory.category_id')
-        ->select('m_videos.*', 'm_videocategory.category_name as category_name', 
+        ->select('m_videos.*', 'm_videos.created_at','m_videocategory.category_name as category_name', 
                         'users.username as username', 'users.profile_image as profile_image');
     
         // Apply category filter if category_id is provided
@@ -722,6 +722,98 @@ class VideoController extends Controller
             'allowed_video_ids' => $highViewVideos, // ✅ Return only video IDs
         ]);
     }
-
-
+    public function userVideos(Request $request, $category_id = null)
+    {
+        $user = auth()->user();
+        \Log::info('Authenticated User:', ['user' => $user]);
+    
+        if (!$user) {
+            return response()->json([
+                'result' => false,
+                'message' => 'User ID is required'
+            ], 400);
+        }
+    
+        $user_id = $user->id;
+    
+        $query = DB::table('m_videos')
+            ->join('users', 'm_videos.user_id', '=', 'users.id')
+            ->leftJoin('m_videocategory', 'm_videos.category_id', '=', 'm_videocategory.category_id')
+            ->select(
+                'm_videos.id',
+                'm_videos.user_id', 
+                'm_videos.title',
+                'm_videos.description',
+                'm_videos.file_path',
+                'm_videos.views',
+                'm_videos.type',
+                'm_videos.category_id',
+                'm_videos.title_size',
+                'm_videos.title_colour',
+                'm_videos.defaultthumbnail',
+                'm_videos.country_code',
+                'm_videos.tags',
+                'm_videos.video_type',
+                'm_videos.created_at',
+                'm_videocategory.category_name as category_name',
+                'users.username as username',
+                'users.profile_image as profile_image'
+            )
+            ->where('m_videos.user_id', $user_id);
+    
+        // Apply category filter if provided
+        if (!is_null($category_id)) {
+            $query->where('m_videocategory.category_id', $category_id);
+        }
+    
+        $videos = $query->get();
+    
+        if ($videos->isEmpty()) {
+            return response()->json([
+                'result' => false,
+                'message' => 'No videos found for this user',
+            ], 404);
+        }
+    
+        // Fetch interaction counts for all videos in a single query
+        $videoIds = $videos->pluck('id');
+        $videoInteractions = M_Videos::whereIn('id', $videoIds)
+            ->withCount(['likes', 'dislikes', 'views'])
+            ->get()
+            ->keyBy('id');
+    
+        $formattedVideos = $videos->map(function ($video) use ($videoInteractions) {
+            $interaction = $videoInteractions[$video->id] ?? null;
+    
+            return [
+                'video_id' => $video->id,
+                'title' => $video->title,
+                'description' => $video->description,
+                'file_path' => $video->file_path ? url('/api/images/' . $video->file_path) : null,
+                'likes' => $interaction ? $interaction->likes_count : 0,
+                'dislikes' => $interaction ? $interaction->dislikes_count : 0,
+                'views' => $interaction ? $interaction->views_count : 0,
+                'user_id' => $video->user_id, // ✅ Now this won't be undefined
+                'user_name' => $video->username,
+                'user_profile_image' => env('APP_URL') . '/api/images/' . $video->profile_image,
+                'type' => $video->type,
+                'category_id' => $video->category_id,
+                'category_name' => $video->category_name,
+                'title_size' => $video->title_size,
+                'title_colour' => $video->title_colour,
+                'defaultthumbnail' => $video->defaultthumbnail,
+                'country_code' => $video->country_code,
+                'tags' => is_string($video->tags) ? json_decode($video->tags, true) ?? [] : $video->tags,
+                'video_type' => $video->video_type,
+                'uploaded_datetime' => optional($video->created_at)->toDateTimeString(),
+            ];
+        });
+    
+        return response()->json([
+            'result' => true,
+            'message' => 'Videos fetched successfully',
+            'data' => $formattedVideos,
+        ], 200);
+    }
+    
 }
