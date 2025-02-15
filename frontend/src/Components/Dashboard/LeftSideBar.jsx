@@ -35,37 +35,52 @@ const LeftSidebar = ({ countryCode, flag, countryName }) => {
         console.error("❌ Authorization token missing. Please log in.");
         return;
       }
-
-      const allowedVideoIds = [54, 41, 42, 48]; // ✅ Only these videos should be played
-
+  
+      // 🔹 Step 1: Fetch allowed video IDs from the 'dashboard/popular' API
+      const allowedResponse = await axios.get(
+        "https://develop.quakbox.com/admin/api/dashboard/popular",
+        {
+          headers: { Authorization: `Bearer ${token}` },
+        }
+      );
+  
+      const allowedVideoIds = allowedResponse.data.allowed_video_ids; // ✅ Extract video IDs
+  
+      if (!allowedVideoIds || allowedVideoIds.length === 0) {
+        console.warn("⚠️ No popular videos found.");
+        setVideos([]); // Set empty videos if none found
+        return;
+      }
+  
+      // 🔹 Step 2: Fetch details for each allowed video
       const fetchedVideos = await Promise.all(
         allowedVideoIds.map(async (id) => {
-          const response = await axios.get(
-            `https://develop.quakbox.com/admin/api/videos/${id}/show`,
-            {
-              headers: {
-                Authorization: `Bearer ${token}`,
-              },
-            }
-          );
-          console.log(response);
-
-          return response.data.data.file_path; // ✅ Assuming API returns file_path for video
+          try {
+            const response = await axios.get(
+              `https://develop.quakbox.com/admin/api/videos/${id}/show`,
+              {
+                headers: { Authorization: `Bearer ${token}` },
+              }
+            );
+            return response.data.data.file_path; // ✅ Extract video URL
+          } catch (error) {
+            console.error(`Error fetching video ${id}:`, error.message);
+            return null; // Return null if error occurs for a specific video
+          }
         })
       );
-
-      setVideos(fetchedVideos); // ✅ Store only allowed video URLs in state
+  
+      // 🔹 Step 3: Filter out failed video fetches (null values)
+      setVideos(fetchedVideos.filter((video) => video !== null));
+  
     } catch (error) {
-      console.error(
-        "Error fetching videos:",
-        error.response?.data || error.message
-      );
+      console.error("❌ Error fetching allowed videos:", error.response?.data || error.message);
     }
   };
-
+  
   useEffect(() => {
     fetchVideos();
-  }, []);
+  }, []);  
 
   // Function to handle icon click
   const handleIconClick = (privacy, icon) => {

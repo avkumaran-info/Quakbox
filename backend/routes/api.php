@@ -98,6 +98,10 @@ Route::middleware('auth:api')->prefix('videos')->group(function () {
     Route::get('search/{query?}', [VideoController::class, 'search']);   
 });
 
+// popular videos
+Route::middleware('auth:api')->prefix('dashboard')->group(function () {
+    Route::get('popular', [VideoController::class, 'showHighViewVideos']);
+});
 // Video Interactions Management
 Route::middleware('auth:api')->group(function () {
     Route::post('/videos/{videoId}/like', [VideoInteractionController::class, 'like']);
