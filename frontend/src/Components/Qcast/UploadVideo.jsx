@@ -63,28 +63,41 @@ const UploadVideo = () => {
 
   const handleFileUpload = async (e) => {
     const formData = new FormData();
-
-    const file = e.target.files[0];
-    const videoType = file.type.startsWith("video/")
+  
+    const files = e.target.files; // ✅ Fix: Get all selected files
+    if (!files.length) return;
+  
+    const firstFile = files[0]; // First file to determine type
+    const videoType = firstFile.type.startsWith("video/")
       ? 1
-      : file.type.startsWith("audio/")
+      : firstFile.type.startsWith("audio/")
       ? 2
-      : file.type.startsWith("image/")
+      : firstFile.type.startsWith("image/")
       ? 3
       : 4; // Default to webcam
-    formData.append("video_type", videoType); // ✅ Fix: Corrected key
+  
+    formData.append("video_type", videoType); 
     formData.append("temp_upload", true);
-    formData.append("video_file", file);
-
-    setIsLoading(true);
-
+  
+    if (videoType === 3) {
+      // ✅ Append files as an array only if `videoType === 3`
+      for (let i = 0; i < files.length; i++) {
+        formData.append("video_file[]", files[i]);
+      }
+    } else {
+      // ✅ If not type 3, only append the first file
+      formData.append("video_file", firstFile);
+    }
+  
+    setIsLoading(true); 
+  
     try {
       const token = localStorage.getItem("api_token");
       if (!token) {
         alert("Authorization token not found. Please log in.");
         return;
       }
-
+  
       const response = await axios.post(
         "https://develop.quakbox.com/admin/api/videos/upload",
         formData,
@@ -95,18 +108,18 @@ const UploadVideo = () => {
           },
         }
       );
-
+  
       setIsLoading(false);
-
+  
       if (response.data.result) {
-        // Pass videoType to the next page
+        // ✅ Pass videoType to the next page
         const videoData = {
           message: response.data.message,
           filePath: response.data.file_path,
           thumbnails: response.data.thumbnails,
-          videoType: response.data.video_type, // ✅ Ensure this is passed
+          videoType: response.data.video_type, 
         };
-
+  
         navigate("/addvideo", { state: { videoData } });
       } else {
         alert(response.data.message);
@@ -116,7 +129,7 @@ const UploadVideo = () => {
       console.error("Error uploading video:", error);
       alert("Upload failed. Please try again.");
     }
-  };
+  };  
 
   // Content for each category
   const categoryContent = {

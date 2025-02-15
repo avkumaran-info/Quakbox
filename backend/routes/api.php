@@ -69,6 +69,7 @@ Route::middleware('auth:api')->group(function () {
     Route::get('get_posts/{cc}', [PostController::class, 'getAllPosts']); // Get all posts
 
     Route::post('set_posts_like/{id}/like', [PostController::class, 'postLike']); // Like/Dislike post
+    Route::get('get_posts_comment/{id}/comment', [PostController::class, 'getComment']);
     Route::post('set_posts_comment/{id}/comment', [PostController::class, 'postComment']); // Comment on post
     Route::post('set_posts_share/{id}/share', [PostController::class, 'postShare']); // Share post
 });
@@ -147,16 +148,16 @@ Route::get('images/uploads/profile/image/{filename}', function ($filename) {
     return response()->file($path);
 });
 
-Route::get('images/uploads/thumbnails/temp/{filename}', function ($filename) {
-    $path = storage_path('app/public/uploads/thumbnails/' . $filename);
+Route::get('images/uploads/videos/temp/thumbnails/{filename}', function ($filename) {
+    $path = storage_path('app/public/uploads/videos/temp/thumbnails/' . $filename);
     if (!file_exists($path)) {
         abort(404);
     }
     return response()->file($path);
 });
 
-Route::get('images/uploads/thumbnails/{filename}', function ($filename) {
-    $path = storage_path('app/public/uploads/thumbnails/' . $filename);
+Route::get('images/uploads/videos/permanent/thumbnails/{filename}', function ($filename) {
+    $path = storage_path('app/public/uploads/videos/permanent/thumbnails/' . $filename);
     if (!file_exists($path)) {
         abort(404);
     }

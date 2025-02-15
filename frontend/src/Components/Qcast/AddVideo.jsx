@@ -109,19 +109,7 @@ const AddVideo = () => {
         if (!isValid) {
             return;
         }
-    
-        // Ensure fileType is valid
-        const fileType = videoData?.fileType || ""; 
-        const videoType = fileType ? fileType.toLowerCase() : "unknown"; 
-    
-        // Convert fileType to a number
-        const videoTypeMapping = {
-            "mp4": 1, "mkv": 1, "avi": 1, "mov": 1,  // Video
-            "mp3": 2, "wav": 2, "m4a": 2,            // Audio
-            "jpeg": 3, "png": 3, "jpg": 3, "gif": 3, // Photo
-        };
-    
-        const videoTypeNumber = videoTypeMapping[videoType] || 4; // Default to 4 (Webcam)
+  
     
         const payload = {
             file_path: videoData.filePath,
@@ -129,7 +117,7 @@ const AddVideo = () => {
             description: description,
             category_id: selectedCategory,
             type: type,
-            video_type: videoTypeNumber, // Ensure it is a number
+            video_type: videoData.videoType, // Ensure it is a number
             country_code: selectedCountryCode,
             title_colour: titleColor,
             title_size: titleSize,
@@ -137,7 +125,7 @@ const AddVideo = () => {
             tags: tagsArray.join(","), // ✅ Convert array to a string
             temp_upload: false,
         };
-    
+         
         try {
             setLoading(true);
             const token = localStorage.getItem("api_token");
@@ -190,10 +178,10 @@ const AddVideo = () => {
     if (file) {
       const imageUrl = URL.createObjectURL(file);
       setCustomThumbnail(imageUrl);
-      setSelectedThumbnail(imageUrl); // Set the uploaded thumbnail as the selected one
+      setSelectedThumbnail(imageUrl); // Set uploaded thumbnail as selected
+      console.log("Selected Custom Thumbnail:", file);
     }
-  };
-  
+  };  
 
   const openFilePicker = () => {
     if (fileInputRef.current) {
@@ -269,11 +257,9 @@ const AddVideo = () => {
                 const countryOptions = response.data.geo_countries.map((country) => ({
                     value: country.code, // Country code
                     label: (
-                        <div style={{ display: "flex", alignItems: "center" }}>
-                            <img
-                                src={country.country_image} // Country image
+                        <div style={{ display: "flex" }}>
+                            <label
                                 alt={country.country_name}
-                                style={{ width: 20, height: 15, marginRight: 10 }}
                             />
                             {country.country_name}
                         </div>
