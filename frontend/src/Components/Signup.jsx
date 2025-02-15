@@ -363,6 +363,8 @@ const Signup = () => {
       formData.append("email", userField.email);
       formData.append("birthdate", userField.dob);
       formData.append("country", userField.country);
+      formData.append("country_code", userField.countryCode); // Send country code
+      formData.append("favourite_country", userField.country); // Send favorite country
       formData.append(
         "mobile_number",
         `${userField.countryCode}${userField.phone}`

@@ -612,4 +612,20 @@ class VideoController extends Controller
         return response()->json(['message' => 'Video deleted successfully.']);
     }
 
+    public function showHighViewVideos()
+   {
+        // Get videos ordered by highest views
+        $highViewVideos = M_Videos::withCount('views')
+            ->orderByDesc('views_count') // Order by highest views
+            ->limit(10) // Fetch top 10 most viewed videos
+            ->pluck('id'); // Retrieve only video IDs
+
+        return response()->json([
+            'result' => true,
+            'allowed_video_ids' => $highViewVideos, // ✅ Return only video IDs
+        ]);
+    }
+
+
 }
+
