@@ -1,79 +1,94 @@
-import React, { useEffect, useRef } from "react";
+import React, { useState, useEffect, useRef } from "react";
+import axios from "axios";
 
-const LiveStream = () => {
-    const localVideoRef = useRef(null);
-    const remoteVideoRef = useRef(null);
-    const ws = useRef(null);
-    const peerConnection = useRef(new RTCPeerConnection({
-        iceServers: [
-            { urls: "stun:stun.l.google.com:19302" },
-            { urls: "stun:stun1.l.google.com:19302" }
-        ]
-    }));
+const StartStream = () => {
+    const [streamKey, setStreamKey] = useState(null);
+    const [streamUrl, setStreamUrl] = useState(null);
+    const [isStreaming, setIsStreaming] = useState(false);
+    const videoRef = useRef(null);
+    const mediaRecorderRef = useRef(null);
+    const [stream, setStream] = useState(null);
 
     useEffect(() => {
-        ws.current = new WebSocket("wss://develop.quakbox.com");
-
-        ws.current.onopen = () => {
-            console.log("WebSocket Connected");
-        };
-
-        ws.current.onmessage = async (event) => {
-            const data = JSON.parse(event.data);
-
-            if (data.type === "offer") {
-                await peerConnection.current.setRemoteDescription(new RTCSessionDescription(data.offer));
-                const answer = await peerConnection.current.createAnswer();
-                await peerConnection.current.setLocalDescription(answer);
-                ws.current.send(JSON.stringify({ type: "answer", answer }));
-            } else if (data.type === "answer") {
-                await peerConnection.current.setRemoteDescription(new RTCSessionDescription(data.answer));
-            } else if (data.type === "candidate") {
-                await peerConnection.current.addIceCandidate(new RTCIceCandidate(data.candidate));
+        const getWebcamStream = async () => {
+            try {
+                const stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
+                videoRef.current.srcObject = stream;
+                setStream(stream);
+            } catch (error) {
+                console.error("Error accessing webcam:", error);
             }
         };
 
-        navigator.mediaDevices.getUserMedia({ video: true, audio: true })
-            .then((stream) => {
-                if (localVideoRef.current) {
-                    localVideoRef.current.srcObject = stream;
-                }
-                stream.getTracks().forEach((track) => {
-                    peerConnection.current.addTrack(track, stream);
-                });
-            })
-            .catch((error) => {
-                console.error("Error accessing media devices:", error);
+        getWebcamStream();
+    }, []);
+
+    const startLiveStream = async () => {
+        try {
+            const response = await axios.post("https://develop.quakbox.com/admin/api/start-stream");
+            setStreamKey(response.data.stream_key);
+            setStreamUrl(response.data.stream_url);
+
+            await axios.post("https://develop.quakbox.com/admin/api/generate-hls", {
+                stream_key: response.data.stream_key,
             });
 
-        peerConnection.current.ontrack = (event) => {
-            if (event.streams && event.streams[0]) {
-                remoteVideoRef.current.srcObject = event.streams[0];
+            setIsStreaming(true);
+            alert("Streaming started!");
+
+            // Start sending video feed to the backend
+            startStreamingToServer(response.data.stream_key);
+        } catch (error) {
+            console.error("Error starting stream:", error);
+        }
+    };
+
+    const startStreamingToServer = async (streamKey) => {
+        if (!stream) {
+            console.error("No webcam stream available.");
+            return;
+        }
+
+        const mediaRecorder = new MediaRecorder(stream, {
+            mimeType: "video/mp4; codecs=H.264",
+        });
+
+
+        mediaRecorderRef.current = mediaRecorder;
+
+        mediaRecorder.ondataavailable = async (event) => {
+            if (event.data.size > 0) {
+                const formData = new FormData();
+                formData.append("stream_key", streamKey);
+                formData.append("video_chunk", event.data);
+
+                await axios.post("https://develop.quakbox.com/admin/api/upload-chunk", formData, {
+                    headers: { "Content-Type": "multipart/form-data" },
+                });
             }
         };
 
-        peerConnection.current.onicecandidate = (event) => {
-            if (event.candidate) {
-                ws.current.send(JSON.stringify({ type: "candidate", candidate: event.candidate }));
-            }
-        };
-
-        return () => {
-            if (ws.current) {
-                ws.current.close();
-            }
-            if (peerConnection.current) {
-                peerConnection.current.close();
-            }
-        };
-    }, []);
+        mediaRecorder.start(1000); // Send chunks every second
+    };
 
     return (
         <div>
-            <video ref={localVideoRef} autoPlay muted style={{ width: "100%", height: "100%", objectFit: "cover" }} />
-            <video ref={remoteVideoRef} autoPlay style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+            <h2>Start Live Stream</h2>
+            <video ref={videoRef} autoPlay playsInline width="640" height="360"></video>
+            <br />
+            <button onClick={startLiveStream} disabled={isStreaming}>
+                {isStreaming ? "Streaming..." : "Go Live"}
+            </button>
+            {streamUrl && (
+                <p>
+                    Share this URL:{" "}
+                    <a href={streamUrl} target="_blank" rel="noopener noreferrer">
+                        {streamUrl}
+                    </a>
+                </p>
+            )}
         </div>
     );
 };
 
-export default LiveStream;
+export default StartStream;

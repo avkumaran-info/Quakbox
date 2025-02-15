@@ -1,43 +1,33 @@
 <?php
+
 namespace App\Events;
 
-use Illuminate\Broadcasting\Channel;
 use Illuminate\Broadcasting\InteractsWithSockets;
-use Illuminate\Broadcasting\PresenceChannel;
-use Illuminate\Broadcasting\PrivateChannel;
-use Illuminate\Broadcasting\ShouldBroadcast;
-use Illuminate\Contracts\Broadcasting\ShouldBroadcastNow;
-use Illuminate\Queue\SerializesModels;
+use Illuminate\Queue\SerializesModels;  // ✅ Correct Import
+use Illuminate\Foundation\Events\Dispatchable;
+use Illuminate\Broadcasting\Channel;
+use Illuminate\Contracts\Broadcasting\ShouldBroadcast;
 
-class LiveStreamStarted implements ShouldBroadcastNow
+class LiveStreamStarted implements ShouldBroadcast
 {
-    use InteractsWithSockets, SerializesModels;
+    use Dispatchable, InteractsWithSockets, SerializesModels;  // ✅ Include Trait
 
     public $user;
+    public $streamUrl;
 
-    public function __construct($user)
+    public function __construct($user, $streamUrl)
     {
         $this->user = $user;
+        $this->streamUrl = $streamUrl;
     }
 
-    // Define broadcast channel
     public function broadcastOn()
     {
-        return new Channel('livestream');
+        return new Channel('live-streams');
     }
 
-    // Optional: Define event name
     public function broadcastAs()
     {
-        return 'live.stream.started';
-    }
-
-    public function broadcastWith()
-    {
-        return [
-            'user_id' => $this->user->id,
-            'username' => $this->user->username,
-            'message' => 'Live stream started!',
-        ];
+        return 'LiveStreamStarted';
     }
 }
