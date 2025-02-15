@@ -215,10 +215,6 @@ class VideoController extends Controller
             }
         }
 
-
-
-
-
         // Audio Format File Upload
         if ($request->video_type == 2) {
             if ($request->hasFile('video_file') && filter_var($request->temp_upload, FILTER_VALIDATE_BOOLEAN)) {
@@ -374,7 +370,7 @@ class VideoController extends Controller
             $ffmpeg = FFMpeg::create();
             $video = $ffmpeg->open($filePath);
             $thumbnails = [];
-            $timestamps = [1, 5, 10, 15]; // Capture at 1s, 5s, 10s, 15s
+            // $timestamps = [1, 5, 10, 15]; // Capture at 1s, 5s, 10s, 15s
 
             // Define the storage path
             $thumbnailFolder = 'uploads/videos/temp/thumbnails/';
@@ -385,7 +381,7 @@ class VideoController extends Controller
                 $timestamp = round(($i * $duration) / 5); // Capture at different positions
                 $thumbnailFileName = pathinfo($uniqueFileName, PATHINFO_FILENAME) . "-$timestamp.jpg";
                 $thumbnailPath = $thumbnailFolder . $thumbnailFileName;
-                $media->frame(TimeCode::fromSeconds($timestamp))
+                $video->frame(TimeCode::fromSeconds($timestamp))
                     ->save(Storage::disk('public')->path($thumbnailPath));
 
                 $thumbnails[] = env('APP_URL') . '/api/images/' . $thumbnailPath;
