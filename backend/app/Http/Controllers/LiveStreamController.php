@@ -1,72 +1,81 @@
 <?php
 
-namespace App\Http\Controllers; 
+namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Str;
-use App\Events\LiveStreamEnded;
-use App\Events\LiveStreamStarted;
-use App\Models\LiveStream;
+use Pusher\Pusher;
+use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Facades\Log;
+use Symfony\Component\Process\Process;
+use Symfony\Component\Process\Exception\ProcessFailedException;
 
 class LiveStreamController extends Controller
 {
-    public function startStreaming(Request $request)
+    public function startStream(Request $request)
     {
-        $user = Auth::user();
-        if (!$user) {
-            return response()->json(['error' => 'Unauthorized'], 401);
-        }
-    
-        $streamKey = Str::uuid()->toString(); // Generate a unique stream key
-    
-        // Store in database
-        $liveStream = LiveStream::create([
-            'user_id' => $user->id,
-            'stream_key' => $streamKey,
+        $streamKey = uniqid(); // Generate unique stream key
+        $streamUrl = "https://develop.quakbox.com/watchlive/" . $streamKey;
+
+        // Notify frontend using Pusher
+        $pusher = new Pusher(env('PUSHER_APP_KEY'), env('PUSHER_APP_SECRET'), env('PUSHER_APP_ID'), [
+            'cluster' => env('PUSHER_APP_CLUSTER'),
+            'useTLS' => true
         ]);
-    
-        // ✅ Broadcast WebSocket event to notify viewers that a new stream has started
-        broadcast(new LiveStreamStarted($liveStream))->toOthers();
-    
+        $pusher->trigger('live-stream', 'LiveStreamStarted', ['streamUrl' => $streamUrl]);
+
         return response()->json([
-            'message' => 'Live stream started',
-            'stream_key' => $streamKey, // Send the key to frontend
-            'watch_url' => "https://develop.quakbox.com/live/$streamKey",
+            'success' => true,
+            'stream_key' => $streamKey,
+            'stream_url' => $streamUrl,
         ]);
     }
-    
-    public function endStreaming(Request $request)
+
+    public function generateHLS(Request $request)
     {
-        $user = Auth::user();
-    if (!$user) {
-        return response()->json(['error' => 'Unauthorized'], 401);
-    }
+        $streamKey = $request->stream_key;
+        $outputPath = storage_path("app/public/hls/{$streamKey}");
 
-    // Get the active stream of the user
-    $liveStream = LiveStream::where('user_id', $user->id)->latest()->first();
-
-    if ($liveStream) {
-        // ✅ Broadcast WebSocket event to inform viewers that the stream has ended
-        broadcast(new LiveStreamEnded($liveStream))->toOthers();
-
-        // ✅ Delete the stream entry (optional)
-        $liveStream->delete();
-    }
-
-    return response()->json(['message' => 'Live stream ended successfully']);
-   }
-
-   public function watchLiveStream($streamKey)
-    {
-        $stream = LiveStream::where('stream_key', $streamKey)->first();
-
-        if (!$stream) {
-            return abort(404, 'Live stream not found');
+        if (!file_exists($outputPath)) {
+            mkdir($outputPath, 0777, true);
         }
 
-        return view('live-stream', compact('streamKey'));
+        // Command to capture webcam input and stream as HLS
+        $command = [
+            'ffmpeg', '-f', 'v4l2', '-i', '/dev/video0', // Capture from webcam
+            '-c:v', 'libx264', '-preset', 'ultrafast', '-tune', 'zerolatency',
+            '-f', 'hls', '-hls_time', '2', '-hls_list_size', '3',
+            '-hls_flags', 'delete_segments',
+            $outputPath . '/index.m3u8'
+        ];
+
+        $process = new Process($command);
+        $process->start();
+
+        return response()->json([
+            'message' => 'Streaming started',
+            'hls_url' => "https://develop.quakbox.com/admin/api/images/hls/{$streamKey}/index.m3u8"
+        ]);
+    }
+
+    public function uploadChunk(Request $request)
+    {
+        $streamKey = $request->stream_key;
+        $chunk = $request->file('video_chunk');
+
+        if (!$chunk || !$streamKey) {
+            return response()->json(["error" => "Invalid request"], 400);
+        }
+
+        $outputPath = storage_path("app/public/hls/{$streamKey}");
+
+        if (!file_exists($outputPath)) {
+            mkdir($outputPath, 0777, true);
+        }
+
+        // Save the video chunk
+        $chunk->move($outputPath, uniqid() . ".webm");
+
+        return response()->json(["success" => true]);
     }
 
 }

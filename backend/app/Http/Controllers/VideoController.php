@@ -132,11 +132,11 @@ class VideoController extends Controller
                         'description' => $request->description,
                         'file_path' => $filePath,
                         'category_id' => (int) $request->category_id,
-                        'type' => (int) $request->type,
+                        'type' => $request->type,
                         'title_size' => $request->title_size,
                         'title_colour' => $request->title_colour,
                         'defaultthumbnail' => $thumbnailPath,
-                        'country_code' => (int) $request->country_code,
+                        'country_code' => $request->country_code,
                         'video_type' => $videoType,
                         'tags' => json_encode($tagsArray),
                         'temp_upload' => false,
@@ -213,8 +213,86 @@ class VideoController extends Controller
                     'thumbnails' => $uploadedThumbnailImages,
                 ], 201);
             }
-        }
 
+            // Step 2: Process permanent storage for video and photos
+            if ($request->has('file_path') && $request->has('title') && !filter_var($request->temp_upload, FILTER_VALIDATE_BOOLEAN)) {
+
+                // Check if thumbnail is provided
+                $defaultThumbnailPath = $request->defaultthumbnail;
+                if (!$defaultThumbnailPath) {
+                    return response()->json([
+                        'result' => false,
+                        'message' => 'Thumbnail is required.',
+                    ], 400);
+                }
+                $filePath = $request->file_path;
+                $thumbnailPath = $request->defaultthumbnail;
+                // temp storage path
+                $tempFolder = 'uploads/videos/temp/';
+                $tempThumbnailFolder = 'uploads/videos/temp/thumbnails/';
+                // Define permanent storage paths
+                $permanentVideoFolder = 'uploads/videos/permanent/';
+                $permanentThumbnailFolder = 'uploads/videos/permanent/thumbnails/';
+                // Extract file names from URLs
+                $thumbnailFileName = basename($thumbnailPath);
+
+                $pImageFilePath = [];
+                foreach ($filePath as $key => $imgFilePath) {
+                    $videoFileName = basename($imgFilePath);
+                    // Move the video file
+                    if (Storage::disk('public')->exists(str_replace(env('APP_URL') . '/api/images/', '', $imgFilePath))) {
+                        Storage::disk('public')->move(
+                            str_replace(env('APP_URL') . '/api/images/', '', $imgFilePath),
+                            $permanentVideoFolder . $videoFileName
+                        );
+                        $pImageFilePath[] = env('APP_URL') . '/api/images/' . $permanentVideoFolder . $videoFileName;
+                    }
+                }
+                // Move the thumbnail file
+                if (Storage::disk('public')->exists(str_replace(env('APP_URL') . '/api/images/', '', $thumbnailPath))) {
+                    Storage::disk('public')->move(
+                        str_replace(env('APP_URL') . '/api/images/', '', $thumbnailPath),
+                        $permanentThumbnailFolder . $thumbnailFileName
+                    );
+                    $thumbnailPath = env('APP_URL') . '/api/images/' . $permanentThumbnailFolder . $thumbnailFileName;
+                }
+                // ✅ Convert tags to array
+                $tagsArray = array_map('trim', explode(',', $request->tags ?? ''));
+
+                try {
+                    // ✅ Save to Database
+                    $video = M_Videos::create([
+                        'user_id' => $userId,
+                        'title' => $request->title,
+                        'description' => $request->description,
+                        'file_path' => implode(',', $pImageFilePath),
+                        'category_id' => (int) $request->category_id,
+                        'type' => $request->type,
+                        'title_size' => $request->title_size,
+                        'title_colour' => $request->title_colour,
+                        'defaultthumbnail' => $thumbnailPath,
+                        'country_code' => $request->country_code,
+                        'video_type' => $videoType,
+                        'tags' => json_encode($tagsArray),
+                        'temp_upload' => false,
+                    ]);
+
+                    Log::info('Video/photo metadata saved', ['video_id' => $video->id]);
+
+                    return response()->json([
+                        'result' => true,
+                        'message' => 'File(s) uploaded successfully',
+                        'video_id' => $video->id, // ✅ Return video_id
+                    ], 201);
+                } catch (\Exception $e) {
+                    Log::error('Database Error: ' . $e->getMessage());
+                    return response()->json([
+                        'result' => false,
+                        'message' => 'Database error: ' . $e->getMessage(),
+                    ], 500);
+                }
+            }
+        }
         // Audio Format File Upload
         if ($request->video_type == 2) {
             if ($request->hasFile('video_file') && filter_var($request->temp_upload, FILTER_VALIDATE_BOOLEAN)) {
@@ -330,11 +408,11 @@ class VideoController extends Controller
                         'description' => $request->description,
                         'file_path' => $filePath,
                         'category_id' => (int) $request->category_id,
-                        'type' => (int) $request->type,
+                        'type' => $request->type,
                         'title_size' => $request->title_size,
                         'title_colour' => $request->title_colour,
                         'defaultthumbnail' => $thumbnailPath,
-                        'country_code' => (int) $request->country_code,
+                        'country_code' => $request->country_code,
                         'video_type' => $videoType,
                         'tags' => json_encode($tagsArray),
                         'temp_upload' => false,
@@ -423,11 +501,17 @@ class VideoController extends Controller
         // Format video data
         $formattedVideos = $videos->map(function ($video) {
             $videoInteraction = M_Videos::withCount(['likes', 'dislikes', 'views'])->findOrFail($video->id);
+            $videoFilePath = null;
+            if ($video->video_type == 3) {
+                $videoFilePath = $video->file_path ? explode(',', $video->file_path) : null;
+            } else {
+                $videoFilePath = $video->file_path ? url('/api/images/' . $video->file_path) : null;
+            }
             return [
                 'video_id' => $video->id,
                 'title' => $video->title,
                 'description' => $video->description,
-                'file_path' => $video->file_path ? url('/api/images/' . $video->file_path) : null,
+                'file_path' => $videoFilePath,
                 'likes' => $videoInteraction->likes_count,
                 'dislikes' => $videoInteraction->dislikes_count,
                 'views' => $videoInteraction->views_count,
@@ -473,6 +557,13 @@ class VideoController extends Controller
         //
         $videoInteraction = M_Videos::withCount(['likes', 'dislikes', 'views'])->findOrFail($video->id);
         $likedUsers = M_Video_Interactions::where('video_id', $video->id)->where('type', 'like')->get(['user_id as video_liked_user_id']);
+
+        $videoFilePath = null;
+        if ($video->video_type == 3) {
+            $videoFilePath = $video->file_path ? explode(',', $video->file_path) : null;
+        } else {
+            $videoFilePath = $video->file_path ? $video->file_path : null;
+        }
         // Return the video details with proper URLs
         return response()->json([
             'result' => true,
@@ -481,7 +572,7 @@ class VideoController extends Controller
                 'video_id' => $video->id,
                 'title' => $video->title,
                 'description' => $video->description,
-                'file_path' => env('APP_URL') . '/api/images/' . $video->file_path, // Full URL for the video file
+                'file_path' => $videoFilePath, // Full URL for the video file
                 'user_id' => $video->user_id,
                 'user_name' => $video->username,
                 'user_profile_image' => env('APP_URL') . '/api/images/' . $video->profile_image,
@@ -494,7 +585,7 @@ class VideoController extends Controller
                 'title_size' => $video->title_size,
                 'title_colour' => $video->title_colour,
                 'defaultthumbnail' => $video->defaultthumbnail 
-                    ? env('APP_URL') . '/api/images/' . $video->defaultthumbnail // Full URL for the thumbnail
+                    ? $video->defaultthumbnail // Full URL for the thumbnail
                     : null,
                 'country_code' => $video->country_code,
                 'tags' => is_string($video->tags) ? json_decode($video->tags, true) : $video->tags,
@@ -563,11 +654,17 @@ class VideoController extends Controller
         // Format video data
         $formattedVideos = $videos->map(function ($video) {
             $videoInteraction = M_Videos::withCount(['likes', 'dislikes', 'views'])->findOrFail($video->id);
+            $videoFilePath = null;
+            if ($video->video_type == 3) {
+                $videoFilePath = $video->file_path ? explode(',', $video->file_path) : null;
+            } else {
+                $videoFilePath = $video->file_path ? url('/api/images/' . $video->file_path) : null;
+            }
             return [
                 'video_id' => $video->id,
                 'title' => $video->title,
                 'description' => $video->description,
-                'file_path' => $video->file_path ? url('/api/images/' . $video->file_path) : null,
+                'file_path' => $videoFilePath,
                 'likes' => $videoInteraction->likes_count,
                 'dislikes' => $videoInteraction->dislikes_count,
                 'views' => $videoInteraction->views_count,
@@ -720,4 +817,3 @@ class VideoController extends Controller
     }
     
 }
-

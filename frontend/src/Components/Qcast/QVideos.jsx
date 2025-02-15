@@ -57,7 +57,7 @@ const QVideos = () => {
 
       if (response.status === 200 && response.data.data) {
         setVideos(response.data.data);
-        console.log(videos);
+        console.log(response.data.data);
 
         setFilteredVideos(response.data.data); // Initially show all videos
       } else {
