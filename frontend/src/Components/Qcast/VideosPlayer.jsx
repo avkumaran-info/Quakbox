@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useContext, useEffect, useState } from "react";
 import user from "../../assets/images/user1.png";
 import { useLocation, useNavigate, useParams } from "react-router-dom";
 import axios from "axios";
@@ -7,11 +7,10 @@ import CommentIcon from "@mui/icons-material/Comment";
 import ThumbUpIcon from "@mui/icons-material/ThumbUp";
 import ThumbDownIcon from "@mui/icons-material/ThumbDown";
 import { Tooltip } from "@mui/material";
-import FavoriteSharpIcon from "@mui/icons-material/FavoriteSharp";
-import GroupIcon from "@mui/icons-material/Group";
 import ScreenShareIcon from "@mui/icons-material/ScreenShare";
 import ReportIcon from "@mui/icons-material/Report";
 import loading from "../../assets/images/loading.gif";
+import { StoreContext } from "../../Context/StoreContext";
 
 const defaultComments = [
   {
@@ -40,11 +39,13 @@ const VideosPlayer = () => {
   const [recommendedVideos, setRecommendedVideos] = useState([]);
   const [showComments, setShowComments] = useState(false);
   const [comments, setComments] = useState([]);
-
+  const [comment, setComment] = useState([]);
   const location = useLocation();
   const navigate = useNavigate();
   const passedVideo = location.state?.video; // Always use passedVideo for recommendations
-  console.log(passedVideo);
+  // console.log(passedVideo);
+  const { userData } = useContext(StoreContext);
+
   const [likes, setLikes] = useState(passedVideo?.likes || 0);
   const [dislikes, setDislikes] = useState(passedVideo?.dislikes || 0);
 
@@ -53,7 +54,8 @@ const VideosPlayer = () => {
   const [isLiked, setIsLiked] = useState(false);
   const [isDisliked, setIsDisliked] = useState(false);
   const [isSubscribed, setIsSubscribed] = useState(false);
-
+  const [commentText, setCommentText] = useState("");
+  const [editingComment, setEditingComment] = useState(null);
   const handleLike = async () => {
     if (!video) return;
 
@@ -66,7 +68,7 @@ const VideosPlayer = () => {
 
       const response = await axios.post(
         `https://develop.quakbox.com/admin/api/videos/${video.video_id}/like`,
-        {},
+        { user_id: currentUserId },
         { headers: { Authorization: `Bearer ${token}` } }
       );
 
@@ -165,6 +167,7 @@ const VideosPlayer = () => {
 
         const fetchedVideo = response.data.data;
         setVideo(fetchedVideo);
+        // console.log(response.data.data);
 
         // ✅ Update Likes & Dislikes
         setLikes(fetchedVideo.likes_count || 0);
@@ -196,6 +199,153 @@ const VideosPlayer = () => {
 
     fetchVideo();
   }, [videoId]); // ✅ Refetch video when videoId changes
+
+  const fetchComments = async () => {
+    if (!video) return;
+
+    try {
+      const token = localStorage.getItem("api_token");
+      if (!token) {
+        console.error("❌ Authorization token missing. Please log in.");
+        return;
+      }
+
+      const response = await axios.get(
+        `https://develop.quakbox.com/admin/api/videos/${video.video_id}/comments`,
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+
+      // console.log(response);
+
+      if (response.status === 200) {
+        setComments(response.data.data);
+      }
+    } catch (error) {
+      console.error("❌ Error fetching comments:", error);
+    }
+  };
+
+  const handleCommentSubmit = async () => {
+    if (!commentText.trim()) {
+      console.error("⚠️ Comment cannot be empty.");
+      return;
+    }
+
+    try {
+      const token = localStorage.getItem("api_token");
+      if (!token) {
+        console.error("❌ Authorization token missing. Please log in.");
+        return;
+      }
+
+      // 🔹 Generate timestamp
+      const currentTime = new Date().toISOString();
+
+      // 🔹 Add comment optimistically to UI
+      const tempComment = {
+        comment_id: Date.now(), // Temporary ID
+        comment_user_name: userData.users.username,
+        comment_content: commentText,
+        comment_user_profile_picture: userData.profile_image_url,
+        comment_updated_datetime: currentTime, // Show correct time
+      };
+
+      setCommentText(""); // Clear input field
+
+      // 🔹 Send comment to API
+      const response = await axios.post(
+        `https://develop.quakbox.com/admin/api/videos/${video.video_id}/comments`,
+        { content: commentText },
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+
+      if (response.status === 201) {
+        // console.log("✅ Comment posted successfully.");
+
+        fetchComments(); // Fetch the latest comments
+      }
+    } catch (error) {
+      console.error("❌ Error posting comment:", error);
+    }
+  };
+
+  const handleEditComment = async (comment) => {
+    // Handle the edit logic here (perhaps set the comment in the input field)
+    console.log("Editing comment:", comment);
+    setEditingComment(comment);
+    setCommentText(comment.comment_content);
+  };
+
+  // Update edited comment via API
+  const handleUpdateComment = async () => {
+    if (!editingComment) return;
+
+    try {
+      const token = localStorage.getItem("api_token");
+      if (!token) {
+        console.error("❌ Authorization token missing. Please log in.");
+        return;
+      }
+      const response = await axios.post(
+        `https://develop.quakbox.com/admin/api/videos/comments/${editingComment.comment_id}`,
+        { content: commentText },
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+
+      // console.log(response);
+
+      if (response.status === 201) {
+        fetchComments(); // Refresh comments
+        setEditingComment(null);
+        setCommentText("");
+      }
+    } catch (error) {
+      console.error("Error updating comment:", error);
+    }
+  };
+
+  // Cancel editing
+  const handleCancelEdit = () => {
+    setEditingComment(null);
+    setCommentText("");
+  };
+
+  const handleDeleteComment = async (commentId) => {
+    // Confirm before deleting the comment (optional)
+    const isConfirmed = window.confirm(
+      "Are you sure you want to delete this comment?"
+    );
+    if (!isConfirmed) return;
+
+    try {
+      const token = localStorage.getItem("api_token");
+      if (!token) {
+        console.error("❌ Authorization token missing. Please log in.");
+        return;
+      }
+
+      const response = await axios.delete(
+        `https://develop.quakbox.com/admin/api/videos/comments/${commentId}`,
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+
+      if (response.status === 200) {
+        console.log("Comment deleted successfully");
+
+        // Optimistically remove the comment from the UI
+        setComments((prevComments) =>
+          prevComments.filter((comment) => comment.comment_id !== commentId)
+        );
+      }
+    } catch (error) {
+      console.error("❌ Error deleting comment:", error);
+    }
+  };
+
+  // 🔹 Fetch comments when page loads
+  useEffect(() => {
+    fetchComments();
+  }, [video]);
 
   useEffect(() => {
     const fetchVideos = async () => {
@@ -240,9 +390,10 @@ const VideosPlayer = () => {
   // Toggle Comments Section
   const toggleComments = () => {
     setShowComments((prev) => !prev);
-    if (!showComments) {
-      setComments(defaultComments); // Set default comments when opening
-    }
+    // if (!showComments) {
+    //   setComments(comment); // Set default comments when opening
+    //   console.log(comment);
+    // }
   };
 
   if (!video) {
@@ -448,22 +599,6 @@ const VideosPlayer = () => {
                   </div>
                 </Tooltip>
               </div>
-
-              {/* Right Side: Action Buttons */}
-              {/* <div className="d-flex gap-2">
-                <button className="btn btn-outline-secondary">
-                  👍 {video.like}
-                </button>
-                <button className="btn btn-outline-secondary">👎</button>
-                <button
-                  className="btn btn-outline-secondary"
-                  onClick={toggleComments}
-                >
-                  {showComments ? "Hide Comments" : "Show Comments"}
-                </button>
-                <button className="btn btn-outline-secondary">🔗 Share</button>
-                <button className="btn btn-outline-secondary">Report</button>
-              </div> */}
             </div>
 
             {/* Video Description */}
@@ -504,25 +639,99 @@ const VideosPlayer = () => {
 
             {/* Comments Section */}
             {showComments && (
-              <div className="mt-4">
+              <div className="mt-3">
                 <h6 className="fw-bold">Comments ({comments.length})</h6>
-                <div className="border-top pt-3">
+                <div className="d-flex align-items-center my-1">
+                  <input
+                    type="text"
+                    className="form-control"
+                    placeholder="Write a comment..."
+                    value={commentText}
+                    onChange={(e) => setCommentText(e.target.value)}
+                  />
+
+                  {editingComment ? (
+                    <>
+                      <button
+                        className="btn btn-success ms-2"
+                        onClick={handleUpdateComment}
+                        disabled={!commentText.trim()}
+                      >
+                        Update
+                      </button>
+                      <button
+                        className="btn btn-secondary ms-2"
+                        onClick={handleCancelEdit}
+                      >
+                        Cancel
+                      </button>
+                    </>
+                  ) : (
+                    <button
+                      className="btn btn-primary ms-2"
+                      onClick={handleCommentSubmit}
+                      disabled={!commentText.trim()}
+                    >
+                      Comment
+                    </button>
+                  )}
+                </div>
+
+                <div className="border-top pt-1">
                   {comments.length > 0 ? (
                     comments.map((comment, index) => (
                       <div key={index} className="d-flex mb-3">
                         <img
-                          src={comment.user_profile || "default-user.png"}
+                          src={
+                            comment.comment_user_profile_picture ||
+                            "default-user.png"
+                          }
                           alt="User"
                           className="rounded-circle me-2"
                           width="40"
                           height="40"
                         />
-                        <div>
-                          <strong>{comment.username}</strong>
-                          <p className="m-0">{comment.text}</p>
-                          <small className="text-muted">
-                            {comment.timestamp}
-                          </small>
+
+                        <div className="w-100">
+                          <div className="d-flex justify-content-between align-items-start flex-wrap">
+                            <div className="me-2">
+                              <strong>{comment.comment_user_name}</strong>{" "}
+                              <small className="text-muted">
+                                {timeAgo(comment.comment_updated_datetime)}
+                              </small>
+                            </div>
+                            <div>
+                              {/* Edit icon */}
+                              {comment.comment_user_id ===
+                                userData.users.id && (
+                                <div>
+                                  {/* Edit button */}
+                                  <button
+                                    className="btn btn-link btn-sm"
+                                    onClick={() => handleEditComment(comment)}
+                                    title="Edit comment"
+                                  >
+                                    <i className="fas fa-edit"></i>
+                                  </button>
+
+                                  {/* Delete button */}
+                                  <button
+                                    className="btn btn-link btn-sm"
+                                    onClick={() =>
+                                      handleDeleteComment(comment.comment_id)
+                                    }
+                                    title="Delete comment"
+                                  >
+                                    <i className="fas fa-trash-alt"></i>
+                                  </button>
+                                </div>
+                              )}
+                            </div>
+                          </div>
+
+                          <p className="m-0 p-1  text-break">
+                            {comment.comment_content}
+                          </p>
                         </div>
                       </div>
                     ))
