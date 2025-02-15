@@ -74,8 +74,8 @@ class PostController extends Controller
     public function postStore(Request $request)
     {
         $request->validate([
-            'message' => 'nullable|string|max:255',
-            'media' => 'nullable|file|mimes:jpeg,png,jpg,mp4,mov|max:20480', // Max 20 MB
+            'message' => 'required',
+            'media' => 'nullable|file|mimes:jpeg,png,jpg,mp4,mov', // Max 20 MB
         ]);
 
         $mediaPath = null;

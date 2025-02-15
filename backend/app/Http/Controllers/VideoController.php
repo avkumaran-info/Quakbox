@@ -489,7 +489,7 @@ class VideoController extends Controller
         $query->where('m_videos.type', '=', 'Public');
     
         // Fetch videos
-        $videos = $query->get();
+        $videos = $query->latest()->get();
         // Check if videos exist
         if ($videos->isEmpty()) {
             return response()->json([
@@ -527,7 +527,7 @@ class VideoController extends Controller
                 'country_code' => $video->country_code,
                 'tags' => is_string($video->tags) ? json_decode($video->tags, true) ?? [] : $video->tags,
                 'video_type' => $video->video_type, // Added this
-                'uploaded_datetime' => optional($video->updated_at)->toDateTimeString(),
+                'uploaded_datetime' => $video->updated_at,
             ];
         });
     
@@ -642,7 +642,7 @@ class VideoController extends Controller
                 ->orWhereRaw('LOWER(m_videos.description) LIKE ?', ['%' . strtolower($searchString) . '%']);
     
         // Fetch videos
-        $videos = $query->get();
+        $videos = $query->latest()->get();
         // Check if videos exist
         if ($videos->isEmpty()) {
             return response()->json([
@@ -680,7 +680,7 @@ class VideoController extends Controller
                 'country_code' => $video->country_code,
                 'tags' => is_string($video->tags) ? json_decode($video->tags, true) ?? [] : $video->tags,
                 'video_type' => $video->video_type, // Added this
-                'uploaded_datetime' => optional($video->updated_at)->toDateTimeString(),
+                'uploaded_datetime' => $video->updated_at,
             ];
         });
     
@@ -712,7 +712,9 @@ class VideoController extends Controller
     public function showHighViewVideos()
    {
         // Get videos ordered by highest views
-        $highViewVideos = M_Videos::withCount('views')
+        $highViewVideos = M_Videos::where("video_type", "1")
+            ->where("type", "Public")
+            ->withCount('views')
             ->orderByDesc('views_count') // Order by highest views
             ->limit(10) // Fetch top 10 most viewed videos
             ->pluck('id'); // Retrieve only video IDs
@@ -779,6 +781,7 @@ class VideoController extends Controller
         $videoIds = $videos->pluck('id');
         $videoInteractions = M_Videos::whereIn('id', $videoIds)
             ->withCount(['likes', 'dislikes', 'views'])
+            ->latest()
             ->get()
             ->keyBy('id');
     
@@ -805,7 +808,7 @@ class VideoController extends Controller
                 'country_code' => $video->country_code,
                 'tags' => is_string($video->tags) ? json_decode($video->tags, true) ?? [] : $video->tags,
                 'video_type' => $video->video_type,
-                'uploaded_datetime' => optional($video->created_at)->toDateTimeString(),
+                'uploaded_datetime' => $video->created_at,
             ];
         });
     
