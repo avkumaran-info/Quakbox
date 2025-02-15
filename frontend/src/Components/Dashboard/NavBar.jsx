@@ -88,34 +88,39 @@ const NavBar = () => {
 
   useEffect(() => {
     const fetchCountries = async () => {
-      const token = localStorage.getItem("api_token"); // Get token from localStorage
-
+      const token = localStorage.getItem("api_token");
+  
       if (!token) {
         setError("Authorization token not found. Please log in.");
         return;
       }
+  
       try {
-        // Fetch favorite countries
         const favCountriesRes = await axios.get(
           "https://develop.quakbox.com/admin/api/get_favourite_country",
           {
             headers: { Authorization: `Bearer ${token}` },
           }
         );
-
+  
+        console.log("API Response:", favCountriesRes.data); // Debugging
+  
         const favouriteCountries =
-          favCountriesRes.data.favourite_country.filter(
+          favCountriesRes.data.favourite_country?.filter(
             (fav) => fav.favourite_country === "1"
-          );
-        // Store the list of favorite countries (just names)
-        setFavCountries(favouriteCountries || []);
+          ) || [];
+  
+        console.log("Filtered Favorites:", favouriteCountries); // Debugging
+  
+        setFavCountries(favouriteCountries);
       } catch (error) {
         console.error("Error fetching countries:", error);
       }
     };
-    userDatas();
+  
+    userDatas(); // Ensure userDatas is defined
     fetchCountries();
-  }, []);
+  }, []);  
 
   useEffect(() => {
     const handleOutsideClick = (event) => {

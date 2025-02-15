@@ -24,7 +24,7 @@ use App\Models\OtpVerification;
 
 use GuzzleHttp\Client;
 use Carbon\Carbon;
-
+use App\Models\FavouriteCountry;
 use App\Models\PasswordResetOtp;
 use App\Mail\QuakboxMailVerification;
 use Illuminate\Support\Facades\Mail;
@@ -207,13 +207,18 @@ class AuthController extends Controller
         ]);
 
         // Create the profile in the 'profiles' table
-        Members::create([
+        $member = Members::create([
             'member_id' => $user->id,  // Link to the user
             'birthdate' => $data['birthdate'] ?? null,  // Optional fields
             'country' => $data['country'] ?? null,
         ]);
 
-        return $user;
+        // Store favourite country in `favourite_country` table
+        FavouriteCountry::create([
+            'member_id' => $member-> member_id,  
+            'favourite_country' => $data['country'], // Store selected country
+            'code' => $data['country_code'] ?? null, // Store optional country code
+        ]);   
     }
     public function logout(Request $request)
     {
