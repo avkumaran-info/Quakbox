@@ -20,9 +20,9 @@ class FavouriteCountry extends Model
 
     public $timestamps = true; // Enable timestamps if your table has `created_at` and `updated_at`
 
-    public function member()
+    public function user()
     {
-        return $this->belongsTo(Members::class, 'member_id', 'member_id');
+        return $this->belongsTo(User::class, 'member_id', 'id');
     }
 
 }
