@@ -370,21 +370,22 @@ class VideoController extends Controller
             $ffmpeg = FFMpeg::create();
             $video = $ffmpeg->open($filePath);
             $thumbnails = [];
-            // $timestamps = [1, 5, 10, 15]; // Capture at 1s, 5s, 10s, 15s
+            $timestamps = [1, 3, 7, 9]; // Capture at 1s, 5s, 10s, 15s
 
             // Define the storage path
             $thumbnailFolder = 'uploads/videos/temp/thumbnails/';
             Storage::disk('public')->makeDirectory($thumbnailFolder); // Ensure folder exists
 
-            $duration = $ffprobe->format($filePath)->get('duration');
-            for ($i = 1; $i <= 4; $i++) {
-                $timestamp = round(($i * $duration) / 5); // Capture at different positions
+            foreach ($timestamps as $timestamp) {
                 $thumbnailFileName = pathinfo($uniqueFileName, PATHINFO_FILENAME) . "-$timestamp.jpg";
-                $thumbnailPath = $thumbnailFolder . $thumbnailFileName;
-                $video->frame(TimeCode::fromSeconds($timestamp))
-                    ->save(Storage::disk('public')->path($thumbnailPath));
+                $thumbnailPath = $thumbnailFolder . $thumbnailFileName; // Storage path
 
-                $thumbnails[] = env('APP_URL') . '/api/images/' . $thumbnailPath;
+                // Generate the thumbnail
+                $video->frame(TimeCode::fromSeconds($timestamp))
+                    ->save(storage_path('app/public/' . $thumbnailPath)); // Save inside storage/app/public
+
+                // Store URL-accessible thumbnail path
+                $thumbnails[] = env('APP_URL') . '/api/images/' . $thumbnailPath; // Use Laravel's storage URL
             }
             return $thumbnails;
         } catch (\Exception $e) {

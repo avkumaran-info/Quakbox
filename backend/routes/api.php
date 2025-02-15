@@ -156,8 +156,8 @@ Route::get('images/uploads/videos/temp/thumbnails/{filename}', function ($filena
     return response()->file($path);
 });
 
-Route::get('images/uploads/thumbnails/{filename}', function ($filename) {
-    $path = storage_path('app/public/uploads/thumbnails/' . $filename);
+Route::get('images/uploads/videos/permanent/thumbnails/{filename}', function ($filename) {
+    $path = storage_path('app/public/uploads/videos/permanent/thumbnails/' . $filename);
     if (!file_exists($path)) {
         abort(404);
     }
