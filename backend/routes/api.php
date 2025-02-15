@@ -96,6 +96,7 @@ Route::middleware('auth:api')->prefix('videos')->group(function () {
     Route::get('{id}/show', [VideoController::class, 'show']);
     Route::post('{id}/delete', [VideoController::class, 'delete']);
     Route::get('search/{query?}', [VideoController::class, 'search']);   
+    Route::get('my-videos', [VideoController::class, 'userVideos']); // ✅ New route
 });
 
 // popular videos
