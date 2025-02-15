@@ -1138,9 +1138,13 @@ const Feed = ({ countryCode, flag, countryName, handleCountryChange }) => {
                                   <h6 className="mb-0">
                                     {comment.comment_user_name || "Anonymous"}
                                   </h6>
-                                  <p className="mb-1">{comment.comment_content}</p>
+                                  <p className="mb-1">
+                                    {comment.comment_content}
+                                  </p>
                                   <small className="text-muted">
-                                    {getTimeAgo(comment.comment_updated_datetime)}
+                                    {getTimeAgo(
+                                      comment.comment_updated_datetime
+                                    )}
                                   </small>
                                 </div>
                               </div>
@@ -1195,7 +1199,7 @@ const Feed = ({ countryCode, flag, countryName, handleCountryChange }) => {
                                 </small>
                               </div>
                             </div> */}
-                            no Comments
+                            No comments
                           </>
                         )}
                       </div>
@@ -1231,16 +1235,18 @@ const Feed = ({ countryCode, flag, countryName, handleCountryChange }) => {
             Array.isArray(data.posts) &&
             data.posts.map((post) => {
               const loggedInUserId = localStorage.getItem("user_Id"); // Get logged-in user ID
-              // console.log(loggedInUserId);
-              // console.log(post.from.user_id);
-
               const isOwner = loggedInUserId == post.from.user_id; // Check if the logged-in user is the post owner
-              // console.log(isOwner);
 
               return (
-                <div className="card mb-1" key={post.id}>
-                  {" "}
-                  {/* Add key here */}
+                <div
+                  className="card mb-1"
+                  key={post.id}
+                  style={{
+                    height: "550px",
+                    display: "flex",
+                    flexDirection: "column",
+                  }}
+                >
                   {/* Post Header */}
                   <div className="card-header d-flex align-items-center bg-white border-0 position-relative">
                     {/* Profile Image */}
@@ -1259,7 +1265,7 @@ const Feed = ({ countryCode, flag, countryName, handleCountryChange }) => {
                       <small>{post.timeAgo}</small>
                     </div>
 
-                    {/* Edit & Delete Buttons - Positioned to the Right */}
+                    {/* Edit & Delete Buttons */}
                     {isOwner && (
                       <div
                         className="ms-auto d-flex align-items-center"
@@ -1267,7 +1273,7 @@ const Feed = ({ countryCode, flag, countryName, handleCountryChange }) => {
                           position: "absolute",
                           right: "15px",
                           top: "10px",
-                          gap: "20px", // Adjust space between icons
+                          gap: "20px",
                         }}
                       >
                         <i
@@ -1281,26 +1287,32 @@ const Feed = ({ countryCode, flag, countryName, handleCountryChange }) => {
                       </div>
                     )}
                   </div>
-                  {/* Post Content */}
-                  <div className="card-body p-0 w-100">
-                    {post.message && <p className="px-3">{post.message}</p>}
 
+                  {/* Post Content */}
+                  {post.message && <p className="px-3">{post.message}</p>}
+                  <div
+                    className="card-body p-0 d-flex align-items-center justify-content-center"
+                    style={{
+                      // height: "300px",
+                      overflow: "hidden",
+                      backgroundColor: "#fff",
+                    }}
+                  >
                     {post.attachments &&
                       post.attachments.data.map((attachment, index) => {
+                        console.log(attachment);
+
                         if (attachment.type === "image") {
                           return (
                             <img
-                              key={index} // This key is for attachments; index is fine for these
+                              key={index}
                               src={attachment.media[0].url}
                               alt={attachment.media[0].alt_text || "Post image"}
                               className="img-fluid"
                               style={{
                                 objectFit: "contain",
-                                backgroundColor: "white",
-                                display: "block",
-                                margin: "auto",
-                                maxHeight: "70vh", // Restricts the image to 80% of the viewport height
-                                maxWidth: "100%", // Ensures it doesn't exceed the container width
+                                maxHeight: "100%",
+                                // maxWidth: "100%",
                               }}
                             />
                           );
@@ -1308,16 +1320,14 @@ const Feed = ({ countryCode, flag, countryName, handleCountryChange }) => {
                         if (attachment.type === "video") {
                           return (
                             <video
-                              key={index} // This key is for attachments, index is fine for these
+                              key={index}
                               controls
                               className="w-100"
                               style={{
-                                maxWidth: "2133px",
-                                maxHeight: "362.5px",
+                                maxWidth: "100%",
+                                height: "100%",
                                 objectFit: "contain",
                                 backgroundColor: "black",
-                                display: "block",
-                                margin: "auto",
                               }}
                             >
                               <source
@@ -1331,9 +1341,9 @@ const Feed = ({ countryCode, flag, countryName, handleCountryChange }) => {
                         return null;
                       })}
                   </div>
+
                   {/* Post Footer */}
                   <div className="card-footer bg-white d-flex justify-content-between align-items-center border-0">
-                    {/* Likes Count */}
                     <span className="text-muted">
                       {post.likes && post.likes.count !== undefined
                         ? `${post.likes.count} likes`
@@ -1341,7 +1351,6 @@ const Feed = ({ countryCode, flag, countryName, handleCountryChange }) => {
                     </span>
 
                     <div className="d-flex">
-                      {/* Like Button */}
                       <button
                         className={`btn btn-sm me-2 ${
                           post.likes?.liked_users?.some(
@@ -1362,11 +1371,10 @@ const Feed = ({ countryCode, flag, countryName, handleCountryChange }) => {
                               ? "white"
                               : "inherit",
                           }}
-                        />{" "}
+                        />
                         Like
                       </button>
 
-                      {/* Dislike Button */}
                       <button
                         className={`btn btn-sm me-2 ${
                           post.disliked_users?.some(
@@ -1387,11 +1395,10 @@ const Feed = ({ countryCode, flag, countryName, handleCountryChange }) => {
                               ? "white"
                               : "inherit",
                           }}
-                        />{" "}
+                        />
                         Dislike
                       </button>
 
-                      {/* Comment Button */}
                       <button
                         className="btn btn-light btn-sm me-2"
                         onClick={() => openCommentPopup(post)}
@@ -1405,7 +1412,6 @@ const Feed = ({ countryCode, flag, countryName, handleCountryChange }) => {
                         </span>
                       </button>
 
-                      {/* Share Button */}
                       <button className="btn btn-light btn-sm">
                         <ShareIcon sx={{ fontSize: 18, marginRight: "5px" }} />{" "}
                         Share

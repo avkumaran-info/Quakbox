@@ -167,7 +167,8 @@ const VideosPlayer = () => {
 
         const fetchedVideo = response.data.data;
         setVideo(fetchedVideo);
-        // console.log(response.data.data);
+
+        console.log(response.data.data);
 
         // ✅ Update Likes & Dislikes
         setLikes(fetchedVideo.likes_count || 0);
@@ -451,6 +452,90 @@ const VideosPlayer = () => {
                   </video>
                 </>
               )}
+              {video.video_type === 3 &&
+                (() => {
+                  const isSingleImage =
+                    Array.isArray(video.file_path) &&
+                    video.file_path.length === 1;
+                  const isMultipleImages =
+                    Array.isArray(video.file_path) &&
+                    video.file_path.length > 1;
+
+                  return (
+                    <div className="w-100 h-100 d-flex justify-content-center align-items-center">
+                      {/* Single Image */}
+                      {isSingleImage && (
+                        <img
+                          src={video.file_path[0]}
+                          alt="Single"
+                          className="img-fluid rounded w-100"
+                          style={{ maxHeight: "400px", objectFit: "contain" }}
+                        />
+                      )}
+
+                      {/* Multiple Images - Bootstrap Carousel */}
+                      {isMultipleImages && (
+                        <div
+                          id={`carousel-${video.video_id}`}
+                          className="carousel slide w-100"
+                          data-bs-ride="carousel"
+                          data-bs-interval="5000" // Changes slide every 5 seconds
+                        >
+                          <div className="carousel-inner">
+                            {video.file_path.map((img, index) => (
+                              <div
+                                className={`carousel-item ${
+                                  index === 0 ? "active" : ""
+                                }`}
+                                key={index}
+                              >
+                                <img
+                                  src={img}
+                                  className="d-block w-100 rounded"
+                                  alt={`Slide ${index + 1}`}
+                                  style={{
+                                    maxHeight: "400px",
+                                    objectFit: "contain",
+                                  }}
+                                />
+                              </div>
+                            ))}
+                          </div>
+
+                          {/* Dark Previous Button */}
+                          <button
+                            className="carousel-control-prev"
+                            type="button"
+                            data-bs-target={`#carousel-${video.video_id}`}
+                            data-bs-slide="prev"
+                          >
+                            <span
+                              className="carousel-control-prev-icon"
+                              aria-hidden="true"
+                              style={{ filter: "invert(1)" }} // Makes button dark
+                            ></span>
+                            <span className="visually-hidden">Previous</span>
+                          </button>
+
+                          {/* Dark Next Button */}
+                          <button
+                            className="carousel-control-next"
+                            type="button"
+                            data-bs-target={`#carousel-${video.video_id}`}
+                            data-bs-slide="next"
+                          >
+                            <span
+                              className="carousel-control-next-icon"
+                              aria-hidden="true"
+                              style={{ filter: "invert(1)" }} // Makes button dark
+                            ></span>
+                            <span className="visually-hidden">Next</span>
+                          </button>
+                        </div>
+                      )}
+                    </div>
+                  );
+                })()}
             </div>
 
             {/* Video Title & Views */}
@@ -460,7 +545,7 @@ const VideosPlayer = () => {
                 <h5 className="fw-bold text-truncate">{video.title}</h5>
                 <p className="text-muted small m-0">
                   {passedVideo.views} views •{" "}
-                  {timeAgo(passedVideo.uploaded_datetime)}{" "}
+                  {timeAgo(video.updated_at)}{" "}
                 </p>
               </div>
               <div className="d-flex gap-3">
