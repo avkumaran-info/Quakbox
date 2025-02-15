@@ -15,7 +15,7 @@ return new class extends Migration
             $table->id('favourite_country_id');
             $table->unsignedBigInteger('member_id'); 
             $table->string('code')->nullable(); 
-            $table->string('favourite_country');
+            $table->integer('favourite_country');
             $table->timestamps();
     
             // Foreign key constraint linking to users table

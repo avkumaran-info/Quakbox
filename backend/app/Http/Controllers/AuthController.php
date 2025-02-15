@@ -215,10 +215,10 @@ class AuthController extends Controller
 
         // Store favourite country in `favourite_country` table
         FavouriteCountry::create([
-            'member_id' => $member-> member_id,  
-            'favourite_country' => $data['country'], // Store selected country
-            'code' => $data['country_code'] ?? null, // Store optional country code
-        ]);   
+            'member_id' => $member->member_id,  
+            'favourite_country' => is_numeric($data['country']) ? (int) $data['country'] : 1, // Store 1 for non-numeric values
+            'code' => (string) $data['country'], 
+        ]);         
     }
     public function logout(Request $request)
     {
