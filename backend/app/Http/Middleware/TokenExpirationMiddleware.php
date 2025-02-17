@@ -11,14 +11,25 @@ class TokenExpirationMiddleware
 {
     public function handle(Request $request, Closure $next)
     {
-        $tokenId = $request->user()->token()->id;
-        $token = Token::find($tokenId);
-
-        if ($token && Carbon::parse($token->created_at)->addMinutes(15)->isPast()) {
-            $token->revoke(); // Expire token
+        $user = $request->user();
+    
+        if (!$user) {
+            return response()->json(['error' => 'Unauthorized'], 401);
+        } else {
+             return $next($request);
+        }
+    
+        $token = $request->bearerToken();  // Get token from the request header
+    
+        if (!$token) {
+            return response()->json(['error' => 'Token not found.'], 401);
+        }
+    
+        $token = Token::find($token);
+        if (!$token || Carbon::parse($token->expires_at)->isPast()) {
             return response()->json(['error' => 'Session expired, please log in again'], 401);
         }
-
+    
         return $next($request);
     }
 }

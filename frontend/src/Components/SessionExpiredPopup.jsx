@@ -4,16 +4,18 @@ const SessionExpiredPopup = () => {
   const [showPopup, setShowPopup] = useState(false);
 
   useEffect(() => {
-    // Listen for session expired event
-    const handleSessionExpired = () => setShowPopup(true);
-    window.addEventListener("sessionExpired", handleSessionExpired);
+    const handleSessionExpired = () => {
+      setShowPopup(true);
+      setTimeout(() => setShowPopup(false), 5000); // Auto-hide popup after 5 seconds
+    };
 
+    window.addEventListener("sessionExpired", handleSessionExpired);
     return () => {
       window.removeEventListener("sessionExpired", handleSessionExpired);
     };
   }, []);
 
-  if (!showPopup) return null; // Don't render if popup is not needed
+  if (!showPopup) return null;
 
   return (
     <div
