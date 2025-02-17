@@ -116,7 +116,7 @@ const Home = () => {
     } else if (countryCode) {
       updateCountryDetails(countryCode); // Selected Country
     } else {
-      updateCountryDetails(userCountry || "IN"); // Default Country (India)
+      updateCountryDetails(userCountry); // Default Country (India)
     }
   }, [countryCode, location]);
 

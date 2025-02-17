@@ -1,6 +1,24 @@
 import axios from "axios";
 import { createContext, useEffect, useState } from "react";
 
+// CSS for the spinner (can be moved to a separate CSS file if preferred)
+const spinnerStyle = {
+  width: "40px",
+  height: "40px",
+  border: "5px solid #f3f3f3", // Light gray
+  borderTop: "5px solid #3498db", // Blue
+  borderRadius: "50%",
+  animation: "spin 1s linear infinite",
+};
+
+// CSS to center the spinner
+const containerStyle = {
+  display: "flex",
+  justifyContent: "center",
+  alignItems: "center",
+  height: "100vh", // Full viewport height
+  textAlign: "center",
+};
 export const StoreContext = createContext(null);
 
 const StoreContextProvider = (props) => {
@@ -24,7 +42,6 @@ const StoreContextProvider = (props) => {
       );
       localStorage.setItem("user_Details", JSON.stringify(res.data));
       setUserData(res.data);
-      //   console.log(res.data);
     } catch (error) {
       console.error("Error fetching user data:", error);
     } finally {
@@ -34,7 +51,7 @@ const StoreContextProvider = (props) => {
 
   useEffect(() => {
     fetchUserData();
-  }, []); // Runs once when the app loads
+  }, []);
 
   // Function to update userData and store it in localStorage after login
   const updateUserData = (data) => {
@@ -43,7 +60,13 @@ const StoreContextProvider = (props) => {
   };
 
   if (loading) {
-    return <div>Loading...</div>; // Show loading state while fetching data
+    return (
+      <div style={containerStyle}>
+        {" "}
+        {/* Center the spinner */}
+        <div style={spinnerStyle}></div> {/* Spinner */}
+      </div>
+    );
   }
 
   const contextValue = { userData, setUserData: updateUserData, fetchUserData };
