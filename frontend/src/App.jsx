@@ -24,10 +24,12 @@ import VideosPlayer from "./Components/Qcast/VideosPlayer";
 import BrowseStation from "./Components/Qcast/BrowseStation";
 import MySubscriptions from "./Components/Qcast/MySubscriptions";
 import MyVideos from "./Components/Qcast/MyVideos";
+import SessionExpiredPopup from "./Components/SessionExpiredPopup";
 const App = () => {
   return (
     <Provider store={store}>
       <Router>
+       <SessionExpiredPopup /> 
         <Routes>
           <Route path="/" element={<Login />} />
           <Route path="/signup" element={<Signup />} />

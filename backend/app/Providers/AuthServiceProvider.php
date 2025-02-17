@@ -28,11 +28,10 @@ class AuthServiceProvider extends ServiceProvider
         if (!app()->routesAreCached()) {
             require base_path('routes/passport.php');
         }
-
-        // Set the token expiration time (e.g., 60 minutes)
-        Passport::tokensExpireIn(now()->addMinutes(60));
-
-        // Optionally, set refresh token expiration time
-        Passport::refreshTokensExpireIn(now()->addDays(30));
+        // Set access token expiry to 15 minutes
+        Passport::tokensExpireIn(now()->addMinutes(15));
+        
+        // Set refresh token expiry (optional)
+        Passport::refreshTokensExpireIn(now()->addDays(1));
     }
 }
