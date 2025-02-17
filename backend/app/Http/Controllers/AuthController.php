@@ -149,7 +149,8 @@ class AuthController extends Controller
                 return response()->json([
                     'result' => true,
                     'message' => 'Login successful',
-                    'token' => $token
+                    'token' => $token,
+                    'expires_at' => now()->addMinutes(15)
                 ], 200);
             }
 

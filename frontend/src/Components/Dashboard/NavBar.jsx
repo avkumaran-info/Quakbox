@@ -70,7 +70,7 @@ const NavBar = () => {
         }
       );
   
-      setShowPopup(true); 
+      confirmLogout(); 
     } catch (error) {
       console.error(
         "Logout Error:",
@@ -824,16 +824,15 @@ const NavBar = () => {
                 )}
               </div>
             </div>
-            {/* Session Timeout Popup (Moved Outside Profile Section) */}
             {showPopup && (
               <div
                 style={{
                   position: "fixed",
-                  top: "0",
-                  left: "0",
+                  top: 0,
+                  left: 0,
                   width: "100%",
                   height: "100%",
-                  background: "rgba(0, 0, 0, 0.5)",
+                  background: "rgba(0, 0, 0, 0.6)",
                   display: "flex",
                   justifyContent: "center",
                   alignItems: "center",
@@ -843,30 +842,64 @@ const NavBar = () => {
                 <div
                   style={{
                     background: "#fff",
-                    padding: "20px",
-                    borderRadius: "5px",
+                    padding: "25px",
+                    borderRadius: "8px",
                     textAlign: "center",
-                    boxShadow: "0 4px 8px rgba(0, 0, 0, 0.2)",
+                    boxShadow: "0 6px 15px rgba(0, 0, 0, 0.3)",
+                    width: "320px",
                   }}
                 >
-                  <p>Session timeout. Please log in again.</p>
-                  <button
-                    style={{
-                      marginTop: "10px",
-                      padding: "8px 15px",
-                      cursor: "pointer",
-                      border: "none",
-                      backgroundColor: "#007bff",
-                      color: "#fff",
-                      borderRadius: "3px",
-                    }}
-                    onClick={() => {
-                      setShowPopup(false);
-                      handleLogout(); // Proceed with logout
-                    }}
-                  >
-                    OK
-                  </button>
+                  {/* Popup Title */}
+                  <h3 style={{ color: "#333", marginBottom: "10px" }}>Confirmation</h3>
+                  
+                  {/* Message */}
+                  <p style={{ color: "#555", fontSize: "14px", marginBottom: "20px" }}>
+                    Are you sure you want to log out?
+                  </p>
+                  
+                  {/* Buttons Container */}
+                  <div style={{ display: "flex", justifyContent: "center", gap: "15px" }}>
+                    {/* Cancel Button */}
+                    <button
+                      style={{
+                        padding: "10px 18px",
+                        cursor: "pointer",
+                        border: "none",
+                        backgroundColor: "#ddd",
+                        color: "#333",
+                        borderRadius: "5px",
+                        fontSize: "14px",
+                        transition: "background 0.3s",
+                      }}
+                      onClick={() => setShowPopup(false)}
+                      onMouseOver={(e) => (e.target.style.backgroundColor = "#ccc")}
+                      onMouseOut={(e) => (e.target.style.backgroundColor = "#ddd")}
+                    >
+                      Cancel
+                    </button>
+
+                    {/* Logout Button */}
+                    <button
+                      style={{
+                        padding: "10px 18px",
+                        cursor: "pointer",
+                        border: "none",
+                        backgroundColor: "#007bff",
+                        color: "#fff",
+                        borderRadius: "5px",
+                        fontSize: "14px",
+                        transition: "background 0.3s",
+                      }}
+                      onClick={() => {
+                        setShowPopup(false);
+                        handleLogout();
+                      }}
+                      onMouseOver={(e) => (e.target.style.backgroundColor = "#0056b3")}
+                      onMouseOut={(e) => (e.target.style.backgroundColor = "#007bff")}
+                    >
+                      Okay
+                    </button>
+                  </div>
                 </div>
               </div>
             )}

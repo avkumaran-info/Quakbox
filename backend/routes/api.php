@@ -17,6 +17,7 @@ use App\Http\Controllers\VideoInteractionController;
 use App\Http\Controllers\VideoSubscriptionController;
 use App\Http\Controllers\VideoCommentController;
 use FFMpeg\Media\Video;
+use Illuminate\Http\Request;
 use App\Http\Controllers\LiveStreamController;
 
 // use App\Http\Controllers\VideoChannelController;
@@ -38,8 +39,11 @@ Route::get('/live/{streamKey}', [LiveStreamController::class, 'watchLiveStream']
 
 Route::post('login', [AuthController::class, 'login']);
 Route::post('register', [AuthController::class, 'register']);
+Route::middleware(['auth:api', 'token.expiry'])->post('logout', [AuthController::class, 'logout']);
 
-Route::middleware('auth:api')->post('logout', [AuthController::class, 'logout']);
+Route::middleware(['auth:api', 'token.expiry'])->get('user', function (Request $request) {
+    return response()->json($request->user());
+});    
 
 Route::post('forgot-password/send-otp', [ForgotPasswordController::class, 'sendOtp']);
 Route::post('forgot-password/verify-otp', [ForgotPasswordController::class, 'verifyOtp']);
