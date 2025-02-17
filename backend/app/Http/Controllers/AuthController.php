@@ -149,8 +149,7 @@ class AuthController extends Controller
                 return response()->json([
                     'result' => true,
                     'message' => 'Login successful',
-                    'token' => $token,
-                    'expires_at' => now()->addMinutes(15)
+                    'token' => $token
                 ], 200);
             }
 
@@ -214,22 +213,20 @@ class AuthController extends Controller
             'country' => $data['country'] ?? null,
         ]);
 
-        $geoData = DB::table('geo_country')
-            ->where('code', $data['country'])
-            ->select('country_name')
-            ->first();
-
         // Store favourite country in `favourite_country` table
         FavouriteCountry::create([
             'member_id' => $member->member_id,  
-            'favourite_country' => 1, // Default Favorite country
-            'code' => $geoData->country_name, 
+            'favourite_country' => is_numeric($data['country']) ? (int) $data['country'] : 1, // Store 1 for non-numeric values
+            'code' => (string) $data['country'], 
         ]);         
     }
     public function logout(Request $request)
     {
-        $request->user()->token()->delete();
-
+        $token = $request->user()->token();  // Get the current token
+        if ($token) {
+            $token->revoke();  // Revoke the token
+        }
+    
         return response()->json([
             'result' => true,
             'message' => 'Logged out successfully'
