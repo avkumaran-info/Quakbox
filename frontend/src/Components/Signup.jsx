@@ -144,9 +144,10 @@ const Signup = () => {
 
   const handleOTPSubmit = async () => {
     console.log(emailOTP);
-    console.log(mobileOTP);
+    // console.log(mobileOTP);
 
-    if (emailOTP.length === 6 && mobileOTP.length === 6) {
+    // if (emailOTP.length === 6 && mobileOTP.length === 6) {
+      if (emailOTP.length === 6 ) {
       await verifyOTP();
     } else {
       alert("Invalid OTP. Please try again.");
@@ -167,13 +168,13 @@ const Signup = () => {
         { email: userField.email }
       );
 
-      const mobileVerifyResponse = await axios.post(
-        "https://develop.quakbox.com/admin/api/send-otp-mobile",
-        { mobile_number: userField.phone }
-      );
+      // const mobileVerifyResponse = await axios.post(
+      //   "https://develop.quakbox.com/admin/api/send-otp-mobile",
+      //   { mobile_number: userField.phone }
+      // );
 
       console.log(emailVerifyResponse);
-      console.log(mobileVerifyResponse);
+      // console.log(mobileVerifyResponse);
     } catch (error) {
       console.log(error);
     }
@@ -187,17 +188,19 @@ const Signup = () => {
         { email: userField.email, otp: emailOTP }
       );
 
-      const mobileVerifyResponse = await axios.post(
-        "https://develop.quakbox.com/admin/api/verify-otp-mobile",
-        { mobile_number: userField.phone, otp: mobileOTP }
-      );
+      // const mobileVerifyResponse = await axios.post(
+      //   "https://develop.quakbox.com/admin/api/verify-otp-mobile",
+      //   { mobile_number: userField.phone, otp: mobileOTP }
+      // );
 
       // Extract status from responses
       const emailSuccess = emailVerifyResponse.data.status; // Expecting true/false from API
-      const mobileSuccess = mobileVerifyResponse.data.status;
+      // const mobileSuccess = mobileVerifyResponse.data.status;
 
       // Handle different cases
-      if (emailSuccess && mobileSuccess) {
+      // if (emailSuccess && mobileSuccess) {
+
+      if (emailSuccess ) {
         toast.success("✅ OTP Verified Successfully! 🎉", {
           position: "top-center",
           autoClose: 5000,
@@ -210,37 +213,39 @@ const Signup = () => {
         });
         console.log("HAPPY LOGIN");
         signup();
-      } else if (emailSuccess && !mobileSuccess) {
-        toast.error(
-          mobileVerifyResponse.data.message || "❌ Incorrect Mobile OTP!",
-          {
-            position: "top-center",
-            autoClose: 5000,
-            hideProgressBar: false,
-            closeOnClick: true,
-            pauseOnHover: true,
-            draggable: true,
-            theme: "light",
-            transition: Bounce,
-          }
-        );
-        console.log("Enter the correct OTP for mobile");
-      } else if (!emailSuccess && mobileSuccess) {
-        toast.error(
-          emailVerifyResponse.data.message || "❌ Incorrect Email OTP!",
-          {
-            position: "top-center",
-            autoClose: 5000,
-            hideProgressBar: false,
-            closeOnClick: true,
-            pauseOnHover: true,
-            draggable: true,
-            theme: "light",
-            transition: Bounce,
-          }
-        );
-        console.log("Email OTP is incorrect");
-      } else {
+      }
+      //  else if (emailSuccess && !mobileSuccess) {
+      //   toast.error(
+      //     mobileVerifyResponse.data.message || "❌ Incorrect Mobile OTP!",
+      //     {
+      //       position: "top-center",
+      //       autoClose: 5000,
+      //       hideProgressBar: false,
+      //       closeOnClick: true,
+      //       pauseOnHover: true,
+      //       draggable: true,
+      //       theme: "light",
+      //       transition: Bounce,
+      //     }
+      //   );
+      //   console.log("Enter the correct OTP for mobile");
+      // } else if (!emailSuccess && mobileSuccess) {
+      //   toast.error(
+      //     emailVerifyResponse.data.message || "❌ Incorrect Email OTP!",
+      //     {
+      //       position: "top-center",
+      //       autoClose: 5000,
+      //       hideProgressBar: false,
+      //       closeOnClick: true,
+      //       pauseOnHover: true,
+      //       draggable: true,
+      //       theme: "light",
+      //       transition: Bounce,
+      //     }
+      //   );
+      //   console.log("Email OTP is incorrect");
+      // } 
+      else {
         toast.error("❌ Invalid or expired OTP for both email and mobile!", {
           position: "top-center",
           autoClose: 5000,
@@ -610,15 +615,14 @@ const Signup = () => {
                   </div>
 
                   {/* Mobile Section */}
-                  <div className="text-start mb-3">
+                  {/* <div className="text-start mb-3">
                     <label className="fw-bold fs-6">
                       Mobile Number:{userField.countryCode} {userField.phone}
                     </label>
-                    {/* <p className="fw-bold text-dark mb-1">{userField.phone}</p> */}
-                  </div>
+                  </div> */}
 
                   {/* Mobile OTP Input */}
-                  <div className="d-flex justify-content-center gap-2 mb-4">
+                  {/* <div className="d-flex justify-content-center gap-2 mb-4">
                     {[...Array(6)].map((_, index) => (
                       <input
                         key={index}
@@ -630,7 +634,7 @@ const Signup = () => {
                         style={{ width: "50px", height: "50px" }}
                       />
                     ))}
-                  </div>
+                  </div> */}
 
                   {/* Verify Button */}
                   <button
