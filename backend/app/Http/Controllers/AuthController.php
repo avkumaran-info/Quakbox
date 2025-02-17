@@ -213,11 +213,16 @@ class AuthController extends Controller
             'country' => $data['country'] ?? null,
         ]);
 
+        $geoData = DB::table('geo_country')
+            ->where('code', $data['country'])
+            ->select('country_name')
+            ->first();
+
         // Store favourite country in `favourite_country` table
         FavouriteCountry::create([
             'member_id' => $member->member_id,  
-            'favourite_country' => is_numeric($data['country']) ? (int) $data['country'] : 1, // Store 1 for non-numeric values
-            'code' => (string) $data['country'], 
+            'favourite_country' => 1, // Default Favorite country
+            'code' => $geoData->country_name,
         ]);         
     }
     public function logout(Request $request)
