@@ -24,6 +24,7 @@ const NavBar = () => {
   const [dropdown, setDropdown] = useState(false);
   const [showAllFlags, setShowAllFlags] = useState(false);
   const [searchQuery, setSearchQuery] = useState(""); // State for search input
+  const [showPopup, setShowPopup] = useState(false);
 
   const userDatas = async () => {
     const token = localStorage.getItem("api_token");
@@ -53,39 +54,43 @@ const NavBar = () => {
 
   const handleLogout = async () => {
     const token = localStorage.getItem("api_token");
-    // console.log("handleLogout : ", token);
-
+  
     if (!token) {
       console.log("No token found, user may not be logged in.");
+      confirmLogout(); // Directly log out if no token
       return;
     }
-
+  
     try {
-      // Make the API call with the token in the header
       const response = await axios.post(
         "https://develop.quakbox.com/admin/api/logout",
-        {},
+        {}, 
         {
-          headers: {
-            Authorization: `Bearer ${token}`, // Send token in Authorization header
-          },
+          headers: { Authorization: `Bearer ${token}` },
         }
       );
-      // console.log(response);
-
-      // Clear local storage and redirect
-      localStorage.clear();
-      navigate("/", { replace: true }); // Redirect to login page
+  
+      setShowPopup(true); 
     } catch (error) {
-      // Handle error from the API
-      if (error.response) {
-        console.error("Error Response:", error.response.data);
-      } else {
-        console.error("Logout Error:", error.message);
+      console.error(
+        "Logout Error:",
+        error.response ? error.response.data : error.message
+      );
+      
+      if (error.response && error.response.status === 401) {
+        console.log("Token might be expired or invalid. Logging out.");
+        confirmLogout(); 
       }
     }
   };
-
+  
+  
+  const confirmLogout = () => {
+    setShowPopup(false); // Close the popup
+    localStorage.clear(); // Clear local storage
+    navigate("/", { replace: true }); // Redirect to login page
+  };
+  
   useEffect(() => {
     const fetchCountries = async () => {
       const token = localStorage.getItem("api_token");
@@ -811,7 +816,7 @@ const NavBar = () => {
                         color: "#333",
                         fontSize: "0.9rem",
                       }}
-                      onClick={handleLogout}
+                      onClick={() => setShowPopup(true)} // Show the popup
                     >
                       Logout
                     </a>
@@ -819,6 +824,52 @@ const NavBar = () => {
                 )}
               </div>
             </div>
+            {/* Session Timeout Popup (Moved Outside Profile Section) */}
+            {showPopup && (
+              <div
+                style={{
+                  position: "fixed",
+                  top: "0",
+                  left: "0",
+                  width: "100%",
+                  height: "100%",
+                  background: "rgba(0, 0, 0, 0.5)",
+                  display: "flex",
+                  justifyContent: "center",
+                  alignItems: "center",
+                  zIndex: 1100,
+                }}
+              >
+                <div
+                  style={{
+                    background: "#fff",
+                    padding: "20px",
+                    borderRadius: "5px",
+                    textAlign: "center",
+                    boxShadow: "0 4px 8px rgba(0, 0, 0, 0.2)",
+                  }}
+                >
+                  <p>Session timeout. Please log in again.</p>
+                  <button
+                    style={{
+                      marginTop: "10px",
+                      padding: "8px 15px",
+                      cursor: "pointer",
+                      border: "none",
+                      backgroundColor: "#007bff",
+                      color: "#fff",
+                      borderRadius: "3px",
+                    }}
+                    onClick={() => {
+                      setShowPopup(false);
+                      handleLogout(); // Proceed with logout
+                    }}
+                  >
+                    OK
+                  </button>
+                </div>
+              </div>
+            )}
           </div>
           {/* Mobile Icon Row (Just Below the Logo) */}
           <div className="d-flex align-items-center">
