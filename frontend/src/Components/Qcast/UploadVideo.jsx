@@ -34,30 +34,31 @@ const UploadVideo = () => {
 
   // Access webcam when "Webcam Capture" is clicked
   const handleWebcamCapture = async () => {
-    try {
-      const stream = await navigator.mediaDevices.getUserMedia({
-        video: true,
-      });
-      setWebcamStream(stream);
-      if (videoRef.current) {
-        videoRef.current.srcObject = stream;
-        videoRef.current.play();
-      }
-      setSelectedCategory("webcam");
-    } catch (error) {
-      console.error("Error accessing webcam: ", error);
-      alert("Please allow webcam access.");
-    }
+    // try {
+    //   const stream = await navigator.mediaDevices.getUserMedia({
+    //     video: true,
+    //   });
+    //   setWebcamStream(stream);
+    //   if (videoRef.current) {
+    //     videoRef.current.srcObject = stream;
+    //     videoRef.current.play();
+    //   }
+    //   setSelectedCategory("webcam");
+    // } catch (error) {
+    //   console.error("Error accessing webcam: ", error);
+    //   alert("Please allow webcam access.");
+    // }
+    navigate("/webcam"); // Navigate to the webcam recording page
   };
 
   // Stop webcam stream when no longer needed
-  const stopWebcam = () => {
-    if (webcamStream) {
-      const tracks = webcamStream.getTracks();
-      tracks.forEach((track) => track.stop());
-      setWebcamStream(null);
-    }
-  };
+  // const stopWebcam = () => {
+  //   if (webcamStream) {
+  //     const tracks = webcamStream.getTracks();
+  //     tracks.forEach((track) => track.stop());
+  //     setWebcamStream(null);
+  //   }
+  // };
 
   // Handle file upload
 
@@ -65,6 +66,8 @@ const UploadVideo = () => {
     const formData = new FormData();
   
     const files = e.target.files; // ✅ Fix: Get all selected files
+    console.log(files);
+    
     if (!files.length) return;
   
     const firstFile = files[0]; // First file to determine type
@@ -78,6 +81,8 @@ const UploadVideo = () => {
   
     formData.append("video_type", videoType); 
     formData.append("temp_upload", true);
+  
+    
   
     if (videoType === 3) {
       // ✅ Append files as an array only if `videoType === 3`
@@ -191,16 +196,16 @@ const UploadVideo = () => {
     navigate("/qcast"); // Navigate to '/qcast'
   };
 
-  useEffect(() => {
-    if (selectedCategory === "webcam" && !webcamStream) {
-      handleWebcamCapture(); // Start the webcam if it's selected
-    } else {
-      stopWebcam();
-    }
+  // useEffect(() => {
+  //   if (selectedCategory === "webcam" && !webcamStream) {
+  //     handleWebcamCapture(); // Start the webcam if it's selected
+  //   } else {
+  //     stopWebcam();
+  //   }
 
-    return () => stopWebcam(); // Cleanup on unmount
-  }, [selectedCategory]);
-  // Run effect when selectedCategory changes
+  //   return () => stopWebcam(); // Cleanup on unmount
+  // }, [selectedCategory]);
+  // // Run effect when selectedCategory changes
 
   return (
     <>
@@ -242,7 +247,8 @@ const UploadVideo = () => {
                   }}
                 >
                   {/* If webcam is active, show video */}
-                  {selectedCategory === "webcam" ? (
+                  {selectedCategory === "webcam" ?
+                   (
                     <video
                       ref={videoRef}
                       style={{
@@ -251,7 +257,8 @@ const UploadVideo = () => {
                         objectFit: "cover",
                       }}
                     />
-                  ) : (
+                  ) : 
+                  (
                     <img
                       src={categoryContent[selectedCategory].image}
                       alt={categoryContent[selectedCategory].label}
@@ -266,7 +273,8 @@ const UploadVideo = () => {
                         fileInputRef.current.click();
                       }}
                     />
-                  )}
+                  )
+                  }
                 </div>
 
                 {/* Label */}

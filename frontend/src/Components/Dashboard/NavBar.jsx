@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from "react";
+import React, { useContext, useEffect, useRef, useState } from "react";
 import logo from "../../assets/logo/logo.png";
 import profileImage from "../../assets/images/vector-users-icon.jpg";
 import axios from "axios";
@@ -13,12 +13,12 @@ import InboxIcon from "@mui/icons-material/Inbox";
 import FavoriteIcon from "@mui/icons-material/Favorite";
 import { Link, useNavigate } from "react-router-dom";
 import { useSelector, useDispatch } from "react-redux";
+import { StoreContext } from "../../Context/StoreContext";
 
 const NavBar = () => {
+  const { userData, favCountries } = useContext(StoreContext);
   const navigate = useNavigate();
   const [countries, setCountries] = useState([]);
-  const [favCountries, setFavCountries] = useState([]);
-  const [userDetails, setUserDetail] = useState([]);
   const dropdownRef = useRef(null);
   const [showDropdown, setShowDropdown] = useState(false);
   const [dropdown, setDropdown] = useState(false);
@@ -27,105 +27,52 @@ const NavBar = () => {
   const [showPopup, setShowPopup] = useState(false);
 
   const userDatas = async () => {
-    const token = localStorage.getItem("api_token");
     const storedCountries =
       JSON.parse(localStorage.getItem("geo_country")) || [];
     setCountries(storedCountries);
-    // console.log(storedCountries);
-
-    if (!token) {
-      return;
-    }
-    try {
-      const res = await axios.get(
-        "https://develop.quakbox.com/admin/api/user",
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        }
-      );
-
-      setUserDetail(res.data);
-    } catch (error) {
-      console.log(error);
-    }
   };
 
   const handleLogout = async () => {
     const token = localStorage.getItem("api_token");
-  
+
     if (!token) {
       console.log("No token found, user may not be logged in.");
       confirmLogout(); // Directly log out if no token
       return;
     }
-  
+
     try {
       const response = await axios.post(
         "https://develop.quakbox.com/admin/api/logout",
-        {}, 
+        {},
         {
           headers: { Authorization: `Bearer ${token}` },
         }
       );
-  
-      confirmLogout(); 
+
+      confirmLogout();
     } catch (error) {
       console.error(
         "Logout Error:",
         error.response ? error.response.data : error.message
       );
-      
+
       if (error.response && error.response.status === 401) {
         console.log("Token might be expired or invalid. Logging out.");
-        confirmLogout(); 
+        confirmLogout();
       }
     }
   };
-  
-  
+
   const confirmLogout = () => {
     setShowPopup(false); // Close the popup
     localStorage.clear(); // Clear local storage
     navigate("/", { replace: true }); // Redirect to login page
   };
-  
+
   useEffect(() => {
-    const fetchCountries = async () => {
-      const token = localStorage.getItem("api_token");
-  
-      if (!token) {
-        setError("Authorization token not found. Please log in.");
-        return;
-      }
-  
-      try {
-        const favCountriesRes = await axios.get(
-          "https://develop.quakbox.com/admin/api/get_favourite_country",
-          {
-            headers: { Authorization: `Bearer ${token}` },
-          }
-        );
-  
-        // console.log("API Response:", favCountriesRes.data); // Debugging
-  
-        const favouriteCountries =
-          favCountriesRes.data.favourite_country?.filter(
-            (fav) => fav.favourite_country === "1"
-          ) || [];
-  
-        // console.log("Filtered Favorites:", favouriteCountries); // Debugging
-  
-        setFavCountries(favouriteCountries);
-      } catch (error) {
-        console.error("Error fetching countries:", error);
-      }
-    };
-  
     userDatas(); // Ensure userDatas is defined
-    fetchCountries();
-  }, []);  
+  }, []);
 
   useEffect(() => {
     const handleOutsideClick = (event) => {
@@ -731,7 +678,7 @@ const NavBar = () => {
                   onClick={() => setShowDropdown((prev) => !prev)}
                 >
                   <img
-                    src={userDetails.profile_image_url}
+                    src={userData.profile_image_url}
                     alt="User"
                     style={{
                       width: "100%",
@@ -770,7 +717,7 @@ const NavBar = () => {
                         setShowDropdown((prev) => !prev);
                       }}
                     >
-                      {userDetails.users.username}
+                      {userData.users.username}
                     </a>
 
                     <a
@@ -850,15 +797,29 @@ const NavBar = () => {
                   }}
                 >
                   {/* Popup Title */}
-                  <h3 style={{ color: "#333", marginBottom: "10px" }}>Confirmation</h3>
-                  
+                  <h3 style={{ color: "#333", marginBottom: "10px" }}>
+                    Confirmation
+                  </h3>
+
                   {/* Message */}
-                  <p style={{ color: "#555", fontSize: "14px", marginBottom: "20px" }}>
+                  <p
+                    style={{
+                      color: "#555",
+                      fontSize: "14px",
+                      marginBottom: "20px",
+                    }}
+                  >
                     Are you sure you want to log out?
                   </p>
-                  
+
                   {/* Buttons Container */}
-                  <div style={{ display: "flex", justifyContent: "center", gap: "15px" }}>
+                  <div
+                    style={{
+                      display: "flex",
+                      justifyContent: "center",
+                      gap: "15px",
+                    }}
+                  >
                     {/* Cancel Button */}
                     <button
                       style={{
@@ -872,8 +833,12 @@ const NavBar = () => {
                         transition: "background 0.3s",
                       }}
                       onClick={() => setShowPopup(false)}
-                      onMouseOver={(e) => (e.target.style.backgroundColor = "#ccc")}
-                      onMouseOut={(e) => (e.target.style.backgroundColor = "#ddd")}
+                      onMouseOver={(e) =>
+                        (e.target.style.backgroundColor = "#ccc")
+                      }
+                      onMouseOut={(e) =>
+                        (e.target.style.backgroundColor = "#ddd")
+                      }
                     >
                       Cancel
                     </button>
@@ -894,8 +859,12 @@ const NavBar = () => {
                         setShowPopup(false);
                         handleLogout();
                       }}
-                      onMouseOver={(e) => (e.target.style.backgroundColor = "#0056b3")}
-                      onMouseOut={(e) => (e.target.style.backgroundColor = "#007bff")}
+                      onMouseOver={(e) =>
+                        (e.target.style.backgroundColor = "#0056b3")
+                      }
+                      onMouseOut={(e) =>
+                        (e.target.style.backgroundColor = "#007bff")
+                      }
                     >
                       Okay
                     </button>

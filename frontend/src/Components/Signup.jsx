@@ -147,7 +147,7 @@ const Signup = () => {
     // console.log(mobileOTP);
 
     // if (emailOTP.length === 6 && mobileOTP.length === 6) {
-      if (emailOTP.length === 6 ) {
+    if (emailOTP.length === 6) {
       await verifyOTP();
     } else {
       alert("Invalid OTP. Please try again.");
@@ -200,7 +200,7 @@ const Signup = () => {
       // Handle different cases
       // if (emailSuccess && mobileSuccess) {
 
-      if (emailSuccess ) {
+      if (emailSuccess) {
         toast.success("✅ OTP Verified Successfully! 🎉", {
           position: "top-center",
           autoClose: 5000,
@@ -244,7 +244,7 @@ const Signup = () => {
       //     }
       //   );
       //   console.log("Email OTP is incorrect");
-      // } 
+      // }
       else {
         toast.error("❌ Invalid or expired OTP for both email and mobile!", {
           position: "top-center",

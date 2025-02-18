@@ -18,7 +18,8 @@ const Login = () => {
     emailOrUsername: "",
     password: "",
   });
-  const { setUserData } = useContext(StoreContext);
+  const { setUserData, fetchUserData, fetchCountries } =
+    useContext(StoreContext);
 
   const changeLanguage = (lng) => {
     i18n.changeLanguage(lng);
@@ -35,9 +36,8 @@ const Login = () => {
   const validateForm = () => {
     const emailRegex =
       /^[a-zA-Z0-9._-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$|^[a-zA-Z0-9_-]{3,20}$/;
-      if (!userField.emailOrUsername) {
-
-        toast.error("Email or Username is required", {
+    if (!userField.emailOrUsername) {
+      toast.error("Email or Username is required", {
         position: "top-center",
         autoClose: 5000,
         hideProgressBar: false,
@@ -49,9 +49,13 @@ const Login = () => {
       });
       return false;
     }
-    if (!emailRegex.test(userField.emailOrUsername) && userField.emailOrUsername.length < 3) {
-
-      toast.error("Please enter a valid email or username", { transition: Bounce });
+    if (
+      !emailRegex.test(userField.emailOrUsername) &&
+      userField.emailOrUsername.length < 3
+    ) {
+      toast.error("Please enter a valid email or username", {
+        transition: Bounce,
+      });
       return false;
     }
     if (!userField.password) {
@@ -63,37 +67,13 @@ const Login = () => {
     return true;
   };
 
-  const fetchUserData = async () => {
-    const token = localStorage.getItem("api_token");
-    if (!token) {
-      setLoading(false);
-      return;
-    }
-
-    try {
-      const res = await axios.get(
-        "https://develop.quakbox.com/admin/api/user",
-        {
-          headers: { Authorization: `Bearer ${token}` },
-        }
-      );
-      localStorage.setItem("user_Details", JSON.stringify(res.data));
-      setUserData(res.data); // Updates state and stores in localStorage immediately
-      navigate("/dashboard", {});
-    } catch (error) {
-      console.error("Error fetching user data:", error);
-    } finally {
-      setLoading(false);
-    }
-  };
-
   const mailLogin = async () => {
     if (!validateForm()) return;
-  
+
     let loginData = {
       password: userField.password,
     };
-  
+
     if (userField.emailOrUsername.includes("@")) {
       // Email-based login
       loginData.email = userField.emailOrUsername;
@@ -101,20 +81,48 @@ const Login = () => {
       // Username-based login
       loginData.username = userField.emailOrUsername;
     }
-  
+
     try {
-      const response = await axios.post("https://develop.quakbox.com/admin/api/login", loginData);
+      const response = await axios.post(
+        "https://develop.quakbox.com/admin/api/login",
+        loginData
+      );
       if (response.data.result) {
         localStorage.setItem("api_token", response.data.token);
         await fetchUserData();
-      } else {
-        toast.error("Login Unsuccessful! Please Provide Correct Credentials", { transition: Bounce });
+        await fetchCountries();
+        navigate("/dashboard", {});
       }
+      toast.error("Login Unsuccessful! Please Provide Correct Credentials", {
+        transition: Bounce,
+      });
     } catch (error) {
-      toast.error("An error occurred during login", { transition: Bounce });
+      // Handle errors
+      if (error.response) {
+        // Server responded with a status other than 2xx
+        console.error("Error Response:", error.response.data);
+        // alert(error.response.data.message);
+
+        toast.error(error.response.data.message, { transition: Bounce });
+        // Clear the password field if login failed
+        setUserField((prevState) => ({
+          ...prevState,
+          password: "", // Clear the password field
+        }));
+      } else if (error.request) {
+        // No response was received
+        console.error("No Response:", error.request);
+        toast.error("No response received from the server", {
+          transition: Bounce,
+        });
+      } else {
+        toast.error("Login Unsuccessful! Please Provide Correct Credentials", {
+          transition: Bounce,
+        });
+      }
     }
   };
-  
+
   useEffect(() => {
     const fetchCountries = async () => {
       try {
@@ -300,17 +308,17 @@ const Login = () => {
               <h2 className="text-center fw-bold mb-4">Login</h2>
               <form>
                 <div className="mb-3">
-                <label htmlFor="emailOrUsername" className="form-label">
-                  {t("Your Email or Username")}
+                  <label htmlFor="emailOrUsername" className="form-label">
+                    {t("Your Email or Username")}
                   </label>
                   <input
-                  type="text"
-                  id="emailOrUsername"
-                  className="form-control"
-                  name="emailOrUsername"
-                  placeholder="Enter Email or Username"
-                  value={userField.emailOrUsername}
-                  onChange={(e) => changeUserFieldHandler(e)}
+                    type="text"
+                    id="emailOrUsername"
+                    className="form-control"
+                    name="emailOrUsername"
+                    placeholder="Enter Email or Username"
+                    value={userField.emailOrUsername}
+                    onChange={(e) => changeUserFieldHandler(e)}
                   />
                 </div>
                 <div className="mb-3">
