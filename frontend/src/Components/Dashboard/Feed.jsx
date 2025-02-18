@@ -482,11 +482,19 @@ const Feed = ({ countryCode, flag, countryName, handleCountryChange }) => {
   const handleLikeClick = async (postId) => {
     const token = localStorage.getItem("api_token");
 
+ // Check if the user has already liked the post
+   const alreadyLiked = post.likes?.liked_users?.some(
+          (user) => user.user_id === currentUserId
+    );
+    if (alreadyLiked) {
+         console.log("You've already liked this post.");
+         return; // Prevent further action if the user has already liked the post
+    }    
     const currentUser = {
       user_id: currentUserId, // Correct field name based on your API response
       name: userName.username || "Unknown User",
     };
-
+       
     setData((prevData) =>
       Array.isArray(prevData.posts)
         ? {
@@ -557,32 +565,42 @@ const Feed = ({ countryCode, flag, countryName, handleCountryChange }) => {
   };
 
   // // Handle Dislike Click
+  const [dislikeInProgress, setDislikeInProgress] = useState(false);
+  
   const handleDislikeClick = async (postId) => {
+    if (dislikeInProgress) return; // Prevent multiple clicks
+    setDislikeInProgress(true);
+  
     const token = localStorage.getItem("api_token");
-
+    const currentUserId = user?.id || localStorage.getItem("user_id");
+    const userName = user?.username || "Unknown User";
+  
+    if (!currentUserId) {
+      console.error("User ID not found!");
+      setDislikeInProgress(false);
+      return;
+    }
+  
     const currentUser = {
       user_id: currentUserId,
-      name: userName.username || "Unknown User",
+      name: userName,
     };
-
+  
+    // Optimistic UI update
     setData((prevData) =>
-      Array.isArray(prevData.posts)
+      prevData?.posts?.length
         ? {
             ...prevData,
             posts: prevData.posts.map((post) =>
               post.id === postId
                 ? {
                     ...post,
-                    disliked_users: [
-                      ...(post.disliked_users || []),
-                      currentUser,
-                    ],
-                    // Remove like if user had liked before
+                    disliked_users: [...(post.disliked_users || []), currentUser],
                     likes: {
                       count: Math.max((post.likes?.count || 0) - 1, 0),
-                      liked_users: (post.likes?.liked_users || []).filter(
+                      liked_users: post.likes?.liked_users?.filter(
                         (user) => user.user_id !== currentUserId
-                      ),
+                      ) || [],
                     },
                   }
                 : post
@@ -590,16 +608,14 @@ const Feed = ({ countryCode, flag, countryName, handleCountryChange }) => {
           }
         : prevData
     );
-
+  
     try {
       const res = await axios.post(
         `https://develop.quakbox.com/admin/api/set_posts_like/${postId}/dislike`,
         {},
-        {
-          headers: { Authorization: `Bearer ${token}` },
-        }
+        { headers: { Authorization: `Bearer ${token}` } }
       );
-
+  
       if (res.status !== 200) {
         console.error("Failed to save the dislike in the database.");
         revertDislike(postId);
@@ -607,13 +623,15 @@ const Feed = ({ countryCode, flag, countryName, handleCountryChange }) => {
     } catch (error) {
       console.error("Error disliking the post:", error);
       revertDislike(postId);
+    } finally {
+      setDislikeInProgress(false);
     }
   };
-
+  
   // Revert Dislike (Rollback if API call fails)
   const revertDislike = (postId) => {
     setData((prevData) =>
-      Array.isArray(prevData.posts)
+      prevData?.posts?.length
         ? {
             ...prevData,
             posts: prevData.posts.map((post) =>
@@ -629,7 +647,7 @@ const Feed = ({ countryCode, flag, countryName, handleCountryChange }) => {
           }
         : prevData
     );
-  };
+  };  
 
   // const getPost = async () => {
   //   const token = localStorage.getItem("api_token");
@@ -1383,61 +1401,64 @@ const Feed = ({ countryCode, flag, countryName, handleCountryChange }) => {
                       })}
                   </div>
 
-                  {/* Post Footer */}
-                  <div className="card-footer bg-white d-flex justify-content-between align-items-center border-0">
-                    <span className="text-muted">
+              {/* Post Footer */}
+              <div className="card-footer bg-white d-flex justify-content-between align-items-center border-0">
+                  <span className="text-muted">
                       {post.likes && post.likes.count !== undefined
-                        ? `${post.likes.count} likes`
-                        : "0 likes"}
-                    </span>
+                          ? `${post.likes.count} likes`
+                          : "0 likes"}
+                  </span>
 
-                    <div className="d-flex">
+                  <div className="d-flex">
                       <button
-                        className={`btn btn-sm me-2 ${
-                          post.likes?.liked_users?.some(
-                            (user) => user.user_id == loggedInUserId
-                          )
-                            ? "btn-primary text-white"
-                            : "btn-light"
-                        }`}
-                        onClick={() => handleLikeClick(post.id)}
-                      >
-                        <ThumbUpIcon
-                          sx={{
-                            fontSize: 18,
-                            marginRight: "5px",
-                            color: post.likes?.liked_users?.some(
+                          className={`btn btn-sm me-2 ${
+                              post.likes?.liked_users?.some(
+                                  (user) => user.user_id == loggedInUserId
+                              )
+                                  ? "btn-primary text-white"
+                                  : "btn-light"
+                          }`}
+                          onClick={() => handleLikeClick(post.id)}
+                          disabled={post.likes?.liked_users?.some(
                               (user) => user.user_id == loggedInUserId
-                            )
-                              ? "white"
-                              : "inherit",
-                          }}
-                        />
-                        Like
+                          )}
+                      >
+                          <ThumbUpIcon
+                              sx={{
+                                  fontSize: 18,
+                                  marginRight: "5px",
+                                  color: post.likes?.liked_users?.some(
+                                      (user) => user.user_id == loggedInUserId
+                                  )
+                                      ? "white"
+                                      : "inherit",
+                              }}
+                          />
+                          Like
                       </button>
 
                       <button
-                        className={`btn btn-sm me-2 ${
-                          post.disliked_users?.some(
-                            (user) => user.user_id === loggedInUserId
-                          )
-                            ? "btn-danger text-white"
-                            : "btn-light"
-                        }`}
-                        onClick={() => handleDislikeClick(post.id)}
+                          className={`btn btn-sm me-2 ${
+                              post.disliked_users?.some(
+                                  (user) => user.user_id === loggedInUserId
+                              )
+                                  ? "btn-danger text-white"
+                                  : "btn-light"
+                          }`}
+                          onClick={() => handleDislikeClick(post.id)}
                       >
-                        <ThumbDownIcon
-                          sx={{
-                            fontSize: 18,
-                            marginRight: "5px",
-                            color: post.disliked_users?.some(
-                              (user) => user.user_id === loggedInUserId
-                            )
-                              ? "white"
-                              : "inherit",
-                          }}
-                        />
-                        Dislike
+                          <ThumbDownIcon
+                              sx={{
+                                  fontSize: 18,
+                                  marginRight: "5px",
+                                  color: post.disliked_users?.some(
+                                      (user) => user.user_id === loggedInUserId
+                                  )
+                                      ? "white"
+                                      : "inherit",
+                              }}
+                          />
+                          Dislike
                       </button>
 
                       <button
