@@ -217,4 +217,23 @@ class PostController extends Controller
 
         return response()->json(["status" => true, 'message' => 'Post shared successfully', 'share' => $share]);
     }
+    // Delete a comment
+    public function commentDestroy(Request $request, $postId, $commentId)
+    {
+        // Find the post
+        $post = Post::findOrFail($postId);
+
+        // Find the comment
+        $comment = Comment::where('post_id', $postId)->findOrFail($commentId);
+
+        // Check if the comment belongs to the authenticated user
+        if ($comment->user_id !== $request->user()->id) {
+            return response()->json(["status" => false, 'message' => 'Unauthorized'], 403);
+        }
+
+        // Delete the comment
+        $comment->delete();
+
+        return response()->json(["status" => true, 'message' => 'Comment deleted successfully']);
+    }
 }
