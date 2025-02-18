@@ -8,7 +8,7 @@ import logo from "../assets/logo/quak_logo.png";
 import bg from "../assets/images/blurred-empty-open-space-office-600nw-2411635125.webp";
 import DEFAULT_PROFILE_IMAGE from "../assets/images/user1.png";
 import { FaEdit } from "react-icons/fa";
-
+import { parsePhoneNumberFromString } from "libphonenumber-js";
 const Signup = () => {
   const navigate = useNavigate();
   const { t } = useTranslation();
@@ -566,6 +566,68 @@ const Signup = () => {
 
     return errors;
   };
+  const handlePhoneChange = (phone) => {
+    console.log("Raw input phone:", phone);
+
+    // Remove non-numeric characters
+    const cleanPhone = phone.replace(/\D/g, "");
+    console.log("Cleaned phone:", cleanPhone);
+
+    // Fix country code formatting
+    const countryCode = userField.countryCode.startsWith("+")
+      ? userField.countryCode
+      : `+${userField.countryCode}`;
+    console.log("Selected Country Code:", countryCode);
+
+    // Create a full phone number string
+    const fullPhoneNumber = `${countryCode}${cleanPhone}`;
+    console.log("Full phone number for validation:", fullPhoneNumber);
+
+    // Parse phone number using libphonenumber-js
+    const phoneNumber = parsePhoneNumberFromString(fullPhoneNumber);
+
+    if (phoneNumber) {
+      console.log("Parsed phone number object:", phoneNumber);
+      console.log("Phone number validity:", phoneNumber.isValid());
+
+      // Check if the number is valid according to libphonenumber-js
+      if (phoneNumber.isValid()) {
+        // Get the length of the national number (excluding country code)
+        const nationalNumberLength = phoneNumber.nationalNumber.length;
+        console.log("National number length:", nationalNumberLength);
+
+        // You can define a maximum or expected length here for the number
+        // For example, for India, valid numbers typically have 10 digits.
+        const expectedLength = 10; // This can be dynamically set based on country, if needed.
+
+        if (nationalNumberLength !== expectedLength) {
+          setUserField({
+            ...userField,
+            phone: cleanPhone,
+            phoneError: `Phone number must be ${expectedLength} digits long.`,
+          });
+          console.log(`❌ Phone number must be ${expectedLength} digits long.`);
+        } else {
+          setUserField({ ...userField, phone: cleanPhone, phoneError: "" });
+          console.log("✅ Phone number is valid!");
+        }
+      } else {
+        setUserField({
+          ...userField,
+          phone: cleanPhone,
+          phoneError: "Invalid phone number for selected country",
+        });
+        console.log("❌ Invalid phone number for the selected country.");
+      }
+    } else {
+      setUserField({
+        ...userField,
+        phone: cleanPhone,
+        phoneError: "Invalid phone number format",
+      });
+      console.log("❌ Invalid phone number format.");
+    }
+  };
 
   return (
     <div className="container-fluid vh-100 d-flex flex-column flex-md-row p-0">
@@ -919,8 +981,12 @@ const Signup = () => {
                     onChange={(e) =>
                       setUserField({ ...userField, phone: e.target.value })
                     }
+                    onBlur={(e) => handlePhoneChange(e.target.value)}
                   />
                 </div>
+                {userField.phoneError && (
+                  <small className="text-danger">{userField.phoneError}</small>
+                )}
               </div>
               <div className="form-group mb-1">
                 <label htmlFor="email" className="fs-6">
