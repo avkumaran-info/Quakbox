@@ -217,23 +217,33 @@ class PostController extends Controller
 
         return response()->json(["status" => true, 'message' => 'Post shared successfully', 'share' => $share]);
     }
-    // Delete a comment
     public function commentDestroy(Request $request, $postId, $commentId)
     {
-        // Find the post
-        $post = Post::findOrFail($postId);
-
-        // Find the comment
-        $comment = Comment::where('post_id', $postId)->findOrFail($commentId);
-
-        // Check if the comment belongs to the authenticated user
-        if ($comment->user_id !== $request->user()->id) {
-            return response()->json(["status" => false, 'message' => 'Unauthorized'], 403);
+        // Find the post by ID
+        $post = Post::find($postId);
+    
+        if (!$post) {
+            return response()->json(['message' => 'Post not found'], 404);
         }
-
+    
+        // Find the comment by ID within the post
+        $comment = $post->comments()->find($commentId);
+    
+        if (!$comment) {
+            return response()->json(['message' => 'Comment not found'], 404);
+        }
+    
+        // Get the authenticated user's ID from the token
+        $userId = $request->user()->id;
+    
+        // Check if the logged-in user is the owner of the comment
+        if ($comment->user_id !== $userId) {
+            return response()->json(['message' => 'You can only delete your own comment'], 403);
+        }
+    
         // Delete the comment
         $comment->delete();
-
-        return response()->json(["status" => true, 'message' => 'Comment deleted successfully']);
-    }
+    
+        return response()->json(['message' => 'Comment deleted successfully'], 200);
+    }    
 }

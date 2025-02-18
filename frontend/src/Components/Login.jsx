@@ -89,53 +89,32 @@ const Login = () => {
 
   const mailLogin = async () => {
     if (!validateForm()) return;
+  
+    let loginData = {
+      password: userField.password,
+    };
+  
+    if (userField.emailOrUsername.includes("@")) {
+      // Email-based login
+      loginData.email = userField.emailOrUsername;
+    } else {
+      // Username-based login
+      loginData.username = userField.emailOrUsername;
+    }
+  
     try {
-      const response = await axios.post(
-        "https://develop.quakbox.com/admin/api/login",
-        userField
-      );
-      // Handle successful login
-      // console.log("Login Successful:", response.data);
-      // country getatis
+      const response = await axios.post("https://develop.quakbox.com/admin/api/login", loginData);
       if (response.data.result) {
-        // Store the token (optional)
         localStorage.setItem("api_token", response.data.token);
         await fetchUserData();
       } else {
-
-        toast.error("Login Unsuccessful! Please Provide Correct Credentials", {
-
-          transition: Bounce,
-
-        });
+        toast.error("Login Unsuccessful! Please Provide Correct Credentials", { transition: Bounce });
       }
     } catch (error) {
-      // Handle errors
-      if (error.response) {
-        // Server responded with a status other than 2xx
-        console.error("Error Response:", error.response.data);
-        // alert(error.response.data.message);
-
-        toast.error(error.response.data.message, { transition: Bounce });
-        // Clear the password field if login failed
-        setUserField((prevState) => ({
-          ...prevState,
-          password: "", // Clear the password field
-        }));
-      } else if (error.request) {
-        // No response was received
-        console.error("No Response:", error.request);
-        toast.error("No response received from the server", {
-          transition: Bounce,
-        });
-      } else {
-        // Something else caused the error
-        console.error("Error Message:", error.message);
-        toast.error("An unexpected error occurred", { transition: Bounce });
-      }
+      toast.error("An error occurred during login", { transition: Bounce });
     }
   };
-
+  
   useEffect(() => {
     const fetchCountries = async () => {
       try {
