@@ -132,7 +132,7 @@ class AuthController extends Controller
                 'password' => 'required|string',
             ]);
     
-            $credentials = ['name' => $request->username, 'password' => $request->password];
+            $credentials = ['username' => $request->username, 'password' => $request->password];
         } else {
             return response()->json([
                 'result' => false,
