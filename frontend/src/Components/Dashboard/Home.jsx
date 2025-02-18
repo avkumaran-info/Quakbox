@@ -11,11 +11,6 @@ import { StoreContext } from "../../Context/StoreContext";
 // Function to fetch country details
 const getCountryDetails = async (countryCode) => {
   try {
-    // const response = await axios.get(
-    //   // "https://restcountries.com/v3.1/all"
-    //   "https://develop.quakbox.com/admin/api/get_geo_country"
-    // );
-
     const storedCountries =
       JSON.parse(localStorage.getItem("geo_country")) || [];
 

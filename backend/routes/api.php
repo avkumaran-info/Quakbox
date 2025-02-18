@@ -38,6 +38,7 @@ Route::middleware('auth:api')->post('end-stream', [LiveStreamController::class, 
 Route::get('/live/{streamKey}', [LiveStreamController::class, 'watchLiveStream']);
 
 Route::post('login', [AuthController::class, 'login']);
+
 Route::post('register', [AuthController::class, 'register']);
 Route::middleware(['auth:api', 'token.expiry'])->post('logout', [AuthController::class, 'logout']);
 
@@ -76,6 +77,8 @@ Route::middleware('auth:api')->group(function () {
     Route::get('get_posts_comment/{id}/comment', [PostController::class, 'getComment']);
     Route::post('set_posts_comment/{id}/comment', [PostController::class, 'postComment']); // Comment on post
     Route::post('set_posts_share/{id}/share', [PostController::class, 'postShare']); // Share post
+    // Route to delete a comment
+    Route::delete('del_posts/{postId}/comments/{commentId}', [PostController::class, 'commentDestroy']); // Delete comment
 });
 
 Route::get('images/uploads/posts/{filename}', function ($filename) {

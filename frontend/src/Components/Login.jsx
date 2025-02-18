@@ -15,7 +15,7 @@ const Login = () => {
   const navigate = useNavigate();
   const { t } = useTranslation();
   const [userField, setUserField] = useState({
-    email: "",
+    emailOrUsername: "",
     password: "",
   });
   const { setUserData, fetchUserData, fetchCountries } =
@@ -36,10 +36,8 @@ const Login = () => {
   const validateForm = () => {
     const emailRegex =
       /^[a-zA-Z0-9._-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$|^[a-zA-Z0-9_-]{3,20}$/;
-    if (!userField.email) {
-      // alert("Email is required");
-
-      toast.error("Email is required", {
+    if (!userField.emailOrUsername) {
+      toast.error("Email or Username is required", {
         position: "top-center",
         autoClose: 5000,
         hideProgressBar: false,
@@ -51,10 +49,13 @@ const Login = () => {
       });
       return false;
     }
-    if (!emailRegex.test(userField.email)) {
-      // alert("Please enter a valid email address");
-
-      toast.error("Please enter a valid email address", { transition: Bounce });
+    if (
+      !emailRegex.test(userField.emailOrUsername) &&
+      userField.emailOrUsername.length < 3
+    ) {
+      toast.error("Please enter a valid email or username", {
+        transition: Bounce,
+      });
       return false;
     }
     if (!userField.password) {
@@ -68,16 +69,25 @@ const Login = () => {
 
   const mailLogin = async () => {
     if (!validateForm()) return;
+
+    let loginData = {
+      password: userField.password,
+    };
+
+    if (userField.emailOrUsername.includes("@")) {
+      // Email-based login
+      loginData.email = userField.emailOrUsername;
+    } else {
+      // Username-based login
+      loginData.username = userField.emailOrUsername;
+    }
+
     try {
       const response = await axios.post(
         "https://develop.quakbox.com/admin/api/login",
-        userField
+        loginData
       );
-      // Handle successful login
-      // console.log("Login Successful:", response.data);
-      // country getatis
       if (response.data.result) {
-        // Store the token (optional)
         localStorage.setItem("api_token", response.data.token);
         await fetchUserData();
         await fetchCountries();
@@ -106,9 +116,9 @@ const Login = () => {
           transition: Bounce,
         });
       } else {
-        // Something else caused the error
-        console.error("Error Message:", error.message);
-        toast.error("An unexpected error occurred", { transition: Bounce });
+        toast.error("Login Unsuccessful! Please Provide Correct Credentials", {
+          transition: Bounce,
+        });
       }
     }
   };
@@ -298,16 +308,16 @@ const Login = () => {
               <h2 className="text-center fw-bold mb-4">Login</h2>
               <form>
                 <div className="mb-3">
-                  <label htmlFor="email" className="form-label">
-                    {t(" Your Email or UserName")}
+                  <label htmlFor="emailOrUsername" className="form-label">
+                    {t("Your Email or Username")}
                   </label>
                   <input
-                    type="email"
-                    id="email"
+                    type="text"
+                    id="emailOrUsername"
                     className="form-control"
-                    name="email"
-                    placeholder="Enter Email or UserName"
-                    value={userField.email}
+                    name="emailOrUsername"
+                    placeholder="Enter Email or Username"
+                    value={userField.emailOrUsername}
                     onChange={(e) => changeUserFieldHandler(e)}
                   />
                 </div>

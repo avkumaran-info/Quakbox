@@ -116,6 +116,30 @@ const Feed = ({ countryCode, flag, countryName, handleCountryChange }) => {
     setVisibleComments((prev) => prev + 10); // Load 10 more comments on click
   };
 
+  const deleteComment = async (postId, commentId) => {
+    try {
+      const token = localStorage.getItem("api_token");
+      if (!token) {
+        console.error("No API token found");
+        return;
+      }
+  
+      const response = await axios.delete(
+        `https://develop.quakbox.com/admin/api/del_posts/${postId}/comments/${commentId}`,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+  
+      console.log("Comment deleted:", response.data);
+      // After deletion, refresh the comments
+      getCommets(selectedPost);
+    } catch (error) {
+      console.error("Error deleting comment:", error);
+    }
+  };  
   // Open Delete Popup
   const openDeletePopup = (post) => {
     setPostToDelete(post);
@@ -1154,6 +1178,15 @@ const Feed = ({ countryCode, flag, countryName, handleCountryChange }) => {
                                       comment.comment_updated_datetime
                                     )}
                                   </small>
+                                   {/* Delete Button */}
+                                  {comment.comment_user_id === userId && (
+                                    <button
+                                      className="btn btn-sm btn-danger mt-1"
+                                      onClick={() => deleteComment(selectedPost.id, comment.id)}
+                                    >
+                                      Delete
+                                    </button>
+                                  )}
                                 </div>
                               </div>
                             ))
