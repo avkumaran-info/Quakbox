@@ -15,7 +15,7 @@ const Login = () => {
   const navigate = useNavigate();
   const { t } = useTranslation();
   const [userField, setUserField] = useState({
-    email: "",
+    emailOrUsername: "",
     password: "",
   });
   const { setUserData } = useContext(StoreContext);
@@ -35,10 +35,9 @@ const Login = () => {
   const validateForm = () => {
     const emailRegex =
       /^[a-zA-Z0-9._-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$|^[a-zA-Z0-9_-]{3,20}$/;
-    if (!userField.email) {
-      // alert("Email is required");
+      if (!userField.emailOrUsername) {
 
-      toast.error("Email is required", {
+        toast.error("Email or Username is required", {
         position: "top-center",
         autoClose: 5000,
         hideProgressBar: false,
@@ -50,10 +49,9 @@ const Login = () => {
       });
       return false;
     }
-    if (!emailRegex.test(userField.email)) {
-      // alert("Please enter a valid email address");
+    if (!emailRegex.test(userField.emailOrUsername) && userField.emailOrUsername.length < 3) {
 
-      toast.error("Please enter a valid email address", { transition: Bounce });
+      toast.error("Please enter a valid email or username", { transition: Bounce });
       return false;
     }
     if (!userField.password) {
@@ -91,49 +89,32 @@ const Login = () => {
 
   const mailLogin = async () => {
     if (!validateForm()) return;
+  
+    let loginData = {
+      password: userField.password,
+    };
+  
+    if (userField.emailOrUsername.includes("@")) {
+      // Email-based login
+      loginData.email = userField.emailOrUsername;
+    } else {
+      // Username-based login
+      loginData.username = userField.emailOrUsername;
+    }
+  
     try {
-      const response = await axios.post(
-        "https://develop.quakbox.com/admin/api/login",
-        userField
-      );
-      // Handle successful login
-      // console.log("Login Successful:", response.data);
-      // country getatis
+      const response = await axios.post("https://develop.quakbox.com/admin/api/login", loginData);
       if (response.data.result) {
-        // Store the token (optional)
         localStorage.setItem("api_token", response.data.token);
         await fetchUserData();
-      }
-      toast.error("Login Unsuccessful! Please Provide Correct Credentials", {
-        transition: Bounce,
-      });
-    } catch (error) {
-      // Handle errors
-      if (error.response) {
-        // Server responded with a status other than 2xx
-        console.error("Error Response:", error.response.data);
-        // alert(error.response.data.message);
-
-        toast.error(error.response.data.message, { transition: Bounce });
-        // Clear the password field if login failed
-        setUserField((prevState) => ({
-          ...prevState,
-          password: "", // Clear the password field
-        }));
-      } else if (error.request) {
-        // No response was received
-        console.error("No Response:", error.request);
-        toast.error("No response received from the server", {
-          transition: Bounce,
-        });
       } else {
-        // Something else caused the error
-        console.error("Error Message:", error.message);
-        toast.error("An unexpected error occurred", { transition: Bounce });
+        toast.error("Login Unsuccessful! Please Provide Correct Credentials", { transition: Bounce });
       }
+    } catch (error) {
+      toast.error("An error occurred during login", { transition: Bounce });
     }
   };
-
+  
   useEffect(() => {
     const fetchCountries = async () => {
       try {
@@ -319,17 +300,17 @@ const Login = () => {
               <h2 className="text-center fw-bold mb-4">Login</h2>
               <form>
                 <div className="mb-3">
-                  <label htmlFor="email" className="form-label">
-                    {t(" Your Email or UserName")}
+                <label htmlFor="emailOrUsername" className="form-label">
+                  {t("Your Email or Username")}
                   </label>
                   <input
-                    type="email"
-                    id="email"
-                    className="form-control"
-                    name="email"
-                    placeholder="Enter Email or UserName"
-                    value={userField.email}
-                    onChange={(e) => changeUserFieldHandler(e)}
+                  type="text"
+                  id="emailOrUsername"
+                  className="form-control"
+                  name="emailOrUsername"
+                  placeholder="Enter Email or Username"
+                  value={userField.emailOrUsername}
+                  onChange={(e) => changeUserFieldHandler(e)}
                   />
                 </div>
                 <div className="mb-3">

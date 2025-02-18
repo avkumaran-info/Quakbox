@@ -16,6 +16,7 @@ use Illuminate\Support\Str;
 use Illuminate\Auth\Events\Registered;
 use Laravel\Socialite\Facades\Socialite;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 
 use App\Models\User;
 use App\Models\Members;
@@ -115,53 +116,49 @@ class AuthController extends Controller
     }
     public function login(Request $request)
     {
-
-        // Validate the incoming request
-        $request->validate([
-            'email' => [
-                'required',
-                'string',
-                function ($attribute, $value, $fail) {
-                    // Check if the value is a valid email
-                    if (filter_var($value, FILTER_VALIDATE_EMAIL)) {
-                        return true; // No need for further checks if it's a valid email.
-                    }
-
-                    // Check if the value is a valid username
-                    if (!preg_match('/^[a-zA-Z0-9_-]{3,20}$/', $value)) {
-                        return $fail('The ' . $attribute . ' must be a valid email or username.');
-                    }
-                }
-            ],
-            'password' => 'required|string',
-        ]);
-
-        // Login with email or username
-        $mailCredentials = $request->only('email', 'password');
-        $nameCredentials = $request->only('username', 'password');
-
-        if (Auth::attempt($mailCredentials) || Auth::attempt($nameCredentials)) {
-            $user = Auth::user();
-            $members = Members::where('member_id', $user["id"])->get();
-            $token = $user->createToken('AuthToken')->accessToken;
-
-            if ($request->route()->middleware() && in_array('api', $request->route()->middleware())) {
-                return response()->json([
-                    'result' => true,
-                    'message' => 'Login successful',
-                    'token' => $token
-                ], 200);
-            }
-
-            return redirect()->route('home');
+        // Check if login is with email or username
+        if ($request->has('email')) {
+            // Email-based login validation
+            $request->validate([
+                'email' => 'required|email',
+                'password' => 'required|string',
+            ]);
+    
+            $credentials = $request->only('email', 'password');
+        } elseif ($request->has('username')) {
+            // Username-based login validation
+            $request->validate([
+                'username' => 'required|string|min:3|max:20',
+                'password' => 'required|string',
+            ]);
+    
+            $credentials = ['name' => $request->username, 'password' => $request->password];
+        } else {
+            return response()->json([
+                'result' => false,
+                'message' => 'Please provide either an email or a username.',
+            ], 400);
         }
-
+    
+        // Attempt login
+        if (Auth::attempt($credentials)) {
+            $user = Auth::user();
+            $token = $user->createToken('AuthToken')->accessToken;
+    
+            return response()->json([
+                'result' => true,
+                'message' => 'Login successful',
+                'token' => $token,
+                'expire_at' => now()->addMinutes(60),
+                'created_at' => now(),
+            ], 200);
+        }
+    
         return response()->json([
             'result' => false,
-            'message' => 'Login Unsuccessful'
-        ], 200);
-    }
-
+            'message' => 'Invalid credentials',
+        ], 401);
+    }    
     public function register(Request $request)
     {
 
