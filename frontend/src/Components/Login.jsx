@@ -15,7 +15,7 @@ const Login = () => {
   const navigate = useNavigate();
   const { t } = useTranslation();
   const [userField, setUserField] = useState({
-    email: "",
+    emailOrUsername: "",
     password: "",
   });
   const { setUserData } = useContext(StoreContext);
@@ -35,10 +35,9 @@ const Login = () => {
   const validateForm = () => {
     const emailRegex =
       /^[a-zA-Z0-9._-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$|^[a-zA-Z0-9_-]{3,20}$/;
-    if (!userField.email) {
-      // alert("Email is required");
+      if (!userField.emailOrUsername) {
 
-      toast.error("Email is required", {
+        toast.error("Email or Username is required", {
         position: "top-center",
         autoClose: 5000,
         hideProgressBar: false,
@@ -50,10 +49,9 @@ const Login = () => {
       });
       return false;
     }
-    if (!emailRegex.test(userField.email)) {
-      // alert("Please enter a valid email address");
+    if (!emailRegex.test(userField.emailOrUsername) && userField.emailOrUsername.length < 3) {
 
-      toast.error("Please enter a valid email address", { transition: Bounce });
+      toast.error("Please enter a valid email or username", { transition: Bounce });
       return false;
     }
     if (!userField.password) {
@@ -103,10 +101,14 @@ const Login = () => {
         // Store the token (optional)
         localStorage.setItem("api_token", response.data.token);
         await fetchUserData();
+      } else {
+
+        toast.error("Login Unsuccessful! Please Provide Correct Credentials", {
+
+          transition: Bounce,
+
+        });
       }
-      toast.error("Login Unsuccessful! Please Provide Correct Credentials", {
-        transition: Bounce,
-      });
     } catch (error) {
       // Handle errors
       if (error.response) {
@@ -319,17 +321,17 @@ const Login = () => {
               <h2 className="text-center fw-bold mb-4">Login</h2>
               <form>
                 <div className="mb-3">
-                  <label htmlFor="email" className="form-label">
-                    {t(" Your Email or UserName")}
+                <label htmlFor="emailOrUsername" className="form-label">
+                  {t("Your Email or Username")}
                   </label>
                   <input
-                    type="email"
-                    id="email"
-                    className="form-control"
-                    name="email"
-                    placeholder="Enter Email or UserName"
-                    value={userField.email}
-                    onChange={(e) => changeUserFieldHandler(e)}
+                  type="text"
+                  id="emailOrUsername"
+                  className="form-control"
+                  name="emailOrUsername"
+                  placeholder="Enter Email or Username"
+                  value={userField.emailOrUsername}
+                  onChange={(e) => changeUserFieldHandler(e)}
                   />
                 </div>
                 <div className="mb-3">
