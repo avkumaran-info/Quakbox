@@ -18,7 +18,8 @@ const Login = () => {
     email: "",
     password: "",
   });
-  const { setUserData } = useContext(StoreContext);
+  const { setUserData, fetchUserData, fetchCountries } =
+    useContext(StoreContext);
 
   const changeLanguage = (lng) => {
     i18n.changeLanguage(lng);
@@ -65,30 +66,6 @@ const Login = () => {
     return true;
   };
 
-  const fetchUserData = async () => {
-    const token = localStorage.getItem("api_token");
-    if (!token) {
-      setLoading(false);
-      return;
-    }
-
-    try {
-      const res = await axios.get(
-        "https://develop.quakbox.com/admin/api/user",
-        {
-          headers: { Authorization: `Bearer ${token}` },
-        }
-      );
-      localStorage.setItem("user_Details", JSON.stringify(res.data));
-      setUserData(res.data); // Updates state and stores in localStorage immediately
-      navigate("/dashboard", {});
-    } catch (error) {
-      console.error("Error fetching user data:", error);
-    } finally {
-      setLoading(false);
-    }
-  };
-
   const mailLogin = async () => {
     if (!validateForm()) return;
     try {
@@ -103,6 +80,8 @@ const Login = () => {
         // Store the token (optional)
         localStorage.setItem("api_token", response.data.token);
         await fetchUserData();
+        await fetchCountries();
+        navigate("/dashboard", {});
       }
       toast.error("Login Unsuccessful! Please Provide Correct Credentials", {
         transition: Bounce,

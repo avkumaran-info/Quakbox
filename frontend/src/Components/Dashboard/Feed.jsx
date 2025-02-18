@@ -1,12 +1,14 @@
-import React, { useEffect, useState } from "react";
+import React, { useContext, useEffect, useState } from "react";
 import defaultUserImage from "../../assets/images/vector-users-icon.jpg";
 import axios from "axios";
 import CommentIcon from "@mui/icons-material/Comment";
 import ThumbUpIcon from "@mui/icons-material/ThumbUp";
 import ThumbDownIcon from "@mui/icons-material/ThumbDown";
 import ShareIcon from "@mui/icons-material/Share";
+import { StoreContext } from "../../Context/StoreContext";
 
 const Feed = ({ countryCode, flag, countryName, handleCountryChange }) => {
+  const { userData } = useContext(StoreContext);
   const [navbarHeight, setNavbarHeight] = useState(56);
   const [likedPosts, setLikedPosts] = useState([]);
   const [dislikedPosts, setDislikedPosts] = useState([]);
@@ -15,9 +17,6 @@ const Feed = ({ countryCode, flag, countryName, handleCountryChange }) => {
   const [message, setMessage] = useState("");
   const [mediaFile, setMediaFile] = useState(null);
   const [mediaPreview, setMediaPreview] = useState(null);
-  const [userName, setUserName] = useState("");
-  const [currentUserId, setCurrentUserId] = useState(null);
-  const [userDetails, setUserDetails] = useState([]);
   const [isDeletePopupOpen, setIsDeletePopupOpen] = useState(false);
   const [isEditPopupOpen, setIsEditPopupOpen] = useState(false);
   const [postToDelete, setPostToDelete] = useState(null);
@@ -266,25 +265,25 @@ const Feed = ({ countryCode, flag, countryName, handleCountryChange }) => {
     }
   };
 
-  const userData = async () => {
-    const token = localStorage.getItem("api_token");
-    if (!token) {
-      return;
-    }
-    try {
-      const res = await axios.get(
-        "https://develop.quakbox.com/admin/api/user",
-        {
-          headers: { Authorization: `Bearer ${token}` },
-        }
-      );
-      setUserDetails(res.data);
-      setUserName(res.data.users);
-      setCurrentUserId(res.data.users.id);
-    } catch (error) {
-      console.log(error);
-    }
-  };
+  // const userData = async () => {
+  //   const token = localStorage.getItem("api_token");
+  //   if (!token) {
+  //     return;
+  //   }
+  //   try {
+  //     const res = await axios.get(
+  //       "https://develop.quakbox.com/admin/api/user",
+  //       {
+  //         headers: { Authorization: `Bearer ${token}` },
+  //       }
+  //     );
+  //     setUserDetails(res.data);
+  //     setUserName(res.data.users);
+  //     setCurrentUserId(userData.users.id);
+  //   } catch (error) {
+  //     console.log(error);
+  //   }
+  // };
 
   const handleSubmit = async () => {
     const token = localStorage.getItem("api_token");
@@ -320,8 +319,8 @@ const Feed = ({ countryCode, flag, countryName, handleCountryChange }) => {
           message: message,
           created_time: new Date().toISOString(),
           from: {
-            name: userName.username,
-            profile_image: userDetails.profile_image_url,
+            name: userData.users.username,
+            profile_image: userData.profile_image_url,
           },
           attachments: mediaFile
             ? {
@@ -459,8 +458,8 @@ const Feed = ({ countryCode, flag, countryName, handleCountryChange }) => {
     const token = localStorage.getItem("api_token");
 
     const currentUser = {
-      user_id: currentUserId, // Correct field name based on your API response
-      name: userName.username || "Unknown User",
+      user_id: userData.users.id, // Correct field name based on your API response
+      name: userData.users.username || "Unknown User",
     };
 
     setData((prevData) =>
@@ -480,7 +479,7 @@ const Feed = ({ countryCode, flag, countryName, handleCountryChange }) => {
                     },
                     // Remove dislike if user had disliked before
                     disliked_users: (post.disliked_users || []).filter(
-                      (user) => user.user_id !== currentUserId
+                      (user) => user.user_id !== userData.users.id
                     ),
                   }
                 : post
@@ -521,7 +520,7 @@ const Feed = ({ countryCode, flag, countryName, handleCountryChange }) => {
                     likes: {
                       count: Math.max((post.likes?.count || 0) - 1, 0),
                       liked_users: (post.likes?.liked_users || []).filter(
-                        (user) => user.user_id !== currentUserId
+                        (user) => user.user_id !== userData.users.id
                       ),
                     },
                   }
@@ -537,8 +536,8 @@ const Feed = ({ countryCode, flag, countryName, handleCountryChange }) => {
     const token = localStorage.getItem("api_token");
 
     const currentUser = {
-      user_id: currentUserId,
-      name: userName.username || "Unknown User",
+      user_id: userData.users.id,
+      name: userData.users.username || "Unknown User",
     };
 
     setData((prevData) =>
@@ -557,7 +556,7 @@ const Feed = ({ countryCode, flag, countryName, handleCountryChange }) => {
                     likes: {
                       count: Math.max((post.likes?.count || 0) - 1, 0),
                       liked_users: (post.likes?.liked_users || []).filter(
-                        (user) => user.user_id !== currentUserId
+                        (user) => user.user_id !== userData.users.id
                       ),
                     },
                   }
@@ -597,7 +596,7 @@ const Feed = ({ countryCode, flag, countryName, handleCountryChange }) => {
                 ? {
                     ...post,
                     disliked_users: (post.disliked_users || []).filter(
-                      (user) => user.user_id !== currentUserId
+                      (user) => user.user_id !== userData.users.id
                     ),
                   }
                 : post
@@ -639,6 +638,8 @@ const Feed = ({ countryCode, flag, countryName, handleCountryChange }) => {
       console.log("No token found, user may not be logged in.");
       return;
     }
+    console.log(countryCode);
+
     try {
       const res = await axios.get(
         `https://develop.quakbox.com/admin/api/get_posts/${countryCode}`,
@@ -674,7 +675,7 @@ const Feed = ({ countryCode, flag, countryName, handleCountryChange }) => {
   }, [mediaPreview]);
 
   useEffect(() => {
-    userData();
+    // userData();
     getPost();
 
     // Update "time ago" dynamically every 60 seconds
@@ -689,7 +690,8 @@ const Feed = ({ countryCode, flag, countryName, handleCountryChange }) => {
     }, 60000);
 
     return () => clearInterval(interval);
-
+  }, [countryCode]);
+  useEffect(() => {
     const updateNavbarHeight = () => {
       setNavbarHeight(window.innerWidth <= 991 ? 110 : 56);
     };
@@ -700,7 +702,7 @@ const Feed = ({ countryCode, flag, countryName, handleCountryChange }) => {
     return () => {
       window.removeEventListener("resize", updateNavbarHeight);
     };
-  }, [countryCode]);
+  }, []);
 
   return (
     <div
@@ -715,7 +717,7 @@ const Feed = ({ countryCode, flag, countryName, handleCountryChange }) => {
         <div className="card p-1 mb-1">
           <div className="d-flex align-items-center">
             <img
-              src={userDetails.profile_image_url}
+              src={userData.profile_image_url}
               alt="Profile"
               className="rounded-circle me-2"
               style={{ width: "40px", height: "40px" }}
@@ -775,13 +777,13 @@ const Feed = ({ countryCode, flag, countryName, handleCountryChange }) => {
                       {/* User Info at the Top */}
                       <div className="d-flex align-items-center mb-3">
                         <img
-                          src={userDetails.profile_image_url} // Use userImage or a default image
+                          src={userData.profile_image_url} // Use userImage or a default image
                           alt="User Avatar"
                           className="rounded-circle me-2"
                           style={{ width: "40px", height: "40px" }}
                         />
                         <span style={{ fontWeight: "bold", fontSize: "16px" }}>
-                          {userName.username}
+                          {userData.users.username}
                         </span>{" "}
                         {/* Replace with dynamic user name */}
                       </div>

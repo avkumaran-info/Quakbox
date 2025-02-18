@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useContext, useEffect, useState } from "react";
 import user1 from "../../assets/images/Rigth side property/user.jpg"; // User image 1
 import user2 from "../../assets/images/Rigth side property/user2.jpeg"; // User image 2
 import user3 from "../../assets/images/Rigth side property/user3.jpg"; // User image 3
@@ -10,14 +10,6 @@ import group from "../../assets/images/Rigth side property/group.png"; // Group 
 import notification from "../../assets/images/Rigth side property/not.png"; // Notification icon
 import set from "../../assets/images/Rigth side property/set.webp"; // Settings icon
 import axios from "axios";
-import {
-  Avatar,
-  Button,
-  Pagination,
-  Stack,
-  TextField,
-  Typography,
-} from "@mui/material";
 import CommentIcon from "@mui/icons-material/Comment";
 import ThumbUpIcon from "@mui/icons-material/ThumbUp";
 import ThumbDownIcon from "@mui/icons-material/ThumbDown";
@@ -25,6 +17,7 @@ import FavoriteSharpIcon from "@mui/icons-material/FavoriteSharp";
 import GroupIcon from "@mui/icons-material/Group";
 import ScreenShareIcon from "@mui/icons-material/ScreenShare";
 import { Tooltip } from "@mui/material";
+import { StoreContext } from "../../Context/StoreContext";
 
 const updates = [
   {
@@ -64,10 +57,8 @@ const updates = [
   },
 ];
 
-// const userDatas = JSON.parse(localStorage.getItem("user_Details")) || [];
-
-const dummyProfilePic = "https://via.placeholder.com/40";
-const RightSidebar = ({ countryCode, flag, countryName, userDetails }) => {
+const RightSidebar = ({ countryCode, flag, countryName }) => {
+  const { userData, favCountries, fanCountries } = useContext(StoreContext);
   const [countryData, setCountryData] = useState(null);
   const [counts, setCounts] = useState({
     comments: 0,
@@ -76,9 +67,6 @@ const RightSidebar = ({ countryCode, flag, countryName, userDetails }) => {
     shares: 0,
   });
 
-  const [favCountries, setFavCountries] = useState([]);
-  const [fanCountries, setFanCountries] = useState([]);
-
   const [navbarHeight, setNavbarHeight] = useState(56);
   const [comments, setComments] = useState([]); // Store comments
   const [showComments, setShowComments] = useState(false); // Controls comment section visibility
@@ -86,8 +74,6 @@ const RightSidebar = ({ countryCode, flag, countryName, userDetails }) => {
   const [currentPage, setCurrentPage] = useState(1); // For pagination
   const commentsPerPage = 10; // Number of comments per page
   const [newComment, setNewComment] = useState("");
-  // console.log("token");
-  // console.log(token);
 
   // Fetch the data for comments, likes, dislikes, and shares count
   const fetchCountryCounts = async () => {
@@ -122,61 +108,18 @@ const RightSidebar = ({ countryCode, flag, countryName, userDetails }) => {
   useEffect(() => {
     if (countryCode) {
       fetchCountryCounts();
-      fetchComments();
     }
   }, [countryCode]);
 
-  useEffect(() => {
-    fetchCountries();
-  }, []);
-
-  // console.log(
-  //   "countryName is ",
-  //   countryName,
-  //   " and countryCode is ",
-  //   countryCode
-  // );
-
   const isWorld = location.pathname === "/world"; // Determines if we're in the "world" section
   const isDashboaed = location.pathname === "/dashboard";
-  // useEffect(() => {
-  //   // Mock API call to get comments
-  //   const fetchComments = () => {
-  //     const mockComments = Array.from({ length: 50 }, (_, index) => ({
-  //       id: index + 1,
-  //       user: `User ${index + 1}`,
-  //       text: `This is comment number ${index + 1}`,
-  //     }));
-  //     setComments(mockComments);
-  //   };
-  //   fetchComments();
-  // }, []);
 
   const handleCommentClick = () => {
+    fetchComments();
     setCurrentPage(1);
     setShowMore(false);
     setShowComments(!showComments);
   };
-
-  const handleShowMore = () => {
-    setShowMore(true);
-  };
-  const handleShowLess = () => {
-    setCurrentPage(1);
-    setShowMore(false);
-  };
-  const paginate = (pageNumber) => {
-    console.log("pageNumber - ", pageNumber);
-    return setCurrentPage(pageNumber);
-  };
-
-  // Get current comments
-  const indexOfLastComment = currentPage * commentsPerPage;
-  const indexOfFirstComment = indexOfLastComment - commentsPerPage;
-  const currentComments = comments.slice(
-    indexOfFirstComment,
-    indexOfLastComment
-  );
 
   useEffect(() => {
     const updateNavbarHeight = () => {
@@ -219,48 +162,6 @@ const RightSidebar = ({ countryCode, flag, countryName, userDetails }) => {
     }
   };
 
-  const fetchCountries = async () => {
-    const token = localStorage.getItem("api_token"); // Get token from localStorage
-
-    if (!token) {
-      setError("Authorization token not found. Please log in.");
-      return;
-    }
-    try {
-      // Fetch favorite countries
-      const favCountriesRes = await axios.get(
-        "https://develop.quakbox.com/admin/api/get_favourite_country",
-        {
-          headers: { Authorization: `Bearer ${token}` },
-        }
-      );
-
-      // Filter countries
-      const favouriteCountries = favCountriesRes.data.favourite_country.filter(
-        (country) => country.favourite_country === "1"
-      );
-
-      const fanCountriesOnly = favCountriesRes.data.favourite_country.filter(
-        (country) =>
-          country.favourite_country === "1" || country.favourite_country === "0"
-      );
-
-      // Use a Set to filter out duplicates based on the country code
-      const uniqueCountries = [
-        ...new Map(
-          fanCountriesOnly.map((country) => [country.code, country])
-        ).values(),
-      ];
-
-      // Update state
-      setFavCountries(favouriteCountries || []);
-      setFanCountries(uniqueCountries || []);
-    } catch (error) {
-      console.error("Error fetching countries:", error);
-    }
-  };
-
-  ////////////////////////
   const handleFavouriteToggle = async () => {
     console.log("Favourite icon clicked");
   };
@@ -272,8 +173,7 @@ const RightSidebar = ({ countryCode, flag, countryName, userDetails }) => {
   const handleShareToggle = async () => {
     console.log("share icon clicked");
   };
-  ///////////////////////
-  ////////////////////////////
+
   const fetchComments = async () => {
     try {
       const token = localStorage.getItem("api_token");
@@ -291,13 +191,19 @@ const RightSidebar = ({ countryCode, flag, countryName, userDetails }) => {
             text: comment.comment,
           }))
         );
+
         fetchCountryCounts();
       }
     } catch (error) {
       console.error("Error fetching comments:", error);
     }
   };
-  const handleCommentSubmit = async () => {
+
+  const closeCommentPopup = () => {
+    setShowComments(false);
+  };
+
+  const handlePostComment = async () => {
     if (!newComment.trim()) return;
     try {
       const token = localStorage.getItem("api_token");
@@ -313,483 +219,343 @@ const RightSidebar = ({ countryCode, flag, countryName, userDetails }) => {
     }
   };
 
-  // console.log("Total Comments:", comments.length);
-  // console.log("Total Pages:", Math.ceil(comments.length / commentsPerPage));
+  // Calculate total pages
+  const totalPages = Math.ceil(comments.length / commentsPerPage);
 
-  ///////////////////////////
+  // Get comments for the current page
+  const indexOfLastComment = currentPage * commentsPerPage;
+  const indexOfFirstComment = indexOfLastComment - commentsPerPage;
+  const currentComments = comments.slice(
+    indexOfFirstComment,
+    indexOfLastComment
+  );
+
   return (
-    <div
-      className="col-md-3 d-none d-md-block bg-light position-fixed"
-      style={{
-        height: "100vh",
-        top: `${navbarHeight}px`,
-        right: "0",
-        paddingBottom: "54px",
-      }}
-    >
-      <div className="card" style={{ height: "100%" }}>
-        <div className="container p-0">
-          {/* Part 1: Fixed Flag Section */}
-          <div
-            className="bg-light text-center border-bottom sticky-top"
-            style={{
-              top: "0",
-              zIndex: "10",
-              backgroundColor: "#fff",
-              padding: "10px",
-              position: "sticky",
-            }}
-          >
-            {isDashboaed ? (
-              <>
-                <div
-                  className="text-center d-flex flex-column align-items-center"
-                  style={{
-                    backgroundColor: "#fff",
-                    boxShadow: "0px 4px 6px rgba(0, 0, 0, 0.1)",
-                    padding: "20px",
-                    borderRadius: "10px",
-                  }}
-                >
-                  <div
+    <>
+      {showComments && (
+        <div
+          className="modal fade show d-block"
+          style={{ background: "rgba(0, 0, 0, 0.5)" }}
+        >
+          <div className="modal-dialog modal-dialog-centered modal-md">
+            <div className="modal-content">
+              {/* Header */}
+              <div className="modal-header">
+                <h5 className="modal-title">Country Comments</h5>
+                <button
+                  className="btn-close"
+                  onClick={closeCommentPopup}
+                ></button>
+              </div>
+
+              {/* Body */}
+              <div
+                className="modal-body d-flex flex-column"
+                style={{ maxHeight: "80vh" }}
+              >
+                {/* Fixed Post Content */}
+                <div className="post-preview" style={{ flexShrink: 0 }}>
+                  <img
+                    src={flag}
+                    alt="Post image"
+                    className="img-fluid rounded w-100"
                     style={{
-                      width: "75%", // Keeps image size proportional
-                      maxWidth: "150px", // Prevents it from becoming too large
-                      aspectRatio: "1/1", // Ensures a perfect square
-                      borderRadius: "50%",
-                      overflow: "hidden",
-                      border: "4px solid white",
-                      boxShadow: "0px 0px 10px rgba(0, 0, 0, 0.1)",
-                      display: "flex",
-                      justifyContent: "center",
-                      alignItems: "center",
-                      margin: "auto", // Centers the div horizontally
+                      height: "150px",
+                      objectFit: "contain",
                     }}
-                  >
-                    <img
-                      src={userDetails.profile_image_url}
-                      alt="User Profile"
-                      className="img-fluid"
-                      style={{
-                        width: "100%", // Ensures the image takes up the full container
-                        height: "100%",
-                        objectFit: "cover",
-                      }}
-                    />
+                  />
+                </div>
+
+                <hr />
+
+                {/* Scrollable Comments Section */}
+                <div
+                  className="comments-section flex-grow-1 overflow-auto"
+                  style={{ maxHeight: "40vh", paddingRight: "10px" }}
+                >
+                  <h6>Comments</h6>
+
+                  {currentComments.length > 0 ? (
+                    currentComments.map((comment, index) => (
+                      <div
+                        key={index}
+                        className="d-flex align-items-start mb-3"
+                      >
+                        <div>
+                          <h6 className="mb-0">{comment.user}</h6>
+                          <p className="mb-1">{comment.text}</p>
+                          <small className="text-muted">
+                            {/* {getTimeAgo(comment.comment_updated_datetime)} */}
+                          </small>
+                        </div>
+                      </div>
+                    ))
+                  ) : (
+                    <>No comments</>
+                  )}
+                </div>
+
+                {/* Pagination Controls */}
+                {totalPages > 1 && (
+                  <div className="d-flex justify-content-center mt-3">
+                    <nav>
+                      <ul className="pagination">
+                        {[...Array(totalPages)].map((_, index) => (
+                          <li
+                            key={index}
+                            className={`page-item ${
+                              currentPage === index + 1 ? "active" : ""
+                            }`}
+                          >
+                            <button
+                              className="page-link"
+                              onClick={() => setCurrentPage(index + 1)}
+                            >
+                              {index + 1}
+                            </button>
+                          </li>
+                        ))}
+                      </ul>
+                    </nav>
                   </div>
-                  <h5 className="mt-2 text-dark">{userDetails.name}</h5>
-                  <button className="btn btn-primary mt-2">
-                    Change Picture
+                )}
+
+                {/* Add a Comment */}
+                <div className="mt-3">
+                  <textarea
+                    className="form-control"
+                    rows="2"
+                    placeholder="Write a comment..."
+                    value={newComment}
+                    onChange={(e) => setNewComment(e.target.value)}
+                  ></textarea>
+                  <button
+                    className="btn btn-primary btn-sm mt-2"
+                    onClick={handlePostComment}
+                  >
+                    Post Comment
                   </button>
                 </div>
-              </>
-            ) : (
-              <>
-                <img
-                  src={flag}
-                  alt={countryName}
-                  className="img-fluid"
-                  style={{
-                    width: "100%",
-                    height: "200px",
-                    objectFit: "cover",
-                  }}
-                />
-                <h5 className="mt-2 mb-2 text-secondary">{countryName}</h5>
-                {/* Like, Dislike, Comment, Share Icons */}
-                <div className="d-flex justify-content-around">
-                  <Tooltip title="Like" arrow disableInteractive>
-                    <div style={{ textAlign: "center" }}>
-                      <ThumbUpIcon
-                        sx={{
-                          fontSize: 30,
-                          color: "#263238",
-                          "&:hover": {
-                            transform: "scale(1.2)",
-                          },
-                          transition: "all 0.3s ease",
-                          fontWeight: "bold",
-                          opacity: 0.8,
-                          cursor: "pointer",
-                        }}
-                        onClick={() =>
-                          handleLikeDislike(`${countryCode}`, true)
-                        }
-                      />
-                      <div style={{ fontSize: "16px", marginTop: "4px" }}>
-                        {counts.likes}
-                      </div>
-                    </div>
-                  </Tooltip>
-                  {/* <Tooltip title="Dislike" arrow disableInteractive>
-                    <div style={{ textAlign: "center" }}>
-                      <ThumbDownIcon
-                        sx={{
-                          fontSize: 30,
-                          color: "#263238",
-                          "&:hover": {
-                            //color: "red",
-                            transform: "scale(1.2)",
-                          },
-                          transition: "all 0.3s ease",
-                          fontWeight: "bold",
-                          opacity: 0.8,
-                          cursor: "pointer",
-                        }}
-                        onClick={() =>
-                          handleLikeDislike(`${countryCode}`, false)
-                        }
-                      />
-                      <div style={{ fontSize: "16px", marginTop: "4px" }}>
-                        {counts.dislikes}
-                      </div>
-                    </div>
-                  </Tooltip> */}
-                  <Tooltip title="Comment" arrow disableInteractive>
-                    <div style={{ textAlign: "center" }}>
-                      <CommentIcon
-                        sx={{
-                          fontSize: 30,
-                          color: "#263238",
-                          "&:hover": {
-                            //color: "red",
-                            transform: "scale(1.2)",
-                          },
-                          transition: "all 0.3s ease",
-                          fontWeight: "bold",
-                          opacity: 0.8,
-                          cursor: "pointer",
-                        }}
-                        onClick={handleCommentClick}
-                      />
-                      <div style={{ fontSize: "16px", marginTop: "4px" }}>
-                        {counts.comments}
-                      </div>
-                    </div>
-                  </Tooltip>
-                  <Tooltip title="Favourite" arrow disableInteractive>
-                    <div style={{ textAlign: "center" }}>
-                      <FavoriteSharpIcon
-                        sx={{
-                          fontSize: 30,
-                          color: favCountries.some(
-                            (c) => c.country_code === countryCode
-                          )
-                            ? "red"
-                            : "#263238",
-                          "&:hover": {
-                            //color: "red",
-                            transform: "scale(1.2)",
-                          },
-                          transition: "all 0.3s ease",
-                          fontWeight: "bold",
-                          opacity: 0.8,
-                          cursor: "pointer",
-                        }}
-                        onClick={handleFavouriteToggle}
-                      />
-                      <div style={{ fontSize: "16px", marginTop: "4px" }}>
-                        {favCountries.length}
-                      </div>
-                    </div>
-                  </Tooltip>
-                  <Tooltip title="Fan" arrow disableInteractive>
-                    <div style={{ textAlign: "center" }}>
-                      <GroupIcon
-                        sx={{
-                          fontSize: 30,
-                          color: fanCountries.some(
-                            (c) => c.country_code === countryCode
-                          )
-                            ? "blue"
-                            : "#263238",
-                          "&:hover": {
-                            //color: "red",
-                            transform: "scale(1.2)",
-                          },
-                          transition: "all 0.3s ease",
-                          fontWeight: "bold",
-                          opacity: 0.8,
-                          cursor: "pointer",
-                        }}
-                        onClick={handleFanToggle}
-                      />
-                      <div style={{ fontSize: "16px", marginTop: "4px" }}>
-                        {fanCountries.length}
-                      </div>
-                    </div>
-                  </Tooltip>
-                  <Tooltip title="Share" arrow disableInteractive>
-                    <div style={{ textAlign: "center" }}>
-                      <ScreenShareIcon
-                        sx={{
-                          fontSize: 30,
-                          color: "#263238",
-                          "&:hover": {
-                            //color: "red",
-                            transform: "scale(1.2)",
-                          },
-                          transition: "all 0.3s ease",
-                          fontWeight: "bold",
-                          opacity: 0.8,
-                          cursor: "pointer",
-                        }}
-                        onClick={handleShareToggle}
-                      />
-                      <div style={{ fontSize: "16px", marginTop: "4px" }}>
-                        {counts.shares}
-                      </div>
-                    </div>
-                  </Tooltip>
-                </div>
-              </>
-            )}
+              </div>
+            </div>
           </div>
-          <div
-            style={{
-              maxHeight: "265px", // Adjust the height as needed
-              overflowY: "auto",
-              // backgroundColor: "red",
-            }}
-          >
-            {/* Comment Section */}
-            {showComments ? 
-            (
-              <div
-                style={{
-                  maxHeight: "265px", // Adjust the height as needed
-                  overflowY: "auto",
-                  // backgroundColor: "yellow",
-                }}
-              >
-                <div className="container mt-1 mb-1 p-0">
-                  <div style={{ display: "flex", alignItems: "center" }}>
-                    <Typography
-                      variant="h5"
-                      sx={{
-                        fontSize: { xs: "12px", sm: "16px", md: "18px" },
-                      }}
-                    >
-                      Comments
-                    </Typography>
-                    {/* Pagination - Keep this unchanged */}
-                    {showMore && (
-                      <nav
-                        className="m-2"
-                        style={{
-                          display: "flex",
-                          justifyContent: "center",
-                        }}
-                      >
-                        <Stack spacing={2}>
-                          <Pagination
-                            // count={Math.ceil(comments.length / commentsPerPage)}
-                            // count={10}
-                            count={Math.max(
-                              1,
-                              Math.ceil(comments.length / commentsPerPage)
-                            )}
-                            // defaultPage={0}
-                            siblingCount={0}
-                            boundaryCount={1}
-                            // count={10}
-                            // showFirstButton
-                            // showLastButton
-                            // hidePrevButton hideNextButton
-                            page={currentPage}
-                            onChange={(event, value) => paginate(value)}
-                            variant="outlined"
-                            shape="rounded"
-                            sx={{
-                              "& .MuiPaginationItem-root": {
-                                fontSize: "12px", // Smaller font size
-                                minWidth: "25px", // Reduce width
-                                height: "25px", // Reduce height
-                                padding: "2px 6px", // Adjust padding
-                                margin: "2px", // Reduce margin for compact layout
-                              },
-                              "@media (max-width: 900px)": {
-                                "& .MuiPaginationItem-root": {
-                                  fontSize: "8px", // Smaller font on mobile
-                                  minWidth: "15px",
-                                  height: "15px",
-                                  padding: "1px 4px",
-                                },
-                              },
-                            }}
-                          />
-                        </Stack>
-                      </nav>
-                    )}
-                  </div>
+        </div>
+      )}
 
+      <div
+        className="col-md-3 d-none d-md-block bg-light position-fixed"
+        style={{
+          height: "100vh",
+          top: `${navbarHeight}px`,
+          right: "0",
+          paddingBottom: "54px",
+        }}
+      >
+        <div className="card" style={{ height: "100%" }}>
+          <div className="container p-0">
+            {/* Part 1: Fixed Flag Section */}
+            <div
+              className="bg-light text-center border-bottom sticky-top"
+              style={{
+                top: "0",
+                zIndex: "10",
+                backgroundColor: "#fff",
+                padding: "10px",
+                position: "sticky",
+              }}
+            >
+              {isDashboaed ? (
+                <>
                   <div
-                    className="list-group"
+                    className="text-center d-flex flex-column align-items-center"
                     style={{
-                      maxHeight: "300px",
-                      overflowY: "auto",
+                      backgroundColor: "#fff",
+                      boxShadow: "0px 4px 6px rgba(0, 0, 0, 0.1)",
+                      padding: "20px",
+                      borderRadius: "10px",
                     }}
                   >
-                    {showMore
-                      ? currentComments.map((comment) => (
-                          <div key={comment.id}>
-                            <li
-                              key={comment.id}
-                              className="list-group-item"
-                              sx={{
-                                display: "flex",
-                                alignItems: "center",
-                                gap: { xs: "5px", sm: "10px" }, // Responsive gap
-                                padding: { xs: "5px", sm: "8px" }, // Responsive padding
-                                margin: "2px",
-                                fontSize: { xs: "10px", sm: "12px" }, // Responsive font size
-                              }}
-                            >
-                              <Avatar
-                                src={dummyProfilePic}
-                                alt="User"
-                                sx={{
-                                  width: { xs: 20, sm: 24 }, // Responsive Avatar size
-                                  height: { xs: 20, sm: 24 },
-                                  marginRight: 0,
-                                }}
-                              />
-                              <strong style={{ fontSize: "12px" }}>
-                                {comment.user}:
-                              </strong>{" "}
-                              <span style={{ fontSize: "12px" }}>
-                                {comment.text}
-                              </span>
-                            </li>
-                          </div>
-                        ))
-                      : comments.slice(0, 2).map((comment) => (
-                          <div key={comment.id}>
-                            <li
-                              key={comment.id}
-                              className="list-group-item"
-                              sx={{
-                                display: "flex",
-                                alignItems: "center",
-                                gap: { xs: "5px", sm: "10px" },
-                                padding: { xs: "5px", sm: "8px" },
-                                margin: "2px",
-                                fontSize: { xs: "10px", sm: "12px" },
-                              }}
-                            >
-                              <Avatar
-                                src={dummyProfilePic}
-                                alt="User"
-                                sx={{
-                                  width: { xs: 20, sm: 24 },
-                                  height: { xs: 20, sm: 24 },
-                                  marginRight: 0,
-                                }}
-                              />
-                              <strong style={{ fontSize: "12px" }}>
-                                {comment.user}:
-                              </strong>
-                              <span style={{ fontSize: "12px" }}>
-                                {comment.text}
-                              </span>
-                            </li>
-                          </div>
-                        ))}
-                  </div>
-                  {!showMore && (
-                    <button
-                      className="btn btn-link mt-2"
-                      onClick={handleShowMore}
-                      style={{ fontSize: "12px" }}
-                    >
-                      Show More
-                    </button>
-                  )}
-                  <div>
-                    <TextField
-                      label="Add a comment"
-                      variant="outlined"
-                      fullWidth
-                      size="small"
-                      value={newComment}
-                      onChange={(e) => setNewComment(e.target.value)}
-                      sx={{
-                        // marginBottom: 2,
-                        fontSize: { xs: "12px", sm: "14px", md: "16px" }, // Responsive font size
-                      }}
-                    />
-                    <Button
-                      onClick={handleCommentSubmit}
-                      variant="contained"
-                      color="primary"
-                      size="small"
-                      sx={{
-                        margin: 1,
-                        fontSize: { xs: "10px", sm: "12px", md: "14px" }, // Responsive font size
-                        padding: {
-                          xs: "6px 12px",
-                          sm: "8px 16px",
-                          md: "4px 10px",
-                        }, // Responsive padding
+                    <div
+                      style={{
+                        width: "75%", // Keeps image size proportional
+                        maxWidth: "150px", // Prevents it from becoming too large
+                        aspectRatio: "1/1", // Ensures a perfect square
+                        borderRadius: "50%",
+                        overflow: "hidden",
+                        border: "4px solid white",
+                        boxShadow: "0px 0px 10px rgba(0, 0, 0, 0.1)",
+                        display: "flex",
+                        justifyContent: "center",
+                        alignItems: "center",
+                        margin: "auto", // Centers the div horizontally
                       }}
                     >
-                      Add Comment
-                    </Button>
-                    <Button
-                      onClick={() => setNewComment("")}
-                      variant="contained"
-                      size="small"
-                      sx={{
-                        margin: 1,
-                        fontSize: { xs: "10px", sm: "12px", md: "14px" }, // Responsive font size
-                        padding: {
-                          xs: "6px 12px",
-                          sm: "8px 16px",
-                          md: "4px 10px",
-                        }, // Responsive padding
-                      }}
-                    >
-                      Cancel Comment
-                    </Button>
-                    <Button
-                      onClick={handleCommentClick}
-                      variant="outlined"
-                      size="small"
-                      sx={{
-                        margin: 1,
-                        fontSize: { xs: "10px", sm: "12px", md: "14px" }, // Responsive font size
-                        padding: {
-                          xs: "6px 12px",
-                          sm: "8px 16px",
-                          md: "4px 10px",
-                        }, // Responsive padding
-                      }}
-                    >
-                      Hide Comments Sections
-                    </Button>
-
-                    {showMore && (
-                      <Button
-                        onClick={handleShowLess}
-                        variant="outlined"
-                        size="small"
-                        sx={{
-                          margin: 1,
-                          fontSize: { xs: "10px", sm: "12px", md: "14px" }, // Responsive font size
-                          padding: {
-                            xs: "6px 12px",
-                            sm: "8px 16px",
-                            md: "4px 10px",
-                          }, // Responsive padding
+                      <img
+                        src={userData.profile_image_url}
+                        alt="User Profile"
+                        className="img-fluid"
+                        style={{
+                          width: "100%", // Ensures the image takes up the full container
+                          height: "100%",
+                          objectFit: "cover",
                         }}
-                      >
-                        Show Less
-                      </Button>
-                    )}
+                      />
+                    </div>
+                    <h5 className="mt-2 text-dark">
+                      {userData.users.username}
+                    </h5>
+                    <button className="btn btn-primary mt-2">
+                      Change Picture
+                    </button>
                   </div>
-                </div>
-              </div>
-            ) : (
+                </>
+              ) : (
+                <>
+                  <img
+                    src={flag}
+                    alt={countryName}
+                    className="img-fluid"
+                    style={{
+                      width: "100%",
+                      height: "200px",
+                      objectFit: "cover",
+                    }}
+                  />
+                  <h5 className="mt-2 mb-2 text-secondary">{countryName}</h5>
+                  {/* Like, Dislike, Comment, Share Icons */}
+                  <div className="d-flex justify-content-around">
+                    <Tooltip title="Like" arrow disableInteractive>
+                      <div style={{ textAlign: "center" }}>
+                        <ThumbUpIcon
+                          sx={{
+                            fontSize: 30,
+                            color: "#263238",
+                            "&:hover": {
+                              transform: "scale(1.2)",
+                            },
+                            transition: "all 0.3s ease",
+                            fontWeight: "bold",
+                            opacity: 0.8,
+                            cursor: "pointer",
+                          }}
+                          onClick={() =>
+                            handleLikeDislike(`${countryCode}`, true)
+                          }
+                        />
+                        <div style={{ fontSize: "16px", marginTop: "4px" }}>
+                          {counts.likes}
+                        </div>
+                      </div>
+                    </Tooltip>
+
+                    <Tooltip title="Comment" arrow disableInteractive>
+                      <div style={{ textAlign: "center" }}>
+                        <CommentIcon
+                          sx={{
+                            fontSize: 30,
+                            color: "#263238",
+                            "&:hover": {
+                              //color: "red",
+                              transform: "scale(1.2)",
+                            },
+                            transition: "all 0.3s ease",
+                            fontWeight: "bold",
+                            opacity: 0.8,
+                            cursor: "pointer",
+                          }}
+                          onClick={handleCommentClick}
+                        />
+                        <div style={{ fontSize: "16px", marginTop: "4px" }}>
+                          {counts.comments}
+                        </div>
+                      </div>
+                    </Tooltip>
+                    <Tooltip title="Favourite" arrow disableInteractive>
+                      <div style={{ textAlign: "center" }}>
+                        <FavoriteSharpIcon
+                          sx={{
+                            fontSize: 30,
+                            color: favCountries.some(
+                              (c) => c.country_code === countryCode
+                            )
+                              ? "red"
+                              : "#263238",
+                            "&:hover": {
+                              //color: "red",
+                              transform: "scale(1.2)",
+                            },
+                            transition: "all 0.3s ease",
+                            fontWeight: "bold",
+                            opacity: 0.8,
+                            cursor: "pointer",
+                          }}
+                          onClick={handleFavouriteToggle}
+                        />
+                        <div style={{ fontSize: "16px", marginTop: "4px" }}>
+                          {favCountries.length}
+                        </div>
+                      </div>
+                    </Tooltip>
+                    <Tooltip title="Fan" arrow disableInteractive>
+                      <div style={{ textAlign: "center" }}>
+                        <GroupIcon
+                          sx={{
+                            fontSize: 30,
+                            color: fanCountries.some(
+                              (c) => c.country_code === countryCode
+                            )
+                              ? "blue"
+                              : "#263238",
+                            "&:hover": {
+                              //color: "red",
+                              transform: "scale(1.2)",
+                            },
+                            transition: "all 0.3s ease",
+                            fontWeight: "bold",
+                            opacity: 0.8,
+                            cursor: "pointer",
+                          }}
+                          onClick={handleFanToggle}
+                        />
+                        <div style={{ fontSize: "16px", marginTop: "4px" }}>
+                          {fanCountries.length}
+                        </div>
+                      </div>
+                    </Tooltip>
+                    <Tooltip title="Share" arrow disableInteractive>
+                      <div style={{ textAlign: "center" }}>
+                        <ScreenShareIcon
+                          sx={{
+                            fontSize: 30,
+                            color: "#263238",
+                            "&:hover": {
+                              //color: "red",
+                              transform: "scale(1.2)",
+                            },
+                            transition: "all 0.3s ease",
+                            fontWeight: "bold",
+                            opacity: 0.8,
+                            cursor: "pointer",
+                          }}
+                          onClick={handleShareToggle}
+                        />
+                        <div style={{ fontSize: "16px", marginTop: "4px" }}>
+                          {counts.shares}
+                        </div>
+                      </div>
+                    </Tooltip>
+                  </div>
+                </>
+              )}
+            </div>
+            <div
+              style={{
+                maxHeight: "265px", // Adjust the height as needed
+                overflowY: "auto",
+                // backgroundColor: "red",
+              }}
+            >
+              {/* Comment Section */}
               <div className="mt-3">
                 {/* Activity Section */}
                 {!isWorld && (
@@ -953,12 +719,12 @@ const RightSidebar = ({ countryCode, flag, countryName, userDetails }) => {
                   </div>
                 )}
               </div>
-            )}
-            {/* Part 2 & 3: Scrollable Section */}
+              {/* Part 2 & 3: Scrollable Section */}
+            </div>
           </div>
         </div>
       </div>
-    </div>
+    </>
   );
 };
 
