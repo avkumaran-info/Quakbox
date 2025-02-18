@@ -74,12 +74,13 @@ Route::middleware('auth:api')->group(function () {
     Route::get('get_posts/{cc}', [PostController::class, 'getAllPosts']); // Get all posts
 
     Route::post('set_posts_like/{id}/like', [PostController::class, 'postLike']); // Like/Dislike post
-    Route::post('/set_posts_like/{id}/dislike', [PostController::class, 'postDislike']);
+    Route::post('set_posts_like/{id}/dislike', [PostController::class, 'postDislike']);
     Route::get('get_posts_comment/{id}/comment', [PostController::class, 'getComment']);
     Route::post('set_posts_comment/{id}/comment', [PostController::class, 'postComment']); // Comment on post
     Route::post('set_posts_share/{id}/share', [PostController::class, 'postShare']); // Share post
     // Route to delete a comment
     Route::delete('del_posts/{postId}/comments/{commentId}', [PostController::class, 'commentDestroy']); // Delete comment
+    Route::get('posts/{id}/liked-users', [PostController::class, 'getLikedUsers']);
 });
 
 Route::get('images/uploads/posts/{filename}', function ($filename) {

@@ -743,6 +743,22 @@ const Feed = ({ countryCode, flag, countryName, handleCountryChange }) => {
       window.removeEventListener("resize", updateNavbarHeight);
     };
   }, [countryCode]);
+  
+  // view the who is like the post 
+  const [likedUsers, setLikedUsers] = useState([]);
+  const [showLikedUsers, setShowLikedUsers] = useState(false);
+
+    const fetchLikedUsers = async (postId) => {
+      try {
+        const res = await axios.get(`https://develop.quakbox.com/admin/api/posts/${postId}/liked-users`);
+        if (res.data.status) {
+          setLikedUsers(res.data.liked_users);
+          setShowLikedUsers(true);
+        }
+      } catch (error) {
+        console.error("Error fetching liked users:", error);
+      }
+    };
 
   return (
     <div
@@ -1403,11 +1419,31 @@ const Feed = ({ countryCode, flag, countryName, handleCountryChange }) => {
 
               {/* Post Footer */}
               <div className="card-footer bg-white d-flex justify-content-between align-items-center border-0">
-                  <span className="text-muted">
-                      {post.likes && post.likes.count !== undefined
-                          ? `${post.likes.count} likes`
-                          : "0 likes"}
-                  </span>
+             {/* Modify your span inside the post loop: */}
+              <span className="text-muted" onClick={() => fetchLikedUsers(post.id)} style={{ cursor: "pointer", color: "blue" }}>
+                {post.likes && post.likes.count !== undefined
+                  ? `${post.likes.count} likes`
+                  : "0 likes"}
+              </span>
+              {/* Display liked users in a modal or popup */}
+              {showLikedUsers && (
+                <div className="liked-users-popup">
+                  <h3>Users who liked this post:</h3>
+                  <ul>
+                    {likedUsers.length > 0 ? (
+                      likedUsers.map((user) => (
+                        <li key={user.user_id}>
+                          <img src={user.profile_image} alt={user.name} width="40" height="40" />
+                          {user.name}
+                        </li>
+                      ))
+                    ) : (
+                      <p>No likes yet.</p>
+                    )}
+                  </ul>
+                  <button onClick={() => setShowLikedUsers(false)}>Close</button>
+                </div>
+              )}
 
                   <div className="d-flex">
                       <button
