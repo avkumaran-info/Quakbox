@@ -25,11 +25,12 @@ import BrowseStation from "./Components/Qcast/BrowseStation";
 import MySubscriptions from "./Components/Qcast/MySubscriptions";
 import MyVideos from "./Components/Qcast/MyVideos";
 import SessionExpiredPopup from "./Components/SessionExpiredPopup";
+import WebcamRecorder from "./Components/Qcast/WebcamRecorder";
 const App = () => {
   return (
     <Provider store={store}>
       <Router>
-       <SessionExpiredPopup /> 
+        <SessionExpiredPopup />
         <Routes>
           <Route path="/" element={<Login />} />
           <Route path="/signup" element={<Signup />} />
@@ -50,6 +51,7 @@ const App = () => {
           <Route path="/browse_channel" element={<BrowseStation />} />
           <Route path="/my_subscriptions" element={<MySubscriptions />} />
           <Route path="/myvideo" element={<MyVideos />} />
+          <Route path="/webcam" element={<WebcamRecorder/>}/>
         </Routes>
       </Router>
     </Provider>

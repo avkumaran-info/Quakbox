@@ -19,10 +19,13 @@ const containerStyle = {
   height: "100vh", // Full viewport height
   textAlign: "center",
 };
+
 export const StoreContext = createContext(null);
 
 const StoreContextProvider = (props) => {
   const [userData, setUserData] = useState(null);
+  const [favCountries, setFavCountries] = useState([]);
+  const [fanCountries, setFanCountries] = useState([]);
   const [loading, setLoading] = useState(true);
 
   // Fetch user data when needed
@@ -49,8 +52,50 @@ const StoreContextProvider = (props) => {
     }
   };
 
+  // Fetch favorite and fan countries
+  const fetchCountries = async () => {
+    const token = localStorage.getItem("api_token"); // Get token from localStorage
+    if (!token) {
+      console.error("Authorization token not found. Please log in.");
+      return;
+    }
+    try {
+      const favCountriesRes = await axios.get(
+        "https://develop.quakbox.com/admin/api/get_favourite_country",
+        {
+          headers: { Authorization: `Bearer ${token}` },
+        }
+      );
+
+      // Filter countries
+      const favouriteCountries = favCountriesRes.data.favourite_country.filter(
+        (country) => country.favourite_country === "1"
+      );
+
+      const fanCountriesOnly = favCountriesRes.data.favourite_country.filter(
+        (country) =>
+          country.favourite_country === "1" || country.favourite_country === "0"
+      );
+
+      // Use a Set to filter out duplicates based on the country code
+      const uniqueCountries = [
+        ...new Map(
+          fanCountriesOnly.map((country) => [country.code, country])
+        ).values(),
+      ];
+
+      // Update state
+      setFavCountries(favouriteCountries || []);
+      setFanCountries(uniqueCountries || []);
+    } catch (error) {
+      console.error("Error fetching countries:", error);
+    }
+  };
+
   useEffect(() => {
+    console.log("Fetching user data...");
     fetchUserData();
+    fetchCountries();
   }, []);
 
   // Function to update userData and store it in localStorage after login
@@ -62,14 +107,19 @@ const StoreContextProvider = (props) => {
   if (loading) {
     return (
       <div style={containerStyle}>
-        {" "}
-        {/* Center the spinner */}
-        <div style={spinnerStyle}></div> {/* Spinner */}
+        <div style={spinnerStyle}></div>
       </div>
     );
   }
 
-  const contextValue = { userData, setUserData: updateUserData, fetchUserData };
+  const contextValue = {
+    userData,
+    setUserData: updateUserData,
+    fetchUserData,
+    favCountries,
+    fanCountries,
+    fetchCountries,
+  };
 
   return (
     <StoreContext.Provider value={contextValue}>
