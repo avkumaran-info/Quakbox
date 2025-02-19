@@ -140,8 +140,10 @@ class PostController extends Controller
             ['user_id' => $request->user()->id, 'post_id' => $id],
             ['is_like' => $isLike]
         );
-
-        return response()->json(["status" => true, 'message' => $isLike ? 'Liked' : 'Disliked', 'like' => $like]);
+        $likeCount = $post->likes()->where('is_like', true)->count();
+        return response()->json(["status" => true,
+         'message' => $isLike ? 'Liked' : 'Disliked', 'like' => $like,
+        'like_count' => $likeCount]);
     }
 
     public function postDislike(Request $request, $id)
@@ -246,4 +248,24 @@ class PostController extends Controller
     
         return response()->json(['message' => 'Comment deleted successfully'], 200);
     }    
+    // Get list of users who liked a post
+    public function getLikedUsers($postId)
+    {
+        try {
+            $post = Post::findOrFail($postId);
+
+            $likedUsers = $post->likes()->where('is_like', true)->with('user')->get()->map(function ($like) {
+                return [
+                    'user_id' => $like->user->id,
+                    'name' => $like->user->username,
+                    'profile_image' => env('APP_URL') . '/api/images/' . $like->user->profile_image,
+                ];
+            });
+
+            return response()->json(["status" => true, "liked_users" => $likedUsers]);
+        } catch (\Exception $e) {
+            return response()->json(["status" => false, "error" => $e->getMessage()], 500);
+        }
+    }
+
 }

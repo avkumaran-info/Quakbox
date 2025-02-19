@@ -24,7 +24,7 @@ const Feed = ({ countryCode, flag, countryName, handleCountryChange }) => {
   const [editedMessage, setEditedMessage] = useState("");
   const [editedMediaFile, setEditedMediaFile] = useState(null);
   const [editedMediaPreview, setEditedMediaPreview] = useState(null);
-
+  
   const userId = localStorage.getItem("user_Id");
 
   // Functions to handle popup visibility
@@ -131,7 +131,7 @@ const Feed = ({ countryCode, flag, countryName, handleCountryChange }) => {
         console.log(`Deleting comment ID: ${commentId} from Post ID: ${postId}`);
 
         const response = await axios.delete(
-            `https://develop.quakbox.com/admin/api/del_posts/${postId}/comments/${commentId}`,
+            `https://develop.quakbox.com/admin/alpi/del_posts/${postId}/comments/${commentId}`,
             {
                 headers: {
                     Authorization: `Bearer ${token}`,
@@ -700,8 +700,7 @@ const Feed = ({ countryCode, flag, countryName, handleCountryChange }) => {
       console.log("No token found, user may not be logged in.");
       return;
     }
-    console.log(countryCode);
-
+  
     try {
       const res = await axios.get(
         `https://develop.quakbox.com/admin/api/get_posts/${countryCode}`,
@@ -709,16 +708,20 @@ const Feed = ({ countryCode, flag, countryName, handleCountryChange }) => {
           headers: { Authorization: `Bearer ${token}` },
         }
       );
-      // Extract posts only if status is true
+  
       if (res.data.status && Array.isArray(res.data.posts)) {
         const formattedPosts = res.data.posts.map((post) => ({
           ...post,
           created_time: post.created_time || new Date().toISOString(),
           timeAgo: getTimeAgo(post.created_time),
         }));
-
+  
         setData({ posts: formattedPosts });
-        // console.log(data);
+  
+        // Select first post as default
+        if (formattedPosts.length > 0) {
+          setSelectedPost(formattedPosts[0]);
+        }
       } else {
         console.log("Invalid API response structure.");
       }
@@ -726,7 +729,7 @@ const Feed = ({ countryCode, flag, countryName, handleCountryChange }) => {
       console.log("Error fetching posts:", error);
     }
   };
-
+  
   useEffect(() => {
     // Cleanup the preview URL to avoid memory leaks
     return () => {
@@ -768,48 +771,42 @@ const Feed = ({ countryCode, flag, countryName, handleCountryChange }) => {
   
   // view the who is like the post 
   const [likedUsers, setLikedUsers] = useState([]);
-const [showLikedUsers, setShowLikedUsers] = useState(false);
-
-const fetchLikedUsers = async (postId) => {
-  try {
-    // Get the token from local storage
-    const token = localStorage.getItem("api_token"); // Ensure correct key
-
-    if (!token) {
-      console.error("No token found, user might not be logged in.");
-      return; // Exit early if token is not found
-    }
-
-    if (!postId) {
-      console.error("No postId provided.");
-      return; // Exit early if postId is missing
-    }
-
-    // Make the request to fetch liked users
-    const response = await axios.get(`http://localhost:8000/api/posts/${postId}/liked-users`, {
-      headers: {
-        Authorization: `Bearer ${token}`, // Include token in headers
-        'Content-Type': 'application/json',
-      },
-    });
-
-    // Log the response to check its structure
-    console.log(response.data);
-
-    // Check for successful response
-    if (response.status === 200 && response.data?.status) {
-      // Assuming 'liked_users' is in the response
-      setLikedUsers(response.data.liked_users || []);  // Default to empty array if none
-      setShowLikedUsers(true);
-    } else {
-      console.error("Failed to fetch liked users:", response.data.message || "Unknown error");
-    }
-  } catch (error) {
-    // Catch any errors in the request and log them
-    console.error("Error fetching liked users:", error);
-  }
-};
-
+  const [showLikedUsers, setShowLikedUsers] = useState(false);
+  useEffect(() => {
+    if (!selectedPost?.id || !showLikedUsers) return;
+  
+    const fetchLikedUsers = async () => {
+      try {
+        console.log("Fetching liked users for post:", selectedPost.id);
+  
+        const token = localStorage.getItem("api_token");
+        if (!token) {
+          console.error("No token found, user might not be logged in.");
+          return;
+        }
+  
+        const response = await axios.get(
+          `https://develop.quakbox.com/admin/api/posts/${selectedPost.id}/liked-users`,
+          {     headers: {
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "application/json",
+            Accept: "application/json", // Ensures Laravel properly parses the request
+          }, }
+        );
+  
+        if (response.status === 200 && response.data?.liked_users) {
+          setLikedUsers(response.data.liked_users);
+        } else {
+          console.error("Failed to fetch liked users:", response.data.message || "Unknown error");
+        }
+      } catch (error) {
+        console.error("Error fetching liked users:", error);
+      }
+    };
+  
+    fetchLikedUsers();
+  }, [showLikedUsers, selectedPost?.id]); // Depend on `selectedPost.id`
+  
   return (
     <div
       className="col-12 col-md-6 offset-md-3 p-1"
@@ -1464,26 +1461,25 @@ const fetchLikedUsers = async (postId) => {
               {/* Post Footer */}
               <div className="card-footer bg-white d-flex justify-content-between align-items-center border-0">
               {/* Modify your span inside the post loop: */}
-              <span
-                className="text-muted"
-                onClick={() => fetchLikedUsers(post.id)}
-                style={{ cursor: "pointer", color: "blue" }}
-              >
-                {post.likes && post.likes.count !== undefined
-                  ? `${post.likes.count} likes`
-                  : "0 likes"}
-              </span>
-
-              {/* Display liked users in a modal or popup */}
+              {selectedPost && (
+                <span
+                  className="text-muted"
+                  onClick={() => setShowLikedUsers(true)}
+                  style={{ cursor: "pointer", color: "blue" }}
+                >
+                  {selectedPost.likes?.count ? `${selectedPost.likes.count} likes` : "0 likes"}
+                </span>
+              )}
+             {/* Display liked users in a modal */}
               {showLikedUsers && (
                 <div style={modalStyle}>
-                  <h3>Users who liked this post:</h3>
+                  <h6>Users who liked this post:</h6>
                   <ul>
                     {likedUsers.length > 0 ? (
                       likedUsers.map((user) => (
                         <li key={user.user_id} style={listItemStyle}>
                           <img
-                            src={user.profile_image}
+                            src={user.profile_image || "https://via.placeholder.com/40"}
                             alt={user.name}
                             width="40"
                             height="40"
@@ -1496,12 +1492,11 @@ const fetchLikedUsers = async (postId) => {
                       <p>No likes yet.</p>
                     )}
                   </ul>
-                  <button onClick={() => setShowLikedUsers(false)} style={buttonStyle}>
+                  <button className="btn btn-sm me-2" onClick={() => setShowLikedUsers(false)} style={buttonStyle}>
                     Close
                   </button>
                 </div>
               )}
-
               <div className="d-flex">
                     <button
                       className={`btn btn-sm me-2 ${
