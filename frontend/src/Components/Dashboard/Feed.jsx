@@ -115,31 +115,49 @@ const Feed = ({ countryCode, flag, countryName, handleCountryChange }) => {
   const loadMoreComments = () => {
     setVisibleComments((prev) => prev + 10); // Load 10 more comments on click
   };
-
   const deleteComment = async (postId, commentId) => {
     try {
-      const token = localStorage.getItem("api_token");
-      if (!token) {
-        console.error("No API token found");
-        return;
-      }
-  
-      const response = await axios.delete(
-        `https://develop.quakbox.com/admin/api/del_posts/${postId}/comments/${commentId}`,
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
+        const token = localStorage.getItem("api_token");
+        if (!token) {
+            console.error("No API token found");
+            return;
         }
-      );
-  
-      console.log("Comment deleted:", response.data);
-      // After deletion, refresh the comments
-      getCommets(selectedPost);
+
+        if (!postId || !commentId) {
+            console.error("Invalid postId or commentId:", { postId, commentId });
+            return;
+        }
+
+        console.log(`Deleting comment ID: ${commentId} from Post ID: ${postId}`);
+
+        const response = await axios.delete(
+            `https://develop.quakbox.com/admin/api/del_posts/${postId}/comments/${commentId}`,
+            {
+                headers: {
+                    Authorization: `Bearer ${token}`,
+                    "Content-Type": "application/json",
+                },
+            }
+        );
+
+        console.log("Comment deleted successfully:", response.data);
+
+        // Remove deleted comment from local state
+        setComments((prevComments) => prevComments.filter((comment) => comment.comment_id !== commentId));
+
     } catch (error) {
-      console.error("Error deleting comment:", error);
+        console.error("Error deleting comment:", error);
+
+        if (error.response) {
+            console.error("Error Response:", error.response.data, "Status:", error.response.status);
+        } else if (error.request) {
+            console.error("No response received:", error.request);
+        } else {
+            console.error("Request setup error:", error.message);
+        }
     }
-  };  
+};
+
   // Open Delete Popup
   const openDeletePopup = (post) => {
     setPostToDelete(post);
@@ -1212,48 +1230,43 @@ const fetchLikedUsers = async (postId) => {
                       >
                         <h6>Comments</h6>
 
-                        {/* If comments exist, show them */}
                         {comments?.length > 0 ? (
-                          comments
-                            .slice(0, visibleComments)
-                            .map((comment, index) => (
-                              <div
-                                key={index}
-                                className="d-flex align-items-start mb-3"
-                              >
-                                <img
-                                  src={
-                                    comment.comment_user_profile_picture ||
-                                    defaultUserImage
-                                  }
-                                  alt="User Avatar"
-                                  className="rounded-circle me-2"
-                                  style={{ width: "35px", height: "35px" }}
-                                />
-                                <div>
-                                  <h6 className="mb-0">
-                                    {comment.comment_user_name || "Anonymous"}
-                                  </h6>
-                                  <p className="mb-1">
-                                    {comment.comment_content}
-                                  </p>
-                                  <small className="text-muted">
-                                    {getTimeAgo(
-                                      comment.comment_updated_datetime
-                                    )}
-                                  </small>
-                                 {/* Delete Icon */}
-                                {comment.comment_user_id === userId && (
-                                  <i
-                                    className="bi bi-trash text-danger mt-1"
-                                    onClick={() => openDeletePopup(post, comment.id)}  // Pass comment id here
-                                    style={{ cursor: 'pointer' }}
-                                  ></i>
-                                )}
-                               </div>
-                              </div>
-                            ))
-                        ) : (
+    comments.slice(0, visibleComments).map((comment, index) => {
+        console.log("Rendering comment:", comment);
+        console.log("Current user ID:", userId);
+        console.log("Comment owner ID:", comment.comment_user_id);
+
+        return (
+            <div key={comment.comment_id || index} className="d-flex align-items-start mb-3">
+                {/* User Avatar */}
+                <img
+                    src={comment.comment_user_profile_picture || defaultUserImage}
+                    alt="User Avatar"
+                    className="rounded-circle me-2"
+                    style={{ width: "35px", height: "35px" }}
+                />
+
+                {/* Comment Content */}
+                <div className="flex-grow-1">
+                    <div className="d-flex justify-content-between">
+                        <h6 className="mb-0">{comment.comment_user_name || "Anonymous"}</h6>
+
+                        {/* 🔥 Debugging: Check if delete icon should be shown */}
+                        {Number(comment.comment_user_id) === Number(userId) && (
+                            <i
+                              className="bi bi-trash text-danger"
+                              onClick={() => deleteComment(selectedPost.id, comment.comment_id)}
+                              style={{ cursor: "pointer", fontSize: "16px" }}
+                            ></i>
+                          )}
+                    </div>
+                    <p className="mb-1">{comment.comment_content}</p>
+                    <small className="text-muted">{getTimeAgo(comment.comment_updated_datetime)}</small>
+                </div>
+            </div>
+        );
+    })
+) : (
                           // Mock Comments for Testing
                           <>
                             {/* <div className="d-flex align-items-start mb-3">
