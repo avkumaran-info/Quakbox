@@ -1,25 +1,21 @@
-import React, { useContext, useEffect, useState } from "react";
+import React, { useEffect, useState } from "react";
+import { useLocation, useParams } from "react-router-dom";
 import NavBar from "./NavBar";
+import LeftSidebar from "./LeftSideBar";
 import RigthSideBar from "./RigthSideBar";
 import Feed from "./Feed";
-import Footer from "./Footer";
-import LeftSidebar from "./LeftSideBar";
-import { useLocation, useParams, useNavigate } from "react-router-dom";
 import axios from "axios";
-import { StoreContext } from "../../Context/StoreContext";
 
-// Function to fetch country details
+// Function to fetch country details from localStorage
 const getCountryDetails = async (countryCode) => {
   try {
-    const storedCountries =
-      JSON.parse(localStorage.getItem("geo_country")) || [];
+    const storedCountries = JSON.parse(localStorage.getItem("geo_country")) || [];
 
     const countryData = storedCountries.find(
       (country) => country.code.toLowerCase() === countryCode.toLowerCase()
     );
-    // console.log(countryData);
 
-    if (!countryData) return { flag: "/default-flag.png", name: "Unknown" };
+    if (!countryData) return { flag: "/default-flag.png", name: "Unknown", code: countryCode };
 
     return {
       flag: countryData.country_image || "/default-flag.png",
@@ -28,79 +24,78 @@ const getCountryDetails = async (countryCode) => {
     };
   } catch (error) {
     console.log("Error fetching country details:", error);
-    return { flag: "/default-flag.png", name: "Unknown" };
+    return { flag: "/default-flag.png", name: "Unknown", code: countryCode };
   }
 };
 
 const Home = () => {
-  const { countryCode } = useParams();
-  const { userData } = useContext(StoreContext);
-
-  const location = useLocation(); // Get the flag image and country name from the location state
+  const { countryCode } = useParams(); // Get country code from URL
+  const location = useLocation(); // Get current path
   const isWorld = location.pathname === "/world";
-  const { flag, countryName } = location.state || {};
-  const [userCountry, setUserCountry] = useState("");
+  const isDashboard = location.pathname === "/dashboard";
+
+  const [userCountry, setUserCountry] = useState(""); // Store user’s country code
   const [currentCountry, setCurrentCountry] = useState({
-    code: countryCode,
-    name: countryName,
-    flag: flag,
+    code: "",
+    name: "",
+    flag: "",
   });
 
-  // Fetch user data
-  const userDataFetch = async () => {
-    const token = localStorage.getItem("api_token");
-    if (!token) return;
+  // // Fetch user country from API
+  // const fetchUserData = async () => {
+  //   const token = localStorage.getItem("api_token");
+  //   if (!token) return;
 
-    try {
-      const res = await axios.get(
-        "https://develop.quakbox.com/admin/api/user",
-        {
-          headers: { Authorization: `Bearer ${token}` },
-        }
-      );
-      setUserCountry(res.data.user_details.country);
-      localStorage.setItem("user_Id", res.data.users.id);
-      const userDetails = res.data.user_details;
-      const defaultCountryCode = userDetails.country; // Default to IN if no country code is present
-      const countryDetails = await getCountryDetails(defaultCountryCode);
+  //   try {
+  //     const res = await axios.get("https://develop.quakbox.com/admin/api/user", {
+  //       headers: { Authorization: `Bearer ${token}` },
+  //     });
 
-      setCurrentCountry({
-        code: defaultCountryCode,
-        name: userDetails.country_name,
-        flag: countryDetails.flag,
-      });
-    } catch (error) {
-      console.log("Error fetching user data:", error);
-    }
-  };
+  //     const userDetails = res.data.user_details;
+  //     const defaultCountryCode = userDetails.country;
+  //     setUserCountry(defaultCountryCode); // Store user’s country
 
-  useEffect(() => {
-    userDataFetch();
-  }, []);
+  //     localStorage.setItem("user_country", defaultCountryCode); // Store in localStorage
+  //     localStorage.setItem("user_Id", res.data.users.id);
+  //   } catch (error) {
+  //     console.log("Error fetching user data:", error);
+  //   }
+  // };
 
+  // Update country details based on the URL (including refresh handling)
   useEffect(() => {
     const updateCountryDetails = async (code) => {
       const countryDetails = await getCountryDetails(code);
       setCurrentCountry({
-        code,
+        code: code,
         name: countryDetails.name,
         flag: countryDetails.flag,
       });
+
+      localStorage.setItem("selected_country", JSON.stringify(countryDetails)); // Store last selected country
     };
+
+    const storedCountry = JSON.parse(localStorage.getItem("selected_country"));
 
     if (isWorld) {
       updateCountryDetails("99"); // World View
+    } else if (isDashboard) {
+      const storedUserCountry = localStorage.getItem("user_country") 
+      updateCountryDetails(storedUserCountry);
     } else if (countryCode) {
-      updateCountryDetails(countryCode); // Selected Country
-    } else {
-      updateCountryDetails(userCountry); // Default Country (India)
+      updateCountryDetails(countryCode);
+    } else if (storedCountry) {
+      setCurrentCountry(storedCountry); // Load last selected country on refresh
     }
-  }, [countryCode, location]);
+  }, [countryCode, isWorld, isDashboard]);
+
+  // useEffect(() => {
+  //   fetchUserData();
+  // }, []);
 
   return (
     <div className="app">
       <NavBar />
-      {/* <div className="container-fluid mt-4"> */}
       <div>
         <LeftSidebar
           countryCode={currentCountry.code}
@@ -108,7 +103,6 @@ const Home = () => {
           countryName={currentCountry.name}
         />
         <Feed
-          // userData={userData}
           countryCode={currentCountry.code}
           flag={currentCountry.flag}
           countryName={currentCountry.name}
@@ -119,7 +113,6 @@ const Home = () => {
           countryName={currentCountry.name}
         />
       </div>
-      {/* <Footer /> */}
     </div>
   );
 };

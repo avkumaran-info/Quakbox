@@ -44,6 +44,11 @@ const StoreContextProvider = (props) => {
         }
       );
       localStorage.setItem("user_Details", JSON.stringify(res.data));
+      const userDetails = res.data.user_details;
+      const defaultCountryCode = userDetails.country;
+      // setUserCountry(defaultCountryCode); // Store user’s country
+
+      localStorage.setItem("user_country", defaultCountryCode); // Store in localStorage
       setUserData(res.data);
     } catch (error) {
       console.error("Error fetching user data:", error);
@@ -93,7 +98,7 @@ const StoreContextProvider = (props) => {
   };
 
   useEffect(() => {
-    console.log("Fetching user data...");
+    // console.log("Fetching user data...");
     fetchUserData();
     fetchCountries();
   }, []);
