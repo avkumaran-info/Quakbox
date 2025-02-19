@@ -111,7 +111,7 @@ const Feed = ({ countryCode, flag, countryName, handleCountryChange }) => {
     setSelectedPost(null);
     setCommentPopupOpen(false);
   };
-
+  
   const loadMoreComments = () => {
     setVisibleComments((prev) => prev + 10); // Load 10 more comments on click
   };
@@ -131,7 +131,7 @@ const Feed = ({ countryCode, flag, countryName, handleCountryChange }) => {
         console.log(`Deleting comment ID: ${commentId} from Post ID: ${postId}`);
 
         const response = await axios.delete(
-            `https://develop.quakbox.com/admin/alpi/del_posts/${postId}/comments/${commentId}`,
+            `https://develop.quakbox.com/admin/api/del_posts/${postId}/comments/${commentId}`,
             {
                 headers: {
                     Authorization: `Bearer ${token}`,
@@ -772,40 +772,35 @@ const Feed = ({ countryCode, flag, countryName, handleCountryChange }) => {
   // view the who is like the post 
   const [likedUsers, setLikedUsers] = useState([]);
   const [showLikedUsers, setShowLikedUsers] = useState(false);
+  
   useEffect(() => {
     if (!selectedPost?.id || !showLikedUsers) return;
-  
+
     const fetchLikedUsers = async () => {
       try {
-        console.log("Fetching liked users for post:", selectedPost.id);
-  
         const token = localStorage.getItem("api_token");
         if (!token) {
-          console.error("No token found, user might not be logged in.");
+          console.error("No token found");
           return;
         }
-  
+
         const response = await axios.get(
           `https://develop.quakbox.com/admin/api/posts/${selectedPost.id}/liked-users`,
-          {     headers: {
-            Authorization: `Bearer ${token}`,
-            "Content-Type": "application/json",
-            Accept: "application/json", // Ensures Laravel properly parses the request
-          }, }
+          { headers: { Authorization: `Bearer ${token}` } }
         );
-  
+
         if (response.status === 200 && response.data?.liked_users) {
           setLikedUsers(response.data.liked_users);
         } else {
-          console.error("Failed to fetch liked users:", response.data.message || "Unknown error");
+          console.error("Failed to fetch liked users");
         }
       } catch (error) {
         console.error("Error fetching liked users:", error);
       }
     };
-  
+
     fetchLikedUsers();
-  }, [showLikedUsers, selectedPost?.id]); // Depend on `selectedPost.id`
+  }, [showLikedUsers, selectedPost?.id]);
   
   return (
     <div
@@ -1228,42 +1223,39 @@ const Feed = ({ countryCode, flag, countryName, handleCountryChange }) => {
                         <h6>Comments</h6>
 
                         {comments?.length > 0 ? (
-    comments.slice(0, visibleComments).map((comment, index) => {
-        console.log("Rendering comment:", comment);
-        console.log("Current user ID:", userId);
-        console.log("Comment owner ID:", comment.comment_user_id);
+                        comments.slice(0, visibleComments).map((comment, index) => {
 
-        return (
-            <div key={comment.comment_id || index} className="d-flex align-items-start mb-3">
-                {/* User Avatar */}
-                <img
-                    src={comment.comment_user_profile_picture || defaultUserImage}
-                    alt="User Avatar"
-                    className="rounded-circle me-2"
-                    style={{ width: "35px", height: "35px" }}
-                />
+                          return (
+                              <div key={comment.comment_id || index} className="d-flex align-items-start mb-3">
+                                  {/* User Avatar */}
+                                  <img
+                                      src={comment.comment_user_profile_picture || defaultUserImage}
+                                      alt="User Avatar"
+                                      className="rounded-circle me-2"
+                                      style={{ width: "35px", height: "35px" }}
+                                  />
 
-                {/* Comment Content */}
-                <div className="flex-grow-1">
-                    <div className="d-flex justify-content-between">
-                        <h6 className="mb-0">{comment.comment_user_name || "Anonymous"}</h6>
+                                  {/* Comment Content */}
+                                  <div className="flex-grow-1">
+                                      <div className="d-flex justify-content-between">
+                                          <h6 className="mb-0">{comment.comment_user_name || "Anonymous"}</h6>
 
-                        {/* 🔥 Debugging: Check if delete icon should be shown */}
-                        {Number(comment.comment_user_id) === Number(userId) && (
-                            <i
-                              className="bi bi-trash text-danger"
-                              onClick={() => deleteComment(selectedPost.id, comment.comment_id)}
-                              style={{ cursor: "pointer", fontSize: "16px" }}
-                            ></i>
-                          )}
-                    </div>
-                    <p className="mb-1">{comment.comment_content}</p>
-                    <small className="text-muted">{getTimeAgo(comment.comment_updated_datetime)}</small>
-                </div>
-            </div>
-        );
-    })
-) : (
+                                          {/* 🔥 Debugging: Check if delete icon should be shown */}
+                                          {Number(comment.comment_user_id) === Number(userId) && (
+                                              <i
+                                                className="bi bi-trash text-danger"
+                                                onClick={() => deleteComment(selectedPost.id, comment.comment_id)}
+                                                style={{ cursor: "pointer", fontSize: "16px" }}
+                                              ></i>
+                                            )}
+                                      </div>
+                                      <p className="mb-1">{comment.comment_content}</p>
+                                      <small className="text-muted">{getTimeAgo(comment.comment_updated_datetime)}</small>
+                                  </div>
+                              </div>
+                          );
+                      })
+                  ) : (
                           // Mock Comments for Testing
                           <>
                             {/* <div className="d-flex align-items-start mb-3">
@@ -1344,21 +1336,18 @@ const Feed = ({ countryCode, flag, countryName, handleCountryChange }) => {
 
         {/* Dynamically Render Posts */}
         <div className="text-white p-0 rounded">
-          {data &&
-            data.posts &&
+        {data && data.posts &&
             Array.isArray(data.posts) &&
             data.posts.map((post) => {
               const loggedInUserId = localStorage.getItem("user_Id"); // Get logged-in user ID
               const isOwner = loggedInUserId == post.from.user_id; // Check if the logged-in user is the post owner
-              // console.log(post);
 
               return (
                 <div
                   className="card mb-1"
                   key={post.id}
                   style={{
-                    height:
-                      post.attachments.data.length === 0 ? "auto" : "550px",
+                    height: post.attachments.data.length === 0 ? "auto" : "550px",
                     display: "flex",
                     flexDirection: "column",
                   }}
@@ -1375,9 +1364,7 @@ const Feed = ({ countryCode, flag, countryName, handleCountryChange }) => {
 
                     {/* Name & Timestamp */}
                     <div>
-                      <h6 className="mb-0">
-                        {post.from?.name || "Unknown User"}
-                      </h6>
+                      <h6 className="mb-0">{post.from?.name || "Unknown User"}</h6>
                       <small>{post.timeAgo}</small>
                     </div>
 
@@ -1392,14 +1379,8 @@ const Feed = ({ countryCode, flag, countryName, handleCountryChange }) => {
                           gap: "20px",
                         }}
                       >
-                        <i
-                          className="bi bi-pencil"
-                          onClick={() => openEditPopup(post)}
-                        ></i>
-                        <i
-                          className="bi bi-trash"
-                          onClick={() => openDeletePopup(post)}
-                        ></i>
+                        <i className="bi bi-pencil" onClick={() => openEditPopup(post)}></i>
+                        <i className="bi bi-trash" onClick={() => openDeletePopup(post)}></i>
                       </div>
                     )}
                   </div>
@@ -1409,15 +1390,12 @@ const Feed = ({ countryCode, flag, countryName, handleCountryChange }) => {
                   <div
                     className="card-body p-0 d-flex align-items-center justify-content-center"
                     style={{
-                      // height: "300px",
                       overflow: "hidden",
                       backgroundColor: "#fff",
                     }}
                   >
                     {post.attachments &&
                       post.attachments.data.map((attachment, index) => {
-                        // console.log(attachment);
-
                         if (attachment.type === "image") {
                           return (
                             <img
@@ -1428,7 +1406,6 @@ const Feed = ({ countryCode, flag, countryName, handleCountryChange }) => {
                               style={{
                                 objectFit: "contain",
                                 maxHeight: "100%",
-                                // maxWidth: "100%",
                               }}
                             />
                           );
@@ -1446,10 +1423,7 @@ const Feed = ({ countryCode, flag, countryName, handleCountryChange }) => {
                                 backgroundColor: "black",
                               }}
                             >
-                              <source
-                                src={attachment.media[0].url}
-                                type="video/mp4"
-                              />
+                              <source src={attachment.media[0].url} type="video/mp4" />
                               Your browser does not support the video tag.
                             </video>
                           );
@@ -1458,105 +1432,120 @@ const Feed = ({ countryCode, flag, countryName, handleCountryChange }) => {
                       })}
                   </div>
 
-              {/* Post Footer */}
-              <div className="card-footer bg-white d-flex justify-content-between align-items-center border-0">
-              {/* Modify your span inside the post loop: */}
-              {selectedPost && (
-                <span
-                  className="text-muted"
-                  onClick={() => setShowLikedUsers(true)}
-                  style={{ cursor: "pointer", color: "blue" }}
-                >
-                  {selectedPost.likes?.count ? `${selectedPost.likes.count} likes` : "0 likes"}
-                </span>
-              )}
-             {/* Display liked users in a modal */}
-              {showLikedUsers && (
-                <div style={modalStyle}>
-                  <h6>Users who liked this post:</h6>
-                  <ul>
-                    {likedUsers.length > 0 ? (
-                      likedUsers.map((user) => (
-                        <li key={user.user_id} style={listItemStyle}>
-                          <img
-                            src={user.profile_image || "https://via.placeholder.com/40"}
-                            alt={user.name}
-                            width="40"
-                            height="40"
-                            style={imgStyle}
-                          />
-                          {user.name}
-                        </li>
-                      ))
-                    ) : (
-                      <p>No likes yet.</p>
-                    )}
-                  </ul>
-                  <button className="btn btn-sm me-2" onClick={() => setShowLikedUsers(false)} style={buttonStyle}>
-                    Close
-                  </button>
-                </div>
-              )}
-              <div className="d-flex">
-                    <button
-                      className={`btn btn-sm me-2 ${
-                        post.likes?.liked_users?.some((user) => user.user_id === currentUserId)
-                          ? "btn-primary text-white"
-                          : "btn-light"
-                      }`}
-                      onClick={() => handleLikeClick(post)}
+                  {/* Post Footer */}
+                  <div className="card-footer bg-white d-flex justify-content-between align-items-center border-0">
+                    <span
+                      className="text-muted"
+                      onClick={() => setShowLikedUsers(true)}
+                      style={{ cursor: "pointer", color: "blue" }}
                     >
-                      <ThumbUpIcon
-                        sx={{
-                          fontSize: 18,
-                          marginRight: "5px",
-                          color: post.likes?.liked_users?.some(
-                            (user) => user.user_id === currentUserId
-                          )
-                            ? "white"
-                            : "inherit",
-                        }}
-                      />
-                      Like
-                    </button>
+                      {post.likes?.count ? `${post.likes.count} likes` : "0 likes"}
+                    </span>
 
-                    <button
-                      className={`btn btn-sm me-2 ${
-                        post?.disliked_users?.some((user) => user.user_id === currentUserId)
-                          ? "btn-danger text-white"
-                          : "btn-light"
-                      }`}
-                      onClick={() => handleDislikeClick(post)}
-                    >
-                      <ThumbDownIcon
-                        sx={{
-                          fontSize: 18,
-                          marginRight: "5px",
-                          color: post?.disliked_users?.some(
-                            (user) => user.user_id === currentUserId
-                          )
-                            ? "white"
-                            : "inherit",
-                        }}
-                      />
-                      Dislike
-                    </button>
+                    {/* Liked Users Modal */}
+                    {showLikedUsers && (
+                     <div
+                     className="modal fade show d-block"
+                     style={{ opacity:"0.5" }}
+                     tabIndex="-1"
+                   >
+                     <div
+                       className="modal-dialog modal-dialog-centered modal-lg"
+                       style={{ maxWidth: "400px" }}
+                     >
+                       <div className="modal-content">
+                         <div className="modal-header">
+                                <h5 className="modal-title">Users Who Liked This Post</h5>
+                                <button className="btn-close" onClick={() => setShowLikedUsers(false)}></button>
+                              </div>
+
+                              {/* Body */}
+                              <div
+                                className="modal-body d-flex flex-column"
+                                style={{ maxHeight: "80vh" }}
+                              >
+                                {likedUsers.length > 0 ? (
+                                  <ul className="list-group">
+                                    {likedUsers.map((user) => (
+                                      <li key={user.user_id} className="list-group-item d-flex align-items-center">
+                                        <img
+                                          src={user.profile_image || "https://via.placeholder.com/40"}
+                                          alt={user.name}
+                                          className="rounded-circle me-2"
+                                          style={{ width: "40px", height: "40px" }}
+                                        />
+                                        {user.name}
+                                      </li>
+                                    ))}
+                                  </ul>
+                                ) : (
+                                  <p>No likes yet.</p>
+                                )}
+                              </div>
+
+                              {/* Footer */}
+                              <div className="modal-footer">
+                                <button className="btn btn-primary" onClick={() => setShowLikedUsers(false)}>
+                                  Close
+                                </button>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                    )}
+
+                    <div className="d-flex">
                       <button
-                        className="btn btn-light btn-sm me-2"
-                        onClick={() => openCommentPopup(post)}
+                        className={`btn btn-sm me-2 ${
+                          post.likes?.liked_users?.some((user) => user.user_id === currentUserId)
+                            ? "btn-primary text-white"
+                            : "btn-light"
+                        }`}
+                        onClick={() => handleLikeClick(post)}
                       >
-                        <CommentIcon
-                          sx={{ fontSize: 18, marginRight: "5px" }}
-                        />{" "}
-                        Comment{" "}
-                        <span className="text-muted">
-                          {post.comments?.count}
-                        </span>
+                        <ThumbUpIcon
+                          sx={{
+                            fontSize: 18,
+                            marginRight: "5px",
+                            color: post.likes?.liked_users?.some(
+                              (user) => user.user_id === currentUserId
+                            )
+                              ? "white"
+                              : "inherit",
+                          }}
+                        />
+                        Like
+                      </button>
+
+                      <button
+                        className={`btn btn-sm me-2 ${
+                          post?.disliked_users?.some((user) => user.user_id === currentUserId)
+                            ? "btn-danger text-white"
+                            : "btn-light"
+                        }`}
+                        onClick={() => handleDislikeClick(post)}
+                      >
+                        <ThumbDownIcon
+                          sx={{
+                            fontSize: 18,
+                            marginRight: "5px",
+                            color: post?.disliked_users?.some(
+                              (user) => user.user_id === currentUserId
+                            )
+                              ? "white"
+                              : "inherit",
+                          }}
+                        />
+                        Dislike
+                      </button>
+
+                      <button className="btn btn-light btn-sm me-2" onClick={() => openCommentPopup(post)}>
+                        <CommentIcon sx={{ fontSize: 18, marginRight: "5px" }} /> Comment{" "}
+                        <span className="text-muted">{post.comments?.count}</span>
                       </button>
 
                       <button className="btn btn-light btn-sm">
-                        <ShareIcon sx={{ fontSize: 18, marginRight: "5px" }} />{" "}
-                        Share
+                        <ShareIcon sx={{ fontSize: 18, marginRight: "5px" }} /> Share
                       </button>
                     </div>
                   </div>
