@@ -24,7 +24,7 @@ const Feed = ({ countryCode, flag, countryName, handleCountryChange }) => {
   const [editedMessage, setEditedMessage] = useState("");
   const [editedMediaFile, setEditedMediaFile] = useState(null);
   const [editedMediaPreview, setEditedMediaPreview] = useState(null);
-
+  
   const userId = localStorage.getItem("user_Id");
 
   // Functions to handle popup visibility
@@ -111,35 +111,53 @@ const Feed = ({ countryCode, flag, countryName, handleCountryChange }) => {
     setSelectedPost(null);
     setCommentPopupOpen(false);
   };
-
+  
   const loadMoreComments = () => {
     setVisibleComments((prev) => prev + 10); // Load 10 more comments on click
   };
-
   const deleteComment = async (postId, commentId) => {
     try {
-      const token = localStorage.getItem("api_token");
-      if (!token) {
-        console.error("No API token found");
-        return;
-      }
-  
-      const response = await axios.delete(
-        `https://develop.quakbox.com/admin/api/del_posts/${postId}/comments/${commentId}`,
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
+        const token = localStorage.getItem("api_token");
+        if (!token) {
+            console.error("No API token found");
+            return;
         }
-      );
-  
-      console.log("Comment deleted:", response.data);
-      // After deletion, refresh the comments
-      getCommets(selectedPost);
+
+        if (!postId || !commentId) {
+            console.error("Invalid postId or commentId:", { postId, commentId });
+            return;
+        }
+
+        console.log(`Deleting comment ID: ${commentId} from Post ID: ${postId}`);
+
+        const response = await axios.delete(
+            `https://develop.quakbox.com/admin/api/del_posts/${postId}/comments/${commentId}`,
+            {
+                headers: {
+                    Authorization: `Bearer ${token}`,
+                    "Content-Type": "application/json",
+                },
+            }
+        );
+
+        console.log("Comment deleted successfully:", response.data);
+
+        // Remove deleted comment from local state
+        setComments((prevComments) => prevComments.filter((comment) => comment.comment_id !== commentId));
+
     } catch (error) {
-      console.error("Error deleting comment:", error);
+        console.error("Error deleting comment:", error);
+
+        if (error.response) {
+            console.error("Error Response:", error.response.data, "Status:", error.response.status);
+        } else if (error.request) {
+            console.error("No response received:", error.request);
+        } else {
+            console.error("Request setup error:", error.message);
+        }
     }
-  };  
+};
+
   // Open Delete Popup
   const openDeletePopup = (post) => {
     setPostToDelete(post);
@@ -478,176 +496,178 @@ const Feed = ({ countryCode, flag, countryName, handleCountryChange }) => {
   //   }
   // };
 
-  const handleLikeClick = async (postId) => {
-    const token = localStorage.getItem("api_token");
+  const token = localStorage.getItem("api_token");
+  const currentUserId = userData?.users?.id || localStorage.getItem("user_id");
 
- // Check if the user has already liked the post
-   const alreadyLiked = post.likes?.liked_users?.some(
-          (user) => user.user_id === currentUserId
-    );
-    if (alreadyLiked) {
-         console.log("You've already liked this post.");
-         return; // Prevent further action if the user has already liked the post
-    }    
-    const currentUser = {
-      user_id: userData.users.id, // Correct field name based on your API response
-      name: userData.users.username || "Unknown User",
-    };
-       
-    setData((prevData) =>
-      Array.isArray(prevData.posts)
-        ? {
-            ...prevData,
-            posts: prevData.posts.map((post) =>
-              post.id === postId
-                ? {
-                    ...post,
-                    likes: {
-                      count: (post.likes?.count || 0) + 1,
-                      liked_users: [
-                        ...(post.likes?.liked_users || []),
-                        currentUser,
-                      ],
-                    },
-                    // Remove dislike if user had disliked before
-                    disliked_users: (post.disliked_users || []).filter(
-                      (user) => user.user_id !== userData.users.id
-                    ),
-                  }
-                : post
-            ),
-          }
-        : prevData
-    );
+  const [dislikeInProgress, setDislikeInProgress] = useState({});
+  const [likeInProgress, setLikeInProgress] = useState({});
 
-    try {
-      const res = await axios.post(
-        `https://develop.quakbox.com/admin/api/set_posts_like/${postId}/like`,
-        {},
-        {
-          headers: { Authorization: `Bearer ${token}` },
-        }
-      );
+  const handleLikeClick = async (post) => {
+    if (likeInProgress[post.id]) return; // Prevent multiple clicks
 
-      if (res.status !== 200) {
-        console.error("Failed to save the like in the database.");
-        revertLike(postId);
-      }
-    } catch (error) {
-      console.error("Error liking the post:", error);
-      revertLike(postId);
-    }
-  };
+    setLikeInProgress((prev) => ({ ...prev, [post.id]: true }));
 
-  // Revert Like (Rollback if API call fails)
-  const revertLike = (postId) => {
-    setData((prevData) =>
-      Array.isArray(prevData.posts)
-        ? {
-            ...prevData,
-            posts: prevData.posts.map((post) =>
-              post.id === postId
-                ? {
-                    ...post,
-                    likes: {
-                      count: Math.max((post.likes?.count || 0) - 1, 0),
-                      liked_users: (post.likes?.liked_users || []).filter(
-                        (user) => user.user_id !== userData.users.id
-                      ),
-                    },
-                  }
-                : post
-            ),
-          }
-        : prevData
-    );
-  };
-
-  // // Handle Dislike Click
-  const [dislikeInProgress, setDislikeInProgress] = useState(false);
-  
-  const handleDislikeClick = async (postId) => {
-    if (dislikeInProgress) return; // Prevent multiple clicks
-    setDislikeInProgress(true);
-  
-    const token = localStorage.getItem("api_token");
-    const currentUserId = user?.id || localStorage.getItem("user_id");
-    const userName = user?.username || "Unknown User";
-  
-    if (!currentUserId) {
-      console.error("User ID not found!");
-      setDislikeInProgress(false);
-      return;
-    }
-  
     const currentUser = {
       user_id: currentUserId,
-      name: userName,
+      name: userData?.users?.username || "Unknown User",
     };
-  
+
+    const alreadyLiked = post.likes?.liked_users?.some(
+      (user) => user.user_id === currentUser.user_id
+    );
+
+    if (alreadyLiked) {
+      console.log("You've already liked this post.");
+      setLikeInProgress((prev) => ({ ...prev, [post.id]: false }));
+      return;
+    }
+
     // Optimistic UI update
     setData((prevData) =>
       prevData?.posts?.length
         ? {
             ...prevData,
-            posts: prevData.posts.map((post) =>
-              post.id === postId
+            posts: prevData.posts.map((p) =>
+              p.id === post.id
                 ? {
-                    ...post,
-                    disliked_users: [...(post.disliked_users || []), currentUser],
+                    ...p,
                     likes: {
-                      count: Math.max((post.likes?.count || 0) - 1, 0),
-                      liked_users: post.likes?.liked_users?.filter(
-                        (user) => user.user_id !== currentUserId
-                      ) || [],
+                      count: (p.likes?.count || 0) + 1,
+                      liked_users: [...(p.likes?.liked_users || []), currentUser],
                     },
+                    disliked_users: p.disliked_users?.filter(
+                      (user) => user.user_id !== currentUserId
+                    ),
                   }
-                : post
+                : p
             ),
           }
         : prevData
     );
-  
+
     try {
       const res = await axios.post(
-        `https://develop.quakbox.com/admin/api/set_posts_like/${postId}/dislike`,
+        `https://develop.quakbox.com/admin/api/set_posts_like/${post.id}/like`,
         {},
         { headers: { Authorization: `Bearer ${token}` } }
       );
-  
+
       if (res.status !== 200) {
-        console.error("Failed to save the dislike in the database.");
-        revertDislike(postId);
+        console.error("Failed to save the like in the database.");
+        revertLike(post);
       }
     } catch (error) {
-      console.error("Error disliking the post:", error);
-      revertDislike(postId);
+      console.error("Error liking the post:", error);
+      revertLike(post);
     } finally {
-      setDislikeInProgress(false);
+      setLikeInProgress((prev) => ({ ...prev, [post.id]: false }));
     }
   };
-  
-  // Revert Dislike (Rollback if API call fails)
-  const revertDislike = (postId) => {
+
+  const revertLike = (post) => {
     setData((prevData) =>
       prevData?.posts?.length
         ? {
             ...prevData,
-            posts: prevData.posts.map((post) =>
-              post.id === postId
+            posts: prevData.posts.map((p) =>
+              p.id === post.id
                 ? {
-                    ...post,
-                    disliked_users: (post.disliked_users || []).filter(
-                      (user) => user.user_id !== userData.users.id
-                    ),
+                    ...p,
+                    likes: {
+                      count: Math.max((p.likes?.count || 0) - 1, 0),
+                      liked_users: (p.likes?.liked_users || []).filter(
+                        (user) => user.user_id !== currentUserId
+                      ),
+                    },
                   }
-                : post
+                : p
             ),
           }
         : prevData
     );
-  };  
+  };
 
+  const handleDislikeClick = async (post) => {
+    if (dislikeInProgress[post.id]) return; // Prevent multiple clicks
+
+    setDislikeInProgress((prev) => ({ ...prev, [post.id]: true }));
+
+    const currentUser = {
+      user_id: currentUserId,
+      name: userData?.users?.username || "Unknown User",
+    };
+
+    const alreadyDisliked = post.disliked_users?.some(
+      (user) => user.user_id === currentUserId
+    );
+
+    if (alreadyDisliked) {
+      console.warn("User already disliked this post!");
+      setDislikeInProgress((prev) => ({ ...prev, [post.id]: false }));
+      return;
+    }
+
+    // Optimistic UI update
+    setData((prevData) =>
+      prevData?.posts?.length
+        ? {
+            ...prevData,
+            posts: prevData.posts.map((p) =>
+              p.id === post.id
+                ? {
+                    ...p,
+                    disliked_users: [...(p.disliked_users || []), currentUser],
+                    likes: {
+                      count: Math.max((p.likes?.count || 0) - 1, 0),
+                      liked_users: p.likes?.liked_users?.filter(
+                        (user) => user.user_id !== currentUserId
+                      ) || [],
+                    },
+                  }
+                : p
+            ),
+          }
+        : prevData
+    );
+
+    try {
+      const res = await axios.post(
+        `https://develop.quakbox.com/admin/api/set_posts_like/${post.id}/dislike`,
+        { user_id: currentUserId },
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+
+      if (res.status !== 200) {
+        console.error("Failed to save the dislike in the database.");
+        revertDislike(post);
+      }
+    } catch (error) {
+      console.error("Error disliking the post:", error);
+      revertDislike(post);
+    } finally {
+      setDislikeInProgress((prev) => ({ ...prev, [post.id]: false }));
+    }
+  };
+
+  const revertDislike = (post) => {
+    setData((prevData) =>
+      prevData?.posts?.length
+        ? {
+            ...prevData,
+            posts: prevData.posts.map((p) =>
+              p.id === post.id
+                ? {
+                    ...p,
+                    disliked_users: (p.disliked_users || []).filter(
+                      (user) => user.user_id !== currentUserId
+                    ),
+                  }
+                : p
+            ),
+          }
+        : prevData
+    );
+  };
   // const getPost = async () => {
   //   const token = localStorage.getItem("api_token");
 
@@ -680,8 +700,7 @@ const Feed = ({ countryCode, flag, countryName, handleCountryChange }) => {
       console.log("No token found, user may not be logged in.");
       return;
     }
-    console.log(countryCode);
-
+  
     try {
       const res = await axios.get(
         `https://develop.quakbox.com/admin/api/get_posts/${countryCode}`,
@@ -689,16 +708,20 @@ const Feed = ({ countryCode, flag, countryName, handleCountryChange }) => {
           headers: { Authorization: `Bearer ${token}` },
         }
       );
-      // Extract posts only if status is true
+  
       if (res.data.status && Array.isArray(res.data.posts)) {
         const formattedPosts = res.data.posts.map((post) => ({
           ...post,
           created_time: post.created_time || new Date().toISOString(),
           timeAgo: getTimeAgo(post.created_time),
         }));
-
+  
         setData({ posts: formattedPosts });
-        // console.log(data);
+  
+        // Select first post as default
+        if (formattedPosts.length > 0) {
+          setSelectedPost(formattedPosts[0]);
+        }
       } else {
         console.log("Invalid API response structure.");
       }
@@ -706,7 +729,7 @@ const Feed = ({ countryCode, flag, countryName, handleCountryChange }) => {
       console.log("Error fetching posts:", error);
     }
   };
-
+  
   useEffect(() => {
     // Cleanup the preview URL to avoid memory leaks
     return () => {
@@ -749,19 +772,36 @@ const Feed = ({ countryCode, flag, countryName, handleCountryChange }) => {
   // view the who is like the post 
   const [likedUsers, setLikedUsers] = useState([]);
   const [showLikedUsers, setShowLikedUsers] = useState(false);
+  
+  useEffect(() => {
+    if (!selectedPost?.id || !showLikedUsers) return;
 
-    const fetchLikedUsers = async (postId) => {
+    const fetchLikedUsers = async () => {
       try {
-        const res = await axios.get(`https://develop.quakbox.com/admin/api/posts/${postId}/liked-users`);
-        if (res.data.status) {
-          setLikedUsers(res.data.liked_users);
-          setShowLikedUsers(true);
+        const token = localStorage.getItem("api_token");
+        if (!token) {
+          console.error("No token found");
+          return;
+        }
+
+        const response = await axios.get(
+          `https://develop.quakbox.com/admin/api/posts/${selectedPost.id}/liked-users`,
+          { headers: { Authorization: `Bearer ${token}` } }
+        );
+
+        if (response.status === 200 && response.data?.liked_users) {
+          setLikedUsers(response.data.liked_users);
+        } else {
+          console.error("Failed to fetch liked users");
         }
       } catch (error) {
         console.error("Error fetching liked users:", error);
       }
     };
 
+    fetchLikedUsers();
+  }, [showLikedUsers, selectedPost?.id]);
+  
   return (
     <div
       className="col-12 col-md-6 offset-md-3 p-1"
@@ -1182,49 +1222,40 @@ const Feed = ({ countryCode, flag, countryName, handleCountryChange }) => {
                       >
                         <h6>Comments</h6>
 
-                        {/* If comments exist, show them */}
                         {comments?.length > 0 ? (
-                          comments
-                            .slice(0, visibleComments)
-                            .map((comment, index) => (
-                              <div
-                                key={index}
-                                className="d-flex align-items-start mb-3"
-                              >
-                                <img
-                                  src={
-                                    comment.comment_user_profile_picture ||
-                                    defaultUserImage
-                                  }
-                                  alt="User Avatar"
-                                  className="rounded-circle me-2"
-                                  style={{ width: "35px", height: "35px" }}
-                                />
-                                <div>
-                                  <h6 className="mb-0">
-                                    {comment.comment_user_name || "Anonymous"}
-                                  </h6>
-                                  <p className="mb-1">
-                                    {comment.comment_content}
-                                  </p>
-                                  <small className="text-muted">
-                                    {getTimeAgo(
-                                      comment.comment_updated_datetime
-                                    )}
-                                  </small>
-                                   {/* Delete Button */}
-                                  {comment.comment_user_id === userId && (
-                                    <button
-                                      className="btn btn-sm btn-danger mt-1"
-                                      onClick={() => deleteComment(selectedPost.id, comment.id)}
-                                    >
-                                      Delete
-                                    </button>
-                                  )}
-                                </div>
+                        comments.slice(0, visibleComments).map((comment, index) => {
+
+                          return (
+                              <div key={comment.comment_id || index} className="d-flex align-items-start mb-3">
+                                  {/* User Avatar */}
+                                  <img
+                                      src={comment.comment_user_profile_picture || defaultUserImage}
+                                      alt="User Avatar"
+                                      className="rounded-circle me-2"
+                                      style={{ width: "35px", height: "35px" }}
+                                  />
+
+                                  {/* Comment Content */}
+                                  <div className="flex-grow-1">
+                                      <div className="d-flex justify-content-between">
+                                          <h6 className="mb-0">{comment.comment_user_name || "Anonymous"}</h6>
+
+                                          {/* 🔥 Debugging: Check if delete icon should be shown */}
+                                          {Number(comment.comment_user_id) === Number(userId) && (
+                                              <i
+                                                className="bi bi-trash text-danger"
+                                                onClick={() => deleteComment(selectedPost.id, comment.comment_id)}
+                                                style={{ cursor: "pointer", fontSize: "16px" }}
+                                              ></i>
+                                            )}
+                                      </div>
+                                      <p className="mb-1">{comment.comment_content}</p>
+                                      <small className="text-muted">{getTimeAgo(comment.comment_updated_datetime)}</small>
+                                  </div>
                               </div>
-                            ))
-                        ) : (
+                          );
+                      })
+                  ) : (
                           // Mock Comments for Testing
                           <>
                             {/* <div className="d-flex align-items-start mb-3">
@@ -1305,21 +1336,18 @@ const Feed = ({ countryCode, flag, countryName, handleCountryChange }) => {
 
         {/* Dynamically Render Posts */}
         <div className="text-white p-0 rounded">
-          {data &&
-            data.posts &&
+        {data && data.posts &&
             Array.isArray(data.posts) &&
             data.posts.map((post) => {
               const loggedInUserId = localStorage.getItem("user_Id"); // Get logged-in user ID
               const isOwner = loggedInUserId == post.from.user_id; // Check if the logged-in user is the post owner
-              // console.log(post);
 
               return (
                 <div
                   className="card mb-1"
                   key={post.id}
                   style={{
-                    height:
-                      post.attachments.data.length === 0 ? "auto" : "550px",
+                    height: post.attachments.data.length === 0 ? "auto" : "550px",
                     display: "flex",
                     flexDirection: "column",
                   }}
@@ -1336,9 +1364,7 @@ const Feed = ({ countryCode, flag, countryName, handleCountryChange }) => {
 
                     {/* Name & Timestamp */}
                     <div>
-                      <h6 className="mb-0">
-                        {post.from?.name || "Unknown User"}
-                      </h6>
+                      <h6 className="mb-0">{post.from?.name || "Unknown User"}</h6>
                       <small>{post.timeAgo}</small>
                     </div>
 
@@ -1353,14 +1379,8 @@ const Feed = ({ countryCode, flag, countryName, handleCountryChange }) => {
                           gap: "20px",
                         }}
                       >
-                        <i
-                          className="bi bi-pencil"
-                          onClick={() => openEditPopup(post)}
-                        ></i>
-                        <i
-                          className="bi bi-trash"
-                          onClick={() => openDeletePopup(post)}
-                        ></i>
+                        <i className="bi bi-pencil" onClick={() => openEditPopup(post)}></i>
+                        <i className="bi bi-trash" onClick={() => openDeletePopup(post)}></i>
                       </div>
                     )}
                   </div>
@@ -1370,15 +1390,12 @@ const Feed = ({ countryCode, flag, countryName, handleCountryChange }) => {
                   <div
                     className="card-body p-0 d-flex align-items-center justify-content-center"
                     style={{
-                      // height: "300px",
                       overflow: "hidden",
                       backgroundColor: "#fff",
                     }}
                   >
                     {post.attachments &&
                       post.attachments.data.map((attachment, index) => {
-                        // console.log(attachment);
-
                         if (attachment.type === "image") {
                           return (
                             <img
@@ -1389,7 +1406,6 @@ const Feed = ({ countryCode, flag, countryName, handleCountryChange }) => {
                               style={{
                                 objectFit: "contain",
                                 maxHeight: "100%",
-                                // maxWidth: "100%",
                               }}
                             />
                           );
@@ -1407,10 +1423,7 @@ const Feed = ({ countryCode, flag, countryName, handleCountryChange }) => {
                                 backgroundColor: "black",
                               }}
                             >
-                              <source
-                                src={attachment.media[0].url}
-                                type="video/mp4"
-                              />
+                              <source src={attachment.media[0].url} type="video/mp4" />
                               Your browser does not support the video tag.
                             </video>
                           );
@@ -1419,102 +1432,120 @@ const Feed = ({ countryCode, flag, countryName, handleCountryChange }) => {
                       })}
                   </div>
 
-              {/* Post Footer */}
-              <div className="card-footer bg-white d-flex justify-content-between align-items-center border-0">
-             {/* Modify your span inside the post loop: */}
-              <span className="text-muted" onClick={() => fetchLikedUsers(post.id)} style={{ cursor: "pointer", color: "blue" }}>
-                {post.likes && post.likes.count !== undefined
-                  ? `${post.likes.count} likes`
-                  : "0 likes"}
-              </span>
-              {/* Display liked users in a modal or popup */}
-              {showLikedUsers && (
-                <div className="liked-users-popup">
-                  <h3>Users who liked this post:</h3>
-                  <ul>
-                    {likedUsers.length > 0 ? (
-                      likedUsers.map((user) => (
-                        <li key={user.user_id}>
-                          <img src={user.profile_image} alt={user.name} width="40" height="40" />
-                          {user.name}
-                        </li>
-                      ))
-                    ) : (
-                      <p>No likes yet.</p>
+                  {/* Post Footer */}
+                  <div className="card-footer bg-white d-flex justify-content-between align-items-center border-0">
+                    <span
+                      className="text-muted"
+                      onClick={() => setShowLikedUsers(true)}
+                      style={{ cursor: "pointer", color: "blue" }}
+                    >
+                      {post.likes?.count ? `${post.likes.count} likes` : "0 likes"}
+                    </span>
+
+                    {/* Liked Users Modal */}
+                    {showLikedUsers && (
+                     <div
+                     className="modal fade show d-block"
+                     style={{ opacity:"0.5" }}
+                     tabIndex="-1"
+                   >
+                     <div
+                       className="modal-dialog modal-dialog-centered modal-lg"
+                       style={{ maxWidth: "400px" }}
+                     >
+                       <div className="modal-content">
+                         <div className="modal-header">
+                                <h5 className="modal-title">Users Who Liked This Post</h5>
+                                <button className="btn-close" onClick={() => setShowLikedUsers(false)}></button>
+                              </div>
+
+                              {/* Body */}
+                              <div
+                                className="modal-body d-flex flex-column"
+                                style={{ maxHeight: "80vh" }}
+                              >
+                                {likedUsers.length > 0 ? (
+                                  <ul className="list-group">
+                                    {likedUsers.map((user) => (
+                                      <li key={user.user_id} className="list-group-item d-flex align-items-center">
+                                        <img
+                                          src={user.profile_image || "https://via.placeholder.com/40"}
+                                          alt={user.name}
+                                          className="rounded-circle me-2"
+                                          style={{ width: "40px", height: "40px" }}
+                                        />
+                                        {user.name}
+                                      </li>
+                                    ))}
+                                  </ul>
+                                ) : (
+                                  <p>No likes yet.</p>
+                                )}
+                              </div>
+
+                              {/* Footer */}
+                              <div className="modal-footer">
+                                <button className="btn btn-primary" onClick={() => setShowLikedUsers(false)}>
+                                  Close
+                                </button>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
                     )}
-                  </ul>
-                  <button onClick={() => setShowLikedUsers(false)}>Close</button>
-                </div>
-              )}
 
-                  <div className="d-flex">
+                    <div className="d-flex">
                       <button
-                          className={`btn btn-sm me-2 ${
-                              post.likes?.liked_users?.some(
-                                  (user) => user.user_id == loggedInUserId
-                              )
-                                  ? "btn-primary text-white"
-                                  : "btn-light"
-                          }`}
-                          onClick={() => handleLikeClick(post.id)}
-                          disabled={post.likes?.liked_users?.some(
-                              (user) => user.user_id == loggedInUserId
-                          )}
+                        className={`btn btn-sm me-2 ${
+                          post.likes?.liked_users?.some((user) => user.user_id === currentUserId)
+                            ? "btn-primary text-white"
+                            : "btn-light"
+                        }`}
+                        onClick={() => handleLikeClick(post)}
                       >
-                          <ThumbUpIcon
-                              sx={{
-                                  fontSize: 18,
-                                  marginRight: "5px",
-                                  color: post.likes?.liked_users?.some(
-                                      (user) => user.user_id == loggedInUserId
-                                  )
-                                      ? "white"
-                                      : "inherit",
-                              }}
-                          />
-                          Like
+                        <ThumbUpIcon
+                          sx={{
+                            fontSize: 18,
+                            marginRight: "5px",
+                            color: post.likes?.liked_users?.some(
+                              (user) => user.user_id === currentUserId
+                            )
+                              ? "white"
+                              : "inherit",
+                          }}
+                        />
+                        Like
                       </button>
 
                       <button
-                          className={`btn btn-sm me-2 ${
-                              post.disliked_users?.some(
-                                  (user) => user.user_id === loggedInUserId
-                              )
-                                  ? "btn-danger text-white"
-                                  : "btn-light"
-                          }`}
-                          onClick={() => handleDislikeClick(post.id)}
+                        className={`btn btn-sm me-2 ${
+                          post?.disliked_users?.some((user) => user.user_id === currentUserId)
+                            ? "btn-danger text-white"
+                            : "btn-light"
+                        }`}
+                        onClick={() => handleDislikeClick(post)}
                       >
-                          <ThumbDownIcon
-                              sx={{
-                                  fontSize: 18,
-                                  marginRight: "5px",
-                                  color: post.disliked_users?.some(
-                                      (user) => user.user_id === loggedInUserId
-                                  )
-                                      ? "white"
-                                      : "inherit",
-                              }}
-                          />
-                          Dislike
+                        <ThumbDownIcon
+                          sx={{
+                            fontSize: 18,
+                            marginRight: "5px",
+                            color: post?.disliked_users?.some(
+                              (user) => user.user_id === currentUserId
+                            )
+                              ? "white"
+                              : "inherit",
+                          }}
+                        />
+                        Dislike
                       </button>
 
-                      <button
-                        className="btn btn-light btn-sm me-2"
-                        onClick={() => openCommentPopup(post)}
-                      >
-                        <CommentIcon
-                          sx={{ fontSize: 18, marginRight: "5px" }}
-                        />{" "}
-                        Comment{" "}
-                        <span className="text-muted">
-                          {post.comments?.count}
-                        </span>
+                      <button className="btn btn-light btn-sm me-2" onClick={() => openCommentPopup(post)}>
+                        <CommentIcon sx={{ fontSize: 18, marginRight: "5px" }} /> Comment{" "}
+                        <span className="text-muted">{post.comments?.count}</span>
                       </button>
 
                       <button className="btn btn-light btn-sm">
-                        <ShareIcon sx={{ fontSize: 18, marginRight: "5px" }} />{" "}
-                        Share
+                        <ShareIcon sx={{ fontSize: 18, marginRight: "5px" }} /> Share
                       </button>
                     </div>
                   </div>
@@ -1525,6 +1556,40 @@ const Feed = ({ countryCode, flag, countryName, handleCountryChange }) => {
       </div>
     </div>
   );
+};
+
+const modalStyle = {
+  position: "fixed",
+  top: "20%",
+  left: "50%",
+  transform: "translateX(-50%)",
+  backgroundColor: "white",
+  border: "1px solid #ccc",
+  padding: "20px",
+  boxShadow: "0 4px 8px rgba(0, 0, 0, 0.1)",
+  zIndex: 9999, // Ensure it appears on top of other content
+  maxHeight: "400px",
+  overflowY: "auto",
+  width: "300px",
+};
+
+const listItemStyle = {
+  display: "flex",
+  alignItems: "center",
+  margin: "10px 0",
+};
+
+const imgStyle = {
+  borderRadius: "50%",
+  marginRight: "10px",
+};
+
+const buttonStyle = {
+  backgroundColor: "#007bff",
+  color: "white",
+  border: "none",
+  padding: "10px",
+  cursor: "pointer",
 };
 
 export default Feed;
