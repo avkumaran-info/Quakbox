@@ -6,6 +6,7 @@ import ThumbUpIcon from "@mui/icons-material/ThumbUp";
 import ThumbDownIcon from "@mui/icons-material/ThumbDown";
 import ShareIcon from "@mui/icons-material/Share";
 import { StoreContext } from "../../Context/StoreContext";
+import EmojiPicker from "emoji-picker-react"; // Import Emoji Picker
 
 const Feed = ({ countryCode, flag, countryName, handleCountryChange }) => {
   const { userData } = useContext(StoreContext);
@@ -39,6 +40,12 @@ const Feed = ({ countryCode, flag, countryName, handleCountryChange }) => {
   const [loading, setLoading] = useState(false);
 
   const [commentText, setCommentText] = useState("");
+  const [showEmojiPicker, setShowEmojiPicker] = useState(false);
+
+  const handleEmojiClick = (emoji) => {
+    setCommentText((prev) => prev + emoji.emoji);
+  };
+
 
   const getCommets = async (post) => {
     try {
@@ -90,16 +97,26 @@ const Feed = ({ countryCode, flag, countryName, handleCountryChange }) => {
   };
 
   // Calling the function inside the comment modal
-  const handlePostComment = async () => {
-    // console.log("hi");
-    // console.log(selectedPost.id);
-    // console.log(commentText);
+ const handlePostComment = async () => {
+  if (!selectedPost || !commentText.trim()) return;
 
-    if (!selectedPost || !commentText.trim()) return;
-    await postComment(selectedPost.id, commentText);
-    setCommentText(""); // Clear the input after posting
-    getCommets(selectedPost); // Refresh comments
-  };
+  // Update the comment count instantly in UI
+  setSelectedPost((prevPost) => ({
+    ...prevPost,
+    comments: {
+      ...prevPost.comments,
+      count: (prevPost.comments?.count || 0) + 1, // Ensure count is incremented
+    },
+  }));
+
+  setCommentText(""); // Clear input field
+
+  await postComment(selectedPost.id, commentText); // API call
+
+  getCommets(selectedPost); // Fetch updated comments from API
+};
+
+  
 
   const openCommentPopup = async (post) => {
     await getCommets(post);
@@ -586,28 +603,26 @@ const Feed = ({ countryCode, flag, countryName, handleCountryChange }) => {
         : prevData
     );
   };
-
   const handleDislikeClick = async (post) => {
     if (dislikeInProgress[post.id]) return; // Prevent multiple clicks
-
     setDislikeInProgress((prev) => ({ ...prev, [post.id]: true }));
-
+  
     const currentUser = {
       user_id: currentUserId,
       name: userData?.users?.username || "Unknown User",
     };
-
+  
     const alreadyDisliked = post.disliked_users?.some(
       (user) => user.user_id === currentUserId
     );
-
+  
     if (alreadyDisliked) {
       console.warn("User already disliked this post!");
       setDislikeInProgress((prev) => ({ ...prev, [post.id]: false }));
       return;
     }
-
-    // Optimistic UI update
+  
+    // Optimistic UI Update: Remove like if user has liked the post
     setData((prevData) =>
       prevData?.posts?.length
         ? {
@@ -618,7 +633,11 @@ const Feed = ({ countryCode, flag, countryName, handleCountryChange }) => {
                     ...p,
                     disliked_users: [...(p.disliked_users || []), currentUser],
                     likes: {
-                      count: Math.max((p.likes?.count || 0) - 1, 0),
+                      count: p.likes?.liked_users?.some(
+                        (user) => user.user_id === currentUserId
+                      )
+                        ? Math.max((p.likes?.count || 0) - 1, 0) // Remove like count if already liked
+                        : p.likes?.count || 0,
                       liked_users: p.likes?.liked_users?.filter(
                         (user) => user.user_id !== currentUserId
                       ) || [],
@@ -629,14 +648,14 @@ const Feed = ({ countryCode, flag, countryName, handleCountryChange }) => {
           }
         : prevData
     );
-
+  
     try {
       const res = await axios.post(
         `https://develop.quakbox.com/admin/api/set_posts_like/${post.id}/dislike`,
         { user_id: currentUserId },
         { headers: { Authorization: `Bearer ${token}` } }
       );
-
+  
       if (res.status !== 200) {
         console.error("Failed to save the dislike in the database.");
         revertDislike(post);
@@ -647,8 +666,7 @@ const Feed = ({ countryCode, flag, countryName, handleCountryChange }) => {
     } finally {
       setDislikeInProgress((prev) => ({ ...prev, [post.id]: false }));
     }
-  };
-
+  };  
   const revertDislike = (post) => {
     setData((prevData) =>
       prevData?.posts?.length
@@ -1316,16 +1334,71 @@ const Feed = ({ countryCode, flag, countryName, handleCountryChange }) => {
 
                       {/* Add a Comment */}
                       <div className="mt-3">
-                        <textarea
-                          className="form-control"
-                          rows="2"
-                          placeholder="Write a comment..."
-                          value={commentText}
-                          onChange={(e) => setCommentText(e.target.value)}
-                        ></textarea>
+                       {/* Comment Input with Emoji Button */}
+                        <div style={{ position: "relative" }}>
+                          <textarea
+                            style={{
+                              width: "100%",
+                              paddingRight: "40px", // Make space for the emoji button
+                              padding: "8px",
+                              borderRadius: "5px",
+                              border: "1px solid #ccc",
+                              resize: "none",
+                            }}
+                            rows="2"
+                            placeholder="Write a comment..."
+                            value={commentText}
+                            onChange={(e) => setCommentText(e.target.value)}
+                          ></textarea>
+
+                          {/* Emoji Picker Toggle Button (Inside the textarea) */}
+                          <button
+                            onClick={() => setShowEmojiPicker(!showEmojiPicker)}
+                            style={{
+                              position: "absolute",
+                              right: "10px",
+                              top: "8px",
+                              background: "transparent",
+                              border: "none",
+                              cursor: "pointer",
+                              fontSize: "20px",
+                            }}
+                          >
+                            😀
+                          </button>
+
+                          {/* Render Emoji Picker when toggled */}
+                          {showEmojiPicker && (
+                            <div
+                              style={{
+                                position: "absolute",
+                                bottom: "50px",
+                                right: "0",
+                                zIndex: "1000",
+                                background: "white",
+                                borderRadius: "10px",
+                                boxShadow: "0px 4px 10px rgba(0, 0, 0, 0.2)",
+                                padding: "10px",
+                              }}
+                            >
+                              <EmojiPicker onEmojiClick={handleEmojiClick} width={300} height={350} />
+                            </div>
+                          )}
+                        </div>
+
+                        {/* Post Comment Button */}
                         <button
-                          className="btn btn-primary btn-sm mt-2"
                           onClick={handlePostComment}
+                          style={{
+                            marginTop: "8px",
+                            padding: "6px 12px",
+                            backgroundColor: "#007bff",
+                            color: "white",
+                            border: "none",
+                            borderRadius: "5px",
+                            cursor: "pointer",
+                            fontSize: "14px",
+                          }}
                         >
                           Post Comment
                         </button>
