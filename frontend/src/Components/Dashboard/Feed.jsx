@@ -97,27 +97,57 @@ const Feed = ({ countryCode, flag, countryName, handleCountryChange }) => {
   };
 
   // Calling the function inside the comment modal
- const handlePostComment = async () => {
-  if (!selectedPost || !commentText.trim()) return;
-
-  // Update the comment count instantly in UI
-  setSelectedPost((prevPost) => ({
-    ...prevPost,
-    comments: {
-      ...prevPost.comments,
-      count: (prevPost.comments?.count || 0) + 1, // Ensure count is incremented
-    },
-  }));
-
-  setCommentText(""); // Clear input field
-
-  await postComment(selectedPost.id, commentText); // API call
-
-  getCommets(selectedPost); // Fetch updated comments from API
-};
-
+  const handlePostComment = async () => {
+    if (!selectedPost || !commentText.trim()) return;
   
-
+    const postId = selectedPost.id;
+    
+    // Update comment count instantly in the UI
+    setData((prevData) => ({
+      ...prevData,
+      posts: prevData.posts.map((post) =>
+        post.id === postId
+          ? {
+              ...post,
+              comments: {
+                ...post.comments,
+                count: (post.comments?.count || 0) + 1, // Increment count
+              },
+            }
+          : post
+      ),
+    }));
+  
+    const comment = commentText;
+    setCommentText(""); // Clear input field
+    closeCommentPopup();
+  
+    try {
+      await postComment(postId, comment); // API call to post comment
+      getCommets(selectedPost); // Fetch updated comments from API
+    } catch (error) {
+      console.error("Error posting comment:", error);
+      alert("Failed to post comment");
+  
+      // Rollback UI update on failure
+      setData((prevData) => ({
+        ...prevData,
+        posts: prevData.posts.map((post) =>
+          post.id === postId
+            ? {
+                ...post,
+                comments: {
+                  ...post.comments,
+                  count: Math.max((post.comments?.count || 1) - 1, 0), // Rollback
+                },
+              }
+            : post
+        ),
+      }));
+    }
+  };
+  
+  
   const openCommentPopup = async (post) => {
     await getCommets(post);
     setSelectedPost(post);
@@ -147,6 +177,27 @@ const Feed = ({ countryCode, flag, countryName, handleCountryChange }) => {
 
         console.log(`Deleting comment ID: ${commentId} from Post ID: ${postId}`);
 
+        // Instantly update UI (Optimistic UI update)
+        setComments((prevComments) =>
+            prevComments.filter((comment) => comment.comment_id !== commentId)
+        );
+
+        setData((prevData) => ({
+            ...prevData,
+            posts: prevData.posts.map((post) =>
+                post.id === postId
+                    ? {
+                          ...post,
+                          comments: {
+                              ...post.comments,
+                              count: Math.max((post.comments?.count || 1) - 1, 0), // Decrease count safely
+                          },
+                      }
+                    : post
+            ),
+        }));
+
+        // API Call to delete comment
         const response = await axios.delete(
             `https://develop.quakbox.com/admin/api/del_posts/${postId}/comments/${commentId}`,
             {
@@ -156,12 +207,9 @@ const Feed = ({ countryCode, flag, countryName, handleCountryChange }) => {
                 },
             }
         );
-
+        closeCommentPopup();
         console.log("Comment deleted successfully:", response.data);
-
-        // Remove deleted comment from local state
-        setComments((prevComments) => prevComments.filter((comment) => comment.comment_id !== commentId));
-
+        
     } catch (error) {
         console.error("Error deleting comment:", error);
 
@@ -172,6 +220,22 @@ const Feed = ({ countryCode, flag, countryName, handleCountryChange }) => {
         } else {
             console.error("Request setup error:", error.message);
         }
+
+        // Rollback UI Update on failure (Revert count)
+        setData((prevData) => ({
+            ...prevData,
+            posts: prevData.posts.map((post) =>
+                post.id === postId
+                    ? {
+                          ...post,
+                          comments: {
+                              ...post.comments,
+                              count: (post.comments?.count || 0) + 1, // Rollback if API call fails
+                          },
+                      }
+                    : post
+            ),
+        }));
     }
 };
 
