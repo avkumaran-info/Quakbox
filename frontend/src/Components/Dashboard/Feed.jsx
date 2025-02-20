@@ -584,26 +584,18 @@ const Feed = ({ countryCode, flag, countryName, handleCountryChange }) => {
   const [likeInProgress, setLikeInProgress] = useState({});
 
   const handleLikeClick = async (post) => {
-    if (likeInProgress[post.id]) return; // Prevent multiple clicks
-
+    if (likeInProgress[post.id]) return;
+  
     setLikeInProgress((prev) => ({ ...prev, [post.id]: true }));
-
+  
     const currentUser = {
       user_id: currentUserId,
       name: userData?.users?.username || "Unknown User",
     };
-
-    const alreadyLiked = post.likes?.liked_users?.some(
-      (user) => user.user_id === currentUser.user_id
-    );
-
-    if (alreadyLiked) {
-      console.log("You've already liked this post.");
-      setLikeInProgress((prev) => ({ ...prev, [post.id]: false }));
-      return;
-    }
-
-    // Optimistic UI update
+  
+    const alreadyLiked = post.likes?.liked_users?.some((user) => user.user_id === currentUserId);
+    const alreadyDisliked = post?.disliked_users?.some((user) => user.user_id === currentUserId);
+  
     setData((prevData) =>
       prevData?.posts?.length
         ? {
@@ -613,26 +605,31 @@ const Feed = ({ countryCode, flag, countryName, handleCountryChange }) => {
                 ? {
                     ...p,
                     likes: {
-                      count: (p.likes?.count || 0) + 1,
-                      liked_users: [...(p.likes?.liked_users || []), currentUser],
+                      count: alreadyLiked
+                        ? Math.max((p.likes?.count || 0) - 1, 0) // Unlike (decrease count)
+                        : (p.likes?.count || 0) + 1, // Like (increase count)
+                      liked_users: alreadyLiked
+                        ? p.likes?.liked_users?.filter((user) => user.user_id !== currentUserId) // Remove like
+                        : [...(p.likes?.liked_users || []), currentUser], // Add like
                     },
-                    disliked_users: p.disliked_users?.filter(
-                      (user) => user.user_id !== currentUserId
-                    ),
+                    // Remove dislike if user had disliked
+                    disliked_users: alreadyDisliked
+                      ? p.disliked_users?.filter((user) => user.user_id !== currentUserId)
+                      : p.disliked_users,
                   }
                 : p
             ),
           }
         : prevData
     );
-
+  
     try {
       const res = await axios.post(
         `https://develop.quakbox.com/admin/api/set_posts_like/${post.id}/like`,
         {},
         { headers: { Authorization: `Bearer ${token}` } }
       );
-
+  
       if (res.status !== 200) {
         console.error("Failed to save the like in the database.");
         revertLike(post);
@@ -668,7 +665,8 @@ const Feed = ({ countryCode, flag, countryName, handleCountryChange }) => {
     );
   };
   const handleDislikeClick = async (post) => {
-    if (dislikeInProgress[post.id]) return; // Prevent multiple clicks
+    if (dislikeInProgress[post.id]) return;
+  
     setDislikeInProgress((prev) => ({ ...prev, [post.id]: true }));
   
     const currentUser = {
@@ -676,17 +674,10 @@ const Feed = ({ countryCode, flag, countryName, handleCountryChange }) => {
       name: userData?.users?.username || "Unknown User",
     };
   
-    const alreadyDisliked = post.disliked_users?.some(
-      (user) => user.user_id === currentUserId
-    );
+    const alreadyDisliked = post?.disliked_users?.some((user) => user.user_id === currentUserId);
+    const alreadyLiked = post.likes?.liked_users?.some((user) => user.user_id === currentUserId);
   
-    if (alreadyDisliked) {
-      console.warn("User already disliked this post!");
-      setDislikeInProgress((prev) => ({ ...prev, [post.id]: false }));
-      return;
-    }
-  
-    // Optimistic UI Update: Remove like if user has liked the post
+    // Optimistically update UI
     setData((prevData) =>
       prevData?.posts?.length
         ? {
@@ -695,16 +686,14 @@ const Feed = ({ countryCode, flag, countryName, handleCountryChange }) => {
               p.id === post.id
                 ? {
                     ...p,
-                    disliked_users: [...(p.disliked_users || []), currentUser],
+                    disliked_users: alreadyDisliked
+                      ? p.disliked_users?.filter((user) => user.user_id !== currentUserId)
+                      : [...(p.disliked_users || []), currentUser],
                     likes: {
-                      count: p.likes?.liked_users?.some(
-                        (user) => user.user_id === currentUserId
-                      )
-                        ? Math.max((p.likes?.count || 0) - 1, 0) // Remove like count if already liked
-                        : p.likes?.count || 0,
-                      liked_users: p.likes?.liked_users?.filter(
-                        (user) => user.user_id !== currentUserId
-                      ) || [],
+                      count: alreadyLiked ? Math.max((p.likes?.count || 0) - 1, 0) : p.likes?.count,
+                      liked_users: alreadyLiked
+                        ? p.likes?.liked_users?.filter((user) => user.user_id !== currentUserId)
+                        : p.likes?.liked_users,
                     },
                   }
                 : p
@@ -716,7 +705,7 @@ const Feed = ({ countryCode, flag, countryName, handleCountryChange }) => {
     try {
       const res = await axios.post(
         `https://develop.quakbox.com/admin/api/set_posts_like/${post.id}/dislike`,
-        { user_id: currentUserId },
+        { is_like: false }, // Ensure backend receives the correct value
         { headers: { Authorization: `Bearer ${token}` } }
       );
   
@@ -730,7 +719,8 @@ const Feed = ({ countryCode, flag, countryName, handleCountryChange }) => {
     } finally {
       setDislikeInProgress((prev) => ({ ...prev, [post.id]: false }));
     }
-  };  
+  };
+  
   const revertDislike = (post) => {
     setData((prevData) =>
       prevData?.posts?.length
@@ -749,7 +739,7 @@ const Feed = ({ countryCode, flag, countryName, handleCountryChange }) => {
           }
         : prevData
     );
-  };
+  };  
   // const getPost = async () => {
   //   const token = localStorage.getItem("api_token");
 
