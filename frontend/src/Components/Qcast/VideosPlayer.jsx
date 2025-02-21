@@ -487,7 +487,7 @@ const VideosPlayer = () => {
             <div className="ratio ratio-16x9" style={{ height: "500px" }}>
               {video.video_type == 1 && (
                 <video
-                  ref={videoRef}
+                  ref="https://develop.quakbox.com/admin/api/images/uploads/videos/permanent/67b80459d03a2/index.m3u8"
                   controls
                   autoPlay
                   className="w-100 rounded"
