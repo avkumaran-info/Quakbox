@@ -11,7 +11,8 @@ import ScreenShareIcon from "@mui/icons-material/ScreenShare";
 import ReportIcon from "@mui/icons-material/Report";
 import loading from "../../assets/images/loading.gif";
 import { StoreContext } from "../../Context/StoreContext";
-
+import Hls from "hls.js";
+import { useRef } from "react";
 const defaultComments = [
   {
     username: "John Doe",
@@ -34,6 +35,7 @@ const defaultComments = [
 ];
 
 const VideosPlayer = () => {
+  const videoRef = useRef(null);
   const { videoId } = useParams(); // Get videoId from URL params
   const [video, setVideo] = useState(null);
   const [recommendedVideos, setRecommendedVideos] = useState([]);
@@ -55,6 +57,7 @@ const VideosPlayer = () => {
   const [commentText, setCommentText] = useState("");
   const [editingComment, setEditingComment] = useState(null);
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
+  const [isLoaded, setIsLoaded] = useState(false);
 
   const toggleSidebar = () => {
     setIsSidebarCollapsed(!isSidebarCollapsed);
@@ -153,6 +156,16 @@ const VideosPlayer = () => {
     }
   };
 
+  const videosPlay = (videoUrl) => {
+    console.log(videoUrl);
+
+    if (Hls.isSupported()) {
+      const hls = new Hls();
+      hls.loadSource(videoUrl);
+      hls.attachMedia(videoRef.current);
+    }
+  };
+
   useEffect(() => {
     const fetchVideo = async () => {
       setVideo(null); // Clear previous video
@@ -173,7 +186,7 @@ const VideosPlayer = () => {
         setVideo(fetchedVideo);
 
         console.log(response.data.data);
-
+        videosPlay(response.data.data.file_path);
         // ✅ Update Likes & Dislikes
         setLikes(fetchedVideo.likes_count || 0);
         setDislikes(fetchedVideo.dislikes_count || 0);
@@ -429,6 +442,34 @@ const VideosPlayer = () => {
     return `${years} year${years > 1 ? "s" : ""} ago`;
   };
 
+  // // Ensure video exists before running useEffect
+  // useEffect(() => {
+  //   console.log("hiii");
+
+  //   if (!video || !video.file_path) return;
+
+  //   console.log("Loading video:", video.file_path);
+
+  //   let hls;
+  //   if (Hls.isSupported() && videoRef.current) {
+  //     hls = new Hls();
+  //     hls.loadSource(video.file_path);
+  //     hls.attachMedia(videoRef.current);
+  //     hls.on(Hls.Events.MANIFEST_PARSED, () => {
+  //       setIsLoaded(true);
+  //     });
+  //     hls.on(Hls.Events.ERROR, (event, data) => {
+  //       console.error("HLS error:", data);
+  //     });
+  //   } else if (videoRef.current?.canPlayType("application/vnd.apple.mpegurl")) {
+  //     videoRef.current.src = video.file_path;
+  //   }
+
+  //   return () => {
+  //     if (hls) hls.destroy(); // Cleanup
+  //   };
+  // }, [video]); // Dependency should be `video`, not `video.file_path`
+
   return (
     <>
       <NavBar />
@@ -446,12 +487,13 @@ const VideosPlayer = () => {
             <div className="ratio ratio-16x9" style={{ height: "500px" }}>
               {video.video_type == 1 && (
                 <video
+                  ref={videoRef}
                   controls
                   autoPlay
                   className="w-100 rounded"
                   style={{ objectFit: "contain" }}
                 >
-                  <source src={video.file_path} type="video/mp4" />
+                  {/* <source src={"https://develop.quakbox.com/admin/api/images/uploads/videos/permanent/67b7ea4caa693/index.m3u8"} type="video/mp4" /> */}
                   Your browser does not support the video tag.
                 </video>
               )}
