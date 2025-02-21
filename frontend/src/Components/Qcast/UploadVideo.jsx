@@ -5,11 +5,11 @@ import videoupload from "../../assets/images/Videos property/videoupload.png";
 import webcam from "../../assets/images/Videos property/webcam.png";
 import photo from "../../assets/images/Videos property/photo.jpeg";
 import music from "../../assets/images/Videos property/music.jpg";
+import shortvideo from "../../assets/images/Videos property/shorts.jpg";
 import loading from "../../assets/images/loading.gif";
 import { FaUpload } from "react-icons/fa"; // For upload icon
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
-import { getOpacity } from "@mui/material/styles/createColorScheme";
 
 const UploadVideo = () => {
   const [sidebarOpen, setSidebarOpen] = useState(true);
@@ -19,7 +19,8 @@ const UploadVideo = () => {
   const fileInputRef = useRef(null); // File input reference for upload
   const navigate = useNavigate();
   const [isLoading, setIsLoading] = useState(false); // Track loading state
-
+  const chunkSize = 45 * 1024 * 1024; // 45MB per chunk
+  const [progress, setProgress] = useState(0);
   const toggleSidebar = () => {
     setSidebarOpen(!sidebarOpen);
   };
@@ -27,114 +28,203 @@ const UploadVideo = () => {
   // Handler for category click on the right side
   const handleCategoryClick = (category) => {
     setSelectedCategory(category);
-    if (category !== "webcam") {
-      stopWebcam(); // Stop webcam when not selected
-    }
   };
 
   // Access webcam when "Webcam Capture" is clicked
   const handleWebcamCapture = async () => {
-    // try {
-    //   const stream = await navigator.mediaDevices.getUserMedia({
-    //     video: true,
-    //   });
-    //   setWebcamStream(stream);
-    //   if (videoRef.current) {
-    //     videoRef.current.srcObject = stream;
-    //     videoRef.current.play();
-    //   }
-    //   setSelectedCategory("webcam");
-    // } catch (error) {
-    //   console.error("Error accessing webcam: ", error);
-    //   alert("Please allow webcam access.");
-    // }
     navigate("/webcam"); // Navigate to the webcam recording page
   };
-
-  // Stop webcam stream when no longer needed
-  // const stopWebcam = () => {
-  //   if (webcamStream) {
-  //     const tracks = webcamStream.getTracks();
-  //     tracks.forEach((track) => track.stop());
-  //     setWebcamStream(null);
-  //   }
-  // };
 
   // Handle file upload
 
   const handleFileUpload = async (e) => {
-    const formData = new FormData();
-  
-    const files = e.target.files; // ✅ Fix: Get all selected files
-    console.log(files);
-    
+    const files = e.target.files;
     if (!files.length) return;
-  
-    const firstFile = files[0]; // First file to determine type
+
+    const firstFile = files[0];
     const videoType = firstFile.type.startsWith("video/")
       ? 1
       : firstFile.type.startsWith("audio/")
       ? 2
       : firstFile.type.startsWith("image/")
       ? 3
-      : 4; // Default to webcam
-  
-    formData.append("video_type", videoType); 
-    formData.append("temp_upload", true);
-  
-    
-  
-    if (videoType === 3) {
-      // ✅ Append files as an array only if `videoType === 3`
-      for (let i = 0; i < files.length; i++) {
-        formData.append("video_file[]", files[i]);
+      : 4;
+
+    setIsLoading(true);
+
+    if (videoType === 1 || videoType === 2) {
+      try {
+        const keyResponse = await axios.get(
+          "https://develop.quakbox.com/admin/api/get-upload-key"
+        );
+        const uploadKey = keyResponse.data.upload_key;
+
+        const totalChunks = Math.ceil(firstFile.size / chunkSize);
+        let start = 0;
+        let end = chunkSize;
+        const uploadPromises = [];
+
+        for (let i = 0; i < totalChunks; i++) {
+          const chunk = firstFile.slice(start, end);
+          const formData = new FormData();
+          formData.append("chunk", chunk);
+          formData.append("index", i + 1);
+          formData.append("total_chunks", totalChunks);
+          formData.append("file_name", firstFile.name);
+          formData.append("upload_key", uploadKey);
+          formData.append("video_type", videoType);
+          formData.append("temp_upload", true);
+
+          uploadPromises.push(
+            axios.post(
+              "https://develop.quakbox.com/admin/api/upload-video-chunk",
+              formData,
+              {
+                headers: {
+                  "Content-Type": "multipart/form-data",
+                },
+                onUploadProgress: (progressEvent) => {
+                  const percentage = Math.round(
+                    (progressEvent.loaded * 100) / progressEvent.total
+                  );
+                  setProgress((prevProgress) =>
+                    Math.max(prevProgress, percentage)
+                  );
+                },
+              }
+            )
+          );
+
+          start = end;
+          end = Math.min(firstFile.size, end + chunkSize);
+        }
+
+        await Promise.all(uploadPromises);
+
+        const mergeResponse = await axios.post(
+          "https://develop.quakbox.com/admin/api/merge-video-chunks",
+          {
+            file_name: firstFile.name,
+            total_chunks: totalChunks,
+            upload_key: uploadKey,
+          }
+        );
+
+        setIsLoading(false);
+        console.log(mergeResponse);
+
+        if (mergeResponse.data) {
+          const videoData = {
+            message: mergeResponse.data.message,
+            filePath: mergeResponse.data.file_path,
+            thumbnails: mergeResponse.data.thumbnails,
+            videoType: videoType,
+          };
+
+          try {
+            const token = localStorage.getItem("api_token");
+            const formData = new FormData();
+            formData.append("video_type", videoType);
+            formData.append("temp_upload", true);
+            formData.append("upload_key", uploadKey);
+            formData.append("video_file", videoData.filePath);
+            if (!token) {
+              alert("Authorization token not found. Please log in.");
+              return;
+            }
+
+            const response = await axios.post(
+              "https://develop.quakbox.com/admin/api/videos/upload",
+              formData,
+              {
+                headers: {
+                  Authorization: `Bearer ${token}`,
+                  "Content-Type": "multipart/form-data",
+                },
+              }
+            );
+
+            if (response.data.result) {
+              // ✅ Pass videoType to the next page
+              const videoData = {
+                message: response.data.message,
+                filePath: response.data.file_path,
+                thumbnails: response.data.thumbnails,
+                videoType: response.data.video_type,
+              };
+
+              navigate("/addvideo", { state: { videoData } });
+            } else {
+              alert(response.data.message);
+            }
+          } catch (error) {
+            console.log(error);
+          }
+        } else {
+          alert(mergeResponse.data.message);
+        }
+      } catch (error) {
+        setIsLoading(false);
+        console.error("Error uploading video:", error);
+        alert("Upload failed. Please try again.");
       }
     } else {
-      // ✅ If not type 3, only append the first file
-      formData.append("video_file", firstFile);
-    }
-  
-    setIsLoading(true); 
-  
-    try {
-      const token = localStorage.getItem("api_token");
-      if (!token) {
-        alert("Authorization token not found. Please log in.");
-        return;
-      }
-  
-      const response = await axios.post(
-        "https://develop.quakbox.com/admin/api/videos/upload",
-        formData,
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-            "Content-Type": "multipart/form-data",
-          },
+      const formData = new FormData();
+      formData.append("video_type", videoType);
+      formData.append("temp_upload", true);
+
+      if (videoType === 3) {
+        // ✅ Append files as an array only if `videoType === 3`
+        for (let i = 0; i < files.length; i++) {
+          formData.append("video_file[]", files[i]);
         }
-      );
-  
-      setIsLoading(false);
-  
-      if (response.data.result) {
-        // ✅ Pass videoType to the next page
-        const videoData = {
-          message: response.data.message,
-          filePath: response.data.file_path,
-          thumbnails: response.data.thumbnails,
-          videoType: response.data.video_type, 
-        };
-  
-        navigate("/addvideo", { state: { videoData } });
       } else {
-        alert(response.data.message);
+        // ✅ If not type 3, only append the first file
+        formData.append("video_file", firstFile);
       }
-    } catch (error) {
-      setIsLoading(false);
-      console.error("Error uploading video:", error);
-      alert("Upload failed. Please try again.");
+
+      setIsLoading(true);
+
+      try {
+        const token = localStorage.getItem("api_token");
+        if (!token) {
+          alert("Authorization token not found. Please log in.");
+          return;
+        }
+
+        const response = await axios.post(
+          "https://develop.quakbox.com/admin/api/videos/upload",
+          formData,
+          {
+            headers: {
+              Authorization: `Bearer ${token}`,
+              "Content-Type": "multipart/form-data",
+            },
+          }
+        );
+
+        setIsLoading(false);
+
+        if (response.data.result) {
+          // ✅ Pass videoType to the next page
+          const videoData = {
+            message: response.data.message,
+            filePath: response.data.file_path,
+            thumbnails: response.data.thumbnails,
+            videoType: response.data.video_type,
+          };
+
+          navigate("/addvideo", { state: { videoData } });
+        } else {
+          alert(response.data.message);
+        }
+      } catch (error) {
+        setIsLoading(false);
+        console.error("Error uploading video:", error);
+        alert("Upload failed. Please try again.");
+      }
     }
-  };  
+  };
 
   // Content for each category
   const categoryContent = {
@@ -150,6 +240,7 @@ const UploadVideo = () => {
         },
         { label: "Create Music", img: music, category: "music" },
         { label: "Photo Slideshow", img: photo, category: "photo" },
+        { label: "Short Video", img: shortvideo, category: "shortvideo" },
       ],
     },
     photo: {
@@ -164,6 +255,7 @@ const UploadVideo = () => {
         },
         { label: "Create Music", img: music, category: "music" },
         { label: "Video Upload", img: videoupload, category: "video" },
+        { label: "Short Video", img: shortvideo, category: "shortvideo" },
       ],
     },
     webcam: {
@@ -173,6 +265,7 @@ const UploadVideo = () => {
         { label: "Photo Slideshow", img: photo, category: "photo" },
         { label: "Create Music", img: music, category: "music" },
         { label: "Video Upload", img: videoupload, category: "video" },
+        { label: "Short Video", img: shortvideo, category: "shortvideo" },
       ],
     },
     music: {
@@ -187,6 +280,17 @@ const UploadVideo = () => {
         },
         { label: "Photo Slideshow", img: photo, category: "photo" },
         { label: "Video Upload", img: videoupload, category: "video" },
+        { label: "Short Video", img: shortvideo, category: "shortvideo" },
+      ],
+    },
+    shortvideo: {
+      image: shortvideo, // Add an appropriate image for short videos
+      label: "Short Video",
+      options: [
+        { label: "Webcam Capture", img: webcam, category: "webcam" },
+        { label: "Create Music", img: music, category: "music" },
+        { label: "Photo Slideshow", img: photo, category: "photo" },
+        { label: "Video Upload", img: videoupload, category: "video" },
       ],
     },
   };
@@ -196,17 +300,6 @@ const UploadVideo = () => {
     navigate("/qcast"); // Navigate to '/qcast'
   };
 
-  // useEffect(() => {
-  //   if (selectedCategory === "webcam" && !webcamStream) {
-  //     handleWebcamCapture(); // Start the webcam if it's selected
-  //   } else {
-  //     stopWebcam();
-  //   }
-
-  //   return () => stopWebcam(); // Cleanup on unmount
-  // }, [selectedCategory]);
-  // // Run effect when selectedCategory changes
-
   return (
     <>
       <NavBar />
@@ -214,6 +307,7 @@ const UploadVideo = () => {
       {isLoading && (
         <div style={overlayStyle}>
           <img src={loading} alt="Loading..." style={gifStyle} />
+          <p>{progress}</p>
         </div>
       )}
 
@@ -247,8 +341,7 @@ const UploadVideo = () => {
                   }}
                 >
                   {/* If webcam is active, show video */}
-                  {selectedCategory === "webcam" ?
-                   (
+                  {selectedCategory === "webcam" ? (
                     <video
                       ref={videoRef}
                       style={{
@@ -257,8 +350,7 @@ const UploadVideo = () => {
                         objectFit: "cover",
                       }}
                     />
-                  ) : 
-                  (
+                  ) : (
                     <img
                       src={categoryContent[selectedCategory].image}
                       alt={categoryContent[selectedCategory].label}
@@ -273,8 +365,7 @@ const UploadVideo = () => {
                         fileInputRef.current.click();
                       }}
                     />
-                  )
-                  }
+                  )}
                 </div>
 
                 {/* Label */}
@@ -322,6 +413,21 @@ const UploadVideo = () => {
                         <input
                           type="file"
                           accept="image/*,audio/*"
+                          style={{ display: "none" }}
+                          ref={fileInputRef}
+                          onChange={handleFileUpload}
+                        />
+                      </label>
+                    </div>
+                  )}
+
+                  {selectedCategory === "shortvideo" && (
+                    <div>
+                      <label className="btn btn-outline-primary">
+                        <FaUpload className="me-2" /> Upload Video
+                        <input
+                          type="file"
+                          accept="video/*"
                           style={{ display: "none" }}
                           ref={fileInputRef}
                           onChange={handleFileUpload}

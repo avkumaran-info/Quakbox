@@ -45,17 +45,21 @@ const VideosPlayer = () => {
   const passedVideo = location.state?.video; // Always use passedVideo for recommendations
   // console.log(passedVideo);
   const { userData } = useContext(StoreContext);
-
+  const [isSearching, setIsSearching] = useState(false);
   const [likes, setLikes] = useState(passedVideo?.likes || 0);
   const [dislikes, setDislikes] = useState(passedVideo?.dislikes || 0);
-
   const currentUserId = parseInt(localStorage.getItem("user_Id")); // Get logged-in user ID
-
   const [isLiked, setIsLiked] = useState(false);
   const [isDisliked, setIsDisliked] = useState(false);
   const [isSubscribed, setIsSubscribed] = useState(false);
   const [commentText, setCommentText] = useState("");
   const [editingComment, setEditingComment] = useState(null);
+  const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
+
+  const toggleSidebar = () => {
+    setIsSidebarCollapsed(!isSidebarCollapsed);
+  };
+
   const handleLike = async () => {
     if (!video) return;
 
@@ -434,11 +438,19 @@ const VideosPlayer = () => {
       >
         <div className="row flex-grow-1">
           {/* Left Side - Video Section */}
-          <div className="col-lg-9 d-flex flex-column bg-white p-3 rounded shadow-sm">
+          <div
+            className="col-lg-9 d-flex flex-column bg-white mt-3 rounded shadow-sm"
+            style={{ height: "auto", minHeight: "600px" }} // Ensures content doesn't shrink
+          >
             {/* Video Player */}
-            <div className="ratio ratio-16x9">
+            <div className="ratio ratio-16x9" style={{ height: "500px" }}>
               {video.video_type == 1 && (
-                <video controls autoPlay className="w-100 rounded">
+                <video
+                  controls
+                  autoPlay
+                  className="w-100 rounded"
+                  style={{ objectFit: "contain" }}
+                >
                   <source src={video.file_path} type="video/mp4" />
                   Your browser does not support the video tag.
                 </video>
@@ -544,8 +556,7 @@ const VideosPlayer = () => {
               <div className="flex-grow-1 mt-2" style={{ marginLeft: "10px" }}>
                 <h5 className="fw-bold text-truncate">{video.title}</h5>
                 <p className="text-muted small m-0">
-                  {passedVideo.views} views •{" "}
-                  {timeAgo(video.updated_at)}{" "}
+                  {passedVideo.views} views • {timeAgo(video.updated_at)}{" "}
                 </p>
               </div>
               <div className="d-flex gap-3">
@@ -827,24 +838,74 @@ const VideosPlayer = () => {
               </div>
             )}
           </div>
+          <div className="col-lg-3 d-flex flex-column bg-white mt-3 rounded shadow-sm flex-grow-1 h-100 p-0">
+            <div className="d-flex align-items-center p-2 bg-primary text-white w-100">
+              {/* Toggle Icon (No Functionality) */}
+              <i className="fa-solid fa-bars fs-5 me-3"></i>
 
-          {/* Right Sidebar - Recommended Videos */}
-          <div className="col-lg-3 bg-white p-3 overflow-hidden">
-            <h4 className="text-muted">Recommended Videos</h4>
+              {/* Title Section with Proper Alignment */}
+              <div className="flex-grow-1 text-start">
+                <h6
+                  className="m-0"
+                  style={{ fontSize: "12px", lineHeight: "1.2" }}
+                >
+                  Recommended <br /> Videos
+                </h6>
+              </div>
+
+              {/* Search Input Box */}
+              {isSearching ? (
+                <div className="position-relative" style={{ width: "60%" }}>
+                  {" "}
+                  {/* Adjust width here */}
+                  <input
+                    type="text"
+                    className="form-control"
+                    placeholder="Search..."
+                    autoFocus
+                    style={{ fontSize: "12px", padding: "2px 8px" }} // Adjust font size and padding
+                  />
+                  <i
+                    className="fa-solid fa-xmark position-absolute end-0 top-50 translate-middle-y me-2"
+                    style={{ cursor: "pointer", color: "#333" }}
+                    onClick={() => setIsSearching(false)}
+                  ></i>
+                </div>
+              ) : (
+                <div className="d-flex gap-3 flex-grow-1 justify-content-end">
+                  <i
+                    className="fa-solid fa-plus fs-5"
+                    style={{ cursor: "pointer" }}
+                    onClick={() => navigate("/upload")}
+                  ></i>
+                  <i
+                    className="fa-solid fa-microphone fs-5"
+                    style={{ cursor: "pointer" }}
+                  ></i>
+                  <i
+                    className="fa-solid fa-search fs-5"
+                    style={{ cursor: "pointer" }}
+                    onClick={() => setIsSearching(true)}
+                  ></i>
+                </div>
+              )}
+            </div>
+
+            {/* Recommended Videos Section */}
             {recommendedVideos.length > 0 ? (
               recommendedVideos.map((recVideo) => (
                 <div
                   key={recVideo.video_id}
-                  className="d-flex mb-3"
+                  className="d-flex mb-3 mt-1"
                   onClick={() => handleVideoClick(recVideo)} // Added onClick handler
                   style={{ cursor: "pointer" }}
                 >
                   <img
-                    src={`${recVideo.defaultthumbnail}`} // Fixed to use correct path for thumbnail
+                    src={recVideo.defaultthumbnail}
                     alt="Thumbnail"
                     className="rounded"
                     style={{
-                      width: "120px",
+                      width: "90px",
                       height: "70px",
                       objectFit: "cover",
                     }}
