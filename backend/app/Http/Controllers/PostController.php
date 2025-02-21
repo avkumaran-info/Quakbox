@@ -142,23 +142,46 @@ class PostController extends Controller
         );
         $likeCount = $post->likes()->where('is_like', true)->count();
         return response()->json(["status" => true,
-         'message' => $isLike ? 'Liked' : 'Disliked', 'like' => $like,
+        'message' => $isLike ? 'Liked' : 'Disliked', 'like' => $like,
         'like_count' => $likeCount]);
     }
-
     public function postDislike(Request $request, $id)
     {
         $post = Post::findOrFail($id);
-
-        $isLike = $request->input('is_like', false);
-
-        $like = Like::updateOrCreate(
-            ['user_id' => $request->user()->id, 'post_id' => $id],
-            ['is_like' => $isLike]
-        );
-
-        return response()->json(["status" => true, 'message' => $isLike ? 'Liked' : 'Disliked', 'like' => $like]);
-    }
+        $userId = $request->user()->id;
+    
+        // Check if user already disliked the post
+        $existingLike = Like::where('post_id', $id)->where('user_id', $userId)->first();
+    
+        if ($existingLike) {
+            if ($existingLike->is_like == false) {
+                // If already disliked, remove it (toggle off)
+                $existingLike->delete();
+                $message = "Dislike removed";
+            } else {
+                // If liked, switch to dislike
+                $existingLike->update(['is_like' => false]);
+                $message = "Switched from Like to Dislike";
+            }
+        } else {
+            // Add new dislike
+            Like::create([
+                'user_id' => $userId,
+                'post_id' => $id,
+                'is_like' => false
+            ]);
+            $message = "Disliked";
+        }
+    
+        // Refresh like count after the update
+        $likeCount = $post->likes()->where('is_like', true)->count();
+    
+        return response()->json([
+            "status" => true,
+            "message" => $message,
+            "like_count" => $likeCount
+        ]);
+    }    
 
     public function getComment(Request $request, $pid)
     {
