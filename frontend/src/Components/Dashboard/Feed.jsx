@@ -645,13 +645,13 @@ const closeEditCommentPopup = () => {
                     ...p,
                     likes: {
                       count: alreadyLiked
-                        ? Math.max((p.likes?.count || 0) - 1, 0) // Unlike (decrease count)
-                        : (p.likes?.count || 0) + 1, // Like (increase count)
+                        ? Math.max((p.likes?.count || 0) - 1, 0)
+                        : (p.likes?.count || 0) + 1,
                       liked_users: alreadyLiked
-                        ? p.likes?.liked_users?.filter((user) => user.user_id !== currentUserId) // Remove like
-                        : [...(p.likes?.liked_users || []), currentUser], // Add like
+                        ? p.likes?.liked_users?.filter((user) => user.user_id !== currentUserId)
+                        : [...(p.likes?.liked_users || []), currentUser],
                     },
-                    // Remove dislike if user had disliked
+                    // Remove dislike if previously disliked
                     disliked_users: alreadyDisliked
                       ? p.disliked_users?.filter((user) => user.user_id !== currentUserId)
                       : p.disliked_users,
@@ -665,7 +665,7 @@ const closeEditCommentPopup = () => {
     try {
       const res = await axios.post(
         `https://develop.quakbox.com/admin/api/set_posts_like/${post.id}/like`,
-        { is_like:true },
+        { is_like: true },
         { headers: { Authorization: `Bearer ${token}` } }
       );
   
@@ -680,8 +680,7 @@ const closeEditCommentPopup = () => {
       setLikeInProgress((prev) => ({ ...prev, [post.id]: false }));
     }
   };
-
-  const revertLike = (post) => {
+    const revertLike = (post) => {
     setData((prevData) =>
       prevData?.posts?.length
         ? {
@@ -703,62 +702,63 @@ const closeEditCommentPopup = () => {
         : prevData
     );
   };
-  const handleDislikeClick = async (post) => {
-    if (dislikeInProgress[post.id]) return;
-  
-    setDislikeInProgress((prev) => ({ ...prev, [post.id]: true }));
-  
-    const currentUser = {
-      user_id: currentUserId,
-      name: userData?.users?.username || "Unknown User",
-    };
-  
-    const alreadyDisliked = post?.disliked_users?.some((user) => user.user_id === currentUserId);
-    const alreadyLiked = post.likes?.liked_users?.some((user) => user.user_id === currentUserId);
-  
-    // Optimistically update UI
-    setData((prevData) =>
-      prevData?.posts?.length
-        ? {
-            ...prevData,
-            posts: prevData.posts.map((p) =>
-              p.id === post.id
-                ? {
-                    ...p,
-                    disliked_users: alreadyDisliked
-                      ? p.disliked_users?.filter((user) => user.user_id !== currentUserId)
-                      : [...(p.disliked_users || []), currentUser],
-                    likes: {
-                      count: alreadyLiked ? Math.max((p.likes?.count || 0) - 1, 0) : p.likes?.count,
-                      liked_users: alreadyLiked
-                        ? p.likes?.liked_users?.filter((user) => user.user_id !== currentUserId)
-                        : p.likes?.liked_users,
-                    },
-                  }
-                : p
-            ),
-          }
-        : prevData
-    );
-  
-    try {
-      const res = await axios.post(
-        `https://develop.quakbox.com/admin/api/set_posts_like/${post.id}/dislike`,
-        { is_like: false }, // Ensure backend receives the correct value
-        { headers: { Authorization: `Bearer ${token}` } }
-      );
-  
-      if (res.status !== 200) {
-        console.error("Failed to save the dislike in the database.");
-        revertDislike(post);
-      }
-    } catch (error) {
-      console.error("Error disliking the post:", error);
-      revertDislike(post);
-    } finally {
-      setDislikeInProgress((prev) => ({ ...prev, [post.id]: false }));
-    }
+ const handleDislikeClick = async (post) => {
+  if (dislikeInProgress[post.id]) return;
+
+  setDislikeInProgress((prev) => ({ ...prev, [post.id]: true }));
+
+  const currentUser = {
+    user_id: currentUserId,
+    name: userData?.users?.username || "Unknown User",
   };
+
+  const alreadyDisliked = post?.disliked_users?.some((user) => user.user_id === currentUserId);
+  const alreadyLiked = post.likes?.liked_users?.some((user) => user.user_id === currentUserId);
+
+  setData((prevData) =>
+    prevData?.posts?.length
+      ? {
+          ...prevData,
+          posts: prevData.posts.map((p) =>
+            p.id === post.id
+              ? {
+                  ...p,
+                  disliked_users: alreadyDisliked
+                    ? p.disliked_users?.filter((user) => user.user_id !== currentUserId)
+                    : [...(p.disliked_users || []), currentUser],
+                  // Remove like if previously liked
+                  likes: {
+                    count: alreadyLiked ? Math.max((p.likes?.count || 0) - 1, 0) : p.likes?.count,
+                    liked_users: alreadyLiked
+                      ? p.likes?.liked_users?.filter((user) => user.user_id !== currentUserId)
+                      : p.likes?.liked_users,
+                  },
+                }
+              : p
+          ),
+        }
+      : prevData
+  );
+
+  try {
+    const res = await axios.post(
+      `https://develop.quakbox.com/admin/api/set_posts_like/${post.id}/dislike`,
+      { is_like: false },
+      { headers: { Authorization: `Bearer ${token}` } }
+    );
+
+    if (res.status !== 200) {
+      console.error("Failed to save the dislike in the database.");
+      revertDislike(post);
+    }
+  } catch (error) {
+    console.error("Error disliking the post:", error);
+    revertDislike(post);
+  } finally {
+    setDislikeInProgress((prev) => ({ ...prev, [post.id]: false }));
+  }
+};
+
   
   const revertDislike = (post) => {
     setData((prevData) =>
@@ -822,11 +822,15 @@ const closeEditCommentPopup = () => {
       );
   
       if (res.data.status && Array.isArray(res.data.posts)) {
-        const formattedPosts = res.data.posts.map((post) => ({
-          ...post,
-          created_time: post.created_time || new Date().toISOString(),
-          timeAgo: getTimeAgo(post.created_time),
-        }));
+        const formattedPosts = res.data.posts.map((post) => {
+          const isLiked = post.likes?.liked_users?.some((user) => user.user_id === currentUserId);
+          return {
+            ...post,
+            created_time: post.created_time || new Date().toISOString(),
+            timeAgo: getTimeAgo(post.created_time),
+            isLiked,
+          };
+        });
   
         setData({ posts: formattedPosts });
   
@@ -840,8 +844,7 @@ const closeEditCommentPopup = () => {
     } catch (error) {
       console.log("Error fetching posts:", error);
     }
-  };
-  
+  };  
   useEffect(() => {
     // Cleanup the preview URL to avoid memory leaks
     return () => {
