@@ -290,5 +290,33 @@ class PostController extends Controller
             return response()->json(["status" => false, "error" => $e->getMessage()], 500);
         }
     }
+    public function commentUpdate(Request $request, $id)
+    {
+        $request->validate([
+            'comment' => 'required|string|max:255',
+        ]);
+
+        // Find the comment by ID
+        $comment = Comment::findOrFail($id);
+
+        // Ensure the user owns the comment before updating
+        if ($comment->user_id !== $request->user()->id) {
+            return response()->json(['status' => false, 'message' => 'You can only edit your own comment'], 403);
+        }
+
+        // Update the comment
+        $comment->update(['comment' => $request->comment]);
+
+        return response()->json([
+            'status' => true,
+            'message' => 'Comment updated successfully',
+            'data' => [
+                'comment_id' => $comment->id,
+                'post_id' => $comment->post_id,
+                'comment' => $comment->comment,
+                'user_id' => $comment->user_id,
+            ]
+        ]);
+    }
 
 }
