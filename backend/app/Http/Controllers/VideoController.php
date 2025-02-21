@@ -9,27 +9,35 @@ use App\Models\M_Videos;
 use App\Models\M_Video_Interactions;
 use App\Models\M_Video_Subscription;
 use FFMpeg\FFMpeg;
+use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Validator;
 use FFMpeg\Coordinate\TimeCode;
 use FFMpeg\FFProbe;
+use App\Jobs\ConvertToHLS;
 
 class VideoController extends Controller
 {   
+public function videoUploadKey()
+{
+	$uploadKey = uniqid();
+        return response()->json([
+            'result' => true,
+            'upload_key' => $uploadKey,
+        ]);
+}
     public function videoUpload(Request $request)
     {
         $userId = $request->user()->id;
         $videoType = $request->video_type;
-        if ($request->video_type == 1) {
+        if ($request->video_type == 1 || $request->video_type == 4 || $request->video_type == 5) {
             // Step 1: Upload video temporarily and generate thumbnails
-            if ($request->hasFile('video_file') && filter_var($request->temp_upload, FILTER_VALIDATE_BOOLEAN)) {
+            if (filter_var($request->temp_upload, FILTER_VALIDATE_BOOLEAN)) {
                 $validator = Validator::make($request->all(), [
-                    'video_file' => 'required',
-                    'video_file.*' => 'file|mimes:mp4,mp3,mov,avi,mkv,jpeg,png,jpg,gif',
+                    'upload_key' => 'required'
                 ]);
-            
                 if ($validator->fails()) {
                     return response()->json([
                         'result' => false,
@@ -37,29 +45,28 @@ class VideoController extends Controller
                         'errors' => $validator->errors(),
                     ], 422);
                 }
-                
-
-                $file = $request->file('video_file');
-
                 // ✅ Determine the upload path
                 $tempFolder = 'uploads/videos/temp';
-                // Ensure temp folder exists
-                if (!file_exists(storage_path($tempFolder))) {
-                    mkdir(storage_path($tempFolder), 0775, true);
-                }
-                $uniqueFileName = uniqid() . '.' . $file->getClientOriginalExtension();
-                $mediaPath = $file->storeAs($tempFolder, $uniqueFileName, 'public');
-                $videoPath = Storage::disk('public')->path($mediaPath);
+                $vdirectory = Storage::disk('public')->path('uploads/videos/temp/');
+                $files_info = File::glob($vdirectory . $request->upload_key . '.*');
+        		if(empty($files_info)) {
+        		    return response()->json([
+                                'result' => false,
+                                'message' => 'Video Upload Failed'
+                            ], 422);
+        		}
+                $uploadingVideo = $files_info[0];
+                $uniqueFileName = basename($uploadingVideo);
+                $mediaPath = 'uploads/videos/temp/'.$uniqueFileName;
                 $singleFilePath = env('APP_URL') . '/api/images/' . $mediaPath;
                 $thumbnails = [];
                 // ✅ Generate video thumbnail
-                $videoThumbnails = $this->generateThumbnails($videoPath, $uniqueFileName);
+                $videoThumbnails = $this->generateThumbnails($uploadingVideo, $uniqueFileName);
                 if (is_array($videoThumbnails)) {
                     $thumbnails = array_merge($thumbnails, $videoThumbnails);
                 } else {
                     $thumbnails[] = $videoThumbnails;
                 }
-
                 return response()->json([
                     'result' => true,
                     'message' => 'File uploaded successfully',
@@ -89,6 +96,7 @@ class VideoController extends Controller
                 $permanentVideoFolder = 'uploads/videos/permanent/';
                 $permanentThumbnailFolder = 'uploads/videos/permanent/thumbnails/';
                 // Extract file names from URLs
+		$videoFName = pathinfo($filePath, PATHINFO_FILENAME);
                 $videoFileName = basename($filePath);
                 $thumbnailFileName = basename($thumbnailPath);
                 // Move the video file
@@ -97,7 +105,6 @@ class VideoController extends Controller
                         str_replace(env('APP_URL') . '/api/images/', '', $filePath),
                         $permanentVideoFolder . $videoFileName
                     );
-                    $filePath = env('APP_URL') . '/api/images/' . $permanentVideoFolder . $videoFileName;
                 }
                 // Move the thumbnail file
                 if (Storage::disk('public')->exists(str_replace(env('APP_URL') . '/api/images/', '', $thumbnailPath))) {
@@ -107,7 +114,15 @@ class VideoController extends Controller
                     );
                     $thumbnailPath = env('APP_URL') . '/api/images/' . $permanentThumbnailFolder . $thumbnailFileName;
                 }
-                // ✅ **Remove all other files in the temp folder**
+		$hlsVideoPath = "public/" . $permanentVideoFolder . $videoFileName;
+		$hlsOutputPath = $permanentVideoFolder . $videoFName . "/";
+		if (!Storage::disk('public')->exists($hlsOutputPath)) {
+    			Storage::disk('public')->makeDirectory($hlsOutputPath, 0777, true);
+		}
+		// Dispatch the conversion job
+	        ConvertToHLS::dispatch($hlsVideoPath , $hlsOutputPath);
+                $filePathP = env('APP_URL') . '/api/images/' . $permanentVideoFolder . $videoFName . "/index.m3u8";
+		// ✅ **Remove all other files in the temp folder**
                 $allTempFiles = Storage::disk('public')->files($tempFolder);
                 foreach ($allTempFiles as $tempFile) {
                     if (basename($tempFile) !== $videoFileName) {
@@ -130,7 +145,7 @@ class VideoController extends Controller
                         'user_id' => $userId,
                         'title' => $request->title,
                         'description' => $request->description,
-                        'file_path' => $filePath,
+                        'file_path' => $filePathP,
                         'category_id' => (int) $request->category_id,
                         'type' => $request->type,
                         'title_size' => $request->title_size,
@@ -295,12 +310,10 @@ class VideoController extends Controller
         }
         // Audio Format File Upload
         if ($request->video_type == 2) {
-            if ($request->hasFile('video_file') && filter_var($request->temp_upload, FILTER_VALIDATE_BOOLEAN)) {
-                
+            if (filter_var($request->temp_upload, FILTER_VALIDATE_BOOLEAN)) {
                 $validator = Validator::make($request->all(), [
-                                'video_file' => 'required|file|mimes:mp3,wav,aac,ogg',
-                            ]);
-            
+                    'upload_key' => 'required'
+                ]);
                 if ($validator->fails()) {
                     return response()->json([
                         'result' => false,
@@ -308,22 +321,21 @@ class VideoController extends Controller
                         'errors' => $validator->errors(),
                     ], 422);
                 }
-
-                $file = $request->file('video_file');
-
                 // ✅ Determine the upload path
                 $tempFolder = 'uploads/videos/temp';
-                // Ensure temp folder exists
-                if (!file_exists(storage_path($tempFolder))) {
-                    mkdir(storage_path($tempFolder), 0775, true);
+                $vdirectory = Storage::disk('public')->path('uploads/videos/temp/');
+                $files_info = File::glob($vdirectory . $request->upload_key . '.*');
+                if(empty($files_info)) {
+                    return response()->json([
+                                'result' => false,
+                                'message' => 'Video Upload Failed'
+                            ], 422);
                 }
-                $uniqueAudioName = uniqid();
-                $uniqueFileName = $uniqueAudioName . '.' . $file->getClientOriginalExtension();
-                $mediaPath = $file->storeAs($tempFolder, $uniqueFileName, 'public');
-                $videoPath = Storage::disk('public')->path($mediaPath);
+                $uploadingVideo = $files_info[0];
+                $uniqueFileName = basename($uploadingVideo);
+                $mediaPath = 'uploads/videos/temp/'.$uniqueFileName;
                 $audioFilePath = env('APP_URL') . '/api/images/' . $mediaPath;
                 
-
                 // ✅ Predefined thumbnail
                 $defaultThumbnailPath = 'uploads/videos/temp/thumbnails/audio/default-audio-thumbnail.png';
                 $newThumbnailName = $uniqueAudioName . '.png';
@@ -495,7 +507,7 @@ class VideoController extends Controller
             return response()->json([
                 'result' => false,
                 'message' => 'No videos found',
-            ], 404);
+            ], 200);
         }
     
         // Format video data
@@ -778,24 +790,19 @@ class VideoController extends Controller
         }
     
         // Fetch interaction counts for all videos in a single query
-        $videoIds = $videos->pluck('id');
-        $videoInteractions = M_Videos::whereIn('id', $videoIds)
-            ->withCount(['likes', 'dislikes', 'views'])
-            ->latest()
-            ->get()
-            ->keyBy('id');
+        $viewCount = M_Video_Interactions::where('video_id', $videoId)->where('type', 'view')->count();
+    	$likeCount = M_Video_Interactions::where('video_id', $videoId)->where('type', 'like')->count();
+    	$dislikeCount = M_Video_Interactions::where('video_id', $videoId)->where('type', 'dislike')->count();
     
-        $formattedVideos = $videos->map(function ($video) use ($videoInteractions) {
-            $interaction = $videoInteractions[$video->id] ?? null;
-    
+        $formattedVideos = $videos->map(function ($video) { 	   
             return [
                 'video_id' => $video->id,
                 'title' => $video->title,
                 'description' => $video->description,
                 'file_path' => $video->file_path ? url('/api/images/' . $video->file_path) : null,
-                'likes' => $interaction ? $interaction->likes_count : 0,
-                'dislikes' => $interaction ? $interaction->dislikes_count : 0,
-                'views' => $interaction ? $interaction->views_count : 0,
+                'likes' => $likeCount ? $likeCount : 0,
+                'dislikes' => $dislikeCount ? $dislikeCount : 0,
+                'views' => $viewCount ? $viewCount : 0,
                 'user_id' => $video->user_id, // ✅ Now this won't be undefined
                 'user_name' => $video->username,
                 'user_profile_image' => env('APP_URL') . '/api/images/' . $video->profile_image,
