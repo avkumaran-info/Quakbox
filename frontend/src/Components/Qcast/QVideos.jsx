@@ -348,7 +348,7 @@ const QVideos = () => {
                       style={{
                         height: "160px",
                         width: "100%",
-                        objectFit: "cover",
+                        objectFit: "contain",
                       }}
                     />
                   </div>
