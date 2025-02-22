@@ -11,49 +11,62 @@ use App\Models\Share;
 
 class PostController extends Controller
 {
-	// Controller Method to Fetch Posts
-    public function getAllPosts($cc)
+    public function getAllPosts($cc = null)
     {
         try {
-
-            $posts = Post::with(['user', 'likes', 'comments'])
-                ->latest()
-                ->where('country_code', $cc)
-                ->get()
-                ->map(function ($post) {
-                    return [
-                        'id' => $post->id,
-                        'created_time' => $post->created_at->toIso8601String(),
-                        'message' => $post->message,
-                        'from' => [
-                            'user_id' => $post->user->id,
-                            'name' => $post->user->username,
-                            'profile_image' => env('APP_URL') . '/api/images/' . $post->user->profile_image,
-                        ],
-                        'attachments' => [
-                            'data' => $this->getPostAttachments($post),
-                        ],
-                        'likes' => [
-                            'count' => $post->likes->count(),
-                            'liked_users' => $post->likes->map(function ($like) {
-                                return [
-                                    'user_id' => $like->user->id,
-                                    'name' => $like->user->username,
-                                ];
-                            }),
-                        ],
-                        'comments' => [
-                            'count' => $post->comments->count(),
-                        ],
-                    ];
-                });
-
+            $userId = auth()->id();
+            
+            if (!$userId) {
+                return response()->json(["status" => false, "error" => "Unauthorized"], 401);
+            }
+    
+            $query = Post::with(['user', 'likes', 'comments'])->latest();
+    
+            if ($cc === '99') {
+                // ✅ Fetch only posts with country_code = '99'
+                $query->where('country_code', '99');
+            } elseif (!empty($cc)) {
+                // ✅ Fetch posts from the given country
+                $query->where('country_code', $cc);
+            } else {
+                // ✅ Fetch only logged-in user's posts
+                $query->where('user_id', $userId);
+            }
+    
+            $posts = $query->get()->map(function ($post) {
+                return [
+                    'id' => $post->id,
+                    'created_time' => $post->created_at->toIso8601String(),
+                    'message' => $post->message,
+                    'from' => [
+                        'user_id' => $post->user->id,
+                        'name' => $post->user->username,
+                        'profile_image' => env('APP_URL') . '/api/images/' . $post->user->profile_image,
+                    ],
+                    'attachments' => [
+                        'data' => $this->getPostAttachments($post),
+                    ],
+                    'likes' => [
+                        'count' => $post->likes->count(),
+                        'liked_users' => $post->likes->map(function ($like) {
+                            return [
+                                'user_id' => $like->user->id,
+                                'name' => $like->user->username,
+                            ];
+                        }),
+                    ],
+                    'comments' => [
+                        'count' => $post->comments->count(),
+                    ],
+                ];
+            });
+    
             return response()->json(["status" => true, 'posts' => $posts], 200);
         } catch (\Exception $e) {
             return response()->json(["status" => false, 'error' => $e->getMessage()], 500);
         }
     }
-
+    
     // Helper Method to Fetch Post Attachments
     private function getPostAttachments($post)
     {

@@ -710,6 +710,8 @@ const NavBar = () => {
                         textDecoration: "none",
                         color: "#333",
                         fontSize: "0.9rem",
+                        fontWeight: "bold", // ✅ Makes it bold
+                        textTransform: "uppercase", // ✅ Converts to uppercase
                       }}
                       onClick={(e) => {
                         e.preventDefault();
@@ -719,7 +721,6 @@ const NavBar = () => {
                     >
                       {userData.users.username}
                     </a>
-
                     <a
                       href="#"
                       style={{
