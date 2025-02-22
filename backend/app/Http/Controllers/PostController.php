@@ -129,36 +129,80 @@ class PostController extends Controller
         return response()->json(["status" => true, 'message' => 'Post deleted successfully']);
     }
 
-    // Like/Dislike a post
     public function postLike(Request $request, $id)
     {
         $post = Post::findOrFail($id);
-
-        $isLike = $request->input('is_like', true);
-
-        $like = Like::updateOrCreate(
-            ['user_id' => $request->user()->id, 'post_id' => $id],
-            ['is_like' => $isLike]
-        );
+        $userId = $request->user()->id;
+    
+        // Check if user has already liked/disliked
+        $existingLike = Like::where('post_id', $id)->where('user_id', $userId)->first();
+    
+        if ($existingLike) {
+            if ($existingLike->is_like == true) {
+                // If already liked, remove it (toggle off)
+                $existingLike->delete();
+                $message = "Like removed";
+            } else {
+                // If disliked, switch to like
+                $existingLike->update(['is_like' => true]);
+                $message = "Switched to Like";
+            }
+        } else {
+            // Add new like
+            Like::create([
+                'user_id' => $userId,
+                'post_id' => $id,
+                'is_like' => true
+            ]);
+            $message = "Liked";
+        }
+    
+        // Refresh like & dislike counts
         $likeCount = $post->likes()->where('is_like', true)->count();
-        return response()->json(["status" => true,
-         'message' => $isLike ? 'Liked' : 'Disliked', 'like' => $like,
-        'like_count' => $likeCount]);
-    }
 
+        return response()->json([
+            "status" => true,
+            "message" => $message,
+            "like_count" => $likeCount,
+        ]);
+    }    
     public function postDislike(Request $request, $id)
     {
         $post = Post::findOrFail($id);
-
-        $isLike = $request->input('is_like', false);
-
-        $like = Like::updateOrCreate(
-            ['user_id' => $request->user()->id, 'post_id' => $id],
-            ['is_like' => $isLike]
-        );
-
-        return response()->json(["status" => true, 'message' => $isLike ? 'Liked' : 'Disliked', 'like' => $like]);
-    }
+        $userId = $request->user()->id;
+    
+        // Check if user already disliked the post
+        $existingLike = Like::where('post_id', $id)->where('user_id', $userId)->first();
+    
+        if ($existingLike) {
+            if ($existingLike->is_like == false) {
+                // If already disliked, remove it (toggle off)
+                $existingLike->delete();
+                $message = "Dislike";
+            } else {
+                // If liked, switch to dislike
+                $existingLike->update(['is_like' => false]);
+                $message = "Switched from Like to Dislike";
+            }
+        } else {
+            // Add new dislike
+            Like::create([
+                'user_id' => $userId,
+                'post_id' => $id,
+                'is_like' => false
+            ]);
+            $message = "Disliked";
+        }
+    
+        // Refresh like count after the update
+        $likeCount = $post->likes()->where('is_like', true)->count();
+    
+        return response()->json([
+            "status" => true,
+            "message" => $message,
+            "like_count" => $likeCount
+        ]);
+    }    
 
     public function getComment(Request $request, $pid)
     {
@@ -266,6 +310,34 @@ class PostController extends Controller
         } catch (\Exception $e) {
             return response()->json(["status" => false, "error" => $e->getMessage()], 500);
         }
+    }
+    public function commentUpdate(Request $request, $id)
+    {
+        $request->validate([
+            'comment' => 'required|string|max:255',
+        ]);
+
+        // Find the comment by ID
+        $comment = Comment::findOrFail($id);
+
+        // Ensure the user owns the comment before updating
+        if ($comment->user_id !== $request->user()->id) {
+            return response()->json(['status' => false, 'message' => 'You can only edit your own comment'], 403);
+        }
+
+        // Update the comment
+        $comment->update(['comment' => $request->comment]);
+
+        return response()->json([
+            'status' => true,
+            'message' => 'Comment updated successfully',
+            'data' => [
+                'comment_id' => $comment->id,
+                'post_id' => $comment->post_id,
+                'comment' => $comment->comment,
+                'user_id' => $comment->user_id,
+            ]
+        ]);
     }
 
 }

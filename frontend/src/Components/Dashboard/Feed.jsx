@@ -6,6 +6,7 @@ import ThumbUpIcon from "@mui/icons-material/ThumbUp";
 import ThumbDownIcon from "@mui/icons-material/ThumbDown";
 import ShareIcon from "@mui/icons-material/Share";
 import { StoreContext } from "../../Context/StoreContext";
+import EmojiPicker from "emoji-picker-react"; // Import Emoji Picker
 
 const Feed = ({ countryCode, flag, countryName, handleCountryChange }) => {
   const { userData } = useContext(StoreContext);
@@ -39,6 +40,12 @@ const Feed = ({ countryCode, flag, countryName, handleCountryChange }) => {
   const [loading, setLoading] = useState(false);
 
   const [commentText, setCommentText] = useState("");
+  const [showEmojiPicker, setShowEmojiPicker] = useState(false);
+
+  const handleEmojiClick = (emoji) => {
+    setCommentText((prev) => prev + emoji.emoji);
+  };
+
 
   const getCommets = async (post) => {
     try {
@@ -91,16 +98,56 @@ const Feed = ({ countryCode, flag, countryName, handleCountryChange }) => {
 
   // Calling the function inside the comment modal
   const handlePostComment = async () => {
-    // console.log("hi");
-    // console.log(selectedPost.id);
-    // console.log(commentText);
-
     if (!selectedPost || !commentText.trim()) return;
-    await postComment(selectedPost.id, commentText);
-    setCommentText(""); // Clear the input after posting
-    getCommets(selectedPost); // Refresh comments
+  
+    const postId = selectedPost.id;
+    
+    // Update comment count instantly in the UI
+    setData((prevData) => ({
+      ...prevData,
+      posts: prevData.posts.map((post) =>
+        post.id === postId
+          ? {
+              ...post,
+              comments: {
+                ...post.comments,
+                count: (post.comments?.count || 0) + 1, // Increment count
+              },
+            }
+          : post
+      ),
+    }));
+  
+    const comment = commentText;
+    setCommentText(""); // Clear input field
+    closeCommentPopup();
+  
+    try {
+      await postComment(postId, comment); // API call to post comment
+      getCommets(selectedPost); // Fetch updated comments from API
+    } catch (error) {
+      console.error("Error posting comment:", error);
+      alert("Failed to post comment");
+  
+      // Rollback UI update on failure
+      setData((prevData) => ({
+        ...prevData,
+        posts: prevData.posts.map((post) =>
+          post.id === postId
+            ? {
+                ...post,
+                comments: {
+                  ...post.comments,
+                  count: Math.max((post.comments?.count || 1) - 1, 0), // Rollback
+                },
+              }
+            : post
+        ),
+      }));
+    }
   };
-
+  
+  
   const openCommentPopup = async (post) => {
     await getCommets(post);
     setSelectedPost(post);
@@ -108,6 +155,7 @@ const Feed = ({ countryCode, flag, countryName, handleCountryChange }) => {
   };
 
   const closeCommentPopup = () => {
+    setShowEmojiPicker(false); 
     setSelectedPost(null);
     setCommentPopupOpen(false);
   };
@@ -115,49 +163,121 @@ const Feed = ({ countryCode, flag, countryName, handleCountryChange }) => {
   const loadMoreComments = () => {
     setVisibleComments((prev) => prev + 10); // Load 10 more comments on click
   };
-  const deleteComment = async (postId, commentId) => {
+  // Handle Delete Comment
+  const handleDeleteComment = async (postId, commentId) => {
+    const isConfirmed = window.confirm("Are you sure you want to delete this comment?");
+    if (!isConfirmed) return;  // Stop if user cancels
+    
     try {
-        const token = localStorage.getItem("api_token");
-        if (!token) {
-            console.error("No API token found");
-            return;
-        }
-
-        if (!postId || !commentId) {
-            console.error("Invalid postId or commentId:", { postId, commentId });
-            return;
-        }
-
-        console.log(`Deleting comment ID: ${commentId} from Post ID: ${postId}`);
-
-        const response = await axios.delete(
-            `https://develop.quakbox.com/admin/api/del_posts/${postId}/comments/${commentId}`,
-            {
-                headers: {
-                    Authorization: `Bearer ${token}`,
-                    "Content-Type": "application/json",
-                },
-            }
-        );
-
-        console.log("Comment deleted successfully:", response.data);
-
-        // Remove deleted comment from local state
+      const token = localStorage.getItem("api_token");
+      if (!token) return alert("Authorization token missing.");
+  
+      const res = await axios.delete(
+        `https://develop.quakbox.com/admin/api/del_posts/${postId}/comments/${commentId}`,
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+  
+      if (res.status === 200) {
         setComments((prevComments) => prevComments.filter((comment) => comment.comment_id !== commentId));
-
+        setData((prevData) => ({
+          ...prevData,
+          posts: prevData.posts.map((post) =>
+            post.id === postId ? { ...post, comments: { count: Math.max((post.comments?.count || 1) - 1, 0) } } : post
+          ),
+        }));
+        alert("Comment deleted successfully.");
+      } else {
+        alert("Failed to delete comment.");
+      }
     } catch (error) {
-        console.error("Error deleting comment:", error);
-
-        if (error.response) {
-            console.error("Error Response:", error.response.data, "Status:", error.response.status);
-        } else if (error.request) {
-            console.error("No response received:", error.request);
-        } else {
-            console.error("Request setup error:", error.message);
-        }
+      console.error("Error deleting comment:", error);
+      alert("An error occurred while deleting the comment.");
     }
+  };
+// Handle Edit Comment
+const handleEditComment = async (commentId) => {
+  if (!editedComment.trim()) return alert("Comment cannot be empty.");
+  
+  try {
+      const token = localStorage.getItem("api_token");
+      if (!token) return alert("Authorization token missing.");
+      
+      const res = await axios.put(
+          `https://develop.quakbox.com/admin/api/put_comment/${commentId}`, // ✅ Consistent API
+          { comment: editedComment }, // ✅ Use "comment"
+          { headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" } }
+      );
+      
+      if (res.status === 200) {
+          setComments((prevComments) =>
+              prevComments.map((comment) =>
+                  comment.comment_id === commentId ? { ...comment, message: res.data.data.comment } : comment
+              )
+          );
+          closeEditCommentPopup();
+      } else {
+          alert("Failed to edit comment.");
+      }
+  } catch (error) {
+      console.error("Error editing comment:", error);
+      alert("An error occurred while editing the comment.");
+  }
 };
 
+const [editingCommentId, setEditingCommentId] = useState(null);
+const [editedComment, setEditedComment] = useState("");
+const [isEditCommentPopupOpen, setIsEditCommentPopupOpen] = useState(false);
+const [commentToEdit, setCommentToEdit] = useState(null); // ✅ Define it properly
+
+
+// Open Edit Comment Popup
+const openEditCommentPopup = (comment) => {
+  setEditingCommentId(comment.comment_id);  
+  setEditedComment(comment.message);  // ✅ Use "message" consistently
+  setIsEditCommentPopupOpen(true);
+};
+
+// Handle Save Comment (Consistent with handleEditComment)
+const handleSaveComment = async () => {
+  if (!editedComment.trim()) return alert("Comment cannot be empty.");
+  
+  try {
+    const token = localStorage.getItem("api_token");
+    if (!token) return alert("Authorization token missing.");
+    
+    const res = await axios.put(
+      `https://develop.quakbox.com/admin/api/put_comment/${editingCommentId}`, // ✅ Consistent API
+      { comment: editedComment }, // ✅ Use "comment"
+      { headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" } }
+    );
+
+    if (res.status === 200) {
+      setComments((prevComments) =>
+        prevComments.map((comment) =>
+          comment.comment_id === editingCommentId
+            ? { ...comment, message: res.data.data.comment } // ✅ Match response format
+            : comment
+        )
+      );
+      setEditingCommentId(null);
+      setEditedComment("");
+      setIsEditCommentPopupOpen(false);
+    } else {
+      alert("Failed to save comment.");
+    }
+  } catch (error) {
+    console.error("Error saving comment:", error);
+    alert("An error occurred while saving the comment.");
+  }
+};
+
+// Close Edit Comment Popup
+const closeEditCommentPopup = () => {
+  setCommentToEdit(null);  // ✅ Reset edited comment
+  setEditingCommentId(null);
+  setEditedComment("");
+  setIsEditCommentPopupOpen(false);
+};
   // Open Delete Popup
   const openDeletePopup = (post) => {
     setPostToDelete(post);
@@ -503,26 +623,18 @@ const Feed = ({ countryCode, flag, countryName, handleCountryChange }) => {
   const [likeInProgress, setLikeInProgress] = useState({});
 
   const handleLikeClick = async (post) => {
-    if (likeInProgress[post.id]) return; // Prevent multiple clicks
-
+    if (likeInProgress[post.id]) return;
+  
     setLikeInProgress((prev) => ({ ...prev, [post.id]: true }));
-
+  
     const currentUser = {
       user_id: currentUserId,
       name: userData?.users?.username || "Unknown User",
     };
-
-    const alreadyLiked = post.likes?.liked_users?.some(
-      (user) => user.user_id === currentUser.user_id
-    );
-
-    if (alreadyLiked) {
-      console.log("You've already liked this post.");
-      setLikeInProgress((prev) => ({ ...prev, [post.id]: false }));
-      return;
-    }
-
-    // Optimistic UI update
+  
+    const alreadyLiked = post.likes?.liked_users?.some((user) => user.user_id === currentUserId);
+    const alreadyDisliked = post?.disliked_users?.some((user) => user.user_id === currentUserId);
+  
     setData((prevData) =>
       prevData?.posts?.length
         ? {
@@ -532,26 +644,31 @@ const Feed = ({ countryCode, flag, countryName, handleCountryChange }) => {
                 ? {
                     ...p,
                     likes: {
-                      count: (p.likes?.count || 0) + 1,
-                      liked_users: [...(p.likes?.liked_users || []), currentUser],
+                      count: alreadyLiked
+                        ? Math.max((p.likes?.count || 0) - 1, 0)
+                        : (p.likes?.count || 0) + 1,
+                      liked_users: alreadyLiked
+                        ? p.likes?.liked_users?.filter((user) => user.user_id !== currentUserId)
+                        : [...(p.likes?.liked_users || []), currentUser],
                     },
-                    disliked_users: p.disliked_users?.filter(
-                      (user) => user.user_id !== currentUserId
-                    ),
+                    // Remove dislike if previously disliked
+                    disliked_users: alreadyDisliked
+                      ? p.disliked_users?.filter((user) => user.user_id !== currentUserId)
+                      : p.disliked_users,
                   }
                 : p
             ),
           }
         : prevData
     );
-
+  
     try {
       const res = await axios.post(
         `https://develop.quakbox.com/admin/api/set_posts_like/${post.id}/like`,
-        {},
+        { is_like: true },
         { headers: { Authorization: `Bearer ${token}` } }
       );
-
+  
       if (res.status !== 200) {
         console.error("Failed to save the like in the database.");
         revertLike(post);
@@ -563,8 +680,7 @@ const Feed = ({ countryCode, flag, countryName, handleCountryChange }) => {
       setLikeInProgress((prev) => ({ ...prev, [post.id]: false }));
     }
   };
-
-  const revertLike = (post) => {
+    const revertLike = (post) => {
     setData((prevData) =>
       prevData?.posts?.length
         ? {
@@ -586,69 +702,64 @@ const Feed = ({ countryCode, flag, countryName, handleCountryChange }) => {
         : prevData
     );
   };
+ const handleDislikeClick = async (post) => {
+  if (dislikeInProgress[post.id]) return;
 
-  const handleDislikeClick = async (post) => {
-    if (dislikeInProgress[post.id]) return; // Prevent multiple clicks
+  setDislikeInProgress((prev) => ({ ...prev, [post.id]: true }));
 
-    setDislikeInProgress((prev) => ({ ...prev, [post.id]: true }));
-
-    const currentUser = {
-      user_id: currentUserId,
-      name: userData?.users?.username || "Unknown User",
-    };
-
-    const alreadyDisliked = post.disliked_users?.some(
-      (user) => user.user_id === currentUserId
-    );
-
-    if (alreadyDisliked) {
-      console.warn("User already disliked this post!");
-      setDislikeInProgress((prev) => ({ ...prev, [post.id]: false }));
-      return;
-    }
-
-    // Optimistic UI update
-    setData((prevData) =>
-      prevData?.posts?.length
-        ? {
-            ...prevData,
-            posts: prevData.posts.map((p) =>
-              p.id === post.id
-                ? {
-                    ...p,
-                    disliked_users: [...(p.disliked_users || []), currentUser],
-                    likes: {
-                      count: Math.max((p.likes?.count || 0) - 1, 0),
-                      liked_users: p.likes?.liked_users?.filter(
-                        (user) => user.user_id !== currentUserId
-                      ) || [],
-                    },
-                  }
-                : p
-            ),
-          }
-        : prevData
-    );
-
-    try {
-      const res = await axios.post(
-        `https://develop.quakbox.com/admin/api/set_posts_like/${post.id}/dislike`,
-        { user_id: currentUserId },
-        { headers: { Authorization: `Bearer ${token}` } }
-      );
-
-      if (res.status !== 200) {
-        console.error("Failed to save the dislike in the database.");
-        revertDislike(post);
-      }
-    } catch (error) {
-      console.error("Error disliking the post:", error);
-      revertDislike(post);
-    } finally {
-      setDislikeInProgress((prev) => ({ ...prev, [post.id]: false }));
-    }
+  const currentUser = {
+    user_id: currentUserId,
+    name: userData?.users?.username || "Unknown User",
   };
 
+  const alreadyDisliked = post?.disliked_users?.some((user) => user.user_id === currentUserId);
+  const alreadyLiked = post.likes?.liked_users?.some((user) => user.user_id === currentUserId);
+
+  setData((prevData) =>
+    prevData?.posts?.length
+      ? {
+          ...prevData,
+          posts: prevData.posts.map((p) =>
+            p.id === post.id
+              ? {
+                  ...p,
+                  disliked_users: alreadyDisliked
+                    ? p.disliked_users?.filter((user) => user.user_id !== currentUserId)
+                    : [...(p.disliked_users || []), currentUser],
+                  // Remove like if previously liked
+                  likes: {
+                    count: alreadyLiked ? Math.max((p.likes?.count || 0) - 1, 0) : p.likes?.count,
+                    liked_users: alreadyLiked
+                      ? p.likes?.liked_users?.filter((user) => user.user_id !== currentUserId)
+                      : p.likes?.liked_users,
+                  },
+                }
+              : p
+          ),
+        }
+      : prevData
+  );
+
+  try {
+    const res = await axios.post(
+      `https://develop.quakbox.com/admin/api/set_posts_like/${post.id}/dislike`,
+      { is_like: false },
+      { headers: { Authorization: `Bearer ${token}` } }
+    );
+
+    if (res.status !== 200) {
+      console.error("Failed to save the dislike in the database.");
+      revertDislike(post);
+    }
+  } catch (error) {
+    console.error("Error disliking the post:", error);
+    revertDislike(post);
+  } finally {
+    setDislikeInProgress((prev) => ({ ...prev, [post.id]: false }));
+  }
+};
+
+  
   const revertDislike = (post) => {
     setData((prevData) =>
       prevData?.posts?.length
@@ -668,6 +779,7 @@ const Feed = ({ countryCode, flag, countryName, handleCountryChange }) => {
         : prevData
     );
   };
+  
   // const getPost = async () => {
   //   const token = localStorage.getItem("api_token");
 
@@ -710,11 +822,15 @@ const Feed = ({ countryCode, flag, countryName, handleCountryChange }) => {
       );
   
       if (res.data.status && Array.isArray(res.data.posts)) {
-        const formattedPosts = res.data.posts.map((post) => ({
-          ...post,
-          created_time: post.created_time || new Date().toISOString(),
-          timeAgo: getTimeAgo(post.created_time),
-        }));
+        const formattedPosts = res.data.posts.map((post) => {
+          const isLiked = post.likes?.liked_users?.some((user) => user.user_id === currentUserId);
+          return {
+            ...post,
+            created_time: post.created_time || new Date().toISOString(),
+            timeAgo: getTimeAgo(post.created_time),
+            isLiked,
+          };
+        });
   
         setData({ posts: formattedPosts });
   
@@ -728,8 +844,7 @@ const Feed = ({ countryCode, flag, countryName, handleCountryChange }) => {
     } catch (error) {
       console.log("Error fetching posts:", error);
     }
-  };
-  
+  };  
   useEffect(() => {
     // Cleanup the preview URL to avoid memory leaks
     return () => {
@@ -774,8 +889,10 @@ const Feed = ({ countryCode, flag, countryName, handleCountryChange }) => {
   const [showLikedUsers, setShowLikedUsers] = useState(false);
   
   useEffect(() => {
+    console.log("Selected Post ID:", selectedPost?.id);
+  
     if (!selectedPost?.id || !showLikedUsers) return;
-
+  
     const fetchLikedUsers = async () => {
       try {
         const token = localStorage.getItem("api_token");
@@ -783,12 +900,14 @@ const Feed = ({ countryCode, flag, countryName, handleCountryChange }) => {
           console.error("No token found");
           return;
         }
-
+  
         const response = await axios.get(
           `https://develop.quakbox.com/admin/api/posts/${selectedPost.id}/liked-users`,
           { headers: { Authorization: `Bearer ${token}` } }
         );
-
+  
+        console.log("Fetched Liked Users:", response.data.liked_users);
+  
         if (response.status === 200 && response.data?.liked_users) {
           setLikedUsers(response.data.liked_users);
         } else {
@@ -798,9 +917,9 @@ const Feed = ({ countryCode, flag, countryName, handleCountryChange }) => {
         console.error("Error fetching liked users:", error);
       }
     };
-
+  
     fetchLikedUsers();
-  }, [showLikedUsers, selectedPost?.id]);
+  }, [showLikedUsers, selectedPost]); // Depend on selectedPost 
   
   return (
     <div
@@ -1220,41 +1339,74 @@ const Feed = ({ countryCode, flag, countryName, handleCountryChange }) => {
                         className="comments-section flex-grow-1 overflow-auto"
                         style={{ maxHeight: "40vh", paddingRight: "10px" }}
                       >
-                        <h6>Comments</h6>
+                  <h6>Comments</h6>
+                  {comments?.length > 0 ? (
+                    comments.slice(0, visibleComments).map((comment, index) => {
+                      const isUserComment = Number(comment.comment_user_id) === Number(userId);
 
-                        {comments?.length > 0 ? (
-                        comments.slice(0, visibleComments).map((comment, index) => {
+                      return (
+                        <div key={comment.comment_id || index} className="d-flex align-items-start mb-3">
+                          {/* User Avatar */}
+                          <img
+                            src={comment.comment_user_profile_picture || defaultUserImage}
+                            alt="User Avatar"
+                            className="rounded-circle me-2"
+                            style={{ width: "35px", height: "35px" }}
+                          />
 
-                          return (
-                              <div key={comment.comment_id || index} className="d-flex align-items-start mb-3">
-                                  {/* User Avatar */}
-                                  <img
-                                      src={comment.comment_user_profile_picture || defaultUserImage}
-                                      alt="User Avatar"
-                                      className="rounded-circle me-2"
-                                      style={{ width: "35px", height: "35px" }}
-                                  />
+                          {/* Comment Content */}
+                          <div className="flex-grow-1">
+                            <div className="d-flex justify-content-between align-items-center">
+                              <h6 className="mb-0">{comment.comment_user_name || "Anonymous"}</h6>
 
-                                  {/* Comment Content */}
-                                  <div className="flex-grow-1">
-                                      <div className="d-flex justify-content-between">
-                                          <h6 className="mb-0">{comment.comment_user_name || "Anonymous"}</h6>
+                              {/* Edit & Delete Buttons for the User's Own Comment */}
+                              {isUserComment && (
+                                <div className="d-flex">
+                                  <i
+                                    className="bi bi-pencil-square me-2 text-primary"
+                                    onClick={() => openEditCommentPopup(comment)}
+                                    style={{ cursor: "pointer", fontSize: "16px" }}
+                                  ></i>
+                                  <i
+                                    className="bi bi-trash text-danger"
+                                    onClick={() => handleDeleteComment(selectedPost.id, comment.comment_id)}
+                                    style={{ cursor: "pointer", fontSize: "16px" }}
+                                  ></i>
+                                </div>
+                              )}
+                            </div>
 
-                                          {/* 🔥 Debugging: Check if delete icon should be shown */}
-                                          {Number(comment.comment_user_id) === Number(userId) && (
-                                              <i
-                                                className="bi bi-trash text-danger"
-                                                onClick={() => deleteComment(selectedPost.id, comment.comment_id)}
-                                                style={{ cursor: "pointer", fontSize: "16px" }}
-                                              ></i>
-                                            )}
-                                      </div>
-                                      <p className="mb-1">{comment.comment_content}</p>
-                                      <small className="text-muted">{getTimeAgo(comment.comment_updated_datetime)}</small>
-                                  </div>
+                            {/* Edit Mode: Show Input Field When Editing */}
+                            {editingCommentId === comment.comment_id ? (
+                              <div className="d-flex align-items-center mt-2">
+                                <input
+                                  type="text"
+                                  className="form-control form-control-sm me-2"
+                                  value={editedComment}
+                                  onChange={(e) => setEditedComment(e.target.value)}
+                                />
+                                <button className="btn btn-sm btn-success" onClick={() => handleSaveComment(comment.comment_id)}>
+                                  Save
+                                </button>
+                                <button className="btn btn-sm btn-secondary ms-2" onClick={() => setEditingCommentId(null)}>
+                                  Cancel
+                                </button>
                               </div>
-                          );
-                      })
+                            ) : (
+                              /* Normal Comment Display */
+                              <>
+                                {comment.comment_content && comment.comment_content.trim() ? (
+                                  <p className="mb-1">{comment.comment_content}</p>
+                                ) : (
+                                  <p className="mb-1 text-muted">No content available</p>
+                                )}
+                                <small className="text-muted">{getTimeAgo(comment.comment_updated_datetime)}</small>
+                              </>
+                            )}
+                          </div>
+                        </div>
+                      );
+                    })
                   ) : (
                           // Mock Comments for Testing
                           <>
@@ -1312,16 +1464,71 @@ const Feed = ({ countryCode, flag, countryName, handleCountryChange }) => {
 
                       {/* Add a Comment */}
                       <div className="mt-3">
-                        <textarea
-                          className="form-control"
-                          rows="2"
-                          placeholder="Write a comment..."
-                          value={commentText}
-                          onChange={(e) => setCommentText(e.target.value)}
-                        ></textarea>
+                       {/* Comment Input with Emoji Button */}
+                        <div style={{ position: "relative" }}>
+                          <textarea
+                            style={{
+                              width: "100%",
+                              paddingRight: "40px", // Make space for the emoji button
+                              padding: "8px",
+                              borderRadius: "5px",
+                              border: "1px solid #ccc",
+                              resize: "none",
+                            }}
+                            rows="2"
+                            placeholder="Write a comment..."
+                            value={commentText}
+                            onChange={(e) => setCommentText(e.target.value)}
+                          ></textarea>
+
+                          {/* Emoji Picker Toggle Button (Inside the textarea) */}
+                          <button
+                            onClick={() => setShowEmojiPicker(!showEmojiPicker)}
+                            style={{
+                              position: "absolute",
+                              right: "10px",
+                              top: "8px",
+                              background: "transparent",
+                              border: "none",
+                              cursor: "pointer",
+                              fontSize: "20px",
+                            }}
+                          >
+                            😀
+                          </button>
+
+                          {/* Render Emoji Picker when toggled */}
+                          {showEmojiPicker && (
+                            <div
+                              style={{
+                                position: "absolute",
+                                bottom: "50px",
+                                right: "0",
+                                zIndex: "1000",
+                                background: "white",
+                                borderRadius: "10px",
+                                boxShadow: "0px 4px 10px rgba(0, 0, 0, 0.2)",
+                                padding: "10px",
+                              }}
+                            >
+                              <EmojiPicker onEmojiClick={handleEmojiClick} width={300} height={350} />
+                            </div>
+                          )}
+                        </div>
+
+                        {/* Post Comment Button */}
                         <button
-                          className="btn btn-primary btn-sm mt-2"
                           onClick={handlePostComment}
+                          style={{
+                            marginTop: "8px",
+                            padding: "6px 12px",
+                            backgroundColor: "#007bff",
+                            color: "white",
+                            border: "none",
+                            borderRadius: "5px",
+                            cursor: "pointer",
+                            fontSize: "14px",
+                          }}
                         >
                           Post Comment
                         </button>
@@ -1434,36 +1641,31 @@ const Feed = ({ countryCode, flag, countryName, handleCountryChange }) => {
 
                   {/* Post Footer */}
                   <div className="card-footer bg-white d-flex justify-content-between align-items-center border-0">
-                    <span
-                      className="text-muted"
-                      onClick={() => setShowLikedUsers(true)}
-                      style={{ cursor: "pointer", color: "blue" }}
-                    >
-                      {post.likes?.count ? `${post.likes.count} likes` : "0 likes"}
-                    </span>
+                  <span
+                        className="text-muted"
+                        onClick={() => {
+                          setSelectedPost(post); // Ensure correct post is selected
+                          setShowLikedUsers(true);
+                        }}
+                        style={{ cursor: "pointer", color: "blue" }}
+                      >
+                        {post.likes?.count ? `${post.likes.count} likes` : "0 likes"}
+                      </span>
 
-                    {/* Liked Users Modal */}
-                    {showLikedUsers && (
-                     <div
-                     className="modal fade show d-block"
-                     style={{ opacity:"0.5" }}
-                     tabIndex="-1"
-                   >
-                     <div
-                       className="modal-dialog modal-dialog-centered modal-lg"
-                       style={{ maxWidth: "400px" }}
-                     >
-                       <div className="modal-content">
-                         <div className="modal-header">
+                      {showLikedUsers && (
+                        <div
+                        className="modal fade show d-block"  style={{ background: "rgba(0, 0, 0, 0.08)" }}>
+                          <div className="modal-dialog modal-dialog-centered modal-lg" style={{ maxWidth: "400px" }}>
+                            <div className="modal-content">
+                              <div className="modal-header">
                                 <h5 className="modal-title">Users Who Liked This Post</h5>
-                                <button className="btn-close" onClick={() => setShowLikedUsers(false)}></button>
+                                <button className="btn-close" onClick={() => {
+                                  setShowLikedUsers(false);
+                                  setSelectedPost(null); // Reset post
+                                }}></button>
                               </div>
 
-                              {/* Body */}
-                              <div
-                                className="modal-body d-flex flex-column"
-                                style={{ maxHeight: "80vh" }}
-                              >
+                              <div className="modal-body d-flex flex-column" style={{ maxHeight: "80vh", overflowY: "auto" }}>
                                 {likedUsers.length > 0 ? (
                                   <ul className="list-group">
                                     {likedUsers.map((user) => (
@@ -1483,17 +1685,18 @@ const Feed = ({ countryCode, flag, countryName, handleCountryChange }) => {
                                 )}
                               </div>
 
-                              {/* Footer */}
                               <div className="modal-footer">
-                                <button className="btn btn-primary" onClick={() => setShowLikedUsers(false)}>
+                                <button className="btn btn-primary" onClick={() => {
+                                  setShowLikedUsers(false);
+                                  setSelectedPost(null); // Reset post
+                                }}>
                                   Close
                                 </button>
                               </div>
                             </div>
                           </div>
                         </div>
-                    )}
-
+                      )}
                     <div className="d-flex">
                       <button
                         className={`btn btn-sm me-2 ${

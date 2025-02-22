@@ -2,6 +2,7 @@
 
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Facades\Response;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\ForgotPasswordController;
 use App\Http\Controllers\CountryController;
@@ -18,7 +19,8 @@ use App\Http\Controllers\VideoSubscriptionController;
 use App\Http\Controllers\VideoCommentController;
 use FFMpeg\Media\Video;
 use Illuminate\Http\Request;
-use App\Http\Controllers\LiveStreamController;
+use App\Http\Controllers\StreamController;
+use App\Http\Controllers\FileUploadController;
 
 // use App\Http\Controllers\VideoChannelController;
 
@@ -32,14 +34,58 @@ use App\Http\Controllers\LiveStreamController;
 | be assigned to the "api" middleware group. Make something great!
 |
 */
+
+Route::get('/stream-key', [StreamController::class, 'getStreamKey']);
+Route::post('/generate-stream-key', [StreamController::class, 'generateStreamKey']);
+Route::post('/upload-chunk-live', [FileUploadController::class, 'uploadChunkLive']);
+
+Route::get('/stream-video/{stream_key}', function ($stream_key) {
+    $hls_url = "http://develop.quakbox.com:8080/hls/{$stream_key}.m3u8";
+    
+    return response()->json([
+        'stream_url' => $hls_url,
+    ]);
+});
+
+
+
+//Route::post('/upload-chunked', [StreamController::class, 'uploadChunk']);
+//Route::get('/watch-stream/{streamKey}', [StreamController::class, 'watchStream']);
+
+//Route::post('/start-stream', [StreamController::class, 'startStream']);
+//Route::post('/upload-chunked', [StreamController::class, 'uploadChunked']);
+//Route::get('/watch/{streamKey}', [StreamController::class, 'watchStreamed']);
+//Route::get('/phpinformation', [StreamController::class, 'phpinformation']);
+
+//Route::post('/generate-stream-key', [StreamController::class, 'generateStreamKey']);
+//Route::get('/get-stream-key', [StreamController::class, 'startStream']);
+
+
+
 //Live streaming 
-Route::middleware('auth:api')->post('start-live-stream', [LiveStreamController::class, 'startStreaming']);
-Route::middleware('auth:api')->post('end-stream', [LiveStreamController::class, 'endStreaming']);
-Route::get('/live/{streamKey}', [LiveStreamController::class, 'watchLiveStream']);
+//Route::post('/start-stream', [LiveStreamController::class, 'startStream']);
+//Route::post('/generate-hls', [LiveStreamController::class, 'generateHLS']);
+//Route::post('/upload-chunk', [LiveStreamController::class, 'uploadChunk']);
+
+Route::get('images/hls/{streamKey}/{segment}', function ($streamKey, $segment) {
+    $filePath = "hls/{$streamKey}/{$segment}";
+
+    if (!Storage::disk('public')->exists($filePath)) {
+        return response()->json(['error' => 'File not found'], 404);
+    }
+
+    $mimeType = str_ends_with($segment, '.m3u8') ? 'application/vnd.apple.mpegurl' : 'video/mp2t';
+
+    return Response::make(Storage::disk('public')->get($filePath), 200, [
+        'Content-Type' => $mimeType,
+    ]);
+});
 
 Route::post('login', [AuthController::class, 'login']);
 
 Route::post('register', [AuthController::class, 'register']);
+// Route::middleware(['auth:api'])->get('user', [AuthController::class, 'user']);
+
 Route::middleware(['auth:api', 'token.expiry'])->post('logout', [AuthController::class, 'logout']);
 
 Route::middleware(['auth:api', 'token.expiry'])->get('user', function (Request $request) {
@@ -77,6 +123,7 @@ Route::middleware('auth:api')->group(function () {
     Route::post('set_posts_like/{id}/dislike', [PostController::class, 'postDislike']);
     Route::get('get_posts_comment/{id}/comment', [PostController::class, 'getComment']);
     Route::post('set_posts_comment/{id}/comment', [PostController::class, 'postComment']); // Comment on post
+    Route::put('put_comment/{id}', [PostController::class, 'commentUpdate']);
     Route::post('set_posts_share/{id}/share', [PostController::class, 'postShare']); // Share post
     // Route to delete a comment
     Route::delete('del_posts/{postId}/comments/{commentId}', [PostController::class, 'commentDestroy']); // Delete comment
@@ -99,6 +146,7 @@ Route::get('images/flags/{filename}', function ($filename) {
 });
 
 // Video Management
+Route::get('get-upload-key', [VideoController::class, 'videoUploadKey']);
 Route::middleware('auth:api')->prefix('videos')->group(function () {
     Route::post('upload', [VideoController::class, 'videoUpload']);
     Route::get('qlist/{category_id?}', [VideoController::class, 'index']);
@@ -107,6 +155,10 @@ Route::middleware('auth:api')->prefix('videos')->group(function () {
     Route::get('search/{query?}', [VideoController::class, 'search']);   
     Route::get('my-videos', [VideoController::class, 'userVideos']); // ✅ New route
 });
+
+// Large File Upload
+Route::post('upload-video-chunk', [FileUploadController::class, 'uploadChunk']);
+Route::post('merge-video-chunks', [FileUploadController::class, 'mergeChunks']);
 
 // popular videos
 Route::middleware('auth:api')->prefix('dashboard')->group(function () {
@@ -196,12 +248,47 @@ Route::get('images/uploads/videos/temp/{filename}', function ($filename) {
 });
 // To display permanent video file
 
-Route::get('images/uploads/videos/permanent/{filename}', function ($filename) {
-    if (!Storage::disk('public')->exists("uploads/videos/permanent/$filename")) {
-        abort(404);
+Route::get('images/uploads/videos/permanent/{folder}/{file}', function (Request $request, $folder, $file) {
+    $path = storage_path("app/public/uploads/videos/permanent/{$folder}/{$file}");
+
+    if (!file_exists($path)) {
+        return response()->json(['error' => 'File not found'], 404);
     }
-    return response()->file(Storage::disk('public')->path("uploads/videos/permanent/$filename"));
+
+    // Set correct MIME type
+    $mimeType = match (pathinfo($path, PATHINFO_EXTENSION)) {
+        'm3u8' => 'application/vnd.apple.mpegurl',
+        'ts'   => 'video/mp2t',
+        default => mime_content_type($path),
+    };
+
+    // Stream the file with proper headers
+    return response()->stream(function () use ($path) {
+        readfile($path);
+    }, 200, [
+        'Content-Type' => $mimeType,
+        'Cache-Control' => 'no-cache',
+        'Access-Control-Allow-Origin' => '*',
+        'Accept-Ranges' => 'bytes',
+    ]);
 });
+
+
+
+//Route::get('images/uploads/videos/permanent/{streamKey}/{segment}', function ($streamKey, $segment) {
+//    $filePath = "uploads/videos/permanent/{$streamKey}/{$segment}";
+
+//    if (!Storage::disk('public')->exists($filePath)) {
+//        return response()->json(['error' => 'File not found'], 404);
+//    }
+
+//    $mimeType = str_ends_with($segment, '.m3u8') ? 'application/vnd.apple.mpegurl' : 'video/mp2t';
+
+//    return Response::make(Storage::disk('public')->get($filePath), 200, [
+//        'Content-Type' => $mimeType,
+//    ]);
+//});
+
 
 Route::post('/send-otp-mobile', [AuthController::class, 'sendOtpMob']);
 Route::post('/verify-otp-mobile', [AuthController::class, 'verifyOtpMob']);
