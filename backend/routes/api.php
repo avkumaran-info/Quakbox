@@ -117,8 +117,7 @@ Route::middleware('auth:api')->group(function () {
     Route::post('set_posts', [PostController::class, 'postStore']); // Create post with media
     Route::put('put_posts/{id}', [PostController::class, 'postUpdate']); // Update post
     Route::delete('del_posts/{id}', [PostController::class, 'postDestroy']); // Delete post
-    Route::get('get_posts/{cc}', [PostController::class, 'getAllPosts']); // Get all posts
-
+    Route::get('get_posts/{cc?}', [PostController::class, 'getAllPosts']); // Get all posts
     Route::post('set_posts_like/{id}/like', [PostController::class, 'postLike']); // Like/Dislike post
     Route::post('set_posts_like/{id}/dislike', [PostController::class, 'postDislike']);
     Route::get('get_posts_comment/{id}/comment', [PostController::class, 'getComment']);
