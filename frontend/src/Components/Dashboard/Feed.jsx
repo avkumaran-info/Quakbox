@@ -155,6 +155,7 @@ const Feed = ({ countryCode, flag, countryName, handleCountryChange }) => {
   };
 
   const closeCommentPopup = () => {
+    setShowEmojiPicker(false); 
     setSelectedPost(null);
     setCommentPopupOpen(false);
   };
@@ -162,83 +163,121 @@ const Feed = ({ countryCode, flag, countryName, handleCountryChange }) => {
   const loadMoreComments = () => {
     setVisibleComments((prev) => prev + 10); // Load 10 more comments on click
   };
-  const deleteComment = async (postId, commentId) => {
+  // Handle Delete Comment
+  const handleDeleteComment = async (postId, commentId) => {
+    const isConfirmed = window.confirm("Are you sure you want to delete this comment?");
+    if (!isConfirmed) return;  // Stop if user cancels
+    
     try {
-        const token = localStorage.getItem("api_token");
-        if (!token) {
-            console.error("No API token found");
-            return;
-        }
-
-        if (!postId || !commentId) {
-            console.error("Invalid postId or commentId:", { postId, commentId });
-            return;
-        }
-
-        console.log(`Deleting comment ID: ${commentId} from Post ID: ${postId}`);
-
-        // Instantly update UI (Optimistic UI update)
-        setComments((prevComments) =>
-            prevComments.filter((comment) => comment.comment_id !== commentId)
-        );
-
+      const token = localStorage.getItem("api_token");
+      if (!token) return alert("Authorization token missing.");
+  
+      const res = await axios.delete(
+        `https://develop.quakbox.com/admin/api/del_posts/${postId}/comments/${commentId}`,
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+  
+      if (res.status === 200) {
+        setComments((prevComments) => prevComments.filter((comment) => comment.comment_id !== commentId));
         setData((prevData) => ({
-            ...prevData,
-            posts: prevData.posts.map((post) =>
-                post.id === postId
-                    ? {
-                          ...post,
-                          comments: {
-                              ...post.comments,
-                              count: Math.max((post.comments?.count || 1) - 1, 0), // Decrease count safely
-                          },
-                      }
-                    : post
-            ),
+          ...prevData,
+          posts: prevData.posts.map((post) =>
+            post.id === postId ? { ...post, comments: { count: Math.max((post.comments?.count || 1) - 1, 0) } } : post
+          ),
         }));
-
-        // API Call to delete comment
-        const response = await axios.delete(
-            `https://develop.quakbox.com/admin/api/del_posts/${postId}/comments/${commentId}`,
-            {
-                headers: {
-                    Authorization: `Bearer ${token}`,
-                    "Content-Type": "application/json",
-                },
-            }
-        );
-        closeCommentPopup();
-        console.log("Comment deleted successfully:", response.data);
-        
+        alert("Comment deleted successfully.");
+      } else {
+        alert("Failed to delete comment.");
+      }
     } catch (error) {
-        console.error("Error deleting comment:", error);
-
-        if (error.response) {
-            console.error("Error Response:", error.response.data, "Status:", error.response.status);
-        } else if (error.request) {
-            console.error("No response received:", error.request);
-        } else {
-            console.error("Request setup error:", error.message);
-        }
-
-        // Rollback UI Update on failure (Revert count)
-        setData((prevData) => ({
-            ...prevData,
-            posts: prevData.posts.map((post) =>
-                post.id === postId
-                    ? {
-                          ...post,
-                          comments: {
-                              ...post.comments,
-                              count: (post.comments?.count || 0) + 1, // Rollback if API call fails
-                          },
-                      }
-                    : post
-            ),
-        }));
+      console.error("Error deleting comment:", error);
+      alert("An error occurred while deleting the comment.");
     }
+  };
+// Handle Edit Comment
+const handleEditComment = async (commentId) => {
+  if (!editedComment.trim()) return alert("Comment cannot be empty.");
+  
+  try {
+      const token = localStorage.getItem("api_token");
+      if (!token) return alert("Authorization token missing.");
+      
+      const res = await axios.put(
+          `https://develop.quakbox.com/admin/api/put_comment/${commentId}`, // ✅ Consistent API
+          { comment: editedComment }, // ✅ Use "comment"
+          { headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" } }
+      );
+      
+      if (res.status === 200) {
+          setComments((prevComments) =>
+              prevComments.map((comment) =>
+                  comment.comment_id === commentId ? { ...comment, message: res.data.data.comment } : comment
+              )
+          );
+          closeEditCommentPopup();
+      } else {
+          alert("Failed to edit comment.");
+      }
+  } catch (error) {
+      console.error("Error editing comment:", error);
+      alert("An error occurred while editing the comment.");
+  }
 };
 
+const [editingCommentId, setEditingCommentId] = useState(null);
+const [editedComment, setEditedComment] = useState("");
+const [isEditCommentPopupOpen, setIsEditCommentPopupOpen] = useState(false);
+const [commentToEdit, setCommentToEdit] = useState(null); // ✅ Define it properly
+
+
+// Open Edit Comment Popup
+const openEditCommentPopup = (comment) => {
+  setEditingCommentId(comment.comment_id);  
+  setEditedComment(comment.message);  // ✅ Use "message" consistently
+  setIsEditCommentPopupOpen(true);
+};
+
+// Handle Save Comment (Consistent with handleEditComment)
+const handleSaveComment = async () => {
+  if (!editedComment.trim()) return alert("Comment cannot be empty.");
+  
+  try {
+    const token = localStorage.getItem("api_token");
+    if (!token) return alert("Authorization token missing.");
+    
+    const res = await axios.put(
+      `https://develop.quakbox.com/admin/api/put_comment/${editingCommentId}`, // ✅ Consistent API
+      { comment: editedComment }, // ✅ Use "comment"
+      { headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" } }
+    );
+
+    if (res.status === 200) {
+      setComments((prevComments) =>
+        prevComments.map((comment) =>
+          comment.comment_id === editingCommentId
+            ? { ...comment, message: res.data.data.comment } // ✅ Match response format
+            : comment
+        )
+      );
+      setEditingCommentId(null);
+      setEditedComment("");
+      setIsEditCommentPopupOpen(false);
+    } else {
+      alert("Failed to save comment.");
+    }
+  } catch (error) {
+    console.error("Error saving comment:", error);
+    alert("An error occurred while saving the comment.");
+  }
+};
+
+// Close Edit Comment Popup
+const closeEditCommentPopup = () => {
+  setCommentToEdit(null);  // ✅ Reset edited comment
+  setEditingCommentId(null);
+  setEditedComment("");
+  setIsEditCommentPopupOpen(false);
+};
   // Open Delete Popup
   const openDeletePopup = (post) => {
     setPostToDelete(post);
@@ -606,13 +645,13 @@ const Feed = ({ countryCode, flag, countryName, handleCountryChange }) => {
                     ...p,
                     likes: {
                       count: alreadyLiked
-                        ? Math.max((p.likes?.count || 0) - 1, 0) // Unlike (decrease count)
-                        : (p.likes?.count || 0) + 1, // Like (increase count)
+                        ? Math.max((p.likes?.count || 0) - 1, 0)
+                        : (p.likes?.count || 0) + 1,
                       liked_users: alreadyLiked
-                        ? p.likes?.liked_users?.filter((user) => user.user_id !== currentUserId) // Remove like
-                        : [...(p.likes?.liked_users || []), currentUser], // Add like
+                        ? p.likes?.liked_users?.filter((user) => user.user_id !== currentUserId)
+                        : [...(p.likes?.liked_users || []), currentUser],
                     },
-                    // Remove dislike if user had disliked
+                    // Remove dislike if previously disliked
                     disliked_users: alreadyDisliked
                       ? p.disliked_users?.filter((user) => user.user_id !== currentUserId)
                       : p.disliked_users,
@@ -626,7 +665,7 @@ const Feed = ({ countryCode, flag, countryName, handleCountryChange }) => {
     try {
       const res = await axios.post(
         `https://develop.quakbox.com/admin/api/set_posts_like/${post.id}/like`,
-        {},
+        { is_like: true },
         { headers: { Authorization: `Bearer ${token}` } }
       );
   
@@ -641,8 +680,7 @@ const Feed = ({ countryCode, flag, countryName, handleCountryChange }) => {
       setLikeInProgress((prev) => ({ ...prev, [post.id]: false }));
     }
   };
-
-  const revertLike = (post) => {
+    const revertLike = (post) => {
     setData((prevData) =>
       prevData?.posts?.length
         ? {
@@ -664,62 +702,63 @@ const Feed = ({ countryCode, flag, countryName, handleCountryChange }) => {
         : prevData
     );
   };
-  const handleDislikeClick = async (post) => {
-    if (dislikeInProgress[post.id]) return;
-  
-    setDislikeInProgress((prev) => ({ ...prev, [post.id]: true }));
-  
-    const currentUser = {
-      user_id: currentUserId,
-      name: userData?.users?.username || "Unknown User",
-    };
-  
-    const alreadyDisliked = post?.disliked_users?.some((user) => user.user_id === currentUserId);
-    const alreadyLiked = post.likes?.liked_users?.some((user) => user.user_id === currentUserId);
-  
-    // Optimistically update UI
-    setData((prevData) =>
-      prevData?.posts?.length
-        ? {
-            ...prevData,
-            posts: prevData.posts.map((p) =>
-              p.id === post.id
-                ? {
-                    ...p,
-                    disliked_users: alreadyDisliked
-                      ? p.disliked_users?.filter((user) => user.user_id !== currentUserId)
-                      : [...(p.disliked_users || []), currentUser],
-                    likes: {
-                      count: alreadyLiked ? Math.max((p.likes?.count || 0) - 1, 0) : p.likes?.count,
-                      liked_users: alreadyLiked
-                        ? p.likes?.liked_users?.filter((user) => user.user_id !== currentUserId)
-                        : p.likes?.liked_users,
-                    },
-                  }
-                : p
-            ),
-          }
-        : prevData
-    );
-  
-    try {
-      const res = await axios.post(
-        `https://develop.quakbox.com/admin/api/set_posts_like/${post.id}/dislike`,
-        { is_like: false }, // Ensure backend receives the correct value
-        { headers: { Authorization: `Bearer ${token}` } }
-      );
-  
-      if (res.status !== 200) {
-        console.error("Failed to save the dislike in the database.");
-        revertDislike(post);
-      }
-    } catch (error) {
-      console.error("Error disliking the post:", error);
-      revertDislike(post);
-    } finally {
-      setDislikeInProgress((prev) => ({ ...prev, [post.id]: false }));
-    }
+ const handleDislikeClick = async (post) => {
+  if (dislikeInProgress[post.id]) return;
+
+  setDislikeInProgress((prev) => ({ ...prev, [post.id]: true }));
+
+  const currentUser = {
+    user_id: currentUserId,
+    name: userData?.users?.username || "Unknown User",
   };
+
+  const alreadyDisliked = post?.disliked_users?.some((user) => user.user_id === currentUserId);
+  const alreadyLiked = post.likes?.liked_users?.some((user) => user.user_id === currentUserId);
+
+  setData((prevData) =>
+    prevData?.posts?.length
+      ? {
+          ...prevData,
+          posts: prevData.posts.map((p) =>
+            p.id === post.id
+              ? {
+                  ...p,
+                  disliked_users: alreadyDisliked
+                    ? p.disliked_users?.filter((user) => user.user_id !== currentUserId)
+                    : [...(p.disliked_users || []), currentUser],
+                  // Remove like if previously liked
+                  likes: {
+                    count: alreadyLiked ? Math.max((p.likes?.count || 0) - 1, 0) : p.likes?.count,
+                    liked_users: alreadyLiked
+                      ? p.likes?.liked_users?.filter((user) => user.user_id !== currentUserId)
+                      : p.likes?.liked_users,
+                  },
+                }
+              : p
+          ),
+        }
+      : prevData
+  );
+
+  try {
+    const res = await axios.post(
+      `https://develop.quakbox.com/admin/api/set_posts_like/${post.id}/dislike`,
+      { is_like: false },
+      { headers: { Authorization: `Bearer ${token}` } }
+    );
+
+    if (res.status !== 200) {
+      console.error("Failed to save the dislike in the database.");
+      revertDislike(post);
+    }
+  } catch (error) {
+    console.error("Error disliking the post:", error);
+    revertDislike(post);
+  } finally {
+    setDislikeInProgress((prev) => ({ ...prev, [post.id]: false }));
+  }
+};
+
   
   const revertDislike = (post) => {
     setData((prevData) =>
@@ -739,7 +778,8 @@ const Feed = ({ countryCode, flag, countryName, handleCountryChange }) => {
           }
         : prevData
     );
-  };  
+  };
+  
   // const getPost = async () => {
   //   const token = localStorage.getItem("api_token");
 
@@ -782,11 +822,15 @@ const Feed = ({ countryCode, flag, countryName, handleCountryChange }) => {
       );
   
       if (res.data.status && Array.isArray(res.data.posts)) {
-        const formattedPosts = res.data.posts.map((post) => ({
-          ...post,
-          created_time: post.created_time || new Date().toISOString(),
-          timeAgo: getTimeAgo(post.created_time),
-        }));
+        const formattedPosts = res.data.posts.map((post) => {
+          const isLiked = post.likes?.liked_users?.some((user) => user.user_id === currentUserId);
+          return {
+            ...post,
+            created_time: post.created_time || new Date().toISOString(),
+            timeAgo: getTimeAgo(post.created_time),
+            isLiked,
+          };
+        });
   
         setData({ posts: formattedPosts });
   
@@ -800,8 +844,7 @@ const Feed = ({ countryCode, flag, countryName, handleCountryChange }) => {
     } catch (error) {
       console.log("Error fetching posts:", error);
     }
-  };
-  
+  };  
   useEffect(() => {
     // Cleanup the preview URL to avoid memory leaks
     return () => {
@@ -1296,41 +1339,74 @@ const Feed = ({ countryCode, flag, countryName, handleCountryChange }) => {
                         className="comments-section flex-grow-1 overflow-auto"
                         style={{ maxHeight: "40vh", paddingRight: "10px" }}
                       >
-                        <h6>Comments</h6>
+                  <h6>Comments</h6>
+                  {comments?.length > 0 ? (
+                    comments.slice(0, visibleComments).map((comment, index) => {
+                      const isUserComment = Number(comment.comment_user_id) === Number(userId);
 
-                        {comments?.length > 0 ? (
-                        comments.slice(0, visibleComments).map((comment, index) => {
+                      return (
+                        <div key={comment.comment_id || index} className="d-flex align-items-start mb-3">
+                          {/* User Avatar */}
+                          <img
+                            src={comment.comment_user_profile_picture || defaultUserImage}
+                            alt="User Avatar"
+                            className="rounded-circle me-2"
+                            style={{ width: "35px", height: "35px" }}
+                          />
 
-                          return (
-                              <div key={comment.comment_id || index} className="d-flex align-items-start mb-3">
-                                  {/* User Avatar */}
-                                  <img
-                                      src={comment.comment_user_profile_picture || defaultUserImage}
-                                      alt="User Avatar"
-                                      className="rounded-circle me-2"
-                                      style={{ width: "35px", height: "35px" }}
-                                  />
+                          {/* Comment Content */}
+                          <div className="flex-grow-1">
+                            <div className="d-flex justify-content-between align-items-center">
+                              <h6 className="mb-0">{comment.comment_user_name || "Anonymous"}</h6>
 
-                                  {/* Comment Content */}
-                                  <div className="flex-grow-1">
-                                      <div className="d-flex justify-content-between">
-                                          <h6 className="mb-0">{comment.comment_user_name || "Anonymous"}</h6>
+                              {/* Edit & Delete Buttons for the User's Own Comment */}
+                              {isUserComment && (
+                                <div className="d-flex">
+                                  <i
+                                    className="bi bi-pencil-square me-2 text-primary"
+                                    onClick={() => openEditCommentPopup(comment)}
+                                    style={{ cursor: "pointer", fontSize: "16px" }}
+                                  ></i>
+                                  <i
+                                    className="bi bi-trash text-danger"
+                                    onClick={() => handleDeleteComment(selectedPost.id, comment.comment_id)}
+                                    style={{ cursor: "pointer", fontSize: "16px" }}
+                                  ></i>
+                                </div>
+                              )}
+                            </div>
 
-                                          {/* 🔥 Debugging: Check if delete icon should be shown */}
-                                          {Number(comment.comment_user_id) === Number(userId) && (
-                                              <i
-                                                className="bi bi-trash text-danger"
-                                                onClick={() => deleteComment(selectedPost.id, comment.comment_id)}
-                                                style={{ cursor: "pointer", fontSize: "16px" }}
-                                              ></i>
-                                            )}
-                                      </div>
-                                      <p className="mb-1">{comment.comment_content}</p>
-                                      <small className="text-muted">{getTimeAgo(comment.comment_updated_datetime)}</small>
-                                  </div>
+                            {/* Edit Mode: Show Input Field When Editing */}
+                            {editingCommentId === comment.comment_id ? (
+                              <div className="d-flex align-items-center mt-2">
+                                <input
+                                  type="text"
+                                  className="form-control form-control-sm me-2"
+                                  value={editedComment}
+                                  onChange={(e) => setEditedComment(e.target.value)}
+                                />
+                                <button className="btn btn-sm btn-success" onClick={() => handleSaveComment(comment.comment_id)}>
+                                  Save
+                                </button>
+                                <button className="btn btn-sm btn-secondary ms-2" onClick={() => setEditingCommentId(null)}>
+                                  Cancel
+                                </button>
                               </div>
-                          );
-                      })
+                            ) : (
+                              /* Normal Comment Display */
+                              <>
+                                {comment.comment_content && comment.comment_content.trim() ? (
+                                  <p className="mb-1">{comment.comment_content}</p>
+                                ) : (
+                                  <p className="mb-1 text-muted">No content available</p>
+                                )}
+                                <small className="text-muted">{getTimeAgo(comment.comment_updated_datetime)}</small>
+                              </>
+                            )}
+                          </div>
+                        </div>
+                      );
+                    })
                   ) : (
                           // Mock Comments for Testing
                           <>
@@ -1577,7 +1653,8 @@ const Feed = ({ countryCode, flag, countryName, handleCountryChange }) => {
                       </span>
 
                       {showLikedUsers && (
-                        <div className="modal fade show" style={{ display: "block" }}>
+                        <div
+                        className="modal fade show d-block"  style={{ background: "rgba(0, 0, 0, 0.08)" }}>
                           <div className="modal-dialog modal-dialog-centered modal-lg" style={{ maxWidth: "400px" }}>
                             <div className="modal-content">
                               <div className="modal-header">
