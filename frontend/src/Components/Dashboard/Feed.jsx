@@ -52,7 +52,7 @@ const Feed = ({ countryCode, flag, countryName, handleCountryChange }) => {
       const token = localStorage.getItem("api_token");
 
       const response = await axios.get(
-        `https://develop.quakbox.com/admin/api/get_posts_comment/${post.id}/comment`,
+        `https://${window.APP_DOMAIN}/admin/api/get_posts_comment/${post.id}/comment`,
         {
           headers: {
             Authorization: `Bearer ${token}`, // Add token to header
@@ -77,7 +77,7 @@ const Feed = ({ countryCode, flag, countryName, handleCountryChange }) => {
       }
 
       const response = await axios.post(
-        `https://develop.quakbox.com/admin/api/set_posts_comment/${postId}/comment`,
+        `https://${window.APP_DOMAIN}/admin/api/set_posts_comment/${postId}/comment`,
         {
           comment: commentText,
         },
@@ -173,7 +173,7 @@ const Feed = ({ countryCode, flag, countryName, handleCountryChange }) => {
       if (!token) return alert("Authorization token missing.");
   
       const res = await axios.delete(
-        `https://develop.quakbox.com/admin/api/del_posts/${postId}/comments/${commentId}`,
+        `https://${window.APP_DOMAIN}/admin/api/del_posts/${postId}/comments/${commentId}`,
         { headers: { Authorization: `Bearer ${token}` } }
       );
   
@@ -203,7 +203,7 @@ const handleEditComment = async (commentId) => {
       if (!token) return alert("Authorization token missing.");
       
       const res = await axios.put(
-          `https://develop.quakbox.com/admin/api/put_comment/${commentId}`, // ✅ Consistent API
+          `https://${window.APP_DOMAIN}/admin/api/put_comment/${commentId}`, // ✅ Consistent API
           { comment: editedComment }, // ✅ Use "comment"
           { headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" } }
       );
@@ -246,7 +246,7 @@ const handleSaveComment = async () => {
     if (!token) return alert("Authorization token missing.");
     
     const res = await axios.put(
-      `https://develop.quakbox.com/admin/api/put_comment/${editingCommentId}`, // ✅ Consistent API
+      `https://${window.APP_DOMAIN}/admin/api/put_comment/${editingCommentId}`, // ✅ Consistent API
       { comment: editedComment }, // ✅ Use "comment"
       { headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" } }
     );
@@ -324,7 +324,7 @@ const closeEditCommentPopup = () => {
     if (!token) return;
     try {
       const res = await axios.delete(
-        `https://develop.quakbox.com/admin/api/del_posts/${postToDelete.id}`,
+        `https://${window.APP_DOMAIN}/admin/api/del_posts/${postToDelete.id}`,
         { headers: { Authorization: `Bearer ${token}` } }
       );
 
@@ -358,7 +358,7 @@ const closeEditCommentPopup = () => {
 
     try {
       const res = await axios.put(
-        `https://develop.quakbox.com/admin/api/put_posts/${postToEdit.id}`,
+        `https://${window.APP_DOMAIN}/admin/api/put_posts/${postToEdit.id}`,
         { message: editedMessage }, // ✅ Sending message as JSON instead of FormData
         {
           headers: {
@@ -434,7 +434,7 @@ const closeEditCommentPopup = () => {
   //   }
   //   try {
   //     const res = await axios.get(
-  //       "https://develop.quakbox.com/admin/api/user",
+  //       "https://${window.APP_DOMAIN}/admin/api/user",
   //       {
   //         headers: { Authorization: `Bearer ${token}` },
   //       }
@@ -465,7 +465,7 @@ const closeEditCommentPopup = () => {
 
     try {
       const response = await axios.post(
-        "https://develop.quakbox.com/admin/api/set_posts",
+        `https://${window.APP_DOMAIN}/admin/api/set_posts`,
         formData,
         {
           headers: {
@@ -557,7 +557,7 @@ const closeEditCommentPopup = () => {
 
   //   try {
   //     const res = await axios.post(
-  //       `https://develop.quakbox.com/admin/api/set_posts_like/${postId}/like`,
+  //       `https://${window.APP_DOMAIN}/admin/api/set_posts_like/${postId}/like`,
   //       {},
   //       {
   //         headers: { Authorization: `Bearer ${token}` },
@@ -664,7 +664,7 @@ const closeEditCommentPopup = () => {
   
     try {
       const res = await axios.post(
-        `https://develop.quakbox.com/admin/api/set_posts_like/${post.id}/like`,
+        `https://${window.APP_DOMAIN}/admin/api/set_posts_like/${post.id}/like`,
         { is_like: true },
         { headers: { Authorization: `Bearer ${token}` } }
       );
@@ -742,7 +742,7 @@ const closeEditCommentPopup = () => {
 
   try {
     const res = await axios.post(
-      `https://develop.quakbox.com/admin/api/set_posts_like/${post.id}/dislike`,
+      `https://${window.APP_DOMAIN}/admin/api/set_posts_like/${post.id}/dislike`,
       { is_like: false },
       { headers: { Authorization: `Bearer ${token}` } }
     );
@@ -789,7 +789,7 @@ const closeEditCommentPopup = () => {
   //   }
   //   try {
   //     const res = await axios.get(
-  //       `https://develop.quakbox.com/admin/api/get_posts/${countryCode}`,
+  //       `https://${window.APP_DOMAIN}/admin/api/get_posts/${countryCode}`,
   //       {
   //         headers: {
   //           Authorization: `Bearer ${token}`,
@@ -813,15 +813,18 @@ const closeEditCommentPopup = () => {
       return;
     }
   
+    // Ensure countryCode is valid (fallback to empty string)
+    const countryParam = countryCode ? countryCode : "";
+  
     try {
       const res = await axios.get(
-        `https://develop.quakbox.com/admin/api/get_posts/${countryCode}`,
+        `https://${window.APP_DOMAIN}/admin/api/get_posts/${countryParam}`,
         {
           headers: { Authorization: `Bearer ${token}` },
         }
       );
   
-      if (res.data.status && Array.isArray(res.data.posts)) {
+      if (res.data?.status && Array.isArray(res.data.posts)) {
         const formattedPosts = res.data.posts.map((post) => {
           const isLiked = post.likes?.liked_users?.some((user) => user.user_id === currentUserId);
           return {
@@ -834,18 +837,18 @@ const closeEditCommentPopup = () => {
   
         setData({ posts: formattedPosts });
   
-        // Select first post as default
+        // Select first post as default (only if available)
         if (formattedPosts.length > 0) {
           setSelectedPost(formattedPosts[0]);
         }
       } else {
-        console.log("Invalid API response structure.");
+        console.log("Invalid API response structure:", res.data);
       }
     } catch (error) {
-      console.log("Error fetching posts:", error);
+      console.error("Error fetching posts:", error);
     }
-  };  
-  useEffect(() => {
+  };
+    useEffect(() => {
     // Cleanup the preview URL to avoid memory leaks
     return () => {
       if (mediaPreview) {
@@ -902,7 +905,7 @@ const closeEditCommentPopup = () => {
         }
   
         const response = await axios.get(
-          `https://develop.quakbox.com/admin/api/posts/${selectedPost.id}/liked-users`,
+          `https://${window.APP_DOMAIN}/admin/api/posts/${selectedPost.id}/liked-users`,
           { headers: { Authorization: `Bearer ${token}` } }
         );
   

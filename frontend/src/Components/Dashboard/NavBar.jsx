@@ -43,7 +43,7 @@ const NavBar = () => {
 
     try {
       const response = await axios.post(
-        "https://develop.quakbox.com/admin/api/logout",
+        `https://${window.APP_DOMAIN}/admin/api/logout`,
         {},
         {
           headers: { Authorization: `Bearer ${token}` },

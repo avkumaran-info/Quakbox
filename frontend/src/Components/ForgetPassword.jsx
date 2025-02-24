@@ -36,7 +36,7 @@ const ForgetPassword = () => {
     try {
       // Send OTP API Call to resend OTP
       const response = await fetch(
-        "https://develop.quakbox.com/admin/api/forgot-password/send-otp",
+        `https://${window.APP_DOMAIN}/admin/api/forgot-password/send-otp`,
         {
           method: "POST",
           headers: {
@@ -108,7 +108,7 @@ const ForgetPassword = () => {
     try {
       // Send OTP API Call
       const response = await fetch(
-        "https://develop.quakbox.com/admin/api/forgot-password/send-otp",
+        `https://${window.APP_DOMAIN}/admin/api/forgot-password/send-otp`,
         {
           method: "POST",
           headers: {
@@ -192,7 +192,7 @@ const ForgetPassword = () => {
     try {
       // Verify OTP API Call
       const response = await fetch(
-        "https://develop.quakbox.com/admin/api/forgot-password/verify-otp",
+        `https://${window.APP_DOMAIN}/admin/api/forgot-password/verify-otp`,
         {
           method: "POST",
           headers: {
@@ -268,7 +268,7 @@ const ForgetPassword = () => {
     setLoading(true);
     try {
       const response = await fetch(
-        "https://develop.quakbox.com/admin/api/forgot-password/reset",
+        `https://${window.APP_DOMAIN}/admin/api/forgot-password/reset`,
         {
           method: "POST",
           headers: {

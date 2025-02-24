@@ -14,7 +14,7 @@ const VideoUpload = () => {
 
   const getUploadKey = async () => {
     try {
-      const { data } = await axios.get('https://develop.quakbox.com/admin/api/get-upload-key');
+      const { data } = await axios.get(`https://${window.APP_DOMAIN}/admin/api/get-upload-key`);
       setUploadKey(data.upload_key);
       return data.upload_key;
     } catch (error) {
@@ -33,7 +33,7 @@ const VideoUpload = () => {
     formData.append('upload_key', key);
 
     try {
-      await axios.post('https://develop.quakbox.com/admin/api/upload-video-chunk', formData, {
+      await axios.post(`https://${window.APP_DOMAIN}/admin/api/upload-video-chunk`, formData, {
         headers: {
           'Content-Type': 'multipart/form-data',
         },
@@ -78,7 +78,7 @@ const VideoUpload = () => {
     await Promise.all(uploadPromises);
 
     // After all chunks are uploaded, merge them
-    await axios.post('https://develop.quakbox.com/admin/api/merge-video-chunks', {
+    await axios.post(`https://${window.APP_DOMAIN}/admin/api/merge-video-chunks`, {
       file_name: file.name,
       total_chunks: totalChunks,
       upload_key: key,

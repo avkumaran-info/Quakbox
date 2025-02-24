@@ -20,7 +20,7 @@ const Dashboard = () => {
     navigate("/", { replace: true }); // Redirect to the login page
     try {
       const response = await axios.post(
-        "https://develop.quakbox.com/admin/api/logout"
+        `https://${window.APP_DOMAIN}/admin/api/logout`
       );
 
       localStorage.clear(); // Clear any stored user data

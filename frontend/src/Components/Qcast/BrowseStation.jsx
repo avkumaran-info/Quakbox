@@ -23,7 +23,7 @@ const BrowseStation = () => {
 
       // Append search query to API URL
       const response = await axios.get(
-        `https://develop.quakbox.com/admin/api/videos/browsestations?search=${query}`,
+        `https://${window.APP_DOMAIN}/admin/api/videos/browsestations?search=${query}`,
         {
           headers: { Authorization: `Bearer ${token}` },
         }

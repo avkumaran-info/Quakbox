@@ -38,7 +38,7 @@ const LeftSidebar = ({ countryCode, flag, countryName }) => {
 
       // 🔹 Step 1: Fetch allowed video IDs from the 'dashboard/popular' API
       const allowedResponse = await axios.get(
-        "https://develop.quakbox.com/admin/api/dashboard/popular",
+        `https://${window.APP_DOMAIN}/admin/api/dashboard/popular`,
         {
           headers: { Authorization: `Bearer ${token}` },
         }
@@ -58,7 +58,7 @@ const LeftSidebar = ({ countryCode, flag, countryName }) => {
         allowedVideoIds.map(async (id) => {
           try {
             const response = await axios.get(
-              `https://develop.quakbox.com/admin/api/videos/${id}/show`,
+              `https://${window.APP_DOMAIN}/admin/api/videos/${id}/show`,
               {
                 headers: { Authorization: `Bearer ${token}` },
               }

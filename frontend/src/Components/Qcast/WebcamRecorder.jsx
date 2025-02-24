@@ -156,7 +156,7 @@ const WebcamRecorder = () => {
       }
 
       const response = await axios.post(
-        "https://develop.quakbox.com/admin/api/videos/upload",
+        `https://${window.APP_DOMAIN}/admin/api/videos/upload`,
         formData,
         {
           headers: {

@@ -21,8 +21,8 @@ const MySubscriptions = () => {
 
       // Use the search API if there's a query, otherwise, fetch all
       const url = search
-        ? `https://develop.quakbox.com/admin/api/videos/search-mysubscriptions?search=${search}`
-        : "https://develop.quakbox.com/admin/api/videos/mysubscriptions";
+        ? `https://${window.APP_DOMAIN}/admin/api/videos/search-mysubscriptions?search=${search}`
+        : `https://${window.APP_DOMAIN}/admin/api/videos/mysubscriptions`;
 
       const response = await axios.get(url, {
         headers: { Authorization: `Bearer ${token}` },

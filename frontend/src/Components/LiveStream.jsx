@@ -25,11 +25,11 @@ const StartStream = () => {
 
     const startLiveStream = async () => {
         try {
-            const response = await axios.post("https://develop.quakbox.com/admin/api/start-stream");
+            const response = await axios.post(`https://${window.APP_DOMAIN}/admin/api/start-stream`);
             setStreamKey(response.data.stream_key);
             setStreamUrl(response.data.stream_url);
 
-            await axios.post("https://develop.quakbox.com/admin/api/generate-hls", {
+            await axios.post(`https://${window.APP_DOMAIN}/admin/api/generate-hls`, {
                 stream_key: response.data.stream_key,
             });
 
@@ -62,7 +62,7 @@ const StartStream = () => {
                 formData.append("stream_key", streamKey);
                 formData.append("video_chunk", event.data);
 
-                await axios.post("https://develop.quakbox.com/admin/api/upload-chunk", formData, {
+                await axios.post(`https://${window.APP_DOMAIN}/admin/api/upload-chunk`, formData, {
                     headers: { "Content-Type": "multipart/form-data" },
                 });
             }

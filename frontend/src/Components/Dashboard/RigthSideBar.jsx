@@ -80,7 +80,7 @@ const RightSidebar = ({ countryCode, flag, countryName }) => {
     try {
       const token = localStorage.getItem("api_token");
       const response = await axios.get(
-        `https://develop.quakbox.com/admin/api/get_geo_country/${countryCode}`,
+        `https://${window.APP_DOMAIN}/admin/api/get_geo_country/${countryCode}`,
         {
           headers: {
             Authorization: `Bearer ${token}`, // Authorization header with token
@@ -144,7 +144,7 @@ const RightSidebar = ({ countryCode, flag, countryName }) => {
 
     try {
       const response = await axios.post(
-        "https://develop.quakbox.com/admin/api/set_country_likes",
+        `https://${window.APP_DOMAIN}/admin/api/set_country_likes`,
         data,
         {
           headers: {
@@ -178,7 +178,7 @@ const RightSidebar = ({ countryCode, flag, countryName }) => {
     try {
       const token = localStorage.getItem("api_token");
       const response = await axios.get(
-        `https://develop.quakbox.com/admin/api/get_country_comments/${countryCode}`,
+        `https://${window.APP_DOMAIN}/admin/api/get_country_comments/${countryCode}`,
         {
           headers: { Authorization: `Bearer ${token}` },
         }
@@ -208,7 +208,7 @@ const RightSidebar = ({ countryCode, flag, countryName }) => {
     try {
       const token = localStorage.getItem("api_token");
       await axios.post(
-        "https://develop.quakbox.com/admin/api/set_country_comments",
+        `https://${window.APP_DOMAIN}/admin/api/set_country_comments`,
         { country_code: countryCode, comment: newComment },
         { headers: { Authorization: `Bearer ${token}` } }
       );
