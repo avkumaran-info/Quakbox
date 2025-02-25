@@ -26,7 +26,7 @@ const Feed = ({ countryCode, flag, countryName, handleCountryChange }) => {
   const [editedMediaFile, setEditedMediaFile] = useState(null);
   const [editedMediaPreview, setEditedMediaPreview] = useState(null);
   
-  const userId = localStorage.getItem("user_Id");
+  const userId = userData?.users?.id || localStorage.getItem("user_Id");
 
   // Functions to handle popup visibility
   const openPopup = () => setIsPopupOpen(true);
@@ -163,11 +163,15 @@ const Feed = ({ countryCode, flag, countryName, handleCountryChange }) => {
   const loadMoreComments = () => {
     setVisibleComments((prev) => prev + 10); // Load 10 more comments on click
   };
+  const [showDeletePopup, setShowDeletePopup] = useState(false);
+  const [commentToDelete, setCommentToDelete] = useState(null);
+
   // Handle Delete Comment
-  const handleDeleteComment = async (postId, commentId) => {
-    const isConfirmed = window.confirm("Are you sure you want to delete this comment?");
-    if (!isConfirmed) return;  // Stop if user cancels
-    
+  const handleDeleteComment = async () => {
+    if (!commentToDelete) return;
+  
+    const { postId, commentId } = commentToDelete;
+  
     try {
       const token = localStorage.getItem("api_token");
       if (!token) return alert("Authorization token missing.");
@@ -185,45 +189,18 @@ const Feed = ({ countryCode, flag, countryName, handleCountryChange }) => {
             post.id === postId ? { ...post, comments: { count: Math.max((post.comments?.count || 1) - 1, 0) } } : post
           ),
         }));
-        alert("Comment deleted successfully.");
+        console.log("Comment deleted successfully.");
       } else {
-        alert("Failed to delete comment.");
+        console.log("Failed to delete comment.");
       }
     } catch (error) {
       console.error("Error deleting comment:", error);
       alert("An error occurred while deleting the comment.");
     }
-  };
-// Handle Edit Comment
-const handleEditComment = async (commentId) => {
-  if (!editedComment.trim()) return alert("Comment cannot be empty.");
   
-  try {
-      const token = localStorage.getItem("api_token");
-      if (!token) return alert("Authorization token missing.");
-      
-      const res = await axios.put(
-          `https://${window.APP_DOMAIN}/admin/api/put_comment/${commentId}`, // ✅ Consistent API
-          { comment: editedComment }, // ✅ Use "comment"
-          { headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" } }
-      );
-      
-      if (res.status === 200) {
-          setComments((prevComments) =>
-              prevComments.map((comment) =>
-                  comment.comment_id === commentId ? { ...comment, message: res.data.data.comment } : comment
-              )
-          );
-          closeEditCommentPopup();
-      } else {
-          alert("Failed to edit comment.");
-      }
-  } catch (error) {
-      console.error("Error editing comment:", error);
-      alert("An error occurred while editing the comment.");
-  }
-};
-
+    setShowDeletePopup(false);
+  };
+  
 const [editingCommentId, setEditingCommentId] = useState(null);
 const [editedComment, setEditedComment] = useState("");
 const [isEditCommentPopupOpen, setIsEditCommentPopupOpen] = useState(false);
@@ -240,31 +217,42 @@ const openEditCommentPopup = (comment) => {
 // Handle Save Comment (Consistent with handleEditComment)
 const handleSaveComment = async () => {
   if (!editedComment.trim()) return alert("Comment cannot be empty.");
-  
+
   try {
     const token = localStorage.getItem("api_token");
     if (!token) return alert("Authorization token missing.");
-    
+
+    // **Instantly update UI before API call (Optimistic Update)**
+    setComments((prevComments) =>
+      prevComments.map((comment) =>
+        comment.comment_id === editingCommentId
+          ? { ...comment, message: editedComment } // ✅ Update state immediately
+          : comment
+      )
+    );
+
+    // **API Call to Save Comment**
     const res = await axios.put(
-      `https://${window.APP_DOMAIN}/admin/api/put_comment/${editingCommentId}`, // ✅ Consistent API
-      { comment: editedComment }, // ✅ Use "comment"
+      `https://${window.APP_DOMAIN}/admin/api/put_comment/${editingCommentId}`,
+      { comment: editedComment },
       { headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" } }
     );
 
+    // **Ensure API response is valid**
     if (res.status === 200) {
       setComments((prevComments) =>
         prevComments.map((comment) =>
           comment.comment_id === editingCommentId
-            ? { ...comment, message: res.data.data.comment } // ✅ Match response format
+            ? { ...comment, message: res.data.data.comment } // ✅ Update from response
             : comment
         )
       );
-      setEditingCommentId(null);
-      setEditedComment("");
-      setIsEditCommentPopupOpen(false);
     } else {
       alert("Failed to save comment.");
     }
+    // **Close Popup**
+    closeEditCommentPopup();
+    closeCommentPopup();
   } catch (error) {
     console.error("Error saving comment:", error);
     alert("An error occurred while saving the comment.");
@@ -479,7 +467,7 @@ const closeEditCommentPopup = () => {
         const newPost = {
           id: response.data.id,
           message: message,
-          created_time: new Date().toISOString(),
+           created_time: new Date().toISOString(),
           from: {
             name: userData.users.username,
             profile_image: userData.profile_image_url,
@@ -618,6 +606,7 @@ const closeEditCommentPopup = () => {
 
   const token = localStorage.getItem("api_token");
   const currentUserId = userData?.users?.id || localStorage.getItem("user_id");
+
 
   const [dislikeInProgress, setDislikeInProgress] = useState({});
   const [likeInProgress, setLikeInProgress] = useState({});
@@ -1346,6 +1335,9 @@ const closeEditCommentPopup = () => {
                   {comments?.length > 0 ? (
                     comments.slice(0, visibleComments).map((comment, index) => {
                       const isUserComment = Number(comment.comment_user_id) === Number(userId);
+                      console.log("Comment User ID:", comment.comment_user_id);
+                      console.log("User ID:", userId);
+                       console.log("Comparison Result:", Number(comment.comment_user_id) === Number(userId));
 
                       return (
                         <div key={comment.comment_id || index} className="d-flex align-items-start mb-3">
@@ -1370,11 +1362,19 @@ const closeEditCommentPopup = () => {
                                     onClick={() => openEditCommentPopup(comment)}
                                     style={{ cursor: "pointer", fontSize: "16px" }}
                                   ></i>
-                                  <i
-                                    className="bi bi-trash text-danger"
-                                    onClick={() => handleDeleteComment(selectedPost.id, comment.comment_id)}
-                                    style={{ cursor: "pointer", fontSize: "16px" }}
-                                  ></i>
+                                 <i
+                                      className="bi bi-trash text-danger"
+                                      onClick={() => {
+                                        if (!selectedPost || !comment.comment_id) {
+                                          console.error("Post ID or Comment ID missing");
+                                          return;
+                                        }
+                                        setCommentToDelete({ postId: selectedPost.id, commentId: comment.comment_id });
+                                        setShowDeletePopup(true);
+                                      }}
+                                      style={{ cursor: "pointer", fontSize: "16px" }}
+                                    ></i>
+
                                 </div>
                               )}
                             </div>
@@ -1464,6 +1464,26 @@ const closeEditCommentPopup = () => {
                           </>
                         )}
                       </div>
+                      {showDeletePopup && (
+                        <div style={modalStyles.overlay}>
+                          <div style={modalStyles.modal}>
+                            <div className="modal-header">
+                              <h4>Confirm Deletion</h4>
+                            </div>
+                            <div className="modal-body">
+                              <p>Are you sure you want to delete this comment?</p>
+                            </div>
+                            <div style={modalStyles.modalFooter}>
+                              <button className="btn btn-secondary" onClick={() => setShowDeletePopup(false)}>
+                                Cancel
+                              </button>
+                              <button className="btn btn-danger" onClick={handleDeleteComment}>
+                                Confirm
+                              </button>
+                            </div>
+                          </div>
+                        </div>
+                      )}
 
                       {/* Add a Comment */}
                       <div className="mt-3">
@@ -1549,7 +1569,7 @@ const closeEditCommentPopup = () => {
         {data && data.posts &&
             Array.isArray(data.posts) &&
             data.posts.map((post) => {
-              const loggedInUserId = localStorage.getItem("user_Id"); // Get logged-in user ID
+              const loggedInUserId = userData?.users?.id || localStorage.getItem("user_Id"); // Get logged-in user ID
               const isOwner = loggedInUserId == post.from.user_id; // Check if the logged-in user is the post owner
 
               return (
@@ -1797,5 +1817,33 @@ const buttonStyle = {
   padding: "10px",
   cursor: "pointer",
 };
+
+const modalStyles = {
+  overlay: {
+    position: "fixed",
+    top: 0,
+    left: 0,
+    width: "100%",
+    height: "100%",
+    background: "rgba(0, 0, 0, 0.5)",
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+    zIndex: 1000,
+  },
+  modal: {
+    background: "white",
+    padding: "20px",
+    borderRadius: "10px",
+    minWidth: "300px",
+    boxShadow: "0px 5px 15px rgba(0, 0, 0, 0.3)",
+  },
+  modalFooter: {
+    display: "flex",
+    justifyContent: "space-between",
+    marginTop: "10px",
+  },
+};
+
 
 export default Feed;
