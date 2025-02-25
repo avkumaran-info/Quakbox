@@ -96,7 +96,14 @@ const NavBar = () => {
         country.country_name.toLowerCase().includes(searchQuery.toLowerCase())
     )
     .sort((a, b) => a.country_name.localeCompare(b.country_name)); // Sort A-Z
-
+  // Random flag showing 
+  const [shuffledCountries, setShuffledCountries] = useState([]);
+  useEffect(() => {
+    if (countries.length > 0) {
+      setShuffledCountries([...countries].sort(() => Math.random() - 0.5)); // Shuffle the array
+    }
+  }, [countries]);
+  
   return (
     <div>
       <nav
@@ -164,51 +171,45 @@ const NavBar = () => {
             >
               {/* Display only the first 3 flags */}
               <div style={{ display: "flex", gap: "3px" }}>
-                {countries?.slice(0, 3).map((country, index) => (
-                  <div
-                    key={index}
+              {shuffledCountries.slice(0, 3).map((country, index) => (
+                <div
+                  key={index}
+                  style={{
+                    display: "flex",
+                    flexDirection: "column",
+                    alignItems: "center",
+                    cursor: "pointer",
+                  }}
+                  onClick={(e) => {
+                    e.preventDefault();
+                    navigate(`/country/${country.code}`);
+                    setShowAllFlags(false);
+                  }}
+                >
+                  <img
+                    src={country.country_image}
+                    alt={country.country_name}
                     style={{
-                      display: "flex",
-                      flexDirection: "column",
-                      alignItems: "center",
-                      cursor: "pointer",
+                      width: "40px",
+                      height: "20px",
+                      objectFit: "cover",
                     }}
-                    onClick={(e) => {
-                      e.preventDefault();
-                      navigate(`/country/${country.code}`);
-                      // handleCountryChange(
-                      //   country.code,
-                      //   country.country_image,
-                      //   country.country_name
-                      // );
-                      setShowAllFlags(false);
+                  />
+                  <span
+                    style={{
+                      fontSize: "0.6rem",
+                      color: "#ffffff",
+                      textAlign: "center",
+                      whiteSpace: "nowrap",
+                      overflow: "hidden",
+                      textOverflow: "ellipsis",
+                      maxWidth: "50px",
                     }}
                   >
-                    <img
-                      src={country.country_image}
-                      alt={country.country_name}
-                      style={{
-                        width: "40px",
-                        height: "20px",
-                        objectFit: "cover",
-                      }}
-                    />
-                    <span
-                      style={{
-                        fontSize: "0.6rem",
-                        color: "#ffffff",
-                        // marginTop: "5px",
-                        textAlign: "center",
-                        whiteSpace: "nowrap",
-                        overflow: "hidden",
-                        textOverflow: "ellipsis",
-                        maxWidth: "50px",
-                      }}
-                    >
-                      {country.country_name}
-                    </span>
-                  </div>
-                ))}
+                    {country.country_name}
+                  </span>
+                </div>
+              ))}
               </div>
 
               {/* Full list of flags with search input */}
