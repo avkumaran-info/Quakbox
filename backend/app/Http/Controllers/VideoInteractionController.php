@@ -1,4 +1,4 @@
-<?php
+<?php 
 
 namespace App\Http\Controllers;
 
@@ -11,11 +11,13 @@ class VideoInteractionController extends Controller
     public function like(Request $request, $videoId)
     {
         $video = M_Videos::findOrFail($videoId);
-
         $user = $request->user();
 
-        // Check if user already interacted with the video
-        $interaction = M_Video_Interactions::where('video_id', $videoId)->where('user_id', $user->id)->first();
+        // Check if the user already has a "like" or "dislike" interaction
+        $interaction = M_Video_Interactions::where('video_id', $videoId)
+            ->where('user_id', $user->id)
+            ->whereIn('type', ['like', 'dislike'])
+            ->first();
 
         if ($interaction) {
             if ($interaction->type === 'like') {
@@ -36,11 +38,13 @@ class VideoInteractionController extends Controller
     public function dislike(Request $request, $videoId)
     {
         $video = M_Videos::findOrFail($videoId);
-
         $user = $request->user();
 
-        // Check if user already interacted with the video
-        $interaction = M_Video_Interactions::where('video_id', $videoId)->where('user_id', $user->id)->first();
+        // Check if the user already has a "like" or "dislike" interaction
+        $interaction = M_Video_Interactions::where('video_id', $videoId)
+            ->where('user_id', $user->id)
+            ->whereIn('type', ['like', 'dislike'])
+            ->first();
 
         if ($interaction) {
             if ($interaction->type === 'dislike') {
@@ -61,18 +65,15 @@ class VideoInteractionController extends Controller
     public function view(Request $request, $videoId)
     {
         $video = M_Videos::findOrFail($videoId);
-
         $user = $request->user();
 
-        // Check if user already interacted with the video
-        $interaction = M_Video_Interactions::where('video_id', $videoId)->where('user_id', $user->id)->first();
+        // Check if the user already viewed the video
+        $viewInteraction = M_Video_Interactions::where('video_id', $videoId)
+            ->where('user_id', $user->id)
+            ->where('type', 'view')
+            ->first();
 
-        if ($interaction) {
-            if ($interaction->type === 'view') {
-                return response()->json(['result' => false, 'message' => 'You already viewed this video'], 400);
-            }
-            $interaction->update(['type' => 'view']);
-        } else {
+        if (!$viewInteraction) {
             M_Video_Interactions::create([
                 'video_id' => $videoId,
                 'user_id' => $user->id,
@@ -85,13 +86,15 @@ class VideoInteractionController extends Controller
 
     public function stats($videoId)
     {
-        $video = M_Videos::withCount(['likes', 'dislikes', 'views'])->findOrFail($videoId);
+        $likes = M_Video_Interactions::where('video_id', $videoId)->where('type', 'like')->count();
+        $dislikes = M_Video_Interactions::where('video_id', $videoId)->where('type', 'dislike')->count();
+        $views = M_Video_Interactions::where('video_id', $videoId)->where('type', 'view')->count();
 
         return response()->json([
             'result' => true,
-            'likes' => $video->likes_count,
-            'dislikes' => $video->dislikes_count,
-            'views' => $video->views_count,
+            'likes' => $likes,
+            'dislikes' => $dislikes,
+            'views' => $views,
         ]);
     }
 
@@ -99,9 +102,11 @@ class VideoInteractionController extends Controller
     {
         $user = $request->user();
 
-        M_Video_Interactions::where('video_id', $videoId)->where('user_id', $user->id)->delete();
+        M_Video_Interactions::where('video_id', $videoId)
+            ->where('user_id', $user->id)
+            ->whereIn('type', ['like', 'dislike'])
+            ->delete();
 
-        return response()->json(['result' => true, 'message' => 'Interaction removed']);
+        return response()->json(['result' => true, 'message' => 'Like/Dislike interaction removed']);
     }
-
 }

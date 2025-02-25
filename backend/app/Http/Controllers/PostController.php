@@ -155,11 +155,7 @@ class PostController extends Controller
                 // If already liked, remove it (toggle off)
                 $existingLike->delete();
                 $message = "Like removed";
-            } else {
-                // If disliked, switch to like
-                $existingLike->update(['is_like' => true]);
-                $message = "Switched to Like";
-            }
+            } 
         } else {
             // Add new like
             Like::create([
@@ -192,11 +188,7 @@ class PostController extends Controller
                 // If already disliked, remove it (toggle off)
                 $existingLike->delete();
                 $message = "Dislike";
-            } else {
-                // If liked, switch to dislike
-                $existingLike->update(['is_like' => false]);
-                $message = "Switched from Like to Dislike";
-            }
+            } 
         } else {
             // Add new dislike
             Like::create([

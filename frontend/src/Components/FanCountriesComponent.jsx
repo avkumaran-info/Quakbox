@@ -23,16 +23,15 @@ import {
 } from "./redux/favouriteCountriesSlice";
 
 // API URLs
-const countriesApi = "https://restcountries.com/v3.1/all";
+const countriesApi =  `https://restcountries.com/v3.1/all `;
 const GET_API_URL =
-  "https://develop.quakbox.com/admin/api/get_favourite_country";
+  `https://${window.APP_DOMAIN}/admin/api/get_favourite_country`;
 const POST_API_URL =
-  "https://develop.quakbox.com/admin/api/set_favourite_country";
+  `https://${window.APP_DOMAIN}/admin/api/set_favourite_country`;
 const PUT_API_URL =
-  "https://develop.quakbox.com/admin/api/put_favourite_country";
+  `https://${window.APP_DOMAIN}/admin/api/put_favourite_country`;
 const RESET_API_URL =
-  "https://develop.quakbox.com/admin/api/del_favourite_country";
-const API_TOKEN = localStorage.getItem("api_token");
+  `https://${window.APP_DOMAIN}/admin/api/del_favourite_country`;
 
 // Helper to get the API token
 const getApiToken = () => {

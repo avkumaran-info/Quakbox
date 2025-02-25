@@ -61,7 +61,7 @@ const fetchVideos = async () => {
       }
       
       const response = await axios.get(
-        "https://develop.quakbox.com/admin/api/videos/my-videos", // ✅ Updated API endpoint
+        `https://${window.APP_DOMAIN}/admin/api/videos/my-videos`, // ✅ Updated API endpoint
         { headers: { Authorization: `Bearer ${token}` } }
       );
   
@@ -91,7 +91,7 @@ const fetchVideos = async () => {
 
       // Call the API to update the view count
       await axios.post(
-        `https://develop.quakbox.com/admin/api/videos/${video.video_id}/view`,
+        `https://${window.APP_DOMAIN}/admin/api/videos/${video.video_id}/view`,
         {},
         {
           headers: { Authorization: `Bearer ${token}` },
@@ -140,7 +140,7 @@ const fetchVideos = async () => {
       let allVideos = videos.length > 0 ? videos : [];
       if (allVideos.length === 0) {
         const response = await axios.get(
-          "https://develop.quakbox.com/admin/api/videos/my-videos",
+          `https://${window.APP_DOMAIN}/admin/api/videos/my-videos`,
           {
             headers: { Authorization: `Bearer ${token}` },
           }

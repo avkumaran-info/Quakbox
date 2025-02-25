@@ -5,6 +5,9 @@ import "./index.css";
 import "bootstrap/dist/css/bootstrap.min.css";
 import { GoogleOAuthProvider } from "@react-oauth/google";
 import StoreContextProvider from "./Context/StoreContext.jsx";
+
+window.APP_DOMAIN = import.meta.env.VITE_APP_DOMAIN;
+
 createRoot(document.getElementById("root")).render(
   <StrictMode>
     <GoogleOAuthProvider clientId="323779904995-4pbai70981e06jt4l6ua6odfv1npcetp.apps.googleusercontent.com">

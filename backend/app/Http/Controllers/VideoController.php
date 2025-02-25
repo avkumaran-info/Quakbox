@@ -488,10 +488,15 @@ public function videoUploadKey()
     {
         // Build the query
         $query = DB::table('m_videos')
-        ->join('users', 'm_videos.user_id', '=', 'users.id')
-        ->join('m_videocategory', 'm_videos.category_id', '=', 'm_videocategory.category_id')
-        ->select('m_videos.*', 'm_videos.created_at','m_videocategory.category_name as category_name', 
-                        'users.username as username', 'users.profile_image as profile_image');
+            ->join('users', 'm_videos.user_id', '=', 'users.id')
+            ->join('m_videocategory', 'm_videos.category_id', '=', 'm_videocategory.category_id')
+            ->select(
+                'm_videos.*', 
+                'm_videos.created_at',
+                'm_videocategory.category_name as category_name', 
+                'users.username as username', 
+                'users.profile_image as profile_image'
+            );
     
         // Apply category filter if category_id is provided
         if (!is_null($category_id)) {
@@ -512,7 +517,11 @@ public function videoUploadKey()
     
         // Format video data
         $formattedVideos = $videos->map(function ($video) {
-            $videoInteraction = M_Videos::withCount(['likes', 'dislikes', 'views'])->findOrFail($video->id);
+            // Fetch interaction counts
+            $likes = M_Video_Interactions::where('video_id', $video->id)->where('type', 'like')->count();
+            $dislikes = M_Video_Interactions::where('video_id', $video->id)->where('type', 'dislike')->count();
+            $views = M_Video_Interactions::where('video_id', $video->id)->where('type', 'view')->count();
+            // Handle file path
             $videoFilePath = null;
             if ($video->video_type == 3) {
                 $videoFilePath = $video->file_path ? explode(',', $video->file_path) : null;
@@ -524,9 +533,9 @@ public function videoUploadKey()
                 'title' => $video->title,
                 'description' => $video->description,
                 'file_path' => $videoFilePath,
-                'likes' => $videoInteraction->likes_count,
-                'dislikes' => $videoInteraction->dislikes_count,
-                'views' => $videoInteraction->views_count,
+                'likes' => $likes,
+                'dislikes' => $dislikes,
+                'views' => $views,
                 'user_id' => $video->user_id,
                 'user_name' => $video->username,
                 'user_profile_image' => env('APP_URL') . '/api/images/' . $video->profile_image,
@@ -538,7 +547,7 @@ public function videoUploadKey()
                 'defaultthumbnail' => $video->defaultthumbnail,
                 'country_code' => $video->country_code,
                 'tags' => is_string($video->tags) ? json_decode($video->tags, true) ?? [] : $video->tags,
-                'video_type' => $video->video_type, // Added this
+                'video_type' => $video->video_type,
                 'uploaded_datetime' => $video->updated_at,
             ];
         });
@@ -549,33 +558,47 @@ public function videoUploadKey()
             'message' => 'Videos fetched successfully',
             'data' => $formattedVideos,
         ], 200);
-    }    
-
+    }
     public function show($id)
     {
-        // Find the video by its ID or fail if not found
-        $video = M_Videos::find($id);
+        // Find the video with user details
+        $video = M_Videos::join('users', 'm_videos.user_id', '=', 'users.id')
+            ->where('m_videos.id', $id)
+            ->select('m_videos.*', 'users.username', 'users.profile_image')
+            ->first();
     
         if (!$video) {
             return response()->json([
                 'result' => false,
                 'message' => 'Video not found'
-            ], 404); // 404 Not Found
+            ], 404);
         }
-        //
-        $subscribers = M_Video_Subscription::where('creator_id', $video->user_id)
-                                ->get(['subscriber_id']);
+    
+        // Get subscribers
+        $subscribers = M_Video_Subscription::where('creator_id', $video->user_id)->pluck('subscriber_id');
         $subscribersCnt = $subscribers->count();
-        //
-        $videoInteraction = M_Videos::withCount(['likes', 'dislikes', 'views'])->findOrFail($video->id);
-        $likedUsers = M_Video_Interactions::where('video_id', $video->id)->where('type', 'like')->get(['user_id as video_liked_user_id']);
-
+    
+        // Fetch interaction counts
+        $likes = M_Video_Interactions::where('video_id', $video->id)->where('type', 'like')->count();
+        $dislikes = M_Video_Interactions::where('video_id', $video->id)->where('type', 'dislike')->count();
+        $views = M_Video_Interactions::where('video_id', $video->id)->where('type', 'view')->count();
+    
+        // Get liked users
+        $likedUsers = M_Video_Interactions::where('video_id', $video->id)
+            ->where('type', 'like')
+            ->pluck('user_id')
+            ->map(function ($userId) {
+                return ['video_liked_user_id' => $userId];
+            });
+    
+        // Handle file path
         $videoFilePath = null;
         if ($video->video_type == 3) {
             $videoFilePath = $video->file_path ? explode(',', $video->file_path) : null;
         } else {
             $videoFilePath = $video->file_path ? $video->file_path : null;
         }
+    
         // Return the video details with proper URLs
         return response()->json([
             'result' => true,
@@ -584,30 +607,29 @@ public function videoUploadKey()
                 'video_id' => $video->id,
                 'title' => $video->title,
                 'description' => $video->description,
-                'file_path' => $videoFilePath, // Full URL for the video file
+                'file_path' => $videoFilePath,
                 'user_id' => $video->user_id,
-                'user_name' => $video->username,
-                'user_profile_image' => env('APP_URL') . '/api/images/' . $video->profile_image,
+                'user_name' => $video->username ?? 'Unknown',
+                'user_profile_image' => $video->profile_image ? env('APP_URL') . '/api/images/' . $video->profile_image : null,
                 'subscribers_user_id' => $subscribers,
                 'subscribers_cnt' => $subscribersCnt,
-                'likes_count' => $videoInteraction->likes_count,
+                'likes_count' => $likes,
+                'dislikes_count' => $dislikes,
+                'views_count' => $views,
                 'liked_user_id' => $likedUsers,
                 'category_id' => $video->category_id,
                 'type' => $video->type,
                 'title_size' => $video->title_size,
                 'title_colour' => $video->title_colour,
-                'defaultthumbnail' => $video->defaultthumbnail 
-                    ? $video->defaultthumbnail // Full URL for the thumbnail
-                    : null,
+                'defaultthumbnail' => $video->defaultthumbnail ? $video->defaultthumbnail : null,
                 'country_code' => $video->country_code,
                 'tags' => is_string($video->tags) ? json_decode($video->tags, true) : $video->tags,
-                'video_type' => $video->video_type, // Added this
+                'video_type' => $video->video_type,
                 'created_at' => $video->created_at,
                 'updated_at' => $video->updated_at,
             ]
         ]);
-    }
-    
+    }    
     
     public function delete($id)
     {
@@ -640,18 +662,21 @@ public function videoUploadKey()
                 'message' => 'Search query cannot be empty'
             ], 400); // 400 Bad Request
         }
-        
         // Build the query
         $query = DB::table('m_videos')
-        ->join('users', 'm_videos.user_id', '=', 'users.id')
-        ->join('m_videocategory', 'm_videos.category_id', '=', 'm_videocategory.category_id')
-        ->select('m_videos.*', 'm_videocategory.category_name as category_name', 
-                        'users.username as username', 'users.profile_image as profile_image');
-    
-        // Public videos only
-        $query->where('m_videos.type', '=', 'Public')
-                ->whereRaw('LOWER(m_videos.title) LIKE ?', ['%' . strtolower($searchString) . '%'])
-                ->orWhereRaw('LOWER(m_videos.description) LIKE ?', ['%' . strtolower($searchString) . '%']);
+            ->join('users', 'm_videos.user_id', '=', 'users.id')
+            ->join('m_videocategory', 'm_videos.category_id', '=', 'm_videocategory.category_id')
+            ->select(
+                'm_videos.*', 
+                'm_videocategory.category_name as category_name', 
+                'users.username as username', 
+                'users.profile_image as profile_image'
+            )
+            ->where('m_videos.type', '=', 'Public')
+            ->where(function ($q) use ($searchString) {
+                $q->whereRaw('LOWER(m_videos.title) LIKE ?', ['%' . strtolower($searchString) . '%'])
+                  ->orWhereRaw('LOWER(m_videos.description) LIKE ?', ['%' . strtolower($searchString) . '%']);
+            });
     
         // Fetch videos
         $videos = $query->latest()->get();
@@ -665,7 +690,11 @@ public function videoUploadKey()
     
         // Format video data
         $formattedVideos = $videos->map(function ($video) {
-            $videoInteraction = M_Videos::withCount(['likes', 'dislikes', 'views'])->findOrFail($video->id);
+            // Fetch interaction counts
+            $likes = M_Video_Interactions::where('video_id', $video->id)->where('type', 'like')->count();
+            $dislikes = M_Video_Interactions::where('video_id', $video->id)->where('type', 'dislike')->count();
+            $views = M_Video_Interactions::where('video_id', $video->id)->where('type', 'view')->count();
+            // Handle file path
             $videoFilePath = null;
             if ($video->video_type == 3) {
                 $videoFilePath = $video->file_path ? explode(',', $video->file_path) : null;
@@ -677,9 +706,9 @@ public function videoUploadKey()
                 'title' => $video->title,
                 'description' => $video->description,
                 'file_path' => $videoFilePath,
-                'likes' => $videoInteraction->likes_count,
-                'dislikes' => $videoInteraction->dislikes_count,
-                'views' => $videoInteraction->views_count,
+                'likes' => $likes,
+                'dislikes' => $dislikes,
+                'views' => $views,
                 'user_id' => $video->user_id,
                 'user_name' => $video->username,
                 'user_profile_image' => env('APP_URL') . '/api/images/' . $video->profile_image,
@@ -691,7 +720,7 @@ public function videoUploadKey()
                 'defaultthumbnail' => $video->defaultthumbnail,
                 'country_code' => $video->country_code,
                 'tags' => is_string($video->tags) ? json_decode($video->tags, true) ?? [] : $video->tags,
-                'video_type' => $video->video_type, // Added this
+                'video_type' => $video->video_type,
                 'uploaded_datetime' => $video->updated_at,
             ];
         });
@@ -702,8 +731,7 @@ public function videoUploadKey()
             'message' => 'Videos fetched successfully',
             'data' => $formattedVideos,
         ], 200);
-
-    }
+    }    
     
     public function update(Request $request, $id)
     {

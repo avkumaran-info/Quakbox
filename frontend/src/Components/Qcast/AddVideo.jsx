@@ -136,7 +136,7 @@ const AddVideo = () => {
             }
     
             const response = await axios.post(
-                "https://develop.quakbox.com/admin/api/videos/upload",
+                `https://${window.APP_DOMAIN}/admin/api/videos/upload`,
                 payload,
                 {
                     headers: {
@@ -249,7 +249,7 @@ const AddVideo = () => {
                 return;
             }
 
-            const response = await axios.get("https://develop.quakbox.com/admin/api/get_geo_country", {
+            const response = await axios.get(`https://${window.APP_DOMAIN}/admin/api/get_geo_country`, {
                 headers: { Authorization: `Bearer ${token}` },
             });
 

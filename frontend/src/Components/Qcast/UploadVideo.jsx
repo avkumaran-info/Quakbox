@@ -55,7 +55,7 @@ const UploadVideo = () => {
     if (videoType === 1 || videoType === 2) {
       try {
         const keyResponse = await axios.get(
-          "https://develop.quakbox.com/admin/api/get-upload-key"
+          `https://${window.APP_DOMAIN}/admin/api/get-upload-key`
         );
         const uploadKey = keyResponse.data.upload_key;
 
@@ -77,7 +77,7 @@ const UploadVideo = () => {
 
           uploadPromises.push(
             axios.post(
-              "https://develop.quakbox.com/admin/api/upload-video-chunk",
+              `https://${window.APP_DOMAIN}/admin/api/upload-video-chunk`,
               formData,
               {
                 headers: {
@@ -102,7 +102,7 @@ const UploadVideo = () => {
         await Promise.all(uploadPromises);
 
         const mergeResponse = await axios.post(
-          "https://develop.quakbox.com/admin/api/merge-video-chunks",
+          `https://${window.APP_DOMAIN}/admin/api/merge-video-chunks`,
           {
             file_name: firstFile.name,
             total_chunks: totalChunks,
@@ -134,7 +134,7 @@ const UploadVideo = () => {
             }
 
             const response = await axios.post(
-              "https://develop.quakbox.com/admin/api/videos/upload",
+              `https://${window.APP_DOMAIN}/admin/api/videos/upload`,
               formData,
               {
                 headers: {
@@ -193,7 +193,7 @@ const UploadVideo = () => {
         }
 
         const response = await axios.post(
-          "https://develop.quakbox.com/admin/api/videos/upload",
+          `https://${window.APP_DOMAIN}/admin/api/videos/upload`,
           formData,
           {
             headers: {
