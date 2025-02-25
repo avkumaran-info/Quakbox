@@ -185,10 +185,14 @@ class PostController extends Controller
     
         if ($existingLike) {
             if ($existingLike->is_like == false) {
-                // If already disliked, remove it (toggle off)
+                // If already disliked, remove it
                 $existingLike->delete();
-                $message = "Dislike";
-            } 
+                $message = "Dislike removed";
+            } else {
+                // If already liked, switch to dislike
+                $existingLike->update(['is_like' => false]);
+                $message = "Disliked";
+            }
         } else {
             // Add new dislike
             Like::create([
