@@ -1663,7 +1663,7 @@ const closeEditCommentPopup = () => {
                   </div>
 
                   {/* Post Footer */}
-                  <div className="card-footer bg-white d-flex justify-content-between align-items-center border-0">
+                  <div className="card-footer bg-white d-flex justify-content-between align-items-center border-0 px-1">
                   <span
                         className="text-muted"
                         onClick={() => {
