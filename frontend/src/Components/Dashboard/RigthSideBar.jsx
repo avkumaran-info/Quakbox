@@ -366,49 +366,49 @@ const RightSidebar = ({ countryCode, flag, countryName }) => {
             >
               {isDashboaed ? (
                 <>
+                <div
+                  className="text-center d-flex flex-column align-items-center"
+                  style={{
+                    backgroundColor: "#fff",
+                    boxShadow: "0px 4px 6px rgba(0, 0, 0, 0.1)",
+                    padding: "20px",
+                    borderRadius: "10px",
+                  }}
+                >
                   <div
-                    className="text-center d-flex flex-column align-items-center"
                     style={{
-                      backgroundColor: "#fff",
+                      width: "140px",  // Keep width fixed for proper oval shape
+                      height: "180px", // Adjust height slightly for a better fit
+                      borderRadius: "50%", // Ensures an accurate oval proportion
+                      overflow: "hidden",
+                      border: "4px solid white",
                       boxShadow: "0px 4px 6px rgba(0, 0, 0, 0.1)",
-                      padding: "20px",
-                      borderRadius: "10px",
+                      display: "flex",
+                      justifyContent: "center",
+                      alignItems: "center",
+                      margin: "auto",
                     }}
                   >
-                    <div
+                    <img
+                      src={userData.profile_image_url}
+                      alt="User Profile"
+                      className="img-fluid"
                       style={{
-                        width: "75%", // Keeps image size proportional
-                        maxWidth: "150px", // Prevents it from becoming too large
-                        aspectRatio: "1/1", // Ensures a perfect square
-                        borderRadius: "50%",
-                        overflow: "hidden",
-                        border: "4px solid white",
-                        boxShadow: "0px 0px 10px rgba(0, 0, 0, 0.1)",
-                        display: "flex",
-                        justifyContent: "center",
-                        alignItems: "center",
-                        margin: "auto", // Centers the div horizontally
+                        width: "100%", 
+                        height: "100%",
+                        objectFit: "cover", // Maintains aspect ratio while filling the oval
+                        transform: "scale(1.1)", // Slight zoom-in to remove unwanted gaps
                       }}
-                    >
-                      <img
-                        src={userData.profile_image_url}
-                        alt="User Profile"
-                        className="img-fluid"
-                        style={{
-                          width: "100%", // Ensures the image takes up the full container
-                          height: "100%",
-                          objectFit: "cover",
-                        }}
-                      />
-                    </div>
-                    <h5 className="mt-2 text-dark">
-                      {userData.users.username}
-                    </h5>
-                    <button className="btn btn-primary mt-2">
-                      Change Picture
-                    </button>
+                    />
                   </div>
-                </>
+                  <h5 className="mt-2 text-dark fw-bold text-uppercase">
+                    {userData.users.username}
+                  </h5>
+                  <button className="btn btn-primary mt-2">
+                    Change Picture
+                  </button>
+                </div>
+              </>
               ) : (
                 <>
                   <img

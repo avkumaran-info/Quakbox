@@ -1358,12 +1358,12 @@ const closeEditCommentPopup = () => {
                               {isUserComment && (
                                 <div className="d-flex">
                                   <i
-                                    className="bi bi-pencil-square me-2 text-primary"
+                                    className="bi bi-pencil-square me-2"
                                     onClick={() => openEditCommentPopup(comment)}
                                     style={{ cursor: "pointer", fontSize: "16px" }}
                                   ></i>
                                  <i
-                                      className="bi bi-trash text-danger"
+                                      className="bi bi-trash"
                                       onClick={() => {
                                         if (!selectedPost || !comment.comment_id) {
                                           console.error("Post ID or Comment ID missing");
@@ -1583,7 +1583,7 @@ const closeEditCommentPopup = () => {
                   }}
                 >
                   {/* Post Header */}
-                  <div className="card-header d-flex align-items-center bg-white border-0 position-relative">
+                  <div className="card-header d-flex align-items-center bg-white border-0 p-1 mb-1">
                     {/* Profile Image */}
                     <img
                       src={post.from?.profile_image || defaultUserImage} // Fallback to defaultUserImage
@@ -1616,7 +1616,7 @@ const closeEditCommentPopup = () => {
                   </div>
 
                   {/* Post Content */}
-                  {post.message && <p className="px-3 mb-1">{post.message}</p>}
+                  {post.message && <p className="px-1 mb-1">{post.message}</p>}
                   <div
                     className="card-body p-0 d-flex align-items-center justify-content-center"
                     style={{
