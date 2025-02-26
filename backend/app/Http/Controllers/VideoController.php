@@ -14,9 +14,11 @@ use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Validator;
+use Symfony\Component\Process\Process;
 use FFMpeg\Coordinate\TimeCode;
 use FFMpeg\FFProbe;
-use App\Jobs\ConvertToHLS;
+use App\Jobs\ProcessVideoHLS;
+use FFMpeg\Format\Video\X264;
 
 class VideoController extends Controller
 {   
@@ -96,7 +98,7 @@ public function videoUploadKey()
                 $permanentVideoFolder = 'uploads/videos/permanent/';
                 $permanentThumbnailFolder = 'uploads/videos/permanent/thumbnails/';
                 // Extract file names from URLs
-		$videoFName = pathinfo($filePath, PATHINFO_FILENAME);
+                $videoFName = pathinfo($filePath, PATHINFO_FILENAME);
                 $videoFileName = basename($filePath);
                 $thumbnailFileName = basename($thumbnailPath);
                 // Move the video file
@@ -114,15 +116,43 @@ public function videoUploadKey()
                     );
                     $thumbnailPath = env('APP_URL') . '/api/images/' . $permanentThumbnailFolder . $thumbnailFileName;
                 }
-		$hlsVideoPath = "public/" . $permanentVideoFolder . $videoFileName;
-		$hlsOutputPath = $permanentVideoFolder . $videoFName . "/";
-		if (!Storage::disk('public')->exists($hlsOutputPath)) {
-    			Storage::disk('public')->makeDirectory($hlsOutputPath, 0777, true);
-		}
-		// Dispatch the conversion job
-	        ConvertToHLS::dispatch($hlsVideoPath , $hlsOutputPath);
-                $filePathP = env('APP_URL') . '/api/images/' . $permanentVideoFolder . $videoFName . "/index.m3u8";
-		// ✅ **Remove all other files in the temp folder**
+        		$hlsVideoPath = "public/" . $permanentVideoFolder . $videoFileName;
+        		$hlsOutputPath = $permanentVideoFolder . $videoFName . "/";
+        		if (!Storage::disk('public')->exists($hlsOutputPath)) {
+            			Storage::disk('public')->makeDirectory($hlsOutputPath, 0777, true);
+        		}
+                $filePathP = env('APP_URL') . '/api/images/' . $permanentVideoFolder . $videoFileName;
+                // if ($request->video_type == 1) {
+                //     Log::info('Video HLS JOB -- Input Path', [ $hlsVideoPath ]);
+                //     // Dispatch the conversion job
+
+                //     // ($hlsVideoPath , $hlsOutputPath)
+                //     $videoPath = storage_path('app/public/' . $permanentVideoFolder . $videoFileName);
+                //     $hlsPath = storage_path('app/public/' . $hlsOutputPath);
+                //     $hlsOutputPathFP = rtrim($hlsPath, '/') . '/';
+                //     // Log::info('Video HLS JOB --  Path', [ $videoPath ]);
+                //     // Log::info('Video HLS JOB --  Path', [ $hlsPath ]);
+
+                //     // $command = "/usr/local/bin/ffmpeg -i $videoPath " .
+                //     //     "-c:v libx264 -preset ultrafast -crf 28 -maxrate 3000k -bufsize 6000k " .
+                //     //     "-c:a aac -b:a 128k -ac 2 -ar 44100 -threads 4 " .
+                //     //     "-hls_time 6 -hls_list_size 0 -hls_flags independent_segments+delete_segments " .
+                //     //     "-hls_segment_filename $hlsOutputPathFP/index_%03d.ts " .
+                //     //     "-f hls $hlsOutputPathFP/index.m3u8";
+
+                //     // Log::info('Video HLS JOB --  command', [ $command ]);
+
+                //     // exec($command);
+
+                //     // Dispatch the job to a queue
+                //     ProcessVideoHLS::dispatch($videoPath, $hlsOutputPathFP);
+
+                //     // ConvertToHLS::dispatch($hlsVideoPath , $hlsOutputPath);
+                //     Log::info('Video HLS JOB -- OUTPUT Path', [ $hlsOutputPath ]);
+                //     $filePathP = env('APP_URL') . '/api/images/' . $permanentVideoFolder . $videoFName . "/index.m3u8";
+                // }
+
+        		// ✅ **Remove all other files in the temp folder**
                 $allTempFiles = Storage::disk('public')->files($tempFolder);
                 foreach ($allTempFiles as $tempFile) {
                     if (basename($tempFile) !== $videoFileName) {
@@ -337,6 +367,7 @@ public function videoUploadKey()
                 $audioFilePath = env('APP_URL') . '/api/images/' . $mediaPath;
                 
                 // ✅ Predefined thumbnail
+                $uniqueAudioName = $request->upload_key;
                 $defaultThumbnailPath = 'uploads/videos/temp/thumbnails/audio/default-audio-thumbnail.png';
                 $newThumbnailName = $uniqueAudioName . '.png';
                 $newThumbnailPath = 'uploads/videos/temp/thumbnails/' . $newThumbnailName;
@@ -752,10 +783,10 @@ public function videoUploadKey()
     public function showHighViewVideos()
    {
         // Get videos ordered by highest views
-        $highViewVideos = M_Videos::where("video_type", "1")
+        $highViewVideos = M_Videos::where("video_type", 5)
             ->where("type", "Public")
-            ->withCount('views')
-            ->orderByDesc('views_count') // Order by highest views
+            // ->withCount('views')
+            // ->orderByDesc('views_count') // Order by highest views
             ->limit(10) // Fetch top 10 most viewed videos
             ->pluck('id'); // Retrieve only video IDs
 

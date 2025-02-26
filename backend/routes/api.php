@@ -2,6 +2,7 @@
 
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Response;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\ForgotPasswordController;
@@ -18,7 +19,6 @@ use App\Http\Controllers\VideoInteractionController;
 use App\Http\Controllers\VideoSubscriptionController;
 use App\Http\Controllers\VideoCommentController;
 use FFMpeg\Media\Video;
-use Illuminate\Http\Request;
 use App\Http\Controllers\StreamController;
 use App\Http\Controllers\FileUploadController;
 
@@ -246,7 +246,53 @@ Route::get('images/uploads/videos/temp/{filename}', function ($filename) {
     return response()->file($path);
 });
 // To display permanent video file
+Route::get('images/uploads/videos/permanent/{filename}', function ($filename) {
+    $path = storage_path('app/public/uploads/videos/permanent/' . $filename);
+    if (!file_exists($path)) {
+        abort(404);
+    }
 
+    $fileSize = filesize($path);
+    $handle = fopen($path, 'rb');
+
+    $start = 0;
+    $end = $fileSize - 1;
+    $length = $fileSize;
+
+    // Handle range requests for seeking
+    if ($request->hasHeader('Range')) {
+        preg_match('/bytes=(\d*)-(\d*)/', $request->header('Range'), $matches);
+        $start = isset($matches[1]) && $matches[1] !== '' ? intval($matches[1]) : 0;
+        $end = isset($matches[2]) && $matches[2] !== '' ? intval($matches[2]) : $end;
+        $length = ($end - $start) + 1;
+
+        header('HTTP/1.1 206 Partial Content');
+    } else {
+        header('HTTP/1.1 200 OK');
+    }
+
+    // Set headers
+    header("Content-Type: video/mp4");
+    header("Accept-Ranges: bytes");
+    header("Content-Length: " . $length);
+    header("Content-Range: bytes $start-$end/$fileSize");
+
+    fseek($handle, $start);
+    $bufferSize = 1024 * 1024; // 1MB chunks
+    $bytesSent = 0;
+
+    while (!feof($handle) && $bytesSent < $length) {
+        $remaining = $length - $bytesSent;
+        $readLength = ($remaining > $bufferSize) ? $bufferSize : $remaining;
+        echo fread($handle, $readLength);
+        $bytesSent += $readLength;
+        flush(); // Send data in chunks
+    }
+
+    fclose($handle);
+    exit;
+});
+//
 Route::get('images/uploads/videos/permanent/{folder}/{file}', function (Request $request, $folder, $file) {
     $path = storage_path("app/public/uploads/videos/permanent/{$folder}/{$file}");
 
