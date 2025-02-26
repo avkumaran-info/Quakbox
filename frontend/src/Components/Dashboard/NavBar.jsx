@@ -614,17 +614,15 @@ const NavBar = () => {
                 {favCountries.length > 0
                   ? favCountries.map((fav, index) => {
                       // Find the matched country in allCountries based on the name
-                      console.log("fav Object:", fav); // Log full object
+                      // console.log("fav Object:", fav); // Log full object
                       // Find the matched country in 'countries' based on the 'code'
-                      const matchedCountry = countries.find((c) => c.code === fav.code);
-                
-                      if (!matchedCountry) {
-                        console.warn(`No matching country found for code: ${fav.code}`);
-                        return null; // Skip if no match found
-                      }
-                
-                      // console.log("Fetching flag for:", fav.code);
-
+                      const matchedCountry = countries.find((c) => c.code === fav.code);                      
+                      // if (!matchedCountry) {
+                      //   console.warn(`No matching country found for code: ${fav.code}`);
+                      //   return null; // Skip if no match found
+                      // }
+                      
+                      // console.log("Fetching flag for:", matchedCountry);
 
                       // Only render the country if it's matched (found)
                       return (
@@ -644,7 +642,7 @@ const NavBar = () => {
                             }}
                           >
                             <img
-                              src={countryCode ? `/assets/flags/${countryCode}.png` : "default-flag.png"}
+                              src={matchedCountry.code ? `/assets/flags/${matchedCountry.code}.png` : "default-flag.png"}
                               alt={matchedCountry.country_name}
                               className="card-img-top img-fluid"
                               style={{

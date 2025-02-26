@@ -138,45 +138,46 @@ const FanCountry = () => {
     () => countries.filter((country) => country.isFavourite),
     [countries]
   );
-
   const fetchFavouriteCountries = async (initialCountries) => {
     try {
       const token = getApiToken();
       const response = await axios.get(GET_API_URL, {
         headers: { Authorization: `Bearer ${token}` },
       });
-      // console.log(response);
-
-      const uniqueCountries = response.data.favourite_country.map(
-        (country) => ({
-          code: country.code,
+  
+      console.log("API Response:", response.data); // ✅ Log the full API response
+  
+      const uniqueCountries = response.data.favourite_country.map((country) => ({
+        code: country.code || "UNKNOWN", // ✅ Handle missing codes
+        isFan: true,
+        isFavourite: country.favourite_country === "1",
+        favourite_country_id: country.favourite_country_id,
+        originalState: {
           isFan: true,
           isFavourite: country.favourite_country === "1",
-          favourite_country_id: country.favourite_country_id,
-          originalState: {
-            isFan: true,
-            isFavourite: country.favourite_country === "1",
-          },
-        })
-      );
-
+        },
+      }));
+  
+      console.log("Unique Countries:", uniqueCountries); // ✅ Log processed data
+  
       const combined = initialCountries.map((country) => {
-        const match = uniqueCountries.find(
-          (fav) => fav.code === country.code
-        );
+        const match = uniqueCountries.find((fav) => fav.code === country.code);
+  
+        // if (!match) {
+        //   console.warn(`No match found for country: ${country.code}`);
+        // }
+  
         return match ? { ...country, ...match } : country;
       });
-
-      // Update Redux store with favourite countries
-      dispatch(
-        setFavouriteCountries(combined.filter((country) => country.isFavourite))
-      );
-
+  
+      // console.log("Combined Countries:", combined); // ✅ Log the final list
+  
+      dispatch(setFavouriteCountries(combined.filter((country) => country.isFavourite)));
       setCountries(combined);
     } catch (error) {
       handleApiError("Error fetching favourite countries", error);
     }
-  };
+  };  
 
   const handleApiError = (message, error) => {
     if (error.response?.status === 401) {
