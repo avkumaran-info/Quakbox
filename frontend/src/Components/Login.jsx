@@ -84,7 +84,7 @@ const Login = () => {
 
     try {
       const response = await axios.post(
-        "https://develop.quakbox.com/admin/api/login",
+        `https://${window.APP_DOMAIN}/admin/api/login`,
         loginData
       );
       if (response.data.result) {
@@ -128,7 +128,7 @@ const Login = () => {
       try {
         // Fetch latest countries data from API
         const res = await axios.get(
-          "https://develop.quakbox.com/admin/api/get_geo_country"
+          `https://${window.APP_DOMAIN}/admin/api/get_geo_country`
         );
 
         const newCountryData = res.data.geo_countries; // Latest country data

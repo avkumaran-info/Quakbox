@@ -74,7 +74,7 @@ const VideosPlayer = () => {
       }
 
       const response = await axios.post(
-        `https://develop.quakbox.com/admin/api/videos/${video.video_id}/like`,
+        `https://${window.APP_DOMAIN}/admin/api/videos/${video.video_id}/like`,
         { user_id: currentUserId },
         { headers: { Authorization: `Bearer ${token}` } }
       );
@@ -104,7 +104,7 @@ const VideosPlayer = () => {
       }
 
       const response = await axios.post(
-        `https://develop.quakbox.com/admin/api/videos/${video.video_id}/dislike`,
+        `https://${window.APP_DOMAIN}/admin/api/videos/${video.video_id}/dislike`,
         {},
         { headers: { Authorization: `Bearer ${token}` } }
       );
@@ -131,7 +131,7 @@ const VideosPlayer = () => {
         return;
       }
 
-      const url = `https://develop.quakbox.com/admin/api/videos/${
+      const url = `https://${window.APP_DOMAIN}/admin/api/videos/${
         isSubscribed
           ? `unsubscribe/${video.user_id}`
           : `subscribe/${video.user_id}`
@@ -178,7 +178,7 @@ const VideosPlayer = () => {
         }
 
         const response = await axios.get(
-          `https://develop.quakbox.com/admin/api/videos/${videoId}/show`,
+          `https://${window.APP_DOMAIN}/admin/api/videos/${videoId}/show`,
           { headers: { Authorization: `Bearer ${token}` } }
         );
 
@@ -229,7 +229,7 @@ const VideosPlayer = () => {
       }
 
       const response = await axios.get(
-        `https://develop.quakbox.com/admin/api/videos/${video.video_id}/comments`,
+        `https://${window.APP_DOMAIN}/admin/api/videos/${video.video_id}/comments`,
         { headers: { Authorization: `Bearer ${token}` } }
       );
 
@@ -272,7 +272,7 @@ const VideosPlayer = () => {
 
       // 🔹 Send comment to API
       const response = await axios.post(
-        `https://develop.quakbox.com/admin/api/videos/${video.video_id}/comments`,
+        `https://${window.APP_DOMAIN}/admin/api/videos/${video.video_id}/comments`,
         { content: commentText },
         { headers: { Authorization: `Bearer ${token}` } }
       );
@@ -305,7 +305,7 @@ const VideosPlayer = () => {
         return;
       }
       const response = await axios.post(
-        `https://develop.quakbox.com/admin/api/videos/comments/${editingComment.comment_id}`,
+        `https://${window.APP_DOMAIN}/admin/api/videos/comments/${editingComment.comment_id}`,
         { content: commentText },
         { headers: { Authorization: `Bearer ${token}` } }
       );
@@ -343,7 +343,7 @@ const VideosPlayer = () => {
       }
 
       const response = await axios.delete(
-        `https://develop.quakbox.com/admin/api/videos/comments/${commentId}`,
+        `https://${window.APP_DOMAIN}/admin/api/videos/comments/${commentId}`,
         { headers: { Authorization: `Bearer ${token}` } }
       );
 
@@ -377,7 +377,7 @@ const VideosPlayer = () => {
         }
 
         const response = await axios.get(
-          "https://develop.quakbox.com/admin/api/videos/qlist",
+          `https://${window.APP_DOMAIN}/admin/api/videos/qlist`,
           { headers: { Authorization: `Bearer ${token}` } }
         );
 
@@ -493,7 +493,7 @@ const VideosPlayer = () => {
                   className="w-100 rounded"
                   style={{ objectFit: "contain" }}
                 >
-                  {/* <source src={"https://develop.quakbox.com/admin/api/images/uploads/videos/permanent/67b7ea4caa693/index.m3u8"} type="video/mp4" /> */}
+                  {/* <source src={"https://${window.APP_DOMAIN}/admin/api/images/uploads/videos/permanent/67b7ea4caa693/index.m3u8"} type="video/mp4" /> */}
                   Your browser does not support the video tag.
                 </video>
               )}

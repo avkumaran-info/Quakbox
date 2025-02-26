@@ -51,7 +51,7 @@ const QVideos = () => {
         return;
       }
       const response = await axios.get(
-        "https://develop.quakbox.com/admin/api/videos/qlist",
+        `https://${window.APP_DOMAIN}/admin/api/videos/qlist`,
         { headers: { Authorization: `Bearer ${token}` } }
       );
 
@@ -80,7 +80,7 @@ const QVideos = () => {
 
       // Call the API to update the view count
       await axios.post(
-        `https://develop.quakbox.com/admin/api/videos/${video.video_id}/view`,
+        `https://${window.APP_DOMAIN}/admin/api/videos/${video.video_id}/view`,
         {},
         {
           headers: { Authorization: `Bearer ${token}` },
@@ -129,7 +129,7 @@ const QVideos = () => {
       let allVideos = videos.length > 0 ? videos : [];
       if (allVideos.length === 0) {
         const response = await axios.get(
-          "https://develop.quakbox.com/admin/api/videos",
+          `https://${window.APP_DOMAIN}/admin/api/videos`,
           {
             headers: { Authorization: `Bearer ${token}` },
           }

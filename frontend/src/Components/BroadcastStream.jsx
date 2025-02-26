@@ -32,7 +32,7 @@ const BroadcastStream = () => {
                     formData.append('video', blob, 'video.webm');
 
                     // Send the video stream to the Laravel backend
-                    fetch('https://develop.quakbox.com/admin/api/stream-video', {
+                    fetch(`https://${window.APP_DOMAIN}/admin/api/stream-video`, {
                         method: 'POST',
                         body: formData,
                     })

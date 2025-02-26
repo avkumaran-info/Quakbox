@@ -8,7 +8,7 @@ const BroadcastWatch = () => {
         if (flvjs.isSupported()) {
             const player = flvjs.createPlayer({
                 type: 'flv',
-                url: 'rtmp://develop.quakbox.com/live/test',
+                url: `rtmp://${window.APP_DOMAIN}/live/test`,
             });
 
             player.attachMediaElement(videoRef.current);

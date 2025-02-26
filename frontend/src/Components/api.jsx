@@ -2,7 +2,7 @@ import axios from "axios";
 
 // Create an Axios instance
 const api = axios.create({
-  baseURL: "https://develop.quakbox.com/admin/api",
+  baseURL: `https://${window.APP_DOMAIN}/admin/api`,
   headers: {
     "Content-Type": "application/json",
   },

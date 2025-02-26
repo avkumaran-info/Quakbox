@@ -164,12 +164,12 @@ const Signup = () => {
   const sendOTP = async () => {
     try {
       const emailVerifyResponse = await axios.post(
-        "https://develop.quakbox.com/admin/api/send-otp-mail",
+        `https://${window.APP_DOMAIN}/admin/api/send-otp-mail`,
         { email: userField.email }
       );
 
       // const mobileVerifyResponse = await axios.post(
-      //   "https://develop.quakbox.com/admin/api/send-otp-mobile",
+      //   "https://${window.APP_DOMAIN}/admin/api/send-otp-mobile",
       //   { mobile_number: userField.phone }
       // );
 
@@ -184,12 +184,12 @@ const Signup = () => {
     try {
       // Send OTP verification requests
       const emailVerifyResponse = await axios.post(
-        "https://develop.quakbox.com/admin/api/verify-otp-mail",
+        `https://${window.APP_DOMAIN}/admin/api/verify-otp-mail`,
         { email: userField.email, otp: emailOTP }
       );
 
       // const mobileVerifyResponse = await axios.post(
-      //   "https://develop.quakbox.com/admin/api/verify-otp-mobile",
+      //   "https://${window.APP_DOMAIN}/admin/api/verify-otp-mobile",
       //   { mobile_number: userField.phone, otp: mobileOTP }
       // );
 
@@ -391,7 +391,7 @@ const Signup = () => {
       }
 
       const response = await axios.post(
-        "https://develop.quakbox.com/admin/api/register",
+        `https://${window.APP_DOMAIN}/admin/api/register`,
         formData
       );
 

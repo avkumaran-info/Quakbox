@@ -23,16 +23,15 @@ import {
 } from "./redux/favouriteCountriesSlice";
 
 // API URLs
-const countriesApi = "https://restcountries.com/v3.1/all";
+const countriesApi =  `https://restcountries.com/v3.1/all `;
 const GET_API_URL =
-  "https://develop.quakbox.com/admin/api/get_favourite_country";
+  `https://${window.APP_DOMAIN}/admin/api/get_favourite_country`;
 const POST_API_URL =
-  "https://develop.quakbox.com/admin/api/set_favourite_country";
+  `https://${window.APP_DOMAIN}/admin/api/set_favourite_country`;
 const PUT_API_URL =
-  "https://develop.quakbox.com/admin/api/put_favourite_country";
+  `https://${window.APP_DOMAIN}/admin/api/put_favourite_country`;
 const RESET_API_URL =
-  "https://develop.quakbox.com/admin/api/del_favourite_country";
-const API_TOKEN = localStorage.getItem("api_token");
+  `https://${window.APP_DOMAIN}/admin/api/del_favourite_country`;
 
 // Helper to get the API token
 const getApiToken = () => {
@@ -117,7 +116,8 @@ const FanCountriesComponent = () => {
       const response = await axios.get(countriesApi);
       const data = response.data.map((country) => ({
         name: country.name.common,
-        flag: country.flags.png,
+        code: country.code?.toUpperCase() || "", // Handle missing/undefined values
+        flag: `/assets/flags/${country.code}.png`,
         isFan: false,
         isFavourite: false,
       }));
@@ -166,7 +166,7 @@ const FanCountriesComponent = () => {
       });
       const uniqueCountries = response.data.favourite_country.map(
         (country) => ({
-          code: country.code.toLowerCase(),
+          code: country.code,
           isFan: true,
           isFavourite: country.favourite_country === "1",
           favourite_country_id: country.favourite_country_id,
@@ -179,7 +179,7 @@ const FanCountriesComponent = () => {
 
       const combined = initialCountries.map((country) => {
         const match = uniqueCountries.find(
-          (fav) => fav.code === country.name.toLowerCase()
+          (fav) => fav.code === country.code
         );
         return match ? { ...country, ...match } : country;
       });
@@ -243,7 +243,7 @@ const FanCountriesComponent = () => {
             (country.isFan || country.isFavourite)
         )
         .map((country) => ({
-          code: country.name,
+          code: country.code,
           favourite_country: country.isFavourite ? "1" : "0",
         }));
 
@@ -293,7 +293,8 @@ const FanCountriesComponent = () => {
 
           return {
             favourite_country_id: country.favourite_country_id,
-            code: country.name,
+            code: country.code,
+            country_name:country.country_name,
             favourite_country: favouriteCountryValue, // Use the new value here
           };
         });
@@ -375,7 +376,7 @@ const FanCountriesComponent = () => {
           }}
         >
           <img
-            src={country.flag}
+            src={`/assets/flags/${country.code}.png`}
             alt={`${country.name} Flag`}
             style={imgStyle}
           />

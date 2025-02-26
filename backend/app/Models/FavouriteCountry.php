@@ -15,6 +15,7 @@ class FavouriteCountry extends Model
     protected $fillable = [
         'member_id',
         'code',
+        'country_name',
         'favourite_country',
     ];
 

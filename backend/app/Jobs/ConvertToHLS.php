@@ -10,6 +10,8 @@ use Illuminate\Queue\SerializesModels;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Log;
 use Symfony\Component\Process\Process;
+use FFMpeg;
+use FFMpeg\Format\Video\X264;
 
 class ConvertToHLS implements ShouldQueue
 {
@@ -28,14 +30,22 @@ class ConvertToHLS implements ShouldQueue
     {
         // Ensure directories exist
         Storage::disk('public')->makeDirectory($this->outputPath);
+        Log::info('Input Path: ' . storage_path('app/' . $this->videoPath));
+        if (!Storage::exists($this->videoPath)) {
+            Log::error("File does not exist: " . storage_path('app/' . $this->videoPath));
+            return;
+        }
         // Define FFmpeg command
         $ffmpegCommand = [
-            'ffmpeg', '-i', storage_path('app/' . $this->videoPath),
+            '/usr/local/bin/ffmpeg', '-i', storage_path('app/' . $this->videoPath),
             '-c:v', 'libx264', '-preset', 'fast', '-b:v', '3000k', '-maxrate', '3000k', '-bufsize', '6000k',
             '-c:a', 'aac', '-b:a', '128k', '-hls_time', '10', '-hls_list_size', '0',
             '-hls_segment_filename', storage_path("app/public/{$this->outputPath}/%03d.ts"),
             storage_path("app/public/{$this->outputPath}/index.m3u8")
         ];
+
+        // Log::info('FFmpeg command: ' . $ffmpegCommand);
+        Log::info('Executing FFmpeg command: ' . implode(' ', $ffmpegCommand));
 
         // Run FFmpeg process
         $process = new Process($ffmpegCommand);

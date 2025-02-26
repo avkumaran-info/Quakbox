@@ -8,7 +8,7 @@ const WatchLiveStream = () => {
     const [error, setError] = useState(null);
 
     useEffect(() => {
-        const streamUrl = `https://develop.quakbox.com/admin/api/images/hls/${streamId}/index.m3u8`;
+        const streamUrl = `https://${window.APP_DOMAIN}/admin/api/images/hls/${streamId}/index.m3u8`;
 
         if (Hls.isSupported()) {
             const hls = new Hls();

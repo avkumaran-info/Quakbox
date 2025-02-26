@@ -26,7 +26,7 @@ const Feed = ({ countryCode, flag, countryName, handleCountryChange }) => {
   const [editedMediaFile, setEditedMediaFile] = useState(null);
   const [editedMediaPreview, setEditedMediaPreview] = useState(null);
   
-  const userId = localStorage.getItem("user_Id");
+  const userId = userData?.users?.id || localStorage.getItem("user_Id");
 
   // Functions to handle popup visibility
   const openPopup = () => setIsPopupOpen(true);
@@ -52,7 +52,7 @@ const Feed = ({ countryCode, flag, countryName, handleCountryChange }) => {
       const token = localStorage.getItem("api_token");
 
       const response = await axios.get(
-        `https://develop.quakbox.com/admin/api/get_posts_comment/${post.id}/comment`,
+        `https://${window.APP_DOMAIN}/admin/api/get_posts_comment/${post.id}/comment`,
         {
           headers: {
             Authorization: `Bearer ${token}`, // Add token to header
@@ -77,7 +77,7 @@ const Feed = ({ countryCode, flag, countryName, handleCountryChange }) => {
       }
 
       const response = await axios.post(
-        `https://develop.quakbox.com/admin/api/set_posts_comment/${postId}/comment`,
+        `https://${window.APP_DOMAIN}/admin/api/set_posts_comment/${postId}/comment`,
         {
           comment: commentText,
         },
@@ -163,17 +163,21 @@ const Feed = ({ countryCode, flag, countryName, handleCountryChange }) => {
   const loadMoreComments = () => {
     setVisibleComments((prev) => prev + 10); // Load 10 more comments on click
   };
+  const [showDeletePopup, setShowDeletePopup] = useState(false);
+  const [commentToDelete, setCommentToDelete] = useState(null);
+
   // Handle Delete Comment
-  const handleDeleteComment = async (postId, commentId) => {
-    const isConfirmed = window.confirm("Are you sure you want to delete this comment?");
-    if (!isConfirmed) return;  // Stop if user cancels
-    
+  const handleDeleteComment = async () => {
+    if (!commentToDelete) return;
+  
+    const { postId, commentId } = commentToDelete;
+  
     try {
       const token = localStorage.getItem("api_token");
       if (!token) return alert("Authorization token missing.");
   
       const res = await axios.delete(
-        `https://develop.quakbox.com/admin/api/del_posts/${postId}/comments/${commentId}`,
+        `https://${window.APP_DOMAIN}/admin/api/del_posts/${postId}/comments/${commentId}`,
         { headers: { Authorization: `Bearer ${token}` } }
       );
   
@@ -185,45 +189,18 @@ const Feed = ({ countryCode, flag, countryName, handleCountryChange }) => {
             post.id === postId ? { ...post, comments: { count: Math.max((post.comments?.count || 1) - 1, 0) } } : post
           ),
         }));
-        alert("Comment deleted successfully.");
+        console.log("Comment deleted successfully.");
       } else {
-        alert("Failed to delete comment.");
+        console.log("Failed to delete comment.");
       }
     } catch (error) {
       console.error("Error deleting comment:", error);
       alert("An error occurred while deleting the comment.");
     }
-  };
-// Handle Edit Comment
-const handleEditComment = async (commentId) => {
-  if (!editedComment.trim()) return alert("Comment cannot be empty.");
   
-  try {
-      const token = localStorage.getItem("api_token");
-      if (!token) return alert("Authorization token missing.");
-      
-      const res = await axios.put(
-          `https://develop.quakbox.com/admin/api/put_comment/${commentId}`, // ✅ Consistent API
-          { comment: editedComment }, // ✅ Use "comment"
-          { headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" } }
-      );
-      
-      if (res.status === 200) {
-          setComments((prevComments) =>
-              prevComments.map((comment) =>
-                  comment.comment_id === commentId ? { ...comment, message: res.data.data.comment } : comment
-              )
-          );
-          closeEditCommentPopup();
-      } else {
-          alert("Failed to edit comment.");
-      }
-  } catch (error) {
-      console.error("Error editing comment:", error);
-      alert("An error occurred while editing the comment.");
-  }
-};
-
+    setShowDeletePopup(false);
+  };
+  
 const [editingCommentId, setEditingCommentId] = useState(null);
 const [editedComment, setEditedComment] = useState("");
 const [isEditCommentPopupOpen, setIsEditCommentPopupOpen] = useState(false);
@@ -240,31 +217,42 @@ const openEditCommentPopup = (comment) => {
 // Handle Save Comment (Consistent with handleEditComment)
 const handleSaveComment = async () => {
   if (!editedComment.trim()) return alert("Comment cannot be empty.");
-  
+
   try {
     const token = localStorage.getItem("api_token");
     if (!token) return alert("Authorization token missing.");
-    
+
+    // **Instantly update UI before API call (Optimistic Update)**
+    setComments((prevComments) =>
+      prevComments.map((comment) =>
+        comment.comment_id === editingCommentId
+          ? { ...comment, message: editedComment } // ✅ Update state immediately
+          : comment
+      )
+    );
+
+    // **API Call to Save Comment**
     const res = await axios.put(
-      `https://develop.quakbox.com/admin/api/put_comment/${editingCommentId}`, // ✅ Consistent API
-      { comment: editedComment }, // ✅ Use "comment"
+      `https://${window.APP_DOMAIN}/admin/api/put_comment/${editingCommentId}`,
+      { comment: editedComment },
       { headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" } }
     );
 
+    // **Ensure API response is valid**
     if (res.status === 200) {
       setComments((prevComments) =>
         prevComments.map((comment) =>
           comment.comment_id === editingCommentId
-            ? { ...comment, message: res.data.data.comment } // ✅ Match response format
+            ? { ...comment, message: res.data.data.comment } // ✅ Update from response
             : comment
         )
       );
-      setEditingCommentId(null);
-      setEditedComment("");
-      setIsEditCommentPopupOpen(false);
     } else {
       alert("Failed to save comment.");
     }
+    // **Close Popup**
+    closeEditCommentPopup();
+    closeCommentPopup();
   } catch (error) {
     console.error("Error saving comment:", error);
     alert("An error occurred while saving the comment.");
@@ -324,7 +312,7 @@ const closeEditCommentPopup = () => {
     if (!token) return;
     try {
       const res = await axios.delete(
-        `https://develop.quakbox.com/admin/api/del_posts/${postToDelete.id}`,
+        `https://${window.APP_DOMAIN}/admin/api/del_posts/${postToDelete.id}`,
         { headers: { Authorization: `Bearer ${token}` } }
       );
 
@@ -358,7 +346,7 @@ const closeEditCommentPopup = () => {
 
     try {
       const res = await axios.put(
-        `https://develop.quakbox.com/admin/api/put_posts/${postToEdit.id}`,
+        `https://${window.APP_DOMAIN}/admin/api/put_posts/${postToEdit.id}`,
         { message: editedMessage }, // ✅ Sending message as JSON instead of FormData
         {
           headers: {
@@ -434,7 +422,7 @@ const closeEditCommentPopup = () => {
   //   }
   //   try {
   //     const res = await axios.get(
-  //       "https://develop.quakbox.com/admin/api/user",
+  //       "https://${window.APP_DOMAIN}/admin/api/user",
   //       {
   //         headers: { Authorization: `Bearer ${token}` },
   //       }
@@ -465,7 +453,7 @@ const closeEditCommentPopup = () => {
 
     try {
       const response = await axios.post(
-        "https://develop.quakbox.com/admin/api/set_posts",
+        `https://${window.APP_DOMAIN}/admin/api/set_posts`,
         formData,
         {
           headers: {
@@ -479,7 +467,7 @@ const closeEditCommentPopup = () => {
         const newPost = {
           id: response.data.id,
           message: message,
-          created_time: new Date().toISOString(),
+           created_time: new Date().toISOString(),
           from: {
             name: userData.users.username,
             profile_image: userData.profile_image_url,
@@ -557,7 +545,7 @@ const closeEditCommentPopup = () => {
 
   //   try {
   //     const res = await axios.post(
-  //       `https://develop.quakbox.com/admin/api/set_posts_like/${postId}/like`,
+  //       `https://${window.APP_DOMAIN}/admin/api/set_posts_like/${postId}/like`,
   //       {},
   //       {
   //         headers: { Authorization: `Bearer ${token}` },
@@ -619,6 +607,7 @@ const closeEditCommentPopup = () => {
   const token = localStorage.getItem("api_token");
   const currentUserId = userData?.users?.id || localStorage.getItem("user_id");
 
+
   const [dislikeInProgress, setDislikeInProgress] = useState({});
   const [likeInProgress, setLikeInProgress] = useState({});
 
@@ -664,7 +653,7 @@ const closeEditCommentPopup = () => {
   
     try {
       const res = await axios.post(
-        `https://develop.quakbox.com/admin/api/set_posts_like/${post.id}/like`,
+        `https://${window.APP_DOMAIN}/admin/api/set_posts_like/${post.id}/like`,
         { is_like: true },
         { headers: { Authorization: `Bearer ${token}` } }
       );
@@ -742,7 +731,7 @@ const closeEditCommentPopup = () => {
 
   try {
     const res = await axios.post(
-      `https://develop.quakbox.com/admin/api/set_posts_like/${post.id}/dislike`,
+      `https://${window.APP_DOMAIN}/admin/api/set_posts_like/${post.id}/dislike`,
       { is_like: false },
       { headers: { Authorization: `Bearer ${token}` } }
     );
@@ -789,7 +778,7 @@ const closeEditCommentPopup = () => {
   //   }
   //   try {
   //     const res = await axios.get(
-  //       `https://develop.quakbox.com/admin/api/get_posts/${countryCode}`,
+  //       `https://${window.APP_DOMAIN}/admin/api/get_posts/${countryCode}`,
   //       {
   //         headers: {
   //           Authorization: `Bearer ${token}`,
@@ -813,15 +802,18 @@ const closeEditCommentPopup = () => {
       return;
     }
   
+    // Ensure countryCode is valid (fallback to empty string)
+    const countryParam = countryCode ? countryCode : "";
+  
     try {
       const res = await axios.get(
-        `https://develop.quakbox.com/admin/api/get_posts/${countryCode}`,
+        `https://${window.APP_DOMAIN}/admin/api/get_posts/${countryParam}`,
         {
           headers: { Authorization: `Bearer ${token}` },
         }
       );
   
-      if (res.data.status && Array.isArray(res.data.posts)) {
+      if (res.data?.status && Array.isArray(res.data.posts)) {
         const formattedPosts = res.data.posts.map((post) => {
           const isLiked = post.likes?.liked_users?.some((user) => user.user_id === currentUserId);
           return {
@@ -834,18 +826,18 @@ const closeEditCommentPopup = () => {
   
         setData({ posts: formattedPosts });
   
-        // Select first post as default
+        // Select first post as default (only if available)
         if (formattedPosts.length > 0) {
           setSelectedPost(formattedPosts[0]);
         }
       } else {
-        console.log("Invalid API response structure.");
+        console.log("Invalid API response structure:", res.data);
       }
     } catch (error) {
-      console.log("Error fetching posts:", error);
+      console.error("Error fetching posts:", error);
     }
-  };  
-  useEffect(() => {
+  };
+    useEffect(() => {
     // Cleanup the preview URL to avoid memory leaks
     return () => {
       if (mediaPreview) {
@@ -902,7 +894,7 @@ const closeEditCommentPopup = () => {
         }
   
         const response = await axios.get(
-          `https://develop.quakbox.com/admin/api/posts/${selectedPost.id}/liked-users`,
+          `https://${window.APP_DOMAIN}/admin/api/posts/${selectedPost.id}/liked-users`,
           { headers: { Authorization: `Bearer ${token}` } }
         );
   
@@ -1343,6 +1335,9 @@ const closeEditCommentPopup = () => {
                   {comments?.length > 0 ? (
                     comments.slice(0, visibleComments).map((comment, index) => {
                       const isUserComment = Number(comment.comment_user_id) === Number(userId);
+                      console.log("Comment User ID:", comment.comment_user_id);
+                      console.log("User ID:", userId);
+                       console.log("Comparison Result:", Number(comment.comment_user_id) === Number(userId));
 
                       return (
                         <div key={comment.comment_id || index} className="d-flex align-items-start mb-3">
@@ -1363,15 +1358,23 @@ const closeEditCommentPopup = () => {
                               {isUserComment && (
                                 <div className="d-flex">
                                   <i
-                                    className="bi bi-pencil-square me-2 text-primary"
+                                    className="bi bi-pencil-square me-2"
                                     onClick={() => openEditCommentPopup(comment)}
                                     style={{ cursor: "pointer", fontSize: "16px" }}
                                   ></i>
-                                  <i
-                                    className="bi bi-trash text-danger"
-                                    onClick={() => handleDeleteComment(selectedPost.id, comment.comment_id)}
-                                    style={{ cursor: "pointer", fontSize: "16px" }}
-                                  ></i>
+                                 <i
+                                      className="bi bi-trash"
+                                      onClick={() => {
+                                        if (!selectedPost || !comment.comment_id) {
+                                          console.error("Post ID or Comment ID missing");
+                                          return;
+                                        }
+                                        setCommentToDelete({ postId: selectedPost.id, commentId: comment.comment_id });
+                                        setShowDeletePopup(true);
+                                      }}
+                                      style={{ cursor: "pointer", fontSize: "16px" }}
+                                    ></i>
+
                                 </div>
                               )}
                             </div>
@@ -1461,6 +1464,26 @@ const closeEditCommentPopup = () => {
                           </>
                         )}
                       </div>
+                      {showDeletePopup && (
+                        <div style={modalStyles.overlay}>
+                          <div style={modalStyles.modal}>
+                            <div className="modal-header">
+                              <h4>Confirm Deletion</h4>
+                            </div>
+                            <div className="modal-body">
+                              <p>Are you sure you want to delete this comment?</p>
+                            </div>
+                            <div style={modalStyles.modalFooter}>
+                              <button className="btn btn-secondary" onClick={() => setShowDeletePopup(false)}>
+                                Cancel
+                              </button>
+                              <button className="btn btn-danger" onClick={handleDeleteComment}>
+                                Confirm
+                              </button>
+                            </div>
+                          </div>
+                        </div>
+                      )}
 
                       {/* Add a Comment */}
                       <div className="mt-3">
@@ -1546,7 +1569,7 @@ const closeEditCommentPopup = () => {
         {data && data.posts &&
             Array.isArray(data.posts) &&
             data.posts.map((post) => {
-              const loggedInUserId = localStorage.getItem("user_Id"); // Get logged-in user ID
+              const loggedInUserId = userData?.users?.id || localStorage.getItem("user_Id"); // Get logged-in user ID
               const isOwner = loggedInUserId == post.from.user_id; // Check if the logged-in user is the post owner
 
               return (
@@ -1560,7 +1583,7 @@ const closeEditCommentPopup = () => {
                   }}
                 >
                   {/* Post Header */}
-                  <div className="card-header d-flex align-items-center bg-white border-0 position-relative">
+                  <div className="card-header d-flex align-items-center bg-white border-0 p-1 mb-1">
                     {/* Profile Image */}
                     <img
                       src={post.from?.profile_image || defaultUserImage} // Fallback to defaultUserImage
@@ -1593,7 +1616,7 @@ const closeEditCommentPopup = () => {
                   </div>
 
                   {/* Post Content */}
-                  {post.message && <p className="px-3 mb-1">{post.message}</p>}
+                  {post.message && <p className="px-1 mb-1">{post.message}</p>}
                   <div
                     className="card-body p-0 d-flex align-items-center justify-content-center"
                     style={{
@@ -1640,7 +1663,7 @@ const closeEditCommentPopup = () => {
                   </div>
 
                   {/* Post Footer */}
-                  <div className="card-footer bg-white d-flex justify-content-between align-items-center border-0">
+                  <div className="card-footer bg-white d-flex justify-content-between align-items-center border-0 px-1">
                   <span
                         className="text-muted"
                         onClick={() => {
@@ -1794,5 +1817,33 @@ const buttonStyle = {
   padding: "10px",
   cursor: "pointer",
 };
+
+const modalStyles = {
+  overlay: {
+    position: "fixed",
+    top: 0,
+    left: 0,
+    width: "100%",
+    height: "100%",
+    background: "rgba(0, 0, 0, 0.5)",
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+    zIndex: 1000,
+  },
+  modal: {
+    background: "white",
+    padding: "20px",
+    borderRadius: "10px",
+    minWidth: "300px",
+    boxShadow: "0px 5px 15px rgba(0, 0, 0, 0.3)",
+  },
+  modalFooter: {
+    display: "flex",
+    justifyContent: "space-between",
+    marginTop: "10px",
+  },
+};
+
 
 export default Feed;
