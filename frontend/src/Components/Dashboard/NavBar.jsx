@@ -87,6 +87,21 @@ const NavBar = () => {
     };
   }, []);
 
+  const flagImagesRaw = import.meta.glob("../../assets/flags/*.png", { eager: true });
+
+const flagImages = Object.fromEntries(
+  Object.entries(flagImagesRaw).map(([path, module]) => {
+    const fileName = path.split("/").pop().replace(".png", ""); // Extract country code
+    return [fileName, module.default]; // Store as { "BE": "/assets/flags/BE.png" }
+  })
+);
+
+const getFlagImage = (code) => {
+  const image = flagImages[code] || flagImages["default"];
+  // console.log("Flag source for", code, "is", image);
+  return image;
+};
+
   // Filter and sort countries
   const filteredCountries = countries
     .filter(
@@ -187,7 +202,7 @@ const NavBar = () => {
                   }}
                 >
                   <img
-                    src={country.country_image}
+                    src={getFlagImage(country.code)}
                     alt={country.country_name}
                     style={{
                       width: "40px",
@@ -276,7 +291,7 @@ const NavBar = () => {
                         // onClick={() => {
                         //   handleCountryChange(
                         //     country.code,
-                        //     country.country_image,
+                        //     getFlagImage(country.code),
                         //     country.country_name
                         //   );
                         //   setShowAllFlags(false);
@@ -288,7 +303,7 @@ const NavBar = () => {
                         }}
                       >
                         <img
-                          src={country.country_image}
+                          src={getFlagImage(country.code)}
                           alt={country.country_name}
                           style={{
                             width: "65px",
@@ -599,10 +614,12 @@ const NavBar = () => {
                 {favCountries.length > 0
                   ? favCountries.map((fav, index) => {
                       // Find the matched country in allCountries based on the name
-                      const matchedCountry = countries.find(
-                        (c) => c.country_name === fav.code
-                      );
-                      // console.log(matchedCountry);
+                      const matchedCountry = countries.find((c) => c.country_name === fav.code);
+
+                      const countryCode = matchedCountry ? matchedCountry.code : null; // Get correct country code
+                      
+                      // console.log("Fetching flag for:", countryCode); // Debugging
+
 
                       // Only render the country if it's matched (found)
                       return (
@@ -622,7 +639,7 @@ const NavBar = () => {
                             }}
                           >
                             <img
-                              src={matchedCountry.country_image}
+                              src={countryCode ? getFlagImage(countryCode) : "default-flag.png"}
                               alt={matchedCountry.country_name}
                               className="card-img-top img-fluid"
                               style={{

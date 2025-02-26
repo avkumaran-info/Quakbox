@@ -57,7 +57,21 @@ const FanCountry = () => {
       navigate("/"); // Redirect to login if no token
     }
   };
+  
+const flagImagesRaw = import.meta.glob("../assets/flags/*.png", { eager: true });
 
+
+const flagImages = Object.fromEntries(
+  Object.entries(flagImagesRaw).map(([path, module]) => {
+    const fileName = path.split("/").pop().replace(".png", ""); // Extract country code
+    return [fileName, module.default]; // Store as { "BE": "/assets/flags/BE.png" }
+  })
+);
+const getFlagImage = (code) => {
+  const image = flagImages[code] || flagImages["default"];
+  console.log("Flag source for", code, "is", image);
+  return image;
+};
   const fetchAllCountries = async () => {
     setLoading(true);
     try {
@@ -70,11 +84,12 @@ const FanCountry = () => {
 
       const data = storedCountries.map((country) => ({
         name: country.country_name,
-        flag: country.country_image,
+        flag: getFlagImage(country.code), // Ensure code is mapped correctly
+        code: country.code?.toUpperCase() || "", // Handle missing/undefined values
         isFan: false,
         isFavourite: false,
-      }));
-
+      })); 
+      console.log(data[0].code);
       // Sort countries alphabetically by name
       const sortedCountries = data.sort((a, b) => a.name.localeCompare(b.name));
 
@@ -144,7 +159,7 @@ const FanCountry = () => {
       const response = await axios.get(GET_API_URL, {
         headers: { Authorization: `Bearer ${token}` },
       });
-      console.log(response);
+      // console.log(response);
 
       const uniqueCountries = response.data.favourite_country.map(
         (country) => ({
@@ -398,7 +413,7 @@ const FanCountry = () => {
                     key={index}
                   >
                     <img
-                      src={country.flag}
+                      src={getFlagImage(country.code)}
                       className="card-img-top"
                       alt={country.name}
                       style={{
@@ -538,7 +553,7 @@ const FanCountry = () => {
                       key={index}
                     >
                       <img
-                        src={country.flag}
+                        src={getFlagImage(country.code)}
                         className="card-img-top"
                         alt={country.name}
                         style={{
@@ -715,7 +730,7 @@ const FanCountry = () => {
                     key={index}
                   >
                     <img
-                      src={country.flag}
+                      src={getFlagImage(country.code)}
                       className="card-img-top"
                       alt={country.name}
                       style={{

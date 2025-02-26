@@ -57,7 +57,7 @@ const updates = [
   },
 ];
 
-const RightSidebar = ({ countryCode, flag, countryName }) => {
+const RightSidebar = ({ countryCode, countryName }) => {
   const { userData, favCountries, fanCountries } = useContext(StoreContext);
   const [countryData, setCountryData] = useState(null);
   const [counts, setCounts] = useState({
@@ -229,6 +229,18 @@ const RightSidebar = ({ countryCode, flag, countryName }) => {
     indexOfFirstComment,
     indexOfLastComment
   );
+  const flagImagesRaw = import.meta.glob("../../assets/flags/*.png", { eager: true });
+
+  const flagImages = Object.fromEntries(
+    Object.entries(flagImagesRaw).map(([path, module]) => {
+      const fileName = path.split("/").pop().replace(".png", ""); // Extract country code
+      return [fileName, module.default]; // Store as { "BE": "/assets/flags/BE.png" }
+    })
+  );
+
+  const getFlagImage = (code) => {
+    return flagImages[code] || flagImages["default"];
+  };
 
   return (
     <>
@@ -256,7 +268,7 @@ const RightSidebar = ({ countryCode, flag, countryName }) => {
                 {/* Fixed Post Content */}
                 <div className="post-preview" style={{ flexShrink: 0 }}>
                   <img
-                    src={flag}
+                    src={getFlagImage(countryCode)}
                     alt="Post image"
                     className="img-fluid rounded w-100"
                     style={{
@@ -412,7 +424,7 @@ const RightSidebar = ({ countryCode, flag, countryName }) => {
               ) : (
                 <>
                   <img
-                    src={flag}
+                    src={getFlagImage(countryCode)}
                     alt={countryName}
                     className="img-fluid"
                     style={{
