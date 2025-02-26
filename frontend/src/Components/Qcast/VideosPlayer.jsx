@@ -50,7 +50,7 @@ const VideosPlayer = () => {
   const [isSearching, setIsSearching] = useState(false);
   const [likes, setLikes] = useState(passedVideo?.likes || 0);
   const [dislikes, setDislikes] = useState(passedVideo?.dislikes || 0);
-  const currentUserId = parseInt(localStorage.getItem("user_Id")); // Get logged-in user ID
+  // const currentUserId = parseInt(localStorage.getItem("user_Id")); // Get logged-in user ID
   const [isLiked, setIsLiked] = useState(false);
   const [isDisliked, setIsDisliked] = useState(false);
   const [isSubscribed, setIsSubscribed] = useState(false);
@@ -75,7 +75,7 @@ const VideosPlayer = () => {
 
       const response = await axios.post(
         `https://${window.APP_DOMAIN}/admin/api/videos/${video.video_id}/like`,
-        { user_id: currentUserId },
+        { user_id: userData.users.id },
         { headers: { Authorization: `Bearer ${token}` } }
       );
 
@@ -84,7 +84,7 @@ const VideosPlayer = () => {
         setIsLiked(!isLiked);
 
         if (isDisliked) {
-          setDislikes((prev) => prev - 1); // Remove dislike if liked
+          setDislikes((prev) => prev - 1);
           setIsDisliked(false);
         }
       }
@@ -114,7 +114,7 @@ const VideosPlayer = () => {
         setIsDisliked(!isDisliked);
 
         if (isLiked) {
-          setLikes((prev) => prev - 1); // Remove like if disliked
+          setLikes((prev) => prev - 1);
           setIsLiked(false);
         }
       }
@@ -156,21 +156,11 @@ const VideosPlayer = () => {
     }
   };
 
-  const videosPlay = (videoUrl) => {
-    console.log(videoUrl);
-
-    if (Hls.isSupported()) {
-      const hls = new Hls();
-      hls.loadSource(videoUrl);
-      hls.attachMedia(videoRef.current);
-    }
-  };
-
   useEffect(() => {
     const fetchVideo = async () => {
-      setVideo(null); // Clear previous video
-
       try {
+        setVideo(null); // Clear previous video to prevent stale state
+
         const token = localStorage.getItem("api_token");
         if (!token) {
           console.error("❌ Authorization token missing. Please log in.");
@@ -182,41 +172,44 @@ const VideosPlayer = () => {
           { headers: { Authorization: `Bearer ${token}` } }
         );
 
-        const fetchedVideo = response.data.data;
-        setVideo(fetchedVideo);
+        if (response.status === 200) {
+          const fetchedVideo = response.data.data;
+          setVideo(fetchedVideo);
+          console.log(fetchedVideo);
 
-        console.log(response.data.data);
-        videosPlay(response.data.data.file_path);
-        // ✅ Update Likes & Dislikes
-        setLikes(fetchedVideo.likes_count || 0);
-        setDislikes(fetchedVideo.dislikes_count || 0);
+          // console.log(fetchedVideo.liked_user_id[0].video_liked_user_id);
 
-        // ✅ Check if user already liked/disliked
-        setIsLiked(
-          fetchedVideo.liked_user_id?.some(
-            (user) => user.video_liked_user_id === currentUserId
-          ) || false
-        );
+          // ✅ Set Likes & Dislikes Counts
+          setLikes(fetchedVideo.likes_count || 0);
+          setDislikes(fetchedVideo.dislikes_count || 0);
 
-        setIsDisliked(
-          fetchedVideo.disliked_user_id?.some(
-            (user) => user.video_disliked_user_id === currentUserId
-          ) || false
-        );
+          // ✅ Check if user already liked/disliked
+          setIsLiked(
+            fetchedVideo.liked_user_id?.some(
+              (user) => user.video_liked_user_id === userData.users.id
+            ) || false
+          );
 
-        // ✅ Check if user already subscribed
-        setIsSubscribed(
-          fetchedVideo.subscribers_user_id?.some(
-            (user) => user.subscriber_id === currentUserId
-          ) || false
-        );
+          setIsDisliked(
+            fetchedVideo.disliked_user_id?.some(
+              (user) => user.video_disliked_user_id === userData.users.id
+            ) || false
+          );
+
+          // ✅ Check if user is subscribed
+          setIsSubscribed(
+            fetchedVideo.subscribers_user_id?.some(
+              (user) => user.subscriber_id === userData.users.id
+            ) || false
+          );
+        }
       } catch (error) {
-        console.error("Error fetching video:", error);
+        console.error("❌ Error fetching video:", error);
       }
     };
 
     fetchVideo();
-  }, [videoId]); // ✅ Refetch video when videoId changes
+  }, [videoId]); // ✅ Added `userData.users.id` to ensure correct updates
 
   const fetchComments = async () => {
     if (!video) return;
@@ -484,28 +477,74 @@ const VideosPlayer = () => {
             style={{ height: "auto", minHeight: "600px" }} // Ensures content doesn't shrink
           >
             {/* Video Player */}
-            <div className="ratio ratio-16x9" style={{ height: "500px" }}>
-              {video.video_type == 1 && (
-                <video
-                  ref="https://develop.quakbox.com/admin/api/images/uploads/videos/permanent/67b80459d03a2/index.m3u8"
-                  controls
-                  autoPlay
-                  className="w-100 rounded"
-                  style={{ objectFit: "contain" }}
-                >
-                  {/* <source src={"https://${window.APP_DOMAIN}/admin/api/images/uploads/videos/permanent/67b7ea4caa693/index.m3u8"} type="video/mp4" /> */}
-                  Your browser does not support the video tag.
-                </video>
-              )}
-              {video.video_type === 2 && (
-                <>
-                  <img src={passedVideo.defaultthumbnail} alt="" />
-                  <video controls autoPlay className="w-100 rounded">
+            <div className="" style={{ height: "500px" }}>
+              {video.video_type == 1 &&
+                (video.file_path.endsWith(".m3u8") ? (
+                  <StreamVideos streamUrl={video.file_path} />
+                ) : (
+                  <video
+                    // ref={videoRef}
+                    controls
+                    autoPlay
+                    className="w-100 rounded"
+                    style={{ objectFit: "contain", height: "500px" }}
+                  >
                     <source src={video.file_path} type="video/mp4" />
                     Your browser does not support the video tag.
                   </video>
-                </>
+                ))}
+              {video.video_type === 2 && (
+                <div
+                  className="relative flex flex-col justify-center items-center"
+                  style={{
+                    height: "500px",
+                    display: "flex",
+                    flexDirection: "column",
+                    justifyContent: "center",
+                    alignItems: "center",
+                    position: "relative",
+                  }}
+                >
+                  {/* Centered Image */}
+                  <div
+                    style={{
+                      flexGrow: 1, // Makes sure the image takes up remaining space
+                      display: "flex",
+                      justifyContent: "center",
+                      alignItems: "center",
+                      width: "100%",
+                    }}
+                  >
+                    <img
+                      src={passedVideo.defaultthumbnail}
+                      alt="Audio Thumbnail"
+                      className="rounded"
+                      style={{
+                        maxHeight: "300px",
+                        objectFit: "contain",
+                        maxWidth: "100%",
+                      }}
+                    />
+                  </div>
+
+                  {/* Audio Player at Bottom */}
+                  <audio
+                    controls
+                    className="w-100"
+                    style={{
+                      position: "absolute",
+                      bottom: "10px", // Stick to the bottom
+                      left: "50%",
+                      transform: "translateX(-50%)",
+                      width: "80%", // Make it responsive
+                    }}
+                  >
+                    <source src={video.file_path} type="audio/mpeg" />
+                    Your browser does not support the audio element.
+                  </audio>
+                </div>
               )}
+
               {video.video_type === 3 &&
                 (() => {
                   const isSingleImage =
@@ -590,6 +629,18 @@ const VideosPlayer = () => {
                     </div>
                   );
                 })()}
+              {video.video_type === 5 && video.file_path && (
+                <video
+                  // ref={videoRef}
+                  controls
+                  autoPlay
+                  className="w-100 rounded"
+                  style={{ objectFit: "contain", height: "500px" }}
+                >
+                  <source src={video.file_path} type="video/mp4" />
+                  Your browser does not support the video tag.
+                </video>
+              )}
             </div>
 
             {/* Video Title & Views */}
@@ -602,6 +653,7 @@ const VideosPlayer = () => {
                 </p>
               </div>
               <div className="d-flex gap-3">
+                {/* Like Button */}
                 <Tooltip title="Like" arrow disableInteractive>
                   <div
                     style={{
@@ -633,6 +685,7 @@ const VideosPlayer = () => {
                   </div>
                 </Tooltip>
 
+                {/* Dislike Button */}
                 <Tooltip title="Dislike" arrow disableInteractive>
                   <div
                     style={{
@@ -664,6 +717,7 @@ const VideosPlayer = () => {
                   </div>
                 </Tooltip>
 
+                {/* Comment Button */}
                 <Tooltip title="Comment" arrow disableInteractive>
                   <div
                     style={{
@@ -675,7 +729,7 @@ const VideosPlayer = () => {
                     }}
                     onClick={toggleComments}
                   >
-                    <div
+                     <div
                       style={{
                         fontSize: "18px",
                         fontWeight: "bold",
@@ -686,7 +740,7 @@ const VideosPlayer = () => {
                     </div>
                     <CommentIcon
                       sx={{
-                        fontSize: 36, // Bigger icon
+                        fontSize: 36,
                         color: "#263238",
                         "&:hover": { transform: "scale(1.2)" },
                         transition: "all 0.3s ease",
@@ -695,6 +749,7 @@ const VideosPlayer = () => {
                   </div>
                 </Tooltip>
 
+                {/* Share Button */}
                 <Tooltip title="Share" arrow disableInteractive>
                   <div
                     style={{
@@ -707,7 +762,7 @@ const VideosPlayer = () => {
                   >
                     <ScreenShareIcon
                       sx={{
-                        fontSize: 36, // Bigger icon
+                        fontSize: 36,
                         color: "#263238",
                         "&:hover": { transform: "scale(1.2)" },
                         transition: "all 0.3s ease",
@@ -716,6 +771,7 @@ const VideosPlayer = () => {
                   </div>
                 </Tooltip>
 
+                {/* Report Button */}
                 <Tooltip title="Report" arrow disableInteractive>
                   <div
                     style={{
@@ -728,7 +784,7 @@ const VideosPlayer = () => {
                   >
                     <ReportIcon
                       sx={{
-                        fontSize: 36, // Bigger icon
+                        fontSize: 36,
                         color: "#263238",
                         "&:hover": { transform: "scale(1.2)" },
                         transition: "all 0.3s ease",

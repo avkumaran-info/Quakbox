@@ -22,10 +22,19 @@ const AddVideo = () => {
   const [titleText, setTitleText] = useState("");
   const [tags, setTags] = useState("");
   const [progress, setProgress] = useState(0);
-  const location = useLocation();
   const [categoryError, setCategoryError] = useState(false);
 
-  const { videoData } = location.state || {};
+  const location = useLocation();
+  const videoData = location.state?.videoData;
+  const uploadKey = location.state?.uploadKey;
+  const Vtype = location.state?.videoType;
+
+  // const upload_key = location.state?.uploadKey;
+  // console.log(upload_key);
+
+  if (!videoData) {
+    return <p>No video data available.</p>;
+  }
   const [loading, setLoading] = useState(false);
   const [thumbnails, setThumbnails] = useState([]);
   const [selectedThumbnail, setSelectedThumbnail] = useState(null);
@@ -33,132 +42,130 @@ const AddVideo = () => {
   const fileInputRef = useRef(null);
   const [selectedCountryCode, setSelectedCountryCode] = useState("");
   const [file, setFile] = useState(null);
-    const [description, setDescription] = useState('');
+  const [description, setDescription] = useState("");
 
-    const [type, setType] = useState('');
-    const [thumbnail, setThumbnail] = useState(null);
-    const [message, setMessage] = useState('');
+  const [type, setType] = useState("");
+  const [thumbnail, setThumbnail] = useState(null);
+  const [message, setMessage] = useState("");
 
-   // Validation states
-   const [titleError, setTitleError] = useState(false);
-   const [descError, setDescError] = useState(false);
-   const [typeError, setTypeError] = useState(false);
-   const [countryError, setCountryError] = useState(false);   
-   const [thumbnailError, setThumbnailError] = useState(false);   
-    const handleFileChange = (event) => {
-        setFile(event.target.files[0]);
+  // Validation states
+  const [titleError, setTitleError] = useState(false);
+  const [descError, setDescError] = useState(false);
+  const [typeError, setTypeError] = useState(false);
+  const [countryError, setCountryError] = useState(false);
+  const [thumbnailError, setThumbnailError] = useState(false);
+  const handleFileChange = (event) => {
+    setFile(event.target.files[0]);
+  };
+  useEffect(() => {
+    console.log("Updated Title Color:", titleColor);
+  }, [titleColor]);
+
+  const handleThumbnailChange = (event) => {
+    setThumbnail(event.target.files[0]);
+  };
+  const tagsArray = tags.split(",").map((tag) => tag.trim()); // Convert tags string to an array
+
+  const handleSaveChanges = async () => {
+    let isValid = true;
+
+    // Title validation
+    if (!titleText.trim()) {
+      setTitleError(true);
+      isValid = false;
+    } else {
+      setTitleError(false);
+    }
+
+    // Description validation
+    if (!description.trim()) {
+      setDescError(true);
+      isValid = false;
+    } else {
+      setDescError(false);
+    }
+
+    // Privacy type validation
+    if (!type || type === "Select") {
+      setTypeError(true);
+      isValid = false;
+    } else {
+      setTypeError(false);
+    }
+
+    // Country selection validation
+    // if (!selectedCountryCode) {
+    //     setCountryError(true);
+    //     isValid = false;
+    // } else {
+    //     setCountryError(false);
+    // }
+
+    if (!selectedCategory) {
+      setCategoryError(true);
+      isValid = false;
+    } else {
+      setCategoryError(false);
+    }
+
+    if (!selectedThumbnail) {
+      setThumbnailError(true);
+      isValid = false;
+    } else {
+      setThumbnailError(false);
+    }
+    // Stop execution if validation fails
+    if (!isValid) {
+      return;
+    }
+
+    const payload = {
+      file_path: videoData.file_path,
+      title: titleText,
+      description: description,
+      category_id: selectedCategory,
+      type: type,
+      video_type: videoData.video_type, // Ensure it is a number
+      country_code: selectedCountryCode,
+      title_colour: titleColor,
+      title_size: titleSize,
+      defaultthumbnail: selectedThumbnail,
+      tags: tagsArray.join(","), // ✅ Convert array to a string
+      temp_upload: false,
     };
-    useEffect(() => {
-      console.log("Updated Title Color:", titleColor);
-    }, [titleColor]);
 
-    const handleThumbnailChange = (event) => {
-        setThumbnail(event.target.files[0]);
-    };
-    const tagsArray = tags.split(',').map(tag => tag.trim()); // Convert tags string to an array
+    try {
+      setLoading(true);
+      const token = localStorage.getItem("api_token");
 
-    const handleSaveChanges = async () => {
-        let isValid = true;
-    
-        // Title validation
-        if (!titleText.trim()) {
-            setTitleError(true);
-            isValid = false;
-        } else {
-            setTitleError(false);
-        }
-      
-        // Description validation
-        if (!description.trim()) {
-            setDescError(true);
-            isValid = false;
-        } else {
-            setDescError(false);
-        }
-    
-        // Privacy type validation
-        if (!type || type === "Select") {
-            setTypeError(true);
-            isValid = false;
-        } else {
-            setTypeError(false);
-        }
-    
-        // Country selection validation
-        if (!selectedCountryCode) {
-            setCountryError(true);
-            isValid = false;
-        } else {
-            setCountryError(false);
-        }
+      if (!token) {
+        setError("Authorization token not found. Please log in.");
+        return;
+      }
 
-        if (!selectedCategory) {
-          setCategoryError(true);
-          isValid = false;
-        } else {
-          setCategoryError(false);
+      const response = await axios.post(
+        `https://${window.APP_DOMAIN}/admin/api/videos/upload`,
+        payload,
+        {
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
         }
-        
-        if (!selectedThumbnail) {
-          setThumbnailError(true);
-          isValid = false;
-        } else {
-          setThumbnailError(false);
-        }
-        // Stop execution if validation fails
-        if (!isValid) {
-            return;
-        }
-  
-    
-        const payload = {
-            file_path: videoData.filePath,
-            title: titleText,
-            description: description,
-            category_id: selectedCategory,
-            type: type,
-            video_type: videoData.videoType, // Ensure it is a number
-            country_code: selectedCountryCode,
-            title_colour: titleColor,
-            title_size: titleSize,
-            defaultthumbnail: selectedThumbnail,
-            tags: tagsArray.join(","), // ✅ Convert array to a string
-            temp_upload: false,
-        };
-         
-        try {
-            setLoading(true);
-            const token = localStorage.getItem("api_token");
-    
-            if (!token) {
-                setError("Authorization token not found. Please log in.");
-                return;
-            }
-    
-            const response = await axios.post(
-                `https://${window.APP_DOMAIN}/admin/api/videos/upload`,
-                payload,
-                {
-                    headers: {
-                        "Content-Type": "application/json",
-                        Authorization: `Bearer ${token}`,
-                    },
-                }
-            );
-    
-            if (response.data.result) {
-                setMessage("✅ Video uploaded successfully!");
-            } else {
-                setMessage(response.data.message || "❌ Error uploading video");
-            }
-            
-        } catch (error) {
-            console.error("Error:", error);
-            setMessage("❌ Error uploading video");
-        } finally {
-            setLoading(false);
-        }
-    };    
+      );
+
+      if (response.data.result) {
+        setMessage("✅ Video uploaded successfully!");
+      } else {
+        setMessage(response.data.message || "❌ Error uploading video");
+      }
+    } catch (error) {
+      console.error("Error:", error);
+      setMessage("❌ Error uploading video");
+    } finally {
+      setLoading(false);
+    }
+  };
 
   useEffect(() => {
     if (videoData?.thumbnails) {
@@ -173,15 +180,75 @@ const AddVideo = () => {
   };
 
   // Function to handle custom thumbnail upload
-  const handleCustomThumbnailUpload = (event) => {
+  // const handleCustomThumbnailUpload = (event) => {
+  //   const file = event.target.files[0];
+  //   if (file) {
+  //     const imageUrl = URL.createObjectURL(file);
+  //     setCustomThumbnail(imageUrl);
+  //     setSelectedThumbnail(imageUrl); // Set uploaded thumbnail as selected
+  //     console.log("Selected Custom Thumbnail:", file);
+  //   }
+  // };
+
+  const handleCustomThumbnailUpload = async (event) => {
     const file = event.target.files[0];
-    if (file) {
-      const imageUrl = URL.createObjectURL(file);
-      setCustomThumbnail(imageUrl);
-      setSelectedThumbnail(imageUrl); // Set uploaded thumbnail as selected
-      console.log("Selected Custom Thumbnail:", file);
+    if (!file) return;
+
+    try {
+      if (!uploadKey) {
+        alert("Upload key is missing. Please check your configuration.");
+        return;
+      }
+
+      const formData = new FormData();
+      formData.append("upload_key", uploadKey);
+      formData.append("custom_image", file);
+
+      const token = localStorage.getItem("api_token");
+      if (!token) {
+        alert("Authorization token not found. Please log in.");
+        return;
+      }
+
+      // Clear previous thumbnail before uploading
+      setSelectedThumbnail(null);
+      setCustomThumbnail(null);
+      setProgress(0);
+
+      const response = await axios.post(
+        "https://develop.quakbox.com/admin/api/videos/custom-thumbnail",
+        formData,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "multipart/form-data",
+          },
+          onUploadProgress: (progressEvent) => {
+            const percentCompleted = Math.round(
+              (progressEvent.loaded / progressEvent.total) * 100
+            );
+            setProgress(percentCompleted < 99 ? percentCompleted : 99);
+            console.log(`📡 Upload Progress: ${percentCompleted}%`);
+          },
+        }
+      );
+
+      if (response.data.result) {
+        const newThumbnailUrl = `${response.data.custom_thumbnail[0]}`;
+        setSelectedThumbnail(newThumbnailUrl);
+        setCustomThumbnail(newThumbnailUrl);
+        setProgress(100);
+        console.log("🎉 Custom Thumbnail Uploaded! (100%)");
+      } else {
+        alert(response.data.message);
+        setSelectedThumbnail(null);
+      }
+    } catch (error) {
+      console.error("Error uploading custom thumbnail:", error);
+      alert("Upload failed. Please try again.");
+      setSelectedThumbnail(null);
     }
-  };  
+  };
 
   const openFilePicker = () => {
     if (fileInputRef.current) {
@@ -209,7 +276,6 @@ const AddVideo = () => {
     setThumbnailPreview(null); // Clear preview on close
     setThumbnailFile(null);
   };
-
 
   const HandleCancleClick = () => {
     navigate("/upload");
@@ -242,43 +308,47 @@ const AddVideo = () => {
   const [countries, setCountries] = useState([]);
   useEffect(() => {
     const fetchCountries = async () => {
-        try {
-            const token = localStorage.getItem("api_token");
-            if (!token) {
-                setMessage("❌ Authorization token missing. Please log in.");
-                return;
-            }
+      try {
+        // const token = localStorage.getItem("api_token");
+        // if (!token) {
+        //   setMessage("❌ Authorization token missing. Please log in.");
+        //   return;
+        // }
 
-            const response = await axios.get(`https://${window.APP_DOMAIN}/admin/api/get_geo_country`, {
-                headers: { Authorization: `Bearer ${token}` },
-            });
+        // const response = await axios.get(
+        //   "https://develop.quakbox.com/admin/api/get_geo_country",
+        //   {
+        //     headers: { Authorization: `Bearer ${token}` },
+        //   }
+        // );
+        const storedCountries =
+          JSON.parse(localStorage.getItem("geo_country")) || [];
 
-            if (response.status === 200 && response.data.success) {
-                const countryOptions = response.data.geo_countries.map((country) => ({
-                    value: country.code, // Country code
-                    label: (
-                        <div style={{ display: "flex" }}>
-                            <label
-                                alt={country.country_name}
-                            />
-                            {country.country_name}
-                        </div>
-                    ),
-                }));
-                setCountries(countryOptions);
-            } else {
-                setMessage("⚠️ No countries found.");
-            }
-        } catch (error) {
-            setMessage("❌ Error fetching countries. Please try again later.");
-            console.error("Error fetching countries:", error);
-        } finally {
-            setLoading(false);
+        // if (response.status === 200 && response.data.success) {
+        if (storedCountries) {
+          const countryOptions = storedCountries.map((country) => ({
+            value: country.code, // Country code
+            label: (
+              <div style={{ display: "flex" }}>
+                <label alt={country.country_name} />
+                {country.country_name}
+              </div>
+            ),
+          }));
+          setCountries(countryOptions);
+        } else {
+          setMessage("⚠️ No countries found.");
         }
+      } catch (error) {
+        setMessage("❌ Error fetching countries. Please try again later.");
+        console.error("Error fetching countries:", error);
+      } finally {
+        setLoading(false);
+      }
     };
 
     fetchCountries();
-}, []);
+  }, []);
 
   // Toggle the sidebar open/close state
   const toggleSidebar = () => {
@@ -287,7 +357,7 @@ const AddVideo = () => {
   return (
     <>
       <NavBar />
-          {/* Full-page loading overlay */}
+      {/* Full-page loading overlay */}
       {loading && (
         <div style={overlayStyle}>
           <img src={loading2} alt="Loading..." style={gifStyle} />
@@ -304,37 +374,41 @@ const AddVideo = () => {
         <div className="mt-4 p-1">
           <h4>Upload Details</h4>
           <div className="card p-3">
-    <div className="d-flex align-items-center mb-1">
-      {/* Video Thumbnail */}
-      <div
-        className={`bg-secondary video-thumbnail ${videoData.filePath}`}
-        style={{
-          width: "120px",
-          height: "80px",
-          backgroundImage: `url(${videoData.thumbnails && videoData.thumbnails.length > 0 ? videoData.thumbnails[0] : 'placeholder.jpg'})`, // Ensure first thumbnail is used
-          backgroundSize: "cover",
-          backgroundPosition: "center",
-        }}
-      ></div>
-        <div className="ms-3">
-          <strong>
-          {videoData ? videoData.message : "No message available"}
-          </strong>
-             {/* Progress Bar (Fixed at 100%) */}
-           <div className="progress mt-1">
-            <div
-              className="progress-bar"
-              role="progressbar"
-              style={{ width: "100%" }} // Ensure progress bar stays at 100%
-              aria-valuenow={100} // Fixed at 100%
-              aria-valuemin="0"
-              aria-valuemax="100"
-             ></div>
+            <div className="d-flex align-items-center mb-1">
+              {/* Video Thumbnail */}
+              <div
+                className={`bg-secondary video-thumbnail ${videoData.filePath}`}
+                style={{
+                  width: "120px",
+                  height: "80px",
+                  backgroundImage: `url(${
+                    videoData.thumbnails && videoData.thumbnails.length > 0
+                      ? videoData.thumbnails[0]
+                      : "placeholder.jpg"
+                  })`, // Ensure first thumbnail is used
+                  backgroundSize: "cover",
+                  backgroundPosition: "center",
+                }}
+              ></div>
+              <div className="ms-3">
+                <strong>
+                  {videoData ? videoData.message : "No message available"}
+                </strong>
+                {/* Progress Bar (Fixed at 100%) */}
+                <div className="progress mt-1">
+                  <div
+                    className="progress-bar"
+                    role="progressbar"
+                    style={{ width: "100%" }} // Ensure progress bar stays at 100%
+                    aria-valuenow={100} // Fixed at 100%
+                    aria-valuemin="0"
+                    aria-valuemax="100"
+                  ></div>
+                </div>
+              </div>
             </div>
-          </div>
-        </div>           
-          <div className="mb-1">
-             <label className="form-label mb-1">Video Title</label>
+            <div className="mb-1">
+              <label className="form-label mb-1">Video Title</label>
               <input
                 type="text"
                 placeholder="Title"
@@ -343,7 +417,9 @@ const AddVideo = () => {
                 style={{ color: titleColor }}
                 onChange={(e) => setTitleText(e.target.value)}
               />
-              {titleError && <small className="text-danger">Title is required</small>}
+              {titleError && (
+                <small className="text-danger">Title is required</small>
+              )}
             </div>
 
             <div className="mb-1">
@@ -353,7 +429,9 @@ const AddVideo = () => {
                 placeholder="Description"
                 onChange={(e) => setDescription(e.target.value)}
               ></textarea>
-               {descError && <small className="text-danger">Description is required</small>}
+              {descError && (
+                <small className="text-danger">Description is required</small>
+              )}
             </div>
 
             <div className="row">
@@ -365,12 +443,20 @@ const AddVideo = () => {
                 </div> */}
               <div className="col-md-3">
                 <label className="form-label">Privacy Settings</label>
-                <select  className={`form-select ${typeError ? "border-danger" : ""}`} onChange={(e) => setType(e.target.value)} value={type}>
+                <select
+                  className={`form-select ${typeError ? "border-danger" : ""}`}
+                  onChange={(e) => setType(e.target.value)}
+                  value={type}
+                >
                   <option>Select</option>
                   <option>Public</option>
                   <option>Private</option>
                 </select>
-                {typeError && <small className="text-danger">Privacy setting is required</small>}
+                {typeError && (
+                  <small className="text-danger">
+                    Privacy setting is required
+                  </small>
+                )}
               </div>
               {/* <div className="col-md-3">
                 <label className="form-label">Monetize</label>
@@ -422,7 +508,7 @@ const AddVideo = () => {
                 <option>English</option>
               </select>
             </div> */}
-            
+
             <div className="row mt-3">
               {/* Title Size Dropdown */}
               <div className="col-md-6">
@@ -451,155 +537,203 @@ const AddVideo = () => {
                   onChange={(e) => setTitleColor(e.target.value)}
                 />
               </div>
-            
-             
-            {/* Country Code Selection */}
+
+              {/* Country Code Selection */}
               <div className="col-md-6">
                 <label className="form-label">Select Country Code</label>
                 <Select
                   options={countries}
-                  value={countries.find((country) => country.value === selectedCountryCode)}
+                  value={countries.find(
+                    (country) => country.value === selectedCountryCode
+                  )}
                   placeholder="Search country..."
                   isSearchable
-                  onChange={(selectedOption) => setSelectedCountryCode(selectedOption?.value || null)}
+                  onChange={(selectedOption) =>
+                    setSelectedCountryCode(selectedOption?.value || null)
+                  }
                   className={countryError ? "border border-danger" : ""}
                   filterOption={(option, inputValue) =>
                     option.data.label.props.children[1]
                       .toLowerCase()
                       .includes(inputValue.toLowerCase())
-                    }
+                  }
                 />
-                {countryError && <small className="text-danger">Country selection is required</small>}
+                {countryError && (
+                  <small className="text-danger">
+                    Country selection is required
+                  </small>
+                )}
               </div>
-          </div>
-            <div className="mt-4"> 
-                <h6>Category</h6>
-                <div className="row mb-3">
-                  {categories?.map((category) => (
-                    <div key={category.id} className="col-md-2">
-                      <div className="form-check">
-                        <input
-                          className="form-check-input"
-                          type="radio"
-                          name="category"
-                          id={`category-${category.id}`}
-                          value={category.id}
-                          checked={selectedCategory === category.id}
-                          onChange={(e) => {
-                            setSelectedCategory(Number(e.target.value));
-                            setCategoryError(false); // Clear error when a category is selected
-                            }}
-                        />
-                        <label className="form-check-label" htmlFor={`category-${category.id}`}>
-                          {category.name}
-                        </label>
-                      </div>
+            </div>
+            <div className="mt-4">
+              <h6>Category</h6>
+              <div className="row mb-3">
+                {categories?.map((category) => (
+                  <div key={category.id} className="col-md-2">
+                    <div className="form-check">
+                      <input
+                        className="form-check-input"
+                        type="radio"
+                        name="category"
+                        id={`category-${category.id}`}
+                        value={category.id}
+                        checked={selectedCategory === category.id}
+                        onChange={(e) => {
+                          setSelectedCategory(Number(e.target.value));
+                          setCategoryError(false); // Clear error when a category is selected
+                        }}
+                      />
+                      <label
+                        className="form-check-label"
+                        htmlFor={`category-${category.id}`}
+                      >
+                        {category.name}
+                      </label>
                     </div>
-                  ))}
-                </div>
-                {categoryError && <small className="text-danger">Category selection is required</small>}
-            {/* Thumbnail Section */}
-            <div className="mt-1">
-              <h6>Thumbnails</h6>
+                  </div>
+                ))}
+              </div>
+              {categoryError && (
+                <small className="text-danger">
+                  Category selection is required
+                </small>
+              )}
+              {/* Thumbnail Section */}
               <div className="mt-1">
-                <div className="row g-4">
-                  {Array.isArray(thumbnails) && thumbnails.length > 0 ? (
-                    ["mp3", "png", "jpeg", "jpg", "gif"].includes(videoType.toLowerCase()) ? (
-                      // ✅ Show only the first thumbnail for audio and image files
-                      <div className="col-md-3">
-                        <div
-                          className={`card ${selectedThumbnail === thumbnails[0] ? "border-primary" : ""}`}
-                          style={{
-                            cursor: "pointer",
-                            boxShadow: selectedThumbnail === thumbnails[0] ? "0 0 10px rgba(0, 123, 255, 0.5)" : "",
-                          }}
-                          onClick={() => handleThumbnailClick(thumbnails[0])}
-                        >
-                          <img
-                            src={thumbnails[0]}
-                            className="card-img-top"
-                            alt="Thumbnail"
-                            style={{ width: "100%", height: "150px", objectFit: "cover" }}
-                          />
-                        </div>
-                      </div>
-                    ) : (
-                      // ✅ Show up to 4 thumbnails for videos
-                      thumbnails.slice(0, 4).map((thumbnail, index) => (
-                        <div key={index} className="col-md-3">
+                <h6>Thumbnails</h6>
+                <div className="mt-1">
+                  <div className="row g-4">
+                    {Array.isArray(thumbnails) && thumbnails.length > 0 ? (
+                      ["mp3", "png", "jpeg", "jpg", "gif"].includes(
+                        videoType.toLowerCase()
+                      ) ? (
+                        // ✅ Show only the first thumbnail for audio and image files
+                        <div className="col-md-3">
                           <div
-                            className={`card ${selectedThumbnail === thumbnail ? "border-primary" : ""}`}
+                            className={`card ${
+                              selectedThumbnail === thumbnails[0]
+                                ? "border-primary"
+                                : ""
+                            }`}
                             style={{
                               cursor: "pointer",
-                              boxShadow: selectedThumbnail === thumbnail ? "0 0 10px rgba(0, 123, 255, 0.5)" : "",
+                              boxShadow:
+                                selectedThumbnail === thumbnails[0]
+                                  ? "0 0 10px rgba(0, 123, 255, 0.5)"
+                                  : "",
                             }}
-                            onClick={() => handleThumbnailClick(thumbnail)}
+                            onClick={() => handleThumbnailClick(thumbnails[0])}
                           >
                             <img
-                              src={thumbnail}
+                              src={thumbnails[0]}
                               className="card-img-top"
-                              alt={`Thumbnail ${index + 1}`}
-                              style={{ width: "100%", height: "150px", objectFit: "cover" }}
+                              alt="Thumbnail"
+                              style={{
+                                width: "100%",
+                                height: "150px",
+                                objectFit: "contain",
+                              }}
                             />
                           </div>
                         </div>
-                      ))
-                    )
-                  ) : (
-                    <p>No thumbnails available.</p>
-                  )}
-                </div>
-              </div>
-
-              {/* Validation Message for Thumbnail Selection */}
-              {thumbnailError && <small className="text-danger">Please select a thumbnail</small>}
-
-              {/* Custom Thumbnail Upload Button */}
-              <div className="text-center mt-2 mb-3">
-                <button className="btn btn-outline-secondary btn-lg" onClick={openFilePicker}>
-                  Custom Thumbnail
-                </button>
-              </div>
-
-              {/* Hidden File Input */}
-              <input
-                type="file"
-                accept="image/*"
-                ref={fileInputRef}
-                style={{ display: 'none' }}
-                onChange={handleCustomThumbnailUpload}
-              />
-
-              {/* Display Selected Thumbnail */}
-              {selectedThumbnail && (
-                <div className="mt-3 d-flex flex-column align-items-center">
-                  <h6 className="mb-2">Selected Thumbnail</h6>
-                  <div
-                    style={{
-                      width: "400px",
-                      height: "250px",
-                      border: "2px solid #000",
-                      display: "flex",
-                      justifyContent: "center",
-                      alignItems: "center",
-                      overflow: "hidden",
-                      borderRadius: "10px",
-                    }}
-                  >
-                    <img
-                      src={selectedThumbnail}
-                      alt="Selected Thumbnail"
-                      style={{
-                        width: "100%",
-                        height: "100%",
-                        objectFit: "cover",
-                      }}
-                    />
+                      ) : (
+                        // ✅ Show up to 4 thumbnails for videos
+                        thumbnails.slice(0, 4).map((thumbnail, index) => (
+                          <div key={index} className="col-md-3">
+                            <div
+                              className={`card ${
+                                selectedThumbnail === thumbnail
+                                  ? "border-primary"
+                                  : ""
+                              }`}
+                              style={{
+                                cursor: "pointer",
+                                boxShadow:
+                                  selectedThumbnail === thumbnail
+                                    ? "0 0 10px rgba(0, 123, 255, 0.5)"
+                                    : "",
+                              }}
+                              onClick={() => handleThumbnailClick(thumbnail)}
+                            >
+                              <img
+                                src={thumbnail}
+                                className="card-img-top"
+                                alt={`Thumbnail ${index + 1}`}
+                                style={{
+                                  width: "100%",
+                                  height: "150px",
+                                  objectFit: "cover",
+                                }}
+                              />
+                            </div>
+                          </div>
+                        ))
+                      )
+                    ) : (
+                      <p>No thumbnails available.</p>
+                    )}
                   </div>
                 </div>
-              )}
-            </div>
-    
+
+                {/* Validation Message for Thumbnail Selection */}
+                {thumbnailError && (
+                  <small className="text-danger">
+                    Please select a thumbnail
+                  </small>
+                )}
+
+                {/* Custom Thumbnail Upload Button */}
+                {(Vtype === 1 || Vtype === 2 || Vtype === 5) && (
+                  <div className="text-center mt-2 mb-3">
+                    <button
+                      className="btn btn-outline-secondary btn-lg"
+                      onClick={openFilePicker}
+                    >
+                      Custom Thumbnail
+                    </button>
+                  </div>
+                )}
+
+                {/* Hidden File Input */}
+                <input
+                  type="file"
+                  accept="image/*"
+                  ref={fileInputRef}
+                  style={{ display: "none" }}
+                  onChange={handleCustomThumbnailUpload}
+                />
+
+                {/* Display Selected Thumbnail */}
+                {selectedThumbnail && (
+                  <div className="mt-3 d-flex flex-column align-items-center">
+                    <h6 className="mb-2">Selected Thumbnail</h6>
+                    <div
+                      style={{
+                        width: "400px",
+                        height: "250px",
+                        border: "2px solid #000",
+                        display: "flex",
+                        justifyContent: "center",
+                        alignItems: "center",
+                        overflow: "hidden",
+                        borderRadius: "10px",
+                        objectFit: "contain",
+                      }}
+                    >
+                      <img
+                        src={selectedThumbnail}
+                        alt="Selected Thumbnail"
+                        style={{
+                          width: "100%",
+                          height: "100%",
+                          objectFit: "cover",
+                        }}
+                      />
+                    </div>
+                  </div>
+                )}
+              </div>
+
               {isPopupOpen && (
                 <div
                   className="modal fade show d-block"
@@ -620,7 +754,7 @@ const AddVideo = () => {
                     className="modal-dialog modal-dialog-centered"
                     style={{
                       maxWidth: "500px",
-                      height:"150px",
+                      height: "150px",
                       background: "#222",
                       borderRadius: "10px",
                       color: "#fff",
@@ -725,55 +859,57 @@ const AddVideo = () => {
                 </div>
               )}
 
-           {/* ✅ Access Restriction Popup */}
-                {message && (
-                  <>
-                    {/* Overlay to disable background interaction */}
-                    <div
-                      style={{
-                        position: "fixed",
-                        top: 0,
-                        left: 0,
-                        width: "100vw",
-                        height: "100vh",
-                        backgroundColor: "rgba(0, 0, 0, 0.5)", // Semi-transparent black
-                        zIndex: 9999,
-                        pointerEvents: "auto",
-                      }}
-                    />
+              {/* ✅ Access Restriction Popup */}
+              {message && (
+                <>
+                  {/* Overlay to disable background interaction */}
+                  <div
+                    style={{
+                      position: "fixed",
+                      top: 0,
+                      left: 0,
+                      width: "100vw",
+                      height: "100vh",
+                      backgroundColor: "rgba(0, 0, 0, 0.5)", // Semi-transparent black
+                      zIndex: 9999,
+                      pointerEvents: "auto",
+                    }}
+                  />
 
-                    {/* Restriction Message Modal */}
-                    <div
-                      style={{
-                        position: "fixed",
-                        top: "50%",
-                        left: "50%",
-                        transform: "translate(-50%, -50%)",
-                        backgroundColor: "white", 
-                        padding: "20px",
-                        borderRadius: "8px",
-                        boxShadow: "0px 4px 10px rgba(0, 0, 0, 0.2)",
-                        zIndex: 10000,
-                        textAlign: "center",
-                        maxWidth: "400px",
+                  {/* Restriction Message Modal */}
+                  <div
+                    style={{
+                      position: "fixed",
+                      top: "50%",
+                      left: "50%",
+                      transform: "translate(-50%, -50%)",
+                      backgroundColor: "white",
+                      padding: "20px",
+                      borderRadius: "8px",
+                      boxShadow: "0px 4px 10px rgba(0, 0, 0, 0.2)",
+                      zIndex: 10000,
+                      textAlign: "center",
+                      maxWidth: "400px",
+                    }}
+                  >
+                    <p>{message}</p>
+                    <button
+                      onClick={() => {
+                        setMessage("");
+                        navigate("/qcast");
                       }}
+                      className="btn btn-secondary"
                     >
-                      <p>{message}</p> 
-                      <button
-                        onClick={() => {
-                          setMessage("");
-                          navigate("/qcast");
-                        }}
-                        className="btn btn-secondary"
-                      >
-                        OK
-                      </button>
-                    </div>
-                  </>
-                )}
+                      OK
+                    </button>
+                  </div>
+                </>
+              )}
 
-
-              <div className="row mb-3 d-flex justify-content-center" style={{ marginTop :"20px" }}>
+              <div
+                className="row mb-3 d-flex justify-content-center"
+                style={{ marginTop: "20px" }}
+              >
                 <div className="col-md-4 d-flex justify-content-between">
                   <button
                     className="btn btn-outline-danger btn-lg w-50 me-2"
@@ -781,11 +917,11 @@ const AddVideo = () => {
                   >
                     Cancel
                   </button>
-                  <button 
-                  className="btn btn-outline-primary btn-lg w-50 ms-2" 
-                  onClick={handleSaveChanges} 
+                  <button
+                    className="btn btn-outline-primary btn-lg w-50 ms-2"
+                    onClick={handleSaveChanges}
                   >
-                   Save Changes
+                    Save Changes
                   </button>
                 </div>
               </div>

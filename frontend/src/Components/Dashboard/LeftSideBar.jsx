@@ -5,15 +5,11 @@ import user2 from "../../assets/images/Rigth side property/user2.jpeg";
 import user from "../../assets/images/Rigth side property/user.png";
 import { Box, Typography } from "@mui/material";
 import { FaThumbsUp, FaThumbsDown, FaComment, FaShare } from "react-icons/fa";
-
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
 const LeftSidebar = ({ countryCode, flag, countryName }) => {
   // const videos = [video4, video1, video2, video3];
-  const [videos, setVideos] = useState([]);
-  const [currentVideoIndex, setCurrentVideoIndex] = useState(0);
   const [isHovered, setIsHovered] = useState(false);
-  const [isPlaying, setIsPlaying] = useState(false);
   const [volume, setVolume] = useState(1); // Default volume is 100%
   const [isLoading, setIsLoading] = useState(true); // Loading state for video
   const [navbarHeight, setNavbarHeight] = useState(56);
@@ -24,11 +20,77 @@ const LeftSidebar = ({ countryCode, flag, countryName }) => {
   const [title, setTitle] = useState("");
   const [allowChat, setAllowChat] = useState(false);
   const [userId, setUserId] = useState("");
+  const [videos, setVideos] = useState([]); // Stores popular video IDs
+  const [currentVideo, setCurrentVideo] = useState(null); // Stores the current video URL
+  const [currentVideoIndex, setCurrentVideoIndex] = useState(0);
+  const [isPlaying, setIsPlaying] = useState(false);
   const videoIds = [48]; // Allowed video IDs
 
   const navigate = useNavigate();
 
-  const fetchVideos = async () => {
+  // const fetchVideos = async () => {
+  //   try {
+  //     const token = localStorage.getItem("api_token");
+  //     if (!token) {
+  //       console.error("❌ Authorization token missing. Please log in.");
+  //       return;
+  //     }
+
+  //     // 🔹 Step 1: Fetch allowed video IDs from the 'dashboard/popular' API
+  //     const allowedResponse = await axios.get(
+  //       "https://develop.quakbox.com/admin/api/dashboard/popular",
+  //       {
+  //         headers: { Authorization: `Bearer ${token}` },
+  //       }
+  //     );
+
+  //     // console.log(allowedResponse);
+
+  //     const allowedVideoIds = allowedResponse.data.allowed_video_ids; // ✅ Extract video IDs
+  //     if (!allowedVideoIds || allowedVideoIds.length === 0) {
+  //       console.warn("⚠️ No popular videos found.");
+  //       setVideos([]); // Set empty videos if none found
+  //       return;
+  //     }
+
+  //     // 🔹 Step 2: Fetch details for each allowed video
+  //     const fetchedVideos = await Promise.all(
+  //       allowedVideoIds.map(async (id) => {
+  //         try {
+  //           const response = await axios.get(
+  //             `https://develop.quakbox.com/admin/api/videos/${id}/show`,
+  //             {
+  //               headers: { Authorization: `Bearer ${token}` },
+  //             }
+  //           );
+  //           // console.log(response.data.data);
+
+  //           return response.data.data.file_path; // ✅ Extract video URL
+  //         } catch (error) {
+  //           console.error(`Error fetching video ${id}:`, error.message);
+  //           return null; // Return null if error occurs for a specific video
+  //         }
+  //       })
+  //     );
+
+  //     // 🔹 Step 3: Filter out failed video fetches (null values)
+  //     setVideos(fetchedVideos.filter((video) => video !== null));
+  //     // console.log(videos);
+  //   } catch (error) {
+  //     console.error(
+  //       "❌ Error fetching allowed videos:",
+  //       error.response?.data || error.message
+  //     );
+  //   }
+  // };
+
+  // useEffect(() => {
+  //   fetchVideos();
+  // }, []);
+
+  // Function to handle icon click
+
+  const fetchPopularVideos = async () => {
     try {
       const token = localStorage.getItem("api_token");
       if (!token) {
@@ -36,59 +98,68 @@ const LeftSidebar = ({ countryCode, flag, countryName }) => {
         return;
       }
 
-      // 🔹 Step 1: Fetch allowed video IDs from the 'dashboard/popular' API
-      const allowedResponse = await axios.get(
+      const response = await axios.get(
         `https://${window.APP_DOMAIN}/admin/api/dashboard/popular`,
         {
           headers: { Authorization: `Bearer ${token}` },
         }
       );
 
-      // console.log(allowedResponse);
-
-      const allowedVideoIds = allowedResponse.data.allowed_video_ids; // ✅ Extract video IDs
+      const allowedVideoIds = response.data.allowed_video_ids;
       if (!allowedVideoIds || allowedVideoIds.length === 0) {
         console.warn("⚠️ No popular videos found.");
-        setVideos([]); // Set empty videos if none found
         return;
       }
 
-      // 🔹 Step 2: Fetch details for each allowed video
-      const fetchedVideos = await Promise.all(
-        allowedVideoIds.map(async (id) => {
-          try {
-            const response = await axios.get(
-              `https://${window.APP_DOMAIN}/admin/api/videos/${id}/show`,
-              {
-                headers: { Authorization: `Bearer ${token}` },
-              }
-            );
-            // console.log(response.data.data);
-
-            return response.data.data.file_path; // ✅ Extract video URL
-          } catch (error) {
-            console.error(`Error fetching video ${id}:`, error.message);
-            return null; // Return null if error occurs for a specific video
-          }
-        })
-      );
-
-      // 🔹 Step 3: Filter out failed video fetches (null values)
-      setVideos(fetchedVideos.filter((video) => video !== null));
-      // console.log(videos);
+      setVideos(allowedVideoIds); // Store video IDs
+      fetchVideoById(allowedVideoIds[0]); // Fetch only the first video
     } catch (error) {
-      console.error(
-        "❌ Error fetching allowed videos:",
-        error.response?.data || error.message
-      );
+      console.error("❌ Error fetching popular videos:", error.message);
     }
   };
 
+  const fetchVideoById = async (videoId) => {
+    try {
+      const token = localStorage.getItem("api_token");
+      if (!token) {
+        console.error("❌ Authorization token missing. Please log in.");
+        return;
+      }
+
+      const response = await axios.get(
+        `https://${window.APP_DOMAIN}/admin/api/videos/${id}/show`,
+        {
+          headers: { Authorization: `Bearer ${token}` },
+        }
+      );
+
+      setCurrentVideo(response.data.data.file_path); // Set the current video URL
+      console.log(response.data.data.file_path);
+    } catch (error) {
+      console.error(`Error fetching video ${videoId}:`, error.message);
+    }
+  };
+
+  const handleArrowClick = (direction) => {
+    if (!videos.length) return;
+
+    let newIndex;
+    if (direction === "left") {
+      newIndex =
+        currentVideoIndex > 0 ? currentVideoIndex - 1 : videos.length - 1;
+    } else {
+      newIndex = (currentVideoIndex + 1) % videos.length;
+    }
+
+    setCurrentVideoIndex(newIndex);
+    fetchVideoById(videos[newIndex]); // Fetch video dynamically when arrow is clicked
+    setIsPlaying(true);
+  };
+
   useEffect(() => {
-    fetchVideos();
+    fetchPopularVideos();
   }, []);
 
-  // Function to handle icon click
   const handleIconClick = (privacy, icon) => {
     setSelectedPrivacy(privacy);
     setSelectIcon(icon);
@@ -199,16 +270,16 @@ const LeftSidebar = ({ countryCode, flag, countryName }) => {
     },
   ];
 
-  const handleArrowClick = (direction) => {
-    if (direction === "left") {
-      setCurrentVideoIndex(
-        currentVideoIndex > 0 ? currentVideoIndex - 1 : videos.length - 1
-      );
-    } else if (direction === "right") {
-      setCurrentVideoIndex((currentVideoIndex + 1) % videos.length);
-    }
-    setIsPlaying(true); // Automatically play the next video
-  };
+  // const handleArrowClick = (direction) => {
+  //   if (direction === "left") {
+  //     setCurrentVideoIndex(
+  //       currentVideoIndex > 0 ? currentVideoIndex - 1 : videos.length - 1
+  //     );
+  //   } else if (direction === "right") {
+  //     setCurrentVideoIndex((currentVideoIndex + 1) % videos.length);
+  //   }
+  //   setIsPlaying(true); // Automatically play the next video
+  // };
 
   const togglePlayPause = () => {
     if (videoRef.current) {
@@ -450,7 +521,7 @@ const LeftSidebar = ({ countryCode, flag, countryName }) => {
             >
               <video
                 ref={videoRef}
-                src={videos[currentVideoIndex]}
+                src={currentVideo} // ✅ Use dynamically fetched video
                 width="100%"
                 height="100%"
                 controls
@@ -473,9 +544,10 @@ const LeftSidebar = ({ countryCode, flag, countryName }) => {
                   }
                 }}
               >
-                <source src={videos[currentVideoIndex]} type="video/mp4" />
+                {currentVideo && <source src={currentVideo} type="video/mp4" />}
                 Your browser does not support the video tag.
               </video>
+              {/* <VideoPlay streamUrl={currentVideo}/> */}
 
               {/* Loading Spinner */}
               {isLoading && (
@@ -509,93 +581,93 @@ const LeftSidebar = ({ countryCode, flag, countryName }) => {
               {/* Video Controls */}
               {/* Video Controls 1 */}
               {/* {isHovered && (
-              <div
-                style={{
-                  position: "absolute",
-                  top: "10px",
-                  left: "10px",
-                  zIndex: "10", // Ensure controls are above video
-                  display: "flex",
-                  justifyContent: "space-between",
-                  width: "calc(100% - 20px)",
-                }}
-              >
-               
-              </div>
-            )} */}
+             <div
+               style={{
+                 position: "absolute",
+                 top: "10px",
+                 left: "10px",
+                 zIndex: "10", // Ensure controls are above video
+                 display: "flex",
+                 justifyContent: "space-between",
+                 width: "calc(100% - 20px)",
+               }}
+             >
+              
+             </div>
+           )} */}
               {/* Video Controls 2 */}
               {/* {isHovered && (
-                   <div
-                     style={{
-                       position: "absolute",
-                       top: "10px",
-                       left: "10px",
-                       zIndex: "10",
-                       display: "flex",
-                       justifyContent: "space-between",
-                       gap: "10px",
-                       width: "calc(100% - 20px)",
-                     }}
-                   >
-                     <button
-                       onClick={togglePlayPause}
-                       style={{
-                         backgroundColor: "rgba(0, 0, 0, 0.7)",
-                         color: "white",
-                         border: "none",
-                         borderRadius: "50%",
-                         padding: "10px",
-                         cursor: "pointer",
-                       }}
-                     >
-                       {isPlaying ? <FaPause /> : <FaPlay />}
-                     </button>
-                     <div
-                       style={{
-                         display: "flex",
-                         justifyContent: "center",
-                         alignItems: "center",
-                       }}
-                     >
-                       <input
-                         type="range"
-                         min="0"
-                         max="1"
-                         step="0.1"
-                         value={volume}
-                         onChange={(e) => {
-                           const newVolume = parseFloat(e.target.value);
-                           setVolume(newVolume);
-                           if (videoRef.current) {
-                             videoRef.current.volume = newVolume; 
-                           }
-                         }}
-                         style={{
-                           width: "100px",
-                           cursor: "pointer",
-                           background: "#ccc",
-                           appearance: "none",
-                           height: "5px",
-                           borderRadius: "5px",
-                           transition: "opacity 0.3s",
-                         }}
-                       />
-                       <button
-                         onClick={handleVolumeToggle}
-                         style={{
-                           backgroundColor: "rgba(0, 0, 0, 0.7)",
-                           color: "white",
-                           border: "none",
-                           borderRadius: "50%",
-                           padding: "10px",
-                           cursor: "pointer",
-                         }}
-                       >
-                         {volume === 0 ? <FaVolumeMute /> : <FaVolumeUp />}
-                       </button>
-                     </div>
-                   </div>
-                 )} */}
+                  <div
+                    style={{
+                      position: "absolute",
+                      top: "10px",
+                      left: "10px",
+                      zIndex: "10",
+                      display: "flex",
+                      justifyContent: "space-between",
+                      gap: "10px",
+                      width: "calc(100% - 20px)",
+                    }}
+                  >
+                    <button
+                      onClick={togglePlayPause}
+                      style={{
+                        backgroundColor: "rgba(0, 0, 0, 0.7)",
+                        color: "white",
+                        border: "none",
+                        borderRadius: "50%",
+                        padding: "10px",
+                        cursor: "pointer",
+                      }}
+                    >
+                      {isPlaying ? <FaPause /> : <FaPlay />}
+                    </button>
+                    <div
+                      style={{
+                        display: "flex",
+                        justifyContent: "center",
+                        alignItems: "center",
+                      }}
+                    >
+                      <input
+                        type="range"
+                        min="0"
+                        max="1"
+                        step="0.1"
+                        value={volume}
+                        onChange={(e) => {
+                          const newVolume = parseFloat(e.target.value);
+                          setVolume(newVolume);
+                          if (videoRef.current) {
+                            videoRef.current.volume = newVolume; 
+                          }
+                        }}
+                        style={{
+                          width: "100px",
+                          cursor: "pointer",
+                          background: "#ccc",
+                          appearance: "none",
+                          height: "5px",
+                          borderRadius: "5px",
+                          transition: "opacity 0.3s",
+                        }}
+                      />
+                      <button
+                        onClick={handleVolumeToggle}
+                        style={{
+                          backgroundColor: "rgba(0, 0, 0, 0.7)",
+                          color: "white",
+                          border: "none",
+                          borderRadius: "50%",
+                          padding: "10px",
+                          cursor: "pointer",
+                        }}
+                      >
+                        {volume === 0 ? <FaVolumeMute /> : <FaVolumeUp />}
+                      </button>
+                    </div>
+                  </div>
+                )} */}
               {/* Video Controls end */}
               {/* Icons section */}
               {isHovered && (
@@ -687,28 +759,28 @@ const LeftSidebar = ({ countryCode, flag, countryName }) => {
               {/* Left Arrow Button */}
 
               {/* <button
-                   style={{
-                     position: "absolute",
-                     left: "70px",
-                     top: "40%", // Center vertically
-                     transform: "translateY(-50%)", // Align center
-                     // transform: "translateY(0)",
-                     // backgroundColor: "rgba(0, 0, 0, 0.7)",
-                     // color: "#FFFFFF",
-                     fontSize: "40px",
-                     // fontWeight: "bold",
-                     // padding: "12px 16px",
-                     borderRadius: "50%",
-                     cursor: "pointer",
-                     // boxShadow: "0 4px 8px rgba(0, 0, 0, 0.4)",
-                     transition: "all 0.3s ease-in-out",
-                     border: "none",
-                     zIndex: "5",
-                   }}
-                   onClick={() => handleArrowClick("left")}
-                 >
-                   ← 
-                 </button> */}
+                  style={{
+                    position: "absolute",
+                    left: "70px",
+                    top: "40%", // Center vertically
+                    transform: "translateY(-50%)", // Align center
+                    // transform: "translateY(0)",
+                    // backgroundColor: "rgba(0, 0, 0, 0.7)",
+                    // color: "#FFFFFF",
+                    fontSize: "40px",
+                    // fontWeight: "bold",
+                    // padding: "12px 16px",
+                    borderRadius: "50%",
+                    cursor: "pointer",
+                    // boxShadow: "0 4px 8px rgba(0, 0, 0, 0.4)",
+                    transition: "all 0.3s ease-in-out",
+                    border: "none",
+                    zIndex: "5",
+                  }}
+                  onClick={() => handleArrowClick("left")}
+                >
+                  ← 
+                </button> */}
               {isHovered && (
                 <button
                   style={{
@@ -738,28 +810,28 @@ const LeftSidebar = ({ countryCode, flag, countryName }) => {
               {/* Right Arrow Button */}
               {/* {isHovered && ( */}
               {/* <button
-                   style={{
-                     position: "absolute",
-                     right: "70px",
-                     top: "40%", // Center vertically
-                     transform: "translateY(-50%)", // Align center
-                     // transform: "translateY(0)",
-                     backgroundColor: "rgba(0, 0, 0, 0.7)",
-                     color: "#FFFFFF",
-                     fontSize: "24px",
-                     fontWeight: "bold",
-                     padding: "12px 16px",
-                     borderRadius: "50%",
-                     cursor: "pointer",
-                     boxShadow: "0 4px 8px rgba(0, 0, 0, 0.4)",
-                     transition: "all 0.3s ease-in-out",
-                     border: "none",
-                     zIndex: "5",
-                   }}
-                   onClick={() => handleArrowClick("right")}
-                 >
-                   → 
-                 </button> */}
+                  style={{
+                    position: "absolute",
+                    right: "70px",
+                    top: "40%", // Center vertically
+                    transform: "translateY(-50%)", // Align center
+                    // transform: "translateY(0)",
+                    backgroundColor: "rgba(0, 0, 0, 0.7)",
+                    color: "#FFFFFF",
+                    fontSize: "24px",
+                    fontWeight: "bold",
+                    padding: "12px 16px",
+                    borderRadius: "50%",
+                    cursor: "pointer",
+                    boxShadow: "0 4px 8px rgba(0, 0, 0, 0.4)",
+                    transition: "all 0.3s ease-in-out",
+                    border: "none",
+                    zIndex: "5",
+                  }}
+                  onClick={() => handleArrowClick("right")}
+                >
+                  → 
+                </button> */}
               {isHovered && (
                 <button
                   style={{
