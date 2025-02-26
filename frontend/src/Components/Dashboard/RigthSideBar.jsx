@@ -229,18 +229,6 @@ const RightSidebar = ({ countryCode, countryName }) => {
     indexOfFirstComment,
     indexOfLastComment
   );
-  const flagImagesRaw = import.meta.glob("../../assets/flags/*.png", { eager: true });
-
-  const flagImages = Object.fromEntries(
-    Object.entries(flagImagesRaw).map(([path, module]) => {
-      const fileName = path.split("/").pop().replace(".png", ""); // Extract country code
-      return [fileName, module.default]; // Store as { "BE": "/assets/flags/BE.png" }
-    })
-  );
-
-  const getFlagImage = (code) => {
-    return flagImages[code] || flagImages["default"];
-  };
 
   return (
     <>
@@ -268,7 +256,7 @@ const RightSidebar = ({ countryCode, countryName }) => {
                 {/* Fixed Post Content */}
                 <div className="post-preview" style={{ flexShrink: 0 }}>
                   <img
-                    src={getFlagImage(countryCode)}
+                    src={`/src/assets/flags/${countryCode}.png`}
                     alt="Post image"
                     className="img-fluid rounded w-100"
                     style={{
@@ -424,7 +412,7 @@ const RightSidebar = ({ countryCode, countryName }) => {
               ) : (
                 <>
                   <img
-                    src={getFlagImage(countryCode)}
+                    src={`/src/assets/flags/${countryCode}.png`}
                     alt={countryName}
                     className="img-fluid"
                     style={{

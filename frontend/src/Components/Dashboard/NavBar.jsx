@@ -87,20 +87,20 @@ const NavBar = () => {
     };
   }, []);
 
-  const flagImagesRaw = import.meta.glob("../../assets/flags/*.png", { eager: true });
+//   const flagImagesRaw = import.meta.glob("../../assets/flags/*.png", { eager: true });
 
-const flagImages = Object.fromEntries(
-  Object.entries(flagImagesRaw).map(([path, module]) => {
-    const fileName = path.split("/").pop().replace(".png", ""); // Extract country code
-    return [fileName, module.default]; // Store as { "BE": "/assets/flags/BE.png" }
-  })
-);
+// const flagImages = Object.fromEntries(
+//   Object.entries(flagImagesRaw).map(([path, module]) => {
+//     const fileName = path.split("/").pop().replace(".png", ""); // Extract country code
+//     return [fileName, module.default]; // Store as { "BE": "/assets/flags/BE.png" }
+//   })
+// );
 
-const getFlagImage = (code) => {
-  const image = flagImages[code] || flagImages["default"];
-  // console.log("Flag source for", code, "is", image);
-  return image;
-};
+// const getFlagImage = (code) => {
+//   const image = flagImages[code] || flagImages["default"];
+//   // console.log("Flag source for", code, "is", image);
+//   return image;
+// };
 
   // Filter and sort countries
   const filteredCountries = countries
@@ -202,7 +202,7 @@ const getFlagImage = (code) => {
                   }}
                 >
                   <img
-                    src={getFlagImage(country.code)}
+                    src={`/src/assets/flags/${country.code}.png`}
                     alt={country.country_name}
                     style={{
                       width: "40px",
@@ -303,7 +303,7 @@ const getFlagImage = (code) => {
                         }}
                       >
                         <img
-                          src={getFlagImage(country.code)}
+                          src={`/src/assets/flags/${country.code}.png`}
                           alt={country.country_name}
                           style={{
                             width: "65px",
@@ -639,7 +639,7 @@ const getFlagImage = (code) => {
                             }}
                           >
                             <img
-                              src={countryCode ? getFlagImage(countryCode) : "default-flag.png"}
+                              src={countryCode ? `/src/assets/flags/${countryCode}.png` : "default-flag.png"}
                               alt={matchedCountry.country_name}
                               className="card-img-top img-fluid"
                               style={{
