@@ -58,20 +58,6 @@ const FanCountry = () => {
     }
   };
   
-const flagImagesRaw = import.meta.glob("../assets/flags/*.png", { eager: true });
-
-
-const flagImages = Object.fromEntries(
-  Object.entries(flagImagesRaw).map(([path, module]) => {
-    const fileName = path.split("/").pop().replace(".png", ""); // Extract country code
-    return [fileName, module.default]; // Store as { "BE": "/assets/flags/BE.png" }
-  })
-);
-const getFlagImage = (code) => {
-  const image = flagImages[code] || flagImages["default"];
-  console.log("Flag source for", code, "is", image);
-  return image;
-};
   const fetchAllCountries = async () => {
     setLoading(true);
     try {
@@ -84,8 +70,8 @@ const getFlagImage = (code) => {
 
       const data = storedCountries.map((country) => ({
         name: country.country_name,
-        flag: getFlagImage(country.code), // Ensure code is mapped correctly
         code: country.code?.toUpperCase() || "", // Handle missing/undefined values
+        flag: `/src/assets/flags/${country.code}.png`,
         isFan: false,
         isFavourite: false,
       })); 
@@ -413,7 +399,7 @@ const getFlagImage = (code) => {
                     key={index}
                   >
                     <img
-                      src={getFlagImage(country.code)}
+                      src={`/src/assets/flags/${country.code}.png`}
                       className="card-img-top"
                       alt={country.name}
                       style={{
@@ -553,7 +539,7 @@ const getFlagImage = (code) => {
                       key={index}
                     >
                       <img
-                        src={getFlagImage(country.code)}
+                        src={`/src/assets/flags/${country.code}.png`}
                         className="card-img-top"
                         alt={country.name}
                         style={{
@@ -730,7 +716,7 @@ const getFlagImage = (code) => {
                     key={index}
                   >
                     <img
-                      src={getFlagImage(country.code)}
+                      src={`/src/assets/flags/${country.code}.png`}
                       className="card-img-top"
                       alt={country.name}
                       style={{
