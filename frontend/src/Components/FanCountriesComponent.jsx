@@ -117,7 +117,7 @@ const FanCountriesComponent = () => {
       const data = response.data.map((country) => ({
         name: country.name.common,
         code: country.code?.toUpperCase() || "", // Handle missing/undefined values
-        flag: `/src/assets/flags/${country.code}.png`,
+        flag: `/assets/flags/${country.code}.png`,
         isFan: false,
         isFavourite: false,
       }));
@@ -166,7 +166,7 @@ const FanCountriesComponent = () => {
       });
       const uniqueCountries = response.data.favourite_country.map(
         (country) => ({
-          code: country.code.toLowerCase(),
+          code: country.code,
           isFan: true,
           isFavourite: country.favourite_country === "1",
           favourite_country_id: country.favourite_country_id,
@@ -179,7 +179,7 @@ const FanCountriesComponent = () => {
 
       const combined = initialCountries.map((country) => {
         const match = uniqueCountries.find(
-          (fav) => fav.code === country.name.toLowerCase()
+          (fav) => fav.code === country.code
         );
         return match ? { ...country, ...match } : country;
       });
@@ -243,7 +243,7 @@ const FanCountriesComponent = () => {
             (country.isFan || country.isFavourite)
         )
         .map((country) => ({
-          code: country.name,
+          code: country.code,
           favourite_country: country.isFavourite ? "1" : "0",
         }));
 
@@ -293,7 +293,8 @@ const FanCountriesComponent = () => {
 
           return {
             favourite_country_id: country.favourite_country_id,
-            code: country.name,
+            code: country.code,
+            country_name:country.country_name,
             favourite_country: favouriteCountryValue, // Use the new value here
           };
         });
@@ -375,7 +376,7 @@ const FanCountriesComponent = () => {
           }}
         >
           <img
-            src={`/src/assets/flags/${country.code}.png`}
+            src={`/assets/flags/${country.code}.png`}
             alt={`${country.name} Flag`}
             style={imgStyle}
           />

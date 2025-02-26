@@ -219,7 +219,8 @@ class AuthController extends Controller
         FavouriteCountry::create([
             'member_id' => $member->member_id,  
             'favourite_country' => 1, // Default Favorite country
-            'code' => $geoData->country_name,
+            'country_name' => $geoData->country_name,
+            'code' => $geoData->code,
         ]);         
     }
     public function logout(Request $request)
