@@ -35,6 +35,195 @@ const UploadVideo = () => {
     navigate("/webcam"); // Navigate to the webcam recording page
   };
 
+  // const uploadFile = async (firstFile, videoType, files) => {
+  //   setIsLoading(true);
+
+  //   if (videoType === 1 || videoType === 2 || videoType === 5) {
+  //     try {
+  //       const keyResponse = await axios.get(
+  //         "https://develop.quakbox.com/admin/api/get-upload-key"
+  //       );
+  //       const uploadKey = keyResponse.data.upload_key;
+
+  //       const totalChunks = Math.ceil(firstFile.size / chunkSize);
+  //       let start = 0;
+  //       let end = chunkSize;
+  //       let uploadedBytes = 0; // Track total uploaded bytes
+
+  //       for (let i = 0; i < totalChunks; i++) {
+  //         const chunk = firstFile.slice(start, end);
+
+  //         const formData = new FormData();
+  //         formData.append("chunk", chunk);
+  //         formData.append("index", i + 1);
+  //         formData.append("total_chunks", totalChunks);
+  //         formData.append("file_name", firstFile.name);
+  //         formData.append("upload_key", uploadKey);
+  //         formData.append("video_type", videoType);
+  //         formData.append("temp_upload", true);
+
+  //   try {
+  //     await axios.post(
+  //       "https://develop.quakbox.com/admin/api/upload-video-chunk",
+  //       formData,
+  //       {
+  //         headers: { "Content-Type": "multipart/form-data" },
+  //         onUploadProgress: (progressEvent) => {
+  //           const chunkProgress = Math.round(
+  //             (progressEvent.loaded / chunk.size) * 100
+  //           ); // Progress of this chunk
+  //           const totalProgress = Math.min(
+  //             95,
+  //             Math.round(
+  //               ((uploadedBytes + progressEvent.loaded) /
+  //                 firstFile.size) *
+  //                 100
+  //             )
+  //           );
+  //           setProgress(totalProgress);
+  //         },
+  //       }
+  //     );
+
+  //     uploadedBytes += chunk.size; // Only update after successful upload
+  //     setProgress(
+  //       Math.min(95, Math.round((uploadedBytes / firstFile.size) * 100))
+  //     ); // Ensure max is 95% before merging
+  //   } catch (error) {
+  //     console.error(`Error uploading chunk ${i + 1}:`, error);
+  //     alert("Chunk upload failed. Please try again.");
+  //     setIsLoading(false);
+  //     return;
+  //   }
+
+  //   start = end;
+  //   end = Math.min(firstFile.size, end + chunkSize);
+  // }
+
+  //       // Start merging process
+  //       setProgress(96); // Set progress to 96% before merging starts
+  //       const mergeResponse = await axios.post(
+  //         "https://develop.quakbox.com/admin/api/merge-video-chunks",
+  //         {
+  //           file_name: firstFile.name,
+  //           total_chunks: totalChunks,
+  //           upload_key: uploadKey,
+  //         }
+  //       );
+
+  //       if (mergeResponse.data) {
+  //         setProgress(98); // Update progress while merging is completing
+
+  //         const videoData = {
+  //           message: mergeResponse.data.message,
+  //           filePath: mergeResponse.data.file_path,
+  //           thumbnails: mergeResponse.data.thumbnails,
+  //           videoType: videoType,
+  //         };
+
+  //         try {
+  //           const token = localStorage.getItem("api_token");
+  //           if (!token) {
+  //             alert("Authorization token not found. Please log in.");
+  //             return;
+  //           }
+
+  //           const formData = new FormData();
+  //           formData.append("video_type", videoType);
+  //           formData.append("temp_upload", true);
+  //           formData.append("upload_key", uploadKey);
+  //           formData.append("video_file", videoData.filePath);
+
+  //           const response = await axios.post(
+  //             "https://develop.quakbox.com/admin/api/videos/upload",
+  //             formData,
+  //             {
+  //               headers: {
+  //                 Authorization: `Bearer ${token}`,
+  //                 "Content-Type": "multipart/form-data",
+  //               },
+  //             }
+  //           );
+
+  //           setIsLoading(false);
+  //           setProgress(100); // Set progress to 100% after merging and final upload
+
+  //           if (response.data.result) {
+  //             console.log("Navigating with videoData:", response.data);
+  //             navigate("/addvideo", { state: { videoData: response.data } });
+  //           } else {
+  //             alert(response.data.message);
+  //           }
+  //         } catch (error) {
+  //           console.error(error);
+  //         }
+  //       } else {
+  //         alert(mergeResponse.data.message);
+  //       }
+  //     } catch (error) {
+  //       setIsLoading(false);
+  //       console.error("Error uploading video:", error);
+  //       alert("Upload failed. Please try again.");
+  //     }
+  //   } else {
+  //     const formData = new FormData();
+  //     formData.append("video_type", videoType);
+  //     formData.append("temp_upload", true);
+
+  //     if (videoType === 3) {
+  //       for (let i = 0; i < files.length; i++) {
+  //         formData.append("video_file[]", files[i]);
+  //       }
+  //     } else {
+  //       formData.append("video_file", firstFile);
+  //     }
+
+  //     setIsLoading(true);
+
+  //     try {
+  //       const token = localStorage.getItem("api_token");
+  //       if (!token) {
+  //         alert("Authorization token not found. Please log in.");
+  //         return;
+  //       }
+
+  //       const response = await axios.post(
+  //         "https://develop.quakbox.com/admin/api/videos/upload",
+  //         formData,
+  //         {
+  //           headers: {
+  //             Authorization: `Bearer ${token}`,
+  //             "Content-Type": "multipart/form-data",
+  //           },
+  //         }
+  //       );
+  //       console.log(response);
+
+  //       setIsLoading(false);
+  //       setProgress(100); // Ensure progress reaches 100% for non-chunked uploads
+
+  //       if (response.data.result) {
+  //         console.log("Navigating with videoData:", response.data);
+  //             navigate("/addvideo", { state: { videoData: response.data } });
+  //       } else {
+  //         alert(response.data.message);
+  //       }
+  //     } catch (error) {
+  //       setIsLoading(false);
+  //       console.error("Error uploading video:", error);
+  //       alert("Upload failed. Please try again.");
+  //     }
+  //   }
+  // };
+
+  // //////////////////////////////////////////////////////////
+
+  // Create a reusable Axios instance
+  const axiosInstance = axios.create({
+    baseURL: "https://develop.quakbox.com/admin/api",
+    headers: { "Content-Type": "multipart/form-data" },
+  });
+
   // Handle file upload
 
   const handleFileUpload = async (e) => {
@@ -43,188 +232,339 @@ const UploadVideo = () => {
 
     const firstFile = files[0];
     const videoType = firstFile.type.startsWith("video/")
-      ? 1
+      ? selectedCategory === "shortvideo"
+        ? 5 // Short Video
+        : 1 // Regular Video
       : firstFile.type.startsWith("audio/")
       ? 2
       : firstFile.type.startsWith("image/")
       ? 3
+      : selectedCategory === "webcam"
+      ? 4 // Webcam Capture
       : 4;
 
-    setIsLoading(true);
+    // **Short Video Duration Validation (Max 20 mins)**
+    if (videoType === 5) {
+      const video = document.createElement("video");
+      video.preload = "metadata";
+      video.src = URL.createObjectURL(firstFile);
 
-    if (videoType === 1 || videoType === 2) {
+      video.onloadedmetadata = async () => {
+        URL.revokeObjectURL(video.src); // Free memory
+
+        if (video.duration > 120) {
+          // 120 seconds = 2 minutes
+          alert("Short Video cannot be longer than 20 minutes.");
+          return;
+        }
+
+        // ✅ If valid, proceed with upload
+        await uploadFile(firstFile, videoType, files);
+      };
+    } else {
+      // ✅ Proceed with other uploads (video, audio, image, webcam)
+      await uploadFile(firstFile, videoType, files);
+    }
+  };
+
+  const getUploadKey = async () => {
+    try {
+      const response = await axiosInstance.get("/get-upload-key");
+      return response.data.upload_key;
+    } catch (error) {
+      console.error("Error fetching upload key:", error);
+      throw error;
+    }
+  };
+
+  // Track progress for all chunks
+  const chunkProgress = new Map();
+  const previousLogState = new Map(); // Stores previous state to avoid redundant console logs
+
+  const formatSize = (size) => (size / (1024 * 1024)).toFixed(2) + "MB"; // Convert bytes to MB
+
+  const logProgress = (totalChunks) => {
+    let logOutput = "📡 Upload Progress:\n";
+    let totalSizeUploaded = 0;
+    let totalSize = 0;
+    let hasChanges = false;
+
+    for (let i = 1; i <= totalChunks; i++) {
+      const progress = chunkProgress.get(i)?.percentCompleted || 0;
+      const totalChunkSize = chunkProgress.get(i)?.size || 0;
+      const uploadedChunkSize = (progress / 100) * totalChunkSize;
+
+      totalSize += totalChunkSize;
+      totalSizeUploaded += uploadedChunkSize;
+
+      const uploadedSizeMB = formatSize(uploadedChunkSize);
+      const totalSizeMB = formatSize(totalChunkSize);
+      const logEntry = `Chunk ${i}: ${progress}% - Uploaded: ${uploadedSizeMB} / ${totalSizeMB}`;
+
+      if (previousLogState.get(i) !== logEntry) {
+        previousLogState.set(i, logEntry);
+        hasChanges = true;
+      }
+
+      logOutput += logEntry + "\n";
+    }
+
+    // ✅ When all chunks are uploaded, move to 95%
+    if (totalSizeUploaded === totalSize) {
+      setProgress(95);
+      logOutput += `\n📦 All chunks uploaded (95%)`;
+    } else {
+      // Update normal progress
+      const overallProgress = Math.round((totalSizeUploaded / totalSize) * 95);
+      setProgress(overallProgress);
+      logOutput += `\n🌍 Overall Upload Progress: ${overallProgress}%`;
+    }
+
+    if (hasChanges) {
+      console.clear();
+      console.log(logOutput.trim());
+    }
+  };
+
+  // ✅ Upload chunks
+  const uploadChunk = async (
+    chunk,
+    index,
+    totalChunks,
+    fileName,
+    uploadKey,
+    videoType,
+    retries = 3
+  ) => {
+    const formData = new FormData();
+    formData.append("chunk", chunk);
+    formData.append("index", index);
+    formData.append("total_chunks", totalChunks);
+    formData.append("file_name", fileName);
+    formData.append("upload_key", uploadKey);
+    formData.append("video_type", videoType);
+    formData.append("temp_upload", true);
+
+    for (let attempt = 1; attempt <= retries; attempt++) {
       try {
-        const keyResponse = await axios.get(
-          `https://${window.APP_DOMAIN}/admin/api/get-upload-key`
+        await axiosInstance.post("/upload-video-chunk", formData, {
+          onUploadProgress: (progressEvent) => {
+            const percentCompleted = Math.round(
+              (progressEvent.loaded / progressEvent.total) * 100
+            );
+            chunkProgress.set(index, { percentCompleted, size: chunk.size });
+            logProgress(totalChunks);
+          },
+        });
+
+        return;
+      } catch (error) {
+        console.error(
+          `❌ Chunk ${index} failed (Attempt ${attempt}/${retries})`,
+          error
         );
-        const uploadKey = keyResponse.data.upload_key;
+        if (attempt === retries) throw error;
+      }
+    }
+  };
+
+  // ✅ Merge chunks after upload
+  const mergeChunks = async (fileName, totalChunks, uploadKey) => {
+    try {
+      setProgress(96); // 🔥 Show 96% when merging starts
+      console.log("🔄 Merging in progress... (96%)");
+
+      const response = await axiosInstance.post("/merge-video-chunks", {
+        file_name: fileName,
+        total_chunks: totalChunks,
+        upload_key: uploadKey,
+      });
+
+      setProgress(98); // ✅ Show 98% when merging completes
+      console.log("✅ Merging completed (98%)");
+
+      return response.data;
+    } catch (error) {
+      console.error("Error merging chunks:", error);
+      throw error;
+    }
+  };
+
+  // ✅ Final video upload after merge
+  const uploadVideo = async (videoData, videoType, uploadKey) => {
+    try {
+      setProgress(99); // 🔥 Show 99% when final upload starts
+      console.log("🚀 Uploading final file... (99%)");
+
+      const token = localStorage.getItem("api_token");
+      if (!token) {
+        alert("Authorization token not found. Please log in.");
+        return;
+      }
+
+      const formData = new FormData();
+      formData.append("video_type", videoType);
+      formData.append("temp_upload", true);
+      formData.append("upload_key", uploadKey);
+      formData.append("video_file", videoData.filePath);
+
+      const res = await axiosInstance.post("/videos/upload", formData, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+
+      setProgress(100); // ✅ Show 100% when everything is done
+      console.log("🎉 Upload Complete! (100%)");
+      return res.data;
+    } catch (error) {
+      console.error("Error uploading video:", error);
+      throw error;
+    }
+  };
+
+  const uploadFile = async (firstFile, videoType, files) => {
+    setIsLoading(true);
+    try {
+      if ([1, 2, 5].includes(videoType)) {
+        const uploadKey = await getUploadKey();
+        console.log(uploadKey);
 
         const totalChunks = Math.ceil(firstFile.size / chunkSize);
-        let start = 0;
-        let end = chunkSize;
+        let start = 0,
+          end = chunkSize;
+
         const uploadPromises = [];
 
         for (let i = 0; i < totalChunks; i++) {
           const chunk = firstFile.slice(start, end);
-          const formData = new FormData();
-          formData.append("chunk", chunk);
-          formData.append("index", i + 1);
-          formData.append("total_chunks", totalChunks);
-          formData.append("file_name", firstFile.name);
-          formData.append("upload_key", uploadKey);
-          formData.append("video_type", videoType);
-          formData.append("temp_upload", true);
-
           uploadPromises.push(
-            axios.post(
-              `https://${window.APP_DOMAIN}/admin/api/upload-video-chunk`,
-              formData,
-              {
-                headers: {
-                  "Content-Type": "multipart/form-data",
-                },
-                onUploadProgress: (progressEvent) => {
-                  const percentage = Math.round(
-                    (progressEvent.loaded * 100) / progressEvent.total
-                  );
-                  setProgress((prevProgress) =>
-                    Math.max(prevProgress, percentage)
-                  );
-                },
-              }
+            uploadChunk(
+              chunk,
+              i + 1,
+              totalChunks,
+              firstFile.name,
+              uploadKey,
+              videoType
             )
           );
-
           start = end;
           end = Math.min(firstFile.size, end + chunkSize);
         }
 
+        // 🚀 Upload all chunks in parallel
         await Promise.all(uploadPromises);
 
-        const mergeResponse = await axios.post(
-          `https://${window.APP_DOMAIN}/admin/api/merge-video-chunks`,
-          {
-            file_name: firstFile.name,
-            total_chunks: totalChunks,
-            upload_key: uploadKey,
-          }
+        // Merge chunks after all uploads finish
+        const mergeResponse = await mergeChunks(
+          firstFile.name,
+          totalChunks,
+          uploadKey
         );
-
-        setIsLoading(false);
-        console.log(mergeResponse);
-
-        if (mergeResponse.data) {
+        if (mergeResponse) {
           const videoData = {
-            message: mergeResponse.data.message,
-            filePath: mergeResponse.data.file_path,
-            thumbnails: mergeResponse.data.thumbnails,
+            message: mergeResponse.message,
+            filePath: mergeResponse.file_path,
+            thumbnails: mergeResponse.thumbnails,
             videoType: videoType,
           };
 
-          try {
-            const token = localStorage.getItem("api_token");
-            const formData = new FormData();
-            formData.append("video_type", videoType);
-            formData.append("temp_upload", true);
-            formData.append("upload_key", uploadKey);
-            formData.append("video_file", videoData.filePath);
-            if (!token) {
-              alert("Authorization token not found. Please log in.");
-              return;
-            }
+          const response = await uploadVideo(
+            videoData,
+            videoType,
+            uploadKey,
+            videoType
+          );
+          console.log(response);
 
-            const response = await axios.post(
-              `https://${window.APP_DOMAIN}/admin/api/videos/upload`,
-              formData,
-              {
-                headers: {
-                  Authorization: `Bearer ${token}`,
-                  "Content-Type": "multipart/form-data",
-                },
-              }
-            );
-
-            if (response.data.result) {
-              // ✅ Pass videoType to the next page
-              const videoData = {
-                message: response.data.message,
-                filePath: response.data.file_path,
-                thumbnails: response.data.thumbnails,
-                videoType: response.data.video_type,
-              };
-
-              navigate("/addvideo", { state: { videoData } });
-            } else {
-              alert(response.data.message);
-            }
-          } catch (error) {
-            console.log(error);
+          if (response.result) {
+            navigate("/addvideo", {
+              state: {
+                videoData: response,
+                uploadKey: uploadKey, // ✅ Include uploadKey
+                videoType: videoType,
+              },
+            });
+          } else {
+            alert(response.message);
           }
         } else {
-          alert(mergeResponse.data.message);
-        }
-      } catch (error) {
-        setIsLoading(false);
-        console.error("Error uploading video:", error);
-        alert("Upload failed. Please try again.");
-      }
-    } else {
-      const formData = new FormData();
-      formData.append("video_type", videoType);
-      formData.append("temp_upload", true);
-
-      if (videoType === 3) {
-        // ✅ Append files as an array only if `videoType === 3`
-        for (let i = 0; i < files.length; i++) {
-          formData.append("video_file[]", files[i]);
+          alert(mergeResponse.message);
         }
       } else {
-        // ✅ If not type 3, only append the first file
-        formData.append("video_file", firstFile);
-      }
+        const formData = new FormData();
+        formData.append("video_type", videoType);
+        formData.append("temp_upload", true);
 
-      setIsLoading(true);
-
-      try {
-        const token = localStorage.getItem("api_token");
-        if (!token) {
-          alert("Authorization token not found. Please log in.");
-          return;
-        }
-
-        const response = await axios.post(
-          `https://${window.APP_DOMAIN}/admin/api/videos/upload`,
-          formData,
-          {
-            headers: {
-              Authorization: `Bearer ${token}`,
-              "Content-Type": "multipart/form-data",
-            },
+        if (videoType === 3) {
+          for (let i = 0; i < files.length; i++) {
+            formData.append("video_file[]", files[i]);
           }
-        );
-
-        setIsLoading(false);
-
-        if (response.data.result) {
-          // ✅ Pass videoType to the next page
-          const videoData = {
-            message: response.data.message,
-            filePath: response.data.file_path,
-            thumbnails: response.data.thumbnails,
-            videoType: response.data.video_type,
-          };
-
-          navigate("/addvideo", { state: { videoData } });
         } else {
-          alert(response.data.message);
+          formData.append("video_file", firstFile);
         }
-      } catch (error) {
-        setIsLoading(false);
-        console.error("Error uploading video:", error);
-        alert("Upload failed. Please try again.");
+
+        setIsLoading(true);
+        setProgress(0); // Start from 0%
+
+        try {
+          const token = localStorage.getItem("api_token");
+          if (!token) {
+            alert("Authorization token not found. Please log in.");
+            return;
+          }
+
+          const response = await axios.post(
+            `https://${window.APP_DOMAIN}/admin/api/videos/upload`,
+            formData,
+            {
+              headers: {
+                Authorization: `Bearer ${token}`,
+                "Content-Type": "multipart/form-data",
+              },
+              onUploadProgress: (progressEvent) => {
+                const percentCompleted = Math.round(
+                  (progressEvent.loaded / progressEvent.total) * 100
+                );
+
+                // Cap progress at 99% during upload
+                setProgress(percentCompleted < 99 ? percentCompleted : 99);
+                console.log(
+                  `📡 Upload Progress: ${
+                    percentCompleted < 99 ? percentCompleted : 99
+                  }%`
+                );
+              },
+            }
+          );
+
+          // ✅ Only when API is successful, set to 100%
+          if (response.data.result) {
+            setProgress(100);
+            console.log("🎉 Upload Complete! (100%)");
+
+            console.log("Navigating with videoData:", response.data);
+            navigate("/addvideo", {
+              state: { videoData: response.data, videoType: videoType },
+            });
+          } else {
+            alert(response.data.message);
+          }
+        } catch (error) {
+          setIsLoading(false);
+          console.error("Error uploading video:", error);
+          alert("Upload failed. Please try again.");
+        } finally {
+          setIsLoading(false);
+        }
       }
+    } catch (error) {
+      console.error("Upload failed:", error);
+      alert("Upload failed. Please try again.");
+    } finally {
+      setIsLoading(false);
     }
   };
+
+  /////////////////////////////////////////////////////////////////////
 
   // Content for each category
   const categoryContent = {
@@ -504,17 +844,27 @@ export const overlayStyle = {
   left: 0,
   width: "100%",
   height: "100%",
-  backgroundColor: "rgba(0, 0, 0, 0.5)", // Semi-transparent black background
+  background: "rgba(0, 0, 0, 0.7)", // Dark transparent background
   display: "flex",
+  flexDirection: "column",
   justifyContent: "center",
   alignItems: "center",
-  zIndex: 9999, // Ensures it's above all other elements
+  color: "#fff", // White text for high contrast
+  fontSize: "24px",
+  fontWeight: "bold",
+  zIndex: 9999, // Ensure it's above everything
 };
 
 export const gifStyle = {
-  width: "200px",
+  width: "200px", // Adjust size if needed
   height: "100px",
-  opacity: 0.5,
+  marginBottom: "20px", // Space between GIF and text
 };
 
+export const progressStyle = {
+  fontSize: "30px", // Bigger font
+  fontWeight: "bold",
+  color: "#00ff00", // Bright green for better visibility
+  textShadow: "2px 2px 4px rgba(0, 0, 0, 0.5)", // Slight shadow for clarity
+};
 export default UploadVideo;
