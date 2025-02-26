@@ -623,7 +623,7 @@ const NavBar = () => {
                         return null; // Skip if no match found
                       }
                 
-                      console.log("Fetching flag for:", fav.code);
+                      // console.log("Fetching flag for:", fav.code);
 
 
                       // Only render the country if it's matched (found)
@@ -644,7 +644,7 @@ const NavBar = () => {
                             }}
                           >
                             <img
-                              src={matchedCountry ? `/assets/flags/${matchedCountry}.png` : "default-flag.png"}
+                              src={countryCode ? `/assets/flags/${countryCode}.png` : "default-flag.png"}
                               alt={matchedCountry.country_name}
                               className="card-img-top img-fluid"
                               style={{
