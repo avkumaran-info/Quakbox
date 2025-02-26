@@ -256,7 +256,7 @@ const RightSidebar = ({ countryCode, countryName }) => {
                 {/* Fixed Post Content */}
                 <div className="post-preview" style={{ flexShrink: 0 }}>
                   <img
-                    src={`/src/assets/flags/${countryCode}.png`}
+                    src={`/assets/flags/${countryCode}.png`}
                     alt="Post image"
                     className="img-fluid rounded w-100"
                     style={{
@@ -412,7 +412,7 @@ const RightSidebar = ({ countryCode, countryName }) => {
               ) : (
                 <>
                   <img
-                    src={`/src/assets/flags/${countryCode}.png`}
+                    src={`/assets/flags/${countryCode}.png`}
                     alt={countryName}
                     className="img-fluid"
                     style={{

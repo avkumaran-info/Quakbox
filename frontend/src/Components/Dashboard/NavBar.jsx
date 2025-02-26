@@ -202,7 +202,7 @@ const NavBar = () => {
                   }}
                 >
                   <img
-                    src={`/src/assets/flags/${country.code}.png`}
+                    src={`/assets/flags/${country.code}.png`}
                     alt={country.country_name}
                     style={{
                       width: "40px",
@@ -303,7 +303,7 @@ const NavBar = () => {
                         }}
                       >
                         <img
-                          src={`/src/assets/flags/${country.code}.png`}
+                          src={`/assets/flags/${country.code}.png`}
                           alt={country.country_name}
                           style={{
                             width: "65px",
@@ -614,11 +614,16 @@ const NavBar = () => {
                 {favCountries.length > 0
                   ? favCountries.map((fav, index) => {
                       // Find the matched country in allCountries based on the name
-                      const matchedCountry = countries.find((c) => c.country_name === fav.code);
-
-                      const countryCode = matchedCountry ? matchedCountry.code : null; // Get correct country code
-                      
-                      // console.log("Fetching flag for:", countryCode); // Debugging
+                      console.log("fav Object:", fav); // Log full object
+                      // Find the matched country in 'countries' based on the 'code'
+                      const matchedCountry = countries.find((c) => c.code === fav.code);
+                
+                      if (!matchedCountry) {
+                        console.warn(`No matching country found for code: ${fav.code}`);
+                        return null; // Skip if no match found
+                      }
+                
+                      // console.log("Fetching flag for:", fav.code);
 
 
                       // Only render the country if it's matched (found)
@@ -639,7 +644,7 @@ const NavBar = () => {
                             }}
                           >
                             <img
-                              src={countryCode ? `/src/assets/flags/${countryCode}.png` : "default-flag.png"}
+                              src={countryCode ? `/assets/flags/${countryCode}.png` : "default-flag.png"}
                               alt={matchedCountry.country_name}
                               className="card-img-top img-fluid"
                               style={{
