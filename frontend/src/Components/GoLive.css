@@ -1,0 +1,229 @@
+/* CSS */
+.mainContainer {
+    width: 100%;
+    height: 100vh;
+    box-sizing: border-box;
+    overflow: hidden;
+}
+
+.navbarDiv {
+    width: 100%;
+    /* height: 10vh; */
+    z-index: 2000 !important;
+    position: absolute;
+
+}
+
+/* Countries - START */
+.countriesMainContainer {
+    width: 100% !important;
+    height: 100vh !important;
+    margin-top: 50px;
+}
+
+.countriesMainContainerBox1 {
+    display: flex;
+    height: 100vh;
+    overflow: hidden;
+    background: linear-gradient(135deg, #4A148C, #673AB7);
+}
+
+.goLivePaper {
+    position: fixed;
+    top: 60px;
+    bottom: 0;
+    width: 100%;
+    height: 93%;
+    left: 0;
+    right: 0;
+    aspect-ratio: 9/16;
+    overflow: hidden;
+    border-radius: 8px;
+    margin: auto;
+}
+
+@media (max-width: 991px) {
+    .goLivePaper {
+        position: fixed;
+        top: 130px;
+        bottom: 20px;
+        width: 100%;
+        height: 83%;
+        left: 0;
+        right: 0;
+        aspect-ratio: 16/9;
+    }
+}
+
+.goLivePaperWeb {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.goLivePaperBox {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 8px;
+}
+
+.goLivePaperBox2 {
+    background-color: red;
+    padding: 4px 8px;
+    border-radius: 5px;
+    display: inline-block;
+}
+
+.goLivePaperBox3 {
+    display: flex;
+    align-items: center;
+    margin-left: 8px;
+}
+
+.goLivePaperBox4 {
+    top: 10px;
+    right: 0;
+}
+
+.close-icon {
+    background-color: white;
+    color: black;
+    font-size: 30px;
+    border-radius: 50%;
+    padding: 8px;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+}
+
+.isLivePaper {
+    position: fixed;
+    top: 55px;
+    bottom: 0;
+    width: 100%;
+    height: 92%;
+    left: 0;
+    right: 0;
+    aspect-ratio: 9/16;
+    overflow: hidden;
+    border-radius: 8px;
+    margin: auto;
+}
+
+@media (max-width: 991px) {
+    .isLivePaper {
+        position: fixed;
+        top: 110px;
+        bottom: 0;
+        width: 100%;
+        height: 83%;
+        left: 0;
+        right: 0;
+        aspect-ratio: 16/9;
+    }
+}
+
+.boxContainer {
+    width: 240px;
+    background: linear-gradient(rgb(106, 17, 203), rgb(37, 117, 252));
+    color: #ffffff;
+    height: 93%;
+    padding: 8px;
+    display: flex;
+    flex-direction: column;
+    position: fixed;
+    top: 50px;
+}
+
+@media (max-width: 991px) {
+    .boxContainer {
+        width: 240px;
+        background: linear-gradient(rgb(106, 17, 203), rgb(37, 117, 252));
+        color: #ffffff;
+        height: 83%;
+        padding: 8px;
+        display: flex;
+        flex-direction: column;
+        position: fixed;
+        top: 110px;
+    }
+}
+
+.isLivePaperWeb {
+    width: 100%;
+    height: 100vh;
+    object-fit: cover;
+}
+
+.isLivePaperBox {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 8px;
+}
+
+.isLivePaperBox2 {
+    display: flex;
+    align-items: center;
+}
+
+.isLivePaperBox3 {
+    background-color: red;
+    padding: 4px 8px;
+    border-radius: 5px;
+    display: inline-block;
+}
+
+.isLivePaperBox4 {
+    margin-left: 8px;
+    display: flex;
+    align-items: center;
+}
+
+.isLivePaperBox5 {
+    top: 10px;
+    right: 0;
+}
+
+.mainContent {
+    flex-grow: 1;
+    padding: 16px;
+    /* Equivalent to p: 4 in MUI */
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    background: linear-gradient(135deg, #4A148C, #673AB7);
+    color: #ffffff;
+    text-align: center;
+    box-sizing: border-box;
+}
+
+
+
+
+
+
+
+/* Responsive Design */
+@media (max-width: 991px) {
+    .video-container {
+        width: 90%;
+        height: 80vh;
+    }
+}
+
+@media (max-width: 600px) {
+    .video-container {
+        width: 100%;
+        height: 100vh;
+    }
+}

@@ -39,7 +39,7 @@ const App = () => {
           <Route path="/country/:countryCode" element={<Home />} />
           <Route path="/world" element={<Home />} />
           <Route path="/chatroom" element={<ChatPage />} />
-          <Route path="/golive" element={<LiveStream />} />
+          <Route path="/golive" element={<GoLive />} />
           <Route path="/watchlive/:streamId" element={<WatchStream />} />
           {/* <Route path="/test" element={<FanCountry />} /> */}
           <Route path="/favouriteCountires" element={<FanCountry />} />
