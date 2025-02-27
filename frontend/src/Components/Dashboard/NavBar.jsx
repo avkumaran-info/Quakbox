@@ -14,7 +14,6 @@ import FavoriteIcon from "@mui/icons-material/Favorite";
 import { Link, useNavigate } from "react-router-dom";
 import { useSelector, useDispatch } from "react-redux";
 import { StoreContext } from "../../Context/StoreContext";
-import india from "../../../public/assets/flags/99.png";
 import { flagsData } from "../flags";
 
 const NavBar = () => {
@@ -28,12 +27,6 @@ const NavBar = () => {
   const [searchQuery, setSearchQuery] = useState(""); // State for search input
   const [showPopup, setShowPopup] = useState(false);
   const [shuffledCountries, setShuffledCountries] = useState([]);
-  const userDatas = async () => {
-    // const storedCountries =
-    //   JSON.parse(localStorage.getItem("geo_country")) || [];
-    // setCountries(storedCountries);
-    setCountries(flagsData);
-  };
 
   const handleLogout = async () => {
     const token = localStorage.getItem("api_token");
@@ -74,7 +67,9 @@ const NavBar = () => {
   };
 
   useEffect(() => {
-    userDatas(); // Ensure userDatas is defined
+    const storedCountries =
+      JSON.parse(localStorage.getItem("geo_country")) || [];
+    setCountries(storedCountries);
   }, []);
 
   useEffect(() => {
@@ -107,12 +102,13 @@ const NavBar = () => {
 
   // Filter and sort countries
   const filteredCountries = countries
-    .filter(
-      (country) =>
+    .filter((country) => {
+      return (
         country.country_name.toLowerCase() !== "earth" && // Exclude "Earth"
-        country.code !== "99" && // Additional safety: exclude code 99
-        country.country_name.toLowerCase().includes(searchQuery.toLowerCase())
-    )
+        country.code !== "99" && // Exclude code 99
+        country.country_name.toLowerCase().includes(searchQuery.toLowerCase()) // Match search query
+      );
+    })
     .sort((a, b) => a.country_name.localeCompare(b.country_name)); // Sort A-Z
 
   // Shuffle flags for random display
@@ -205,10 +201,10 @@ const NavBar = () => {
                     }}
                   >
                     <img
-                      // src={india}
-                      // src={`/assets/${country.code}.png`}
-                      src={country.flag}
-                      // src={`/assets/flags/${country.code}.png`}
+                      src={
+                        flagsData.find((code) => code.code === country.code)
+                          ?.flag
+                      }
                       alt={country.country_name}
                       style={{
                         width: "40px",
@@ -216,6 +212,7 @@ const NavBar = () => {
                         objectFit: "cover",
                       }}
                     />
+
                     <span
                       style={{
                         fontSize: "0.6rem",
@@ -309,7 +306,10 @@ const NavBar = () => {
                         }}
                       >
                         <img
-                          src={`/assets/flags/${country.code}.png`}
+                          src={
+                            flagsData.find((code) => code.code === country.code)
+                              ?.flag
+                          }
                           alt={country.country_name}
                           style={{
                             width: "65px",

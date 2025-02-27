@@ -66,10 +66,10 @@ const RightSidebar = ({ countryCode, countryName, flag }) => {
     dislikes: 0,
     shares: 0,
   });
-  console.log(countryCode);
+  // console.log(countryCode);
   
   const country = flagsData.find((c) => c.code === countryCode);
-  console.log("COunty",country);
+  // console.log("COunty",country);
 
   const [navbarHeight, setNavbarHeight] = useState(56);
   const [comments, setComments] = useState([]); // Store comments
@@ -416,7 +416,7 @@ const RightSidebar = ({ countryCode, countryName, flag }) => {
               ) : (
                 <>
                   <img
-                    src={country.flag} // Use the imported flag image
+                    // src={country.flag} // Use the imported flag image
                     alt={countryName}
                     className="img-fluid"
                     style={{

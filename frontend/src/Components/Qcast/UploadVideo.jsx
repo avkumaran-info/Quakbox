@@ -254,7 +254,7 @@ const UploadVideo = () => {
 
         if (video.duration > 120) {
           // 120 seconds = 2 minutes
-          alert("Short Video cannot be longer than 20 minutes.");
+          alert("Short Video cannot be longer than 2 minutes.");
           return;
         }
 
@@ -401,10 +401,10 @@ const UploadVideo = () => {
         alert("Authorization token not found. Please log in.");
         return;
       }
-
+      console.log(videoData);
       const formData = new FormData();
       formData.append("video_type", videoType);
-      formData.append("temp_upload", true);
+      formData.append("temp_upload", false);
       formData.append("upload_key", uploadKey);
       formData.append("video_file", videoData.filePath);
 
@@ -462,10 +462,11 @@ const UploadVideo = () => {
         if (mergeResponse) {
           const videoData = {
             message: mergeResponse.message,
-            filePath: mergeResponse.file_path,
+            filePath: mergeResponse.file_url,
             thumbnails: mergeResponse.thumbnails,
             videoType: videoType,
           };
+          console.log(videoData);
 
           const response = await uploadVideo(
             videoData,
