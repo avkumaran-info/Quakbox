@@ -1,594 +1,368 @@
+import {
+  Drawer,
+  List,
+  ListItem,
+  ListItemText,
+  ListItemIcon,
+  useMediaQuery,
+} from "@mui/material";
+import "./GoLive.css";
 import React, { useState, useRef, useEffect } from "react";
 import Webcam from "react-webcam";
 import { useNavigate } from "react-router-dom";
-import {
-  Box,
-  Button,
-  TextField,
-  Typography,
-  Paper,
-  IconButton,
-  Stack,
-  Avatar,
-  Divider,
-} from "@mui/material";
-import { GrClose } from "react-icons/gr";
-import {
-  FaThumbsUp,
-  FaHeart,
-  FaLaughBeam,
-  FaSadTear,
-  FaAngry,
-} from "react-icons/fa";
+import NavBar from "../Components/Dashboard/NavBar";
+import MicIcon from "@mui/icons-material/Mic";
+import MicOffIcon from "@mui/icons-material/MicOff";
+// import VideocamIcon from "@mui/icons-material/Videocam";
+import VideocamOffIcon from "@mui/icons-material/VideocamOff";
+import { Box, Button, Typography, Paper, IconButton } from "@mui/material";
 
-import SendIcon from "@mui/icons-material/Send";
 import VisibilityIcon from "@mui/icons-material/Visibility";
-import { keyframes, styled } from "@mui/system";
-import menProfilePic from "../assets/images/man-user-color-icon.svg";
-import menProfilePicTwo from "../assets/images/man-user-circle-icon.svg";
-import womenProfilePic from "../assets/images/woman-user-color-icon.svg";
-import womenProfilePicTwo from "../assets/images/woman-user-circle-icon.svg";
-import LiveStreamComponent from "./LiveStream"; // Implement WebRTC Streaming
-// Animation for floating icons
-const floatUp = keyframes`
-  0% {
-    opacity: 1;
-    transform: translateY(0);
-  }
-  100% {
-    opacity: 0;
-    transform: translateY(-600px);
-  }
-`;
-// Styled components for floating icons
-const FloatingReaction = styled(Box)(({ theme }) => ({
-  position: "absolute",
-  bottom: "70px",
-  right: "0px",
-  fontSize: "30px",
-  animation: `${floatUp} 3s ease-out`,
-}));
-const GoLiveTwo = () => {
+
+import { GrClose } from "react-icons/gr";
+
+import { useTheme } from "@mui/material/styles";
+import MenuIcon from "@mui/icons-material/Menu";
+
+import CheckCircleIcon from "@mui/icons-material/CheckCircle";
+
+import VideocamIcon from "@mui/icons-material/Videocam";
+import SettingsIcon from "@mui/icons-material/Settings";
+import FeedbackIcon from "@mui/icons-material/Feedback";
+import axios from "axios";
+
+const GoLive = () => {
   // State declarations
   const [isLive, setIsLive] = useState(false);
-  const [comments, setComments] = useState([]);
-  const [newComment, setNewComment] = useState("");
-  const [reactions, setReactions] = useState([]);
-  const [viewersCount, setViewersCount] = useState(1542); // Viewers count
-  const commentsContainerRef = useRef(null);
-  const isUserScrolling = useRef(false);
+  const [permissionGranted, setPermissionGranted] = useState({
+    camera: false,
+    mic: false,
+  });
+  const [isStreaming, setIsStreaming] = useState(false);
   const navigate = useNavigate(); // For navigation
-  // User data
-  const users = [
-    { name: "Alice", avatar: womenProfilePic },
-    { name: "Bob", avatar: menProfilePic },
-    { name: "Charlie", avatar: menProfilePicTwo },
-    { name: "Jenny", avatar: womenProfilePicTwo },
-  ];
+  const mediaRecorderRef = useRef(null);
+  const streamRef = useRef(null);
+  const [uploadKey, setUploadKey] = useState("");
+  const [cameraOn, setCameraOn] = useState(true);
+  const [micOn, setMicOn] = useState(true);
+  const videoRef = useRef(null);
 
-  // Live stream owner data
-  const liveOwner = {
-    name: "John Doe",
-    avatar: menProfilePic,
+  const startStreaming = async () => {
+    try {
+      // Check permissions before starting the stream
+      const stream = await navigator.mediaDevices.getUserMedia({
+        video: { facingMode: "user" },
+        audio: true,
+      });
+      // Check if video and audio are granted
+      if (!stream.getVideoTracks().length || !stream.getAudioTracks().length) {
+        alert("Please enable camera and microphone access to start streaming.");
+        return;
+      }
+      // Set the camera and mic permission states
+      setPermissionGranted({
+        camera: true,
+        mic: true,
+      });
+      // Fetch upload key from the backend
+      const { data } = await axios.get(
+        "https://develop.quakbox.com/admin/api/get-upload-key"
+      );
+      setUploadKey(data.upload_key);
+      if (videoRef.current) {
+        videoRef.current.srcObject = stream;
+      }
+
+      streamRef.current = stream;
+
+      mediaRecorderRef.current = new MediaRecorder(stream, {
+        mimeType: "video/webm; codecs=vp8, opus",
+      });
+
+      mediaRecorderRef.current.ondataavailable = async (event) => {
+        if (event.data.size > 0) {
+          const formData = new FormData();
+          formData.append("chunk", event.data);
+          formData.append("file_name", `video_${Date.now()}.webm`);
+          formData.append("upload_key", uploadKey);
+          try {
+            await axios.post(
+              "https://develop.quakbox.com/admin/api/upload-chunk-live",
+              formData,
+              {
+                headers: { "Content-Type": "multipart/form-data" },
+              }
+            );
+          } catch (error) {
+            console.error("Error uploading chunk:", error);
+          }
+        }
+      };
+      mediaRecorderRef.current.start(1000);
+      setIsStreaming(true);
+    } catch (error) {
+      console.error("Error starting live stream:", error);
+      alert("Error starting live stream. Please try again.");
+    }
   };
+
+  const stopStreaming = () => {
+    if (mediaRecorderRef.current) {
+      mediaRecorderRef.current.stop();
+    }
+    if (streamRef.current) {
+      streamRef.current.getTracks().forEach((track) => track.stop());
+    }
+    setIsStreaming(false);
+  };
+
+  const toggleCamera = () => {
+    if (videoRef.current && videoRef.current.stream) {
+      const videoTracks = videoRef.current.stream.getVideoTracks();
+      if (videoTracks.length > 0) {
+        setCameraOn((prevCameraOn) => {
+          const newCameraState = !prevCameraOn;
+
+          videoTracks.forEach((track) => (track.enabled = newCameraState));
+
+          console.log("Camera toggled:", newCameraState);
+
+          return newCameraState;
+        });
+      } else {
+        console.log("No video tracks found");
+      }
+    } else {
+      console.log("No active video stream found");
+    }
+  };
+
+  const toggleMic = () => {
+    if (streamRef.current) {
+      const audioTracks = streamRef.current.getAudioTracks();
+      if (audioTracks.length > 0) {
+        setMicOn((prevMicOn) => {
+          const newMicState = !prevMicOn;
+          audioTracks[0].enabled = newMicState;
+          console.log("Microphone toggled:", newMicState);
+          return newMicState;
+        });
+      } else {
+        console.log("No audio tracks found");
+      }
+    } else {
+      console.log("No active audio stream found");
+    }
+  };
+
   // Helper to validate session
   const checkUserSession = () => {
-    const userToken = localStorage.getItem("api_token"); // Replace with your session key
+    const userToken = localStorage.getItem("api_token");
     if (!userToken) {
-      navigate("/"); // Redirect to login if no session
+      navigate("/");
     }
   };
+
   useEffect(() => {
-    checkUserSession(); // Validate session on mount
+    checkUserSession();
   }, []);
-  // Handlers for live stream state
-  const handleGoLive = async () => {
-    try {
-      const response = await fetch(`https://${window.APP_DOMAIN}/admin/api/start-live-stream`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${localStorage.getItem("api_token")}`,
-        },
-      });
 
-      console.log(response);
-      
+  const handleGoLive = () => setIsLive(true);
 
-      const data = await response.json();
-      if (response.ok) {
-        console.log("Live stream started:", data);
-        alert(`Your stream URL: ${data.watch_url}`);
-      } else {
-        console.error("Error starting stream:", data);
-      }
-    } catch (error) {
-      console.error("Network error:", error);
-    }
-};
-
-  
-  const handleEndLive = async () => {
-    try {
-      await fetch(`https://${window.APP_DOMAIN}/admin/api/end-stream`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${localStorage.getItem("api_token")}`,
-        },
-      });
-  
-      setIsLive(false);
-      setComments([]);
-      setReactions([]);
-    } catch (error) {
-      console.error("Error ending stream:", error);
-    }
-  };
-  
-
-  // Handler for comment submission
-  const handleCommentSubmit = () => {
-    if (newComment.trim()) {
-      const comment = {
-        user: users[3].name,
-        avatar: users[3].avatar,
-        text: newComment,
-      };
-
-      // Get the current position in the comments section (1st, 2nd, 3rd, etc.)
-      const position = comments.length + 1;
-
-      // Log the comment and its position
-      //  console.log(`Comment at position ${position}:`, comment.text);
-      setComments((prevComments) => {
-        const updatedComments = [...prevComments, comment];
-
-        // Scroll to the bottom of the comments container
-        const container = commentsContainerRef.current;
-        if (container) {
-          container.scrollTop = container.scrollHeight; // Ensures the latest comment is visible
-        }
-
-        return updatedComments;
-      });
-      setNewComment(""); // Clear the input field after submission
-    }
+  const handleEndLive = () => {
+    setIsLive(false);
+    setPermissionGranted(false);
+    setMobileOpen(false);
   };
 
-  // Reaction handling
-  const handleReaction = (reactionType) => {
-    const reactionId = Date.now();
-    setReactions((prevReactions) => [
-      ...prevReactions,
-      { id: reactionId, type: reactionType },
-    ]);
+  const [selected, setSelected] = useState("Stream");
+  const [mobileOpen, setMobileOpen] = useState(false);
+  const theme = useTheme();
+  const isMobile = useMediaQuery(theme.breakpoints.down("md"));
 
-    setTimeout(() => {
-      setReactions((prevReactions) =>
-        prevReactions.filter((reaction) => reaction.id !== reactionId)
-      );
-    }, 2000);
+  const handleDrawerToggle = () => {
+    setMobileOpen(!mobileOpen);
+    console.log("mobileOpen clikced");
+    console.log(mobileOpen);
   };
 
-  const handleScroll = () => {
-    const container = commentsContainerRef.current;
-    if (!container) return;
-
-    const containerTop = container.scrollTop;
-    const containerBottom = containerTop + container.clientHeight;
-
-    const visibleComments = [];
-
-    // Loop through all comments and check if they are visible
-    comments.forEach((comment, index) => {
-      const commentElement = document.getElementById(`comment-${index}`);
-
-      if (commentElement) {
-        const commentTop = commentElement.offsetTop;
-        const commentBottom = commentTop + commentElement.offsetHeight;
-
-        // Check if the comment is within the visible area of the container
-        if (commentBottom > containerTop && commentTop < containerBottom) {
-          // Add the visible comment to the list
-          visibleComments.push({ comment, index });
-        }
-      }
-    });
-
-    // Ensure only the first 4 visible comments are logged with position 1, 2, 3, or 4
-    visibleComments.slice(0, 3).forEach(({ comment, index }, visibleIndex) => {
-      const reversedIndex = 3 - (visibleIndex + 1); // This will give you positions like 6, 5, 4, etc.
-      // console.log(
-      //   `Visible Comment at position ${reversedIndex}: ${comment.text}`
-      // );
-      // console.log(
-      //   `Visible Comment at position ${visibleIndex + 1}: ${comment.text}`
-      // );
-      // Apply opacity based on position
-      const opacity = 1 - reversedIndex * 0.3; // Fade out as position increases
-      document.getElementById(`comment-${index}`).style.opacity = opacity;
-    });
+  const requestGoLive = () => {
+    setIsLive(true);
   };
 
-  // Automatically scroll to the latest comment
-  useEffect(() => {
-    const container = commentsContainerRef.current;
-    if (!container) return;
-
-    if (!isUserScrolling.current) {
-      container.scrollTop = container.scrollHeight;
-    }
-  }, [comments]);
+  const drawer = (
+    <div className="countriesMainContainer">
+      <Box className="boxContainer">
+        <List>
+          <ListItem
+            component="div"
+            selected={selected === "Webcam"}
+            onClick={() => {
+              handleDrawerToggle();
+              setSelected("Webcam");
+              handleGoLive();
+            }}
+            sx={{ cursor: "pointer" }}
+          >
+            <ListItemIcon sx={{ color: "#ffffff" }}>
+              <VideocamIcon />
+            </ListItemIcon>
+            <ListItemText primary="Webcam" />
+          </ListItem>
+          <ListItem
+            component="div"
+            selected={selected === "Manage"}
+            onClick={() => {
+              handleDrawerToggle();
+              setSelected("Manage");
+            }}
+            // onClick={() => setSelected("Manage")}
+            sx={{ cursor: "pointer" }}
+          >
+            <ListItemIcon sx={{ color: "#ffffff" }}>
+              <SettingsIcon />
+            </ListItemIcon>
+            <ListItemText primary="Manage" />
+          </ListItem>
+        </List>
+        <Box sx={{ flexGrow: 1 }} />
+        <List>
+          <ListItem
+            component="div"
+            sx={{ marginTop: "auto", cursor: "pointer" }}
+            onClick={() => {
+              handleDrawerToggle();
+              setSelected("Send Feedback");
+            }}
+          >
+            <ListItemIcon sx={{ color: "#ffffff" }}>
+              <FeedbackIcon />
+            </ListItemIcon>
+            <ListItemText primary="Send Feedback" />
+          </ListItem>
+        </List>
+      </Box>
+    </div>
+  );
 
   return (
-    <Box
-      sx={{
-        display: "flex",
-        flexDirection: "column",
-        alignItems: "center",
-        justifyContent: "center",
-        height: "100vh",
-        backgroundColor: "#ffa",
-        color: "black",
-      }}
-    >
-      {/* Live Stream Video with Owner Info Overlay */}
-      {isLive ? (
-        <Paper
-          elevation={20}
-          sx={{
-            position: "relative",
-            width: {
-              xs: "100%", // Full width for mobile screens
-              md: "70%", // 70% width for medium and larger screens
-            },
-            height: {
-              xs: "100%", // Full height for mobile screens
-              md: "90vh", // 90% viewport height for medium and larger screens
-            },
-            aspectRatio: {
-              xs: "9 / 16", // Preserve aspect ratio on mobile
-              md: "16 / 9", // Wide aspect ratio for desktop
-            },
-            // maxWidth: 400,
-            // aspectRatio: "9 / 16",
-            overflow: "hidden",
-            borderRadius: 2,
-            mx: "auto",
-          }}
-        >
-          {/* Video Section */}
-          <LiveStreamComponent
-            audio={true}
-            mirrored={true}
-            style={{
-              width: "100%",
-              height: "100%",
-              objectFit: "cover",
-            }}
-          />
-
-          <Box
-            sx={{
-              position: "absolute",
-              top: 0,
-              left: 0,
-              right: 0,
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "space-between",
-              padding: "8px",
-            }}
-          >
-            {/* Owner Info Section */}
-            <Box sx={{ display: "flex", alignItems: "center" }}>
-              <Avatar
-                src={liveOwner.avatar}
-                alt={liveOwner.name}
-                sx={{ width: 40, height: 40, mr: 1 }}
+    <div className="mainContainer">
+      <div className="navbarDiv">
+        <NavBar />
+      </div>
+      <div className="countriesMainContainer">
+        <Box className="countriesMainContainerBox1">
+          {isLive ? (
+            <Paper className="goLivePaper" elevation={20}>
+              {/* Video Section */}
+              <Webcam
+                className="goLivePaperWeb"
+                audio={micOn}
+                mirrored={true}
+                ref={videoRef}
               />
-              <Typography variant="h6" sx={{ color: "white" }}>
-                {liveOwner.name}
-              </Typography>
-            </Box>
+              <Box className="goLivePaperBox">
+                <Box>
+                  <Button
+                    onClick={isStreaming ? stopStreaming : startStreaming}
+                    color={isStreaming ? "error" : "primary"}
+                  >
+                    {isStreaming ? "Stop Streaming" : "Start Streaming"}
+                  </Button>
+                </Box>
+                <Box sx={{ display: "flex", gap: 2, mt: 2 }}>
+                  <IconButton onClick={toggleCamera} color="primary">
+                    {cameraOn ? <VideocamIcon /> : <VideocamOffIcon />}
+                  </IconButton>
+                  <IconButton onClick={toggleMic} color="primary">
+                    {micOn ? <MicIcon /> : <MicOffIcon />}
+                  </IconButton>
+                </Box>
 
-            {/* Live Text Section */}
-            <Box
-              sx={{
-                backgroundColor: "red",
-                padding: "4px 8px",
-                borderRadius: "5px",
-                display: "inline-block",
-              }}
-            >
-              <Typography variant="h6" sx={{ color: "white" }}>
-                LIVE
-              </Typography>
-            </Box>
-
-            {/* Viewers Icon and Count Section */}
-            <Box sx={{ ml: 2, display: "flex", alignItems: "center" }}>
-              <VisibilityIcon sx={{ color: "white", fontSize: 20, mr: 1 }} />
-              <Typography sx={{ color: "white" }}>{viewersCount}</Typography>
-            </Box>
-
-            {/* Close Button Section */}
-            <Box sx={{ top: 10, right: 0 }}>
-              <GrClose
-                onClick={handleEndLive}
-                style={{
-                  backgroundColor: "white",
-                  color: "black",
-                  fontSize: 30,
-                  borderRadius: "50%",
-                  padding: "8px",
-                  cursor: "pointer",
-                  transition: "background-color 0.3s ease",
-                }}
-                className="close-icon"
-              />
-            </Box>
-          </Box>
-
-          {/* Comments Section */}
-          <Box
-            sx={{
-              position: "absolute",
-              bottom: 0,
-              left: 0,
-              right: 0,
-              // bgcolor: "rgba(255, 255, 255,0.2)",
-              pt: 1,
-              pb: 0,
-              pl: 1,
-              pr: 1,
-            }}
-          >
-            <Box
-              ref={commentsContainerRef}
-              onScroll={handleScroll}
-              sx={{
-                maxHeight: 220,
-                width: 350,
-                overflowY: "auto",
-                display: "flex",
-                flexDirection: "column",
-                scrollbarWidth: "none",
-                msOverflowStyle: "none",
-                WebkitOverflowScrolling: "touch",
-                "&::-webkit-scrollbar": { display: "none" },
-              }}
-            >
-              {comments.map((comment, index) => {
-                return (
-                  <Box
-                    key={index}
-                    id={`comment-${index}`} // Unique ID for each comment
+                {/* Close Button Section */}
+                <Box className="goLivePaperBox4">
+                  <GrClose
+                    onClick={() => {
+                      handleEndLive();
+                    }}
+                    className="close-icon"
+                  />
+                </Box>
+              </Box>
+            </Paper>
+          ) : (
+            <>
+              {isMobile ? (
+                <>
+                  <IconButton
                     sx={{
-                      display: "flex",
-                      alignItems: "center",
-                      color: "wheat",
-                      borderRadius: 2,
-                      // p: 1,
+                      // position: "absolute",
+                      // top: 10,
+                      left: 10,
+                      color: "#ffffff",
+                      position: "fixed",
+                      top: "120px",
+                    }}
+                    onClick={handleDrawerToggle}
+                  >
+                    <MenuIcon />
+                  </IconButton>
+                  <Drawer
+                    variant="temporary"
+                    open={mobileOpen}
+                    onClose={handleDrawerToggle}
+                    ModalProps={{ keepMounted: true }}
+                    sx={{
+                      "& .MuiDrawer-paper": {
+                        width: 240,
+                        boxSizing: "border-box",
+                      },
                     }}
                   >
-                    <Avatar
-                      src={comment.avatar}
-                      alt={comment.user}
-                      sx={{ width: 30, height: 30, mr: 1 }}
-                    />
-                    <Typography variant="body2">
-                      <Typography
-                        component="span"
-                        sx={{
-                          fontSize: 15,
-                          fontWeight: "bold",
-                          color: "wheat",
-                        }}
-                      >
-                        {comment.user}
-                      </Typography>
-                      <br />
-                      <Typography
-                        component="span"
-                        sx={{
-                          fontSize: 12,
-                          color: "white",
-                          wordWrap: "break-word",
-                          overflow: "hidden",
-                          textOverflow: "ellipsis",
-                          whiteSpace: "pre-wrap",
-                        }}
-                      >
-                        {comment.text}
-                      </Typography>
-                    </Typography>
-                  </Box>
-                );
-              })}
-            </Box>
-            <Divider sx={{ bgcolor: "white", mt: 1 }} />
-            <Stack
-              direction="row"
-              sx={{
-                spacing: 1,
-                mt: 0,
-                pt: 1,
-                pb: 1,
-              }}
-            >
-              <TextField
-                variant="outlined"
-                placeholder="Write a comment..."
-                size="small"
-                fullWidth
-                value={newComment}
-                onChange={(e) => setNewComment(e.target.value)}
-                sx={{
-                  backgroundColor: "transparent", // Transparent background
-                  "& .MuiOutlinedInput-root": {
-                    "& fieldset": {
-                      border: "none", // Removes the border
+                    {drawer}
+                  </Drawer>
+                </>
+              ) : (
+                <Drawer
+                  variant="permanent"
+                  sx={{
+                    width: 240,
+                    flexShrink: 0,
+                    "& .MuiDrawer-paper": {
+                      width: 240,
+                      boxSizing: "border-box",
+                      height: "100vh",
+                      overflow: "hidden",
                     },
-                    "&:hover fieldset": {
-                      border: "none", // No border on hover
-                    },
-                    "&.Mui-focused fieldset": {
-                      border: "none", // No border on focus
-                    },
-                  },
-                  input: {
-                    color: "white", // White text color
-                  },
-                }}
-              />
-              <IconButton
-                color="primary"
-                onClick={handleCommentSubmit}
-                sx={{
-                  bgcolor: "white", // Set the initial background color
-                  "&:hover": {
-                    bgcolor: "primary.main", // Change background color on hover (use the primary color)
-                  },
-                  bottom: 0,
-                  right: 0,
-                  padding: "10px",
-                  // margin: "3px",
-                  width: "40px",
-                  height: "40px",
-                }}
-              >
-                <SendIcon
-                  sx={{ color: "primary.main", "&:hover": { color: "white" } }}
-                />
-              </IconButton>
-            </Stack>
-          </Box>
+                  }}
+                >
+                  {drawer}
+                </Drawer>
+              )}
+              {/* Main Content */}
+              <Box className="mainContent">
+                <IconButton color="success">
+                  <CheckCircleIcon sx={{ fontSize: 50 }} />
+                </IconButton>
 
-          {/* Floating Reactions Section */}
-          <IconButton
-            onClick={() => handleReaction("like")}
-            sx={{
-              position: "absolute",
-              bottom: 70,
-              right: 10,
-              bgcolor: "#1877f2",
-              // padding: "10px",
-              margin: "3px",
-              width: "30px",
-              height: "30px",
-            }}
-          >
-            <FaThumbsUp
-              style={{
-                fontSize: 24,
-                color: "white",
-              }}
-            />
-          </IconButton>
-          <IconButton
-            onClick={() => handleReaction("love")}
-            sx={{
-              position: "absolute",
-              bottom: 105,
-              right: 10,
-              bgcolor: "#ff5a5f",
-              // padding: "10px",
-              margin: "3px",
-              width: "30px",
-              height: "30px",
-            }}
-          >
-            <FaHeart style={{ color: "white", fontSize: 24 }} />
-          </IconButton>
-          <IconButton
-            onClick={() => handleReaction("haha")}
-            sx={{
-              position: "absolute",
-              bottom: 140,
-              right: 10,
-              bgcolor: "#f0e130",
-              // padding: "10px",
-              margin: "3px",
-              width: "30px",
-              height: "30px",
-            }}
-          >
-            <FaLaughBeam style={{ color: "black", fontSize: 24 }} />
-          </IconButton>
-          <IconButton
-            onClick={() => handleReaction("sad")}
-            sx={{
-              position: "absolute",
-              bottom: 175,
-              right: 10,
-              bgcolor: "#1c87c9",
-              // padding: "10px",
-              margin: "3px",
-              width: "30px",
-              height: "30px",
-            }}
-          >
-            <FaSadTear style={{ color: "white", fontSize: 24 }} />
-          </IconButton>
-          <IconButton
-            onClick={() => handleReaction("angry")}
-            sx={{
-              position: "absolute",
-              bottom: 210,
-              right: 10,
-              bgcolor: "#e14b40",
-              // padding: "10px",
-              margin: "3px",
-              width: "30px",
-              height: "30px",
-            }}
-          >
-            <FaAngry style={{ color: "white", fontSize: 24 }} />
-          </IconButton>
-          {/* Render Floating Reaction Icons */}
-          {reactions.map((reaction) => {
-            return (
-              <FloatingReaction key={reaction.id}>
-                {reaction.type === "like" && (
-                  <FaThumbsUp style={{ color: "#1877f2" }} />
-                )}
-                {reaction.type === "love" && (
-                  <FaHeart style={{ color: "#ff5a5f" }} />
-                )}
-                {reaction.type === "haha" && (
-                  <FaLaughBeam style={{ color: "#f0e130" }} />
-                )}
-                {reaction.type === "sad" && (
-                  <FaSadTear style={{ color: "#1c87c9" }} />
-                )}
-                {reaction.type === "angry" && (
-                  <FaAngry style={{ color: "#e14b40" }} />
-                )}
-              </FloatingReaction>
-            );
-          })}
-        </Paper>
-      ) : (
-        <Box>
-          {/* Go Live Button Section */}
-          <Typography variant="h4" gutterBottom>
-            Go Live
-          </Typography>
-          <Button
-            variant="contained"
-            color="success"
-            size="large"
-            onClick={handleGoLive}
-            sx={{ mt: 2 }}
-          >
-            Start Live Stream
-          </Button>
+                <Typography variant="h4" sx={{ mt: 2, fontWeight: "bold" }}>
+                  Request Success, You can Go Live Now
+                </Typography>
+                <Button
+                  variant="contained"
+                  sx={{ mt: 2 }}
+                  onClick={requestGoLive}
+                  color="primary"
+                >
+                  Go Live
+                </Button>
+              </Box>
+            </>
+          )}
         </Box>
-      )}
-    </Box>
+      </div>
+    </div>
   );
 };
 
-export default GoLiveTwo;
+export default GoLive;

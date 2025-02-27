@@ -14,6 +14,8 @@ import FavoriteIcon from "@mui/icons-material/Favorite";
 import { Link, useNavigate } from "react-router-dom";
 import { useSelector, useDispatch } from "react-redux";
 import { StoreContext } from "../../Context/StoreContext";
+import india from "../../../public/assets/flags/99.png";
+import { flagsData } from "../flags";
 
 const NavBar = () => {
   const { userData, favCountries } = useContext(StoreContext);
@@ -25,11 +27,12 @@ const NavBar = () => {
   const [showAllFlags, setShowAllFlags] = useState(false);
   const [searchQuery, setSearchQuery] = useState(""); // State for search input
   const [showPopup, setShowPopup] = useState(false);
-
+  const [shuffledCountries, setShuffledCountries] = useState([]);
   const userDatas = async () => {
-    const storedCountries =
-      JSON.parse(localStorage.getItem("geo_country")) || [];
-    setCountries(storedCountries);
+    // const storedCountries =
+    //   JSON.parse(localStorage.getItem("geo_country")) || [];
+    // setCountries(storedCountries);
+    setCountries(flagsData);
   };
 
   const handleLogout = async () => {
@@ -87,20 +90,20 @@ const NavBar = () => {
     };
   }, []);
 
-//   const flagImagesRaw = import.meta.glob("../../assets/flags/*.png", { eager: true });
+  //   const flagImagesRaw = import.meta.glob("../../assets/flags/*.png", { eager: true });
 
-// const flagImages = Object.fromEntries(
-//   Object.entries(flagImagesRaw).map(([path, module]) => {
-//     const fileName = path.split("/").pop().replace(".png", ""); // Extract country code
-//     return [fileName, module.default]; // Store as { "BE": "/assets/flags/BE.png" }
-//   })
-// );
+  // const flagImages = Object.fromEntries(
+  //   Object.entries(flagImagesRaw).map(([path, module]) => {
+  //     const fileName = path.split("/").pop().replace(".png", ""); // Extract country code
+  //     return [fileName, module.default]; // Store as { "BE": "/assets/flags/BE.png" }
+  //   })
+  // );
 
-// const getFlagImage = (code) => {
-//   const image = flagImages[code] || flagImages["default"];
-//   // console.log("Flag source for", code, "is", image);
-//   return image;
-// };
+  // const getFlagImage = (code) => {
+  //   const image = flagImages[code] || flagImages["default"];
+  //   // console.log("Flag source for", code, "is", image);
+  //   return image;
+  // };
 
   // Filter and sort countries
   const filteredCountries = countries
@@ -111,14 +114,14 @@ const NavBar = () => {
         country.country_name.toLowerCase().includes(searchQuery.toLowerCase())
     )
     .sort((a, b) => a.country_name.localeCompare(b.country_name)); // Sort A-Z
-  // Random flag showing 
-  const [shuffledCountries, setShuffledCountries] = useState([]);
+
+  // Shuffle flags for random display
   useEffect(() => {
     if (countries.length > 0) {
       setShuffledCountries([...countries].sort(() => Math.random() - 0.5)); // Shuffle the array
     }
   }, [countries]);
-  
+
   return (
     <div>
       <nav
@@ -186,45 +189,48 @@ const NavBar = () => {
             >
               {/* Display only the first 3 flags */}
               <div style={{ display: "flex", gap: "3px" }}>
-              {shuffledCountries.slice(0, 3).map((country, index) => (
-                <div
-                  key={index}
-                  style={{
-                    display: "flex",
-                    flexDirection: "column",
-                    alignItems: "center",
-                    cursor: "pointer",
-                  }}
-                  onClick={(e) => {
-                    e.preventDefault();
-                    navigate(`/country/${country.code}`);
-                    setShowAllFlags(false);
-                  }}
-                >
-                  <img
-                    src={`/assets/flags/${country.code}.png`}
-                    alt={country.country_name}
+                {shuffledCountries.slice(0, 3).map((country, index) => (
+                  <div
+                    key={index}
                     style={{
-                      width: "40px",
-                      height: "20px",
-                      objectFit: "cover",
+                      display: "flex",
+                      flexDirection: "column",
+                      alignItems: "center",
+                      cursor: "pointer",
                     }}
-                  />
-                  <span
-                    style={{
-                      fontSize: "0.6rem",
-                      color: "#ffffff",
-                      textAlign: "center",
-                      whiteSpace: "nowrap",
-                      overflow: "hidden",
-                      textOverflow: "ellipsis",
-                      maxWidth: "50px",
+                    onClick={(e) => {
+                      e.preventDefault();
+                      navigate(`/country/${country.code}`);
+                      setShowAllFlags(false);
                     }}
                   >
-                    {country.country_name}
-                  </span>
-                </div>
-              ))}
+                    <img
+                      // src={india}
+                      // src={`/assets/${country.code}.png`}
+                      src={country.flag}
+                      // src={`/assets/flags/${country.code}.png`}
+                      alt={country.country_name}
+                      style={{
+                        width: "40px",
+                        height: "20px",
+                        objectFit: "cover",
+                      }}
+                    />
+                    <span
+                      style={{
+                        fontSize: "0.6rem",
+                        color: "#ffffff",
+                        textAlign: "center",
+                        whiteSpace: "nowrap",
+                        overflow: "hidden",
+                        textOverflow: "ellipsis",
+                        maxWidth: "50px",
+                      }}
+                    >
+                      {country.country_name}
+                    </span>
+                  </div>
+                ))}
               </div>
 
               {/* Full list of flags with search input */}
@@ -616,12 +622,14 @@ const NavBar = () => {
                       // Find the matched country in allCountries based on the name
                       // console.log("fav Object:", fav); // Log full object
                       // Find the matched country in 'countries' based on the 'code'
-                      const matchedCountry = countries.find((c) => c.code === fav.code);                      
+                      const matchedCountry = countries.find(
+                        (c) => c.code === fav.code
+                      );
                       // if (!matchedCountry) {
                       //   console.warn(`No matching country found for code: ${fav.code}`);
                       //   return null; // Skip if no match found
                       // }
-                      
+
                       // console.log("Fetching flag for:", matchedCountry);
 
                       // Only render the country if it's matched (found)
@@ -642,7 +650,11 @@ const NavBar = () => {
                             }}
                           >
                             <img
-                              src={matchedCountry.code ? `/assets/flags/${matchedCountry.code}.png` : "default-flag.png"}
+                              src={
+                                matchedCountry.code
+                                  ? `/assets/flags/${matchedCountry.code}.png`
+                                  : "default-flag.png"
+                              }
                               alt={matchedCountry.country_name}
                               className="card-img-top img-fluid"
                               style={{
