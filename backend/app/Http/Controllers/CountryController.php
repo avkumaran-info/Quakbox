@@ -237,14 +237,41 @@ class CountryController extends Controller
                 'country_code' => 'required',
                 'is_like' => 'required|boolean',
             ]);
-
-            Flag_Likes::updateOrCreate(
-                ['country_code' => $request->country_code, 'user_id' => $request->user()->id],
-                ['is_like' => $request->is_like]
-            );
-            
-            return response()->json(['success' => true, 'message' => 'Country Liked/Disliked successfully']);
-        
+    
+            $userId = $request->user()->id;
+            $countryCode = $request->country_code;
+    
+            // Check if the user already liked the country
+            $existingLike = Flag_Likes::where('user_id', $userId)
+                ->where('country_code', $countryCode)
+                ->first();
+    
+            if ($existingLike) {
+                // Toggle like status
+                $existingLike->is_like = !$existingLike->is_like;
+                $existingLike->save();
+                $message = $existingLike->is_like ? 'Country Liked successfully' : 'Country Unliked successfully';
+            } else {
+                // Create a new like entry
+                Flag_Likes::create([
+                    'user_id' => $userId,
+                    'country_code' => $countryCode,
+                    'is_like' => true
+                ]);
+                $message = 'Country Liked successfully';
+            }
+    
+            // Get the total number of likes for the country
+            $likeCount = Flag_Likes::where('country_code', $countryCode)
+                ->where('is_like', true)
+                ->count();
+    
+            return response()->json([
+                'success' => true,
+                'message' => $message,
+                'like_count' => $likeCount
+            ]);
+    
         } catch (\Exception $e) {
             return response()->json([
                 'success' => false,
@@ -252,7 +279,7 @@ class CountryController extends Controller
                 'error' => $e->getMessage()
             ], 500);
         }
-    }
+    }    
 
     public function storeCountryComments(Request $request)
     {
@@ -302,5 +329,66 @@ class CountryController extends Controller
 
         return $countryComment;
 
+    }
+    public function updateCountryComment(Request $request, $commentId)
+    {
+        try {
+            $request->validate([
+                'comment' => 'required|string',
+            ]);
+    
+            $userId = $request->user()->id;
+            $comment = Flag_Comments::find($commentId);
+    
+            if (!$comment) {
+                return response()->json(['success' => false, 'message' => 'Comment not found'], 404);
+            }
+    
+            if ($comment->user_id !== $userId) {
+                return response()->json(['success' => false, 'message' => 'Unauthorized action'], 403);
+            }
+    
+            $comment->comment = $request->comment;
+            $comment->save();
+    
+            return response()->json([
+                'success' => true, 
+                'message' => 'Comment updated successfully',
+                'updated_comment' => $comment
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Error updating comment',
+                'error' => $e->getMessage()
+            ], 500);
+        }
+    }
+        
+
+    public function deleteCountryComment(Request $request, $commentId)
+    {
+        try {
+            $userId = $request->user()->id;
+            $comment = Flag_Comments::find($commentId);
+
+            if (!$comment) {
+                return response()->json(['success' => false, 'message' => 'Comment not found'], 404);
+            }
+
+            if ($comment->user_id !== $userId) {
+                return response()->json(['success' => false, 'message' => 'Unauthorized action'], 403);
+            }
+
+            $comment->delete();
+
+            return response()->json(['success' => true, 'message' => 'Comment deleted successfully']);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Error deleting comment',
+                'error' => $e->getMessage()
+            ], 500);
+        }
     }
 }
