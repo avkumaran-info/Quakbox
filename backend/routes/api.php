@@ -112,7 +112,8 @@ Route::middleware('auth:api')->post('del_favourite_country', [CountryController:
 Route::middleware('auth:api')->post('set_country_likes', [CountryController::class, 'storeCountryLikes']);
 Route::middleware('auth:api')->post('set_country_comments', [CountryController::class, 'storeCountryComments']);
 Route::middleware('auth:api')->post('set_country_shares', [CountryController::class, 'storeCountryShares']);
-
+Route::middleware('auth:api')->put('update_country_comment/{commentId}', [CountryController::class, 'updateCountryComment']);
+Route::middleware('auth:api')->delete('delete_country_comment/{commentId}', [CountryController::class, 'deleteCountryComment']);
 Route::middleware('auth:api')->group(function () {
     Route::post('set_posts', [PostController::class, 'postStore']); // Create post with media
     Route::put('put_posts/{id}', [PostController::class, 'postUpdate']); // Update post

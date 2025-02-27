@@ -40,11 +40,11 @@ class GeoCountry extends Model
                                     ->leftJoin('flag_comments', 'geo_country.code', '=', 'flag_comments.country_code')
                                     ->leftJoin('flag_shares', 'geo_country.code', '=', 'flag_shares.country_code')
                                     ->select(
-                                        DB::raw('COUNT(CASE WHEN flag_likes.is_like = 1 THEN 1 END) as likes_count'),
-                                        DB::raw('COUNT(CASE WHEN flag_likes.is_like = 0 THEN 1 END) as dislikes_count'),
-                                        DB::raw('COUNT(flag_comments.id) as comments_count'),
-                                        DB::raw('COUNT(flag_shares.id) as shares_count'),
-                                    )
+                                        DB::raw('COUNT(DISTINCT CASE WHEN flag_likes.is_like = 1 THEN flag_likes.id END) as likes_count'),
+                                        DB::raw('COUNT(DISTINCT CASE WHEN flag_likes.is_like = 0 THEN flag_likes.id END) as dislikes_count'),
+                                        DB::raw('COUNT(DISTINCT flag_comments.id) as comments_count'),
+                                        DB::raw('COUNT(DISTINCT flag_shares.id) as shares_count')
+                                        )
                                     ->where('geo_country.code', $cc)
                                     ->groupBy('geo_country.code')
                                     ->first();
@@ -52,16 +52,18 @@ class GeoCountry extends Model
     }
 
     public static function getCountryComment($cc) {
-        $comment_country = GeoCountry::leftJoin('flag_comments', 'geo_country.code', '=', 'flag_comments.country_code')
-                            ->leftJoin('users', 'flag_comments.user_id', '=', 'users.id')
-                            ->select(
-                                DB::raw('flag_comments.id as comment_id'),
-                                DB::raw('users.username as userName'),
-                                DB::raw('flag_comments.country_code as country_code'),
-                                DB::raw('flag_comments.comment as comment'),
-                            )
-                            ->where('geo_country.code', $cc)
-                            ->get();
-        return $comment_country;
+        return GeoCountry::leftJoin('flag_comments', 'geo_country.code', '=', 'flag_comments.country_code')
+            ->leftJoin('users', 'flag_comments.user_id', '=', 'users.id')
+            ->select(
+                DB::raw('flag_comments.id as comment_id'),
+                DB::raw('users.username as userName'),
+                DB::raw('users.id as userID'),
+                DB::raw('flag_comments.country_code as country_code'),
+                DB::raw('flag_comments.comment as comment'),
+                DB::raw('flag_comments.created_at as created_at')
+            )
+            ->where('geo_country.code', $cc)
+            ->orderBy('flag_comments.created_at', 'DESC') // Order comments by latest first
+            ->get();    
     }
 }
