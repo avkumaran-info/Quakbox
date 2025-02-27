@@ -26,6 +26,7 @@ import MySubscriptions from "./Components/Qcast/MySubscriptions";
 import MyVideos from "./Components/Qcast/MyVideos";
 import SessionExpiredPopup from "./Components/SessionExpiredPopup";
 import WebcamRecorder from "./Components/Qcast/WebcamRecorder";
+import FriendPage from "./Components/FriendPage";
 const App = () => {
   return (
     <Provider store={store}>
@@ -39,7 +40,8 @@ const App = () => {
           <Route path="/country/:countryCode" element={<Home />} />
           <Route path="/world" element={<Home />} />
           <Route path="/chatroom" element={<ChatPage />} />
-          <Route path="/golive" element={<LiveStream />} />
+          <Route path="/golive" element={<GoLive />} />
+          <Route path="/friendPage" element={<FriendPage />} />
           <Route path="/watchlive/:streamId" element={<WatchStream />} />
           {/* <Route path="/test" element={<FanCountry />} /> */}
           <Route path="/favouriteCountires" element={<FanCountry />} />
@@ -51,7 +53,7 @@ const App = () => {
           <Route path="/browse_channel" element={<BrowseStation />} />
           <Route path="/my_subscriptions" element={<MySubscriptions />} />
           <Route path="/myvideo" element={<MyVideos />} />
-          <Route path="/webcam" element={<WebcamRecorder/>}/>
+          <Route path="/webcam" element={<WebcamRecorder />} />
         </Routes>
       </Router>
     </Provider>
