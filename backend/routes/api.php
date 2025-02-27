@@ -149,6 +149,7 @@ Route::get('images/flags/{filename}', function ($filename) {
 Route::get('get-upload-key', [VideoController::class, 'videoUploadKey']);
 Route::middleware('auth:api')->prefix('videos')->group(function () {
     Route::post('upload', [VideoController::class, 'videoUpload']);
+    Route::post('custom-thumbnail', [VideoController::class, 'uploadCustomThumbnail']);
     Route::get('qlist/{category_id?}', [VideoController::class, 'index']);
     Route::get('{id}/show', [VideoController::class, 'show']);
     Route::post('{id}/delete', [VideoController::class, 'delete']);

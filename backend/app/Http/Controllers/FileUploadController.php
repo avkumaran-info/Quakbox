@@ -27,7 +27,7 @@ class FileUploadController extends Controller
         $index = $request->input('index');
         $totalChunks = $request->input('total_chunks');
         $fileName = $request->input('file_name');
-	$uploadKey = $request->input('upload_key');
+	    $uploadKey = $request->input('upload_key');
 
         // Define a temporary folder for storing chunks
         $chunkFolder = storage_path('app/public/uploads/videos/video_chunks/' . $uploadKey);
@@ -54,13 +54,13 @@ class FileUploadController extends Controller
         $request->validate([
             'file_name' => 'required|string',
             'total_chunks' => 'required|integer',
-	    'upload_key' => 'required|string'
+	        'upload_key' => 'required|string'
         ]);
 
         $fileName = $request->input('file_name');
         $totalChunks = $request->input('total_chunks');
-	$uploadKey = $request->input('upload_key');
-	$fileExtension = pathinfo($fileName , PATHINFO_EXTENSION);
+	    $uploadKey = $request->input('upload_key');
+	    $fileExtension = pathinfo($fileName , PATHINFO_EXTENSION);
         $chunkFolder = storage_path('app/public/uploads/videos/video_chunks/' . $uploadKey);
 
         // Path where the final merged file will be saved

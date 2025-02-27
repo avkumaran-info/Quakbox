@@ -884,5 +884,40 @@ public function videoUploadKey()
             'data' => $formattedVideos,
         ], 200);
     }
+
+    public function uploadCustomThumbnail(Request $request)
+    {
+        // Validate the request
+        $validator = Validator::make($request->all(), [
+            'upload_key' => 'required',
+            'custom_image' => 'required|image|mimes:jpeg,png,jpg|max:2048', // Max 2MB
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json(['error' => $validator->errors()], 422);
+        }
+
+        $tempThumbnailFolder = 'uploads/videos/temp/thumbnails';
+        $imageUniqueName =  $request->upload_key;
+        $i = 1;
+        $files = is_array($request->file('custom_image')) ? $request->file('custom_image') : [$request->file('custom_image')];
+        foreach ($files as $image) {
+            // Generate unique file name
+            $fileName =  $imageUniqueName.'_99'.'.' . $image->getClientOriginalExtension();
+
+            // Store image in the public disk
+            $filePathThumbnail = $image->storeAs($tempThumbnailFolder, $fileName, 'public');
+
+            // Get the full URL
+            $uploadedThumbnailImages[] = env('APP_URL') . '/api/images/' . $filePathThumbnail;
+            $i++;
+        }
+
+        return response()->json([
+            'result' => true,
+            'message' => 'File uploaded successfully',
+            'custom_thumbnail' => $uploadedThumbnailImages,
+        ], 200);
+    }
     
 }
