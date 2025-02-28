@@ -38,7 +38,7 @@ const Feed = ({ countryCode, flag, countryName, handleCountryChange }) => {
   const [comments, setComments] = useState([]); // Store comments
   const [newComment, setNewComment] = useState(""); // Store new comment input
   const [loading, setLoading] = useState(false);
-
+  const [isDisabled, setIsDisabled] = useState(false);
   const [commentText, setCommentText] = useState("");
   const [showEmojiPicker, setShowEmojiPicker] = useState(false);
 
@@ -1075,6 +1075,7 @@ const closeEditCommentPopup = () => {
                         type="button"
                         className="btn btn-primary w-100"
                         onClick={handleSubmit}
+                        disabled={isDisabled}
                       >
                         Post
                       </button>
@@ -1335,9 +1336,9 @@ const closeEditCommentPopup = () => {
                   {comments?.length > 0 ? (
                     comments.slice(0, visibleComments).map((comment, index) => {
                       const isUserComment = Number(comment.comment_user_id) === Number(userId);
-                      console.log("Comment User ID:", comment.comment_user_id);
-                      console.log("User ID:", userId);
-                       console.log("Comparison Result:", Number(comment.comment_user_id) === Number(userId));
+                      // console.log("Comment User ID:", comment.comment_user_id);
+                      // console.log("User ID:", userId);
+                      //  console.log("Comparison Result:", Number(comment.comment_user_id) === Number(userId));
 
                       return (
                         <div key={comment.comment_id || index} className="d-flex align-items-start mb-3">
