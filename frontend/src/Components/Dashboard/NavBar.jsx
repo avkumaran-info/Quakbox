@@ -112,11 +112,27 @@ const NavBar = () => {
     .sort((a, b) => a.country_name.localeCompare(b.country_name)); // Sort A-Z
 
   // Shuffle flags for random display
-  useEffect(() => {
-    if (countries.length > 0) {
-      setShuffledCountries([...countries].sort(() => Math.random() - 0.5)); // Shuffle the array
-    }
-  }, [countries]);
+ // Shuffle function
+
+ const shuffleArray = (array) => {
+
+  return [...array].sort(() => Math.random() - 0.5);
+
+};
+
+// Shuffle on initial render and when countries change
+
+useEffect(() => {
+  if (countries.length > 0) {
+    setShuffledCountries(shuffleArray(countries)); // Shuffle the array
+  }
+}, [countries]);
+
+// Function to handle flag click
+const handleFlagClick = (country) => {
+  navigate(`/country/${country.code}`);
+  setShuffledCountries(shuffleArray(countries)); // Reshuffle flags on click
+};
 
   return (
     <div>
@@ -194,11 +210,7 @@ const NavBar = () => {
                       alignItems: "center",
                       cursor: "pointer",
                     }}
-                    onClick={(e) => {
-                      e.preventDefault();
-                      navigate(`/country/${country.code}`);
-                      setShowAllFlags(false);
-                    }}
+                    onClick={() => handleFlagClick(country)}
                   >
                     <img
                       src={
@@ -303,6 +315,7 @@ const NavBar = () => {
                           e.preventDefault();
                           navigate(`/country/${country.code}`);
                           setShowAllFlags(false);
+                          setShuffledCountries(shuffleArray(countries));
                         }}
                       >
                         <img
