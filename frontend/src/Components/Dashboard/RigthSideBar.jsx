@@ -739,7 +739,7 @@ const deleteComment = async () => {
               ) : (
                 <>
                   <img
-                    src={country.flag} // Use the imported flag image
+                    // src={country.flag} // Use the imported flag image
                     alt={countryName}
                     className="img-fluid"
                     style={{
