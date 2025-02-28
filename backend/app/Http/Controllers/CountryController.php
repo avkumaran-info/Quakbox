@@ -194,13 +194,11 @@ class CountryController extends Controller
                     DB::table('favourite_country')
                         ->where('member_id', $request->user()->id)
                         ->where('code', $country['code'])
-                        ->when('country_name', $country['country_name'])
                         ->delete();
                 } else {
                     DB::table('favourite_country')
                         ->where('member_id', $request->user()->id)
                         ->where('code', $country['code'])
-                        ->when('country_name', $country['country_name'])
                         ->update([
                             'favourite_country' => $country['favourite_country'],
                         ]);    
