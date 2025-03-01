@@ -424,7 +424,7 @@ const UploadVideo = () => {
   const uploadFile = async (firstFile, videoType, files) => {
     setIsLoading(true);
     try {
-      if ([1, 2, 5].includes(videoType)) {
+      if ([1, 2, 4, 5].includes(videoType)) {
         const uploadKey = await getUploadKey();
         console.log(uploadKey);
 

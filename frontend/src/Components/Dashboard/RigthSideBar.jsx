@@ -19,6 +19,7 @@ import ScreenShareIcon from "@mui/icons-material/ScreenShare";
 import { Tooltip } from "@mui/material";
 import { StoreContext } from "../../Context/StoreContext";
 import { flagsData } from "../flags";
+import { useParams } from "react-router-dom";
 const updates = [
   {
     id: 1,
@@ -67,9 +68,22 @@ const RightSidebar = ({ countryCode, countryName, flag }) => {
     shares: 0,
   });
   // console.log(countryCode);
-  
-  const country = flagsData.find((c) => c.code === countryCode);
-  // console.log("COunty",country);
+
+  const isWorld = location.pathname === "/world"; // Determines if we're in the "world" section
+  const isDashboard = location.pathname === "/dashboard";
+  const { Code } = useParams();
+  // Ensure Code is defined when on "/country/:code"
+  const pathParts = location.pathname.split("/");
+  const urlCountryCode = pathParts[1] === "country" ? pathParts[2] : null;
+
+  const countryParam = isWorld
+    ? "99"
+    : isDashboard
+    ? localStorage.getItem("user_country") || Code
+    : urlCountryCode || Code || "defaultCode"; // Ensures countryParam is always set
+
+  const country = flagsData.find((c) => c.code === countryParam);
+  // console.log("COunty", country);
 
   const [navbarHeight, setNavbarHeight] = useState(56);
   const [comments, setComments] = useState([]); // Store comments
@@ -114,9 +128,6 @@ const RightSidebar = ({ countryCode, countryName, flag }) => {
       fetchCountryCounts();
     }
   }, [countryCode]);
-
-  const isWorld = location.pathname === "/world"; // Determines if we're in the "world" section
-  const isDashboaed = location.pathname === "/dashboard";
 
   const handleCommentClick = () => {
     fetchComments();
@@ -368,7 +379,7 @@ const RightSidebar = ({ countryCode, countryName, flag }) => {
                 position: "sticky",
               }}
             >
-              {isDashboaed ? (
+              {isDashboard ? (
                 <>
                   <div
                     className="text-center d-flex flex-column align-items-center"
@@ -394,7 +405,10 @@ const RightSidebar = ({ countryCode, countryName, flag }) => {
                       }}
                     >
                       <img
-                        src={userData.profile_image_url}
+                        // src={userData.profile_image_url}
+                        src={
+                          userData?.profile_image_url || "default-profile.png"
+                        }
                         alt="User Profile"
                         className="img-fluid"
                         style={{
@@ -406,7 +420,8 @@ const RightSidebar = ({ countryCode, countryName, flag }) => {
                       />
                     </div>
                     <h5 className="mt-2 text-dark fw-bold text-uppercase">
-                      {userData.users.username}
+                      {/* {userData.users.username} */}
+                      {userData?.users?.username}
                     </h5>
                     <button className="btn btn-primary mt-2">
                       Change Picture
@@ -416,7 +431,7 @@ const RightSidebar = ({ countryCode, countryName, flag }) => {
               ) : (
                 <>
                   <img
-                    // src={country.flag} // Use the imported flag image
+                    src={country.flag} // Use the imported flag image
                     alt={countryName}
                     className="img-fluid"
                     style={{

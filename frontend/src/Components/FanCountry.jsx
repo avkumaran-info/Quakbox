@@ -10,17 +10,19 @@ import {
   selectFavouriteCountries,
   setFavouriteCountries,
 } from "./redux/favouriteCountriesSlice";
-
+import { flagsData } from "./flags";
 // API URLs
 const countriesApi = `https://restcountries.com/v3.1/all`;
-const GET_API_URL =
-  `https://${window.APP_DOMAIN}/admin/api/get_favourite_country`;
-const POST_API_URL =
-  `https://${window.APP_DOMAIN}/admin/api/set_favourite_country`;
-const PUT_API_URL =
-  `https://${window.APP_DOMAIN}/admin/api/put_favourite_country`;
-const RESET_API_URL =
-  `https://${window.APP_DOMAIN}/admin/api/del_favourite_country`;
+// const GET_API_URL = `https://${window.APP_DOMAIN}/admin/api/get_favourite_country`;
+// const POST_API_URL = `https://${window.APP_DOMAIN}/admin/api/set_favourite_country`;
+// const PUT_API_URL = `https://${window.APP_DOMAIN}/admin/api/put_favourite_country`;
+// const RESET_API_URL = `https://${window.APP_DOMAIN}/admin/api/del_favourite_country`;
+
+const GET_API_URL = `https://develop.quakbox.com/admin/api/get_favourite_country`;
+const POST_API_URL = `https://develop.quakbox.com/admin/api/set_favourite_country`;
+const PUT_API_URL = `https://develop.quakbox.com/admin/api/put_favourite_country`;
+const RESET_API_URL = `https://develop.quakbox.com/admin/api/del_favourite_country`;
+
 const API_TOKEN = localStorage.getItem("api_token");
 
 // Helper to get the API token
@@ -57,24 +59,27 @@ const FanCountry = () => {
       navigate("/"); // Redirect to login if no token
     }
   };
-  
+
   const fetchAllCountries = async () => {
     setLoading(true);
     try {
       const storedCountries =
-      JSON.parse(localStorage.getItem("geo_country")) || [];
+        JSON.parse(localStorage.getItem("geo_country")) || [];
       // console.log(storedCountries);
-      
+
       // const response = await axios.get(countriesApi);
       // console.log(response.data);
 
       const data = storedCountries.map((country) => ({
         name: country.country_name,
-        code: country.code?.toUpperCase() || "", // Handle missing/undefined values
-        flag: `/assets/flags/${country.code}.png`,
+        code: country.code?.toUpperCase() || "", // Ensure uppercase codes
+        flag: flagsData.find(
+          (flagObj) =>
+            flagObj.code?.toUpperCase() === country.code?.toUpperCase()
+        )?.flag, // Case-insensitive match
         isFan: false,
         isFavourite: false,
-      })); 
+      }));
       console.log(data[0].code);
       // Sort countries alphabetically by name
       const sortedCountries = data.sort((a, b) => a.name.localeCompare(b.name));
@@ -144,40 +149,44 @@ const FanCountry = () => {
       const response = await axios.get(GET_API_URL, {
         headers: { Authorization: `Bearer ${token}` },
       });
-  
+
       console.log("API Response:", response.data); // ✅ Log the full API response
-  
-      const uniqueCountries = response.data.favourite_country.map((country) => ({
-        code: country.code || "UNKNOWN", // ✅ Handle missing codes
-        isFan: true,
-        isFavourite: country.favourite_country === "1",
-        favourite_country_id: country.favourite_country_id,
-        originalState: {
+
+      const uniqueCountries = response.data.favourite_country.map(
+        (country) => ({
+          code: country.code || "UNKNOWN", // ✅ Handle missing codes
           isFan: true,
           isFavourite: country.favourite_country === "1",
-        },
-      }));
-  
+          favourite_country_id: country.favourite_country_id,
+          originalState: {
+            isFan: true,
+            isFavourite: country.favourite_country === "1",
+          },
+        })
+      );
+
       console.log("Unique Countries:", uniqueCountries); // ✅ Log processed data
-  
+
       const combined = initialCountries.map((country) => {
         const match = uniqueCountries.find((fav) => fav.code === country.code);
-  
+
         // if (!match) {
         //   console.warn(`No match found for country: ${country.code}`);
         // }
-  
+
         return match ? { ...country, ...match } : country;
       });
-  
+
       // console.log("Combined Countries:", combined); // ✅ Log the final list
-  
-      dispatch(setFavouriteCountries(combined.filter((country) => country.isFavourite)));
+
+      dispatch(
+        setFavouriteCountries(combined.filter((country) => country.isFavourite))
+      );
       setCountries(combined);
     } catch (error) {
       handleApiError("Error fetching favourite countries", error);
     }
-  };  
+  };
 
   const handleApiError = (message, error) => {
     if (error.response?.status === 401) {
@@ -198,8 +207,11 @@ const FanCountry = () => {
         )
         .map((country) => ({
           code: country.code,
+          country_name: country.name,
           favourite_country: country.isFavourite ? "1" : "0",
         }));
+
+      console.log("Post Payload:", postPayload);
 
       if (postPayload.length === 0) {
         handleError("No new countries to add.");
@@ -236,6 +248,8 @@ const FanCountry = () => {
           );
         })
         .map((country) => {
+          console.log(country);
+          
           let favouriteCountryValue;
 
           if (country.isFan && !country.isFavourite) {
@@ -249,7 +263,7 @@ const FanCountry = () => {
           return {
             favourite_country_id: country.favourite_country_id,
             code: country.code,
-            country_name:country.country_name,
+            // country_name:country.name,
             favourite_country: favouriteCountryValue,
           };
         });
@@ -260,6 +274,8 @@ const FanCountry = () => {
       }
 
       const token = getApiToken();
+      console.log("Country:", putPayload);
+
       await axios.post(
         PUT_API_URL,
         { countries: putPayload },
@@ -401,7 +417,10 @@ const FanCountry = () => {
                     key={index}
                   >
                     <img
-                      src={`/assets/flags/${country.code}.png`}
+                      src={
+                        flagsData.find((code) => code.code === country.code)
+                          ?.flag
+                      }
                       className="card-img-top"
                       alt={country.name}
                       style={{
@@ -541,7 +560,10 @@ const FanCountry = () => {
                       key={index}
                     >
                       <img
-                        src={`/assets/flags/${country.code}.png`}
+                        src={
+                          flagsData.find((code) => code.code === country.code)
+                            ?.flag
+                        }
                         className="card-img-top"
                         alt={country.name}
                         style={{
@@ -718,7 +740,10 @@ const FanCountry = () => {
                     key={index}
                   >
                     <img
-                      src={`/assets/flags/${country.code}.png`}
+                      src={
+                        flagsData.find((code) => code.code === country.code)
+                          ?.flag
+                      }
                       className="card-img-top"
                       alt={country.name}
                       style={{

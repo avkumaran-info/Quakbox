@@ -649,10 +649,19 @@ const NavBar = () => {
                               console.log(fav);
                             }}
                           >
+                         
+                            {console.log(
+                              flagsData.find(
+                                (item) => item.code === matchedCountry.code
+                              )?.flag
+                            )}
                             <img
                               src={
                                 matchedCountry.code
-                                  ? `/assets/flags/${matchedCountry.code}.png`
+                                  ? flagsData.find(
+                                      (item) =>
+                                        item.code === matchedCountry.code
+                                    )?.flag
                                   : "default-flag.png"
                               }
                               alt={matchedCountry.country_name}
@@ -663,6 +672,7 @@ const NavBar = () => {
                                 objectFit: "cover",
                               }}
                             />
+
                             <span
                               style={{
                                 fontSize: "0.6rem",
@@ -711,7 +721,8 @@ const NavBar = () => {
                   onClick={() => setShowDropdown((prev) => !prev)}
                 >
                   <img
-                    src={userData.profile_image_url}
+                    // src={userData.profile_image_url}
+                    src={userData?.profile_image_url || "default-profile.png"}
                     alt="User"
                     style={{
                       width: "100%",
