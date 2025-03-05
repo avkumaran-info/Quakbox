@@ -25,7 +25,7 @@ const Feed = ({ countryCode, flag, countryName, handleCountryChange }) => {
   const [editedMessage, setEditedMessage] = useState("");
   const [editedMediaFile, setEditedMediaFile] = useState(null);
   const [editedMediaPreview, setEditedMediaPreview] = useState(null);
-  
+
   const userId = userData?.users?.id || localStorage.getItem("user_Id");
 
   // Functions to handle popup visibility
@@ -46,7 +46,7 @@ const Feed = ({ countryCode, flag, countryName, handleCountryChange }) => {
     const emojiChar = String.fromCodePoint(`0x${emoji.unified}`);
     setCommentText((prevText) => prevText + emojiChar);
     console.log(emojiChar);
-  };  
+  };
 
   const getCommets = async (post) => {
     try {
@@ -100,9 +100,9 @@ const Feed = ({ countryCode, flag, countryName, handleCountryChange }) => {
   // Calling the function inside the comment modal
   const handlePostComment = async () => {
     if (!selectedPost || !commentText.trim()) return;
-  
+
     const postId = selectedPost.id;
-    
+
     // Update comment count instantly in the UI
     setData((prevData) => ({
       ...prevData,
@@ -118,18 +118,18 @@ const Feed = ({ countryCode, flag, countryName, handleCountryChange }) => {
           : post
       ),
     }));
-  
+
     const comment = commentText;
     setCommentText(""); // Clear input field
     closeCommentPopup();
-  
+
     try {
       await postComment(postId, comment); // API call to post comment
       getCommets(selectedPost); // Fetch updated comments from API
     } catch (error) {
       console.error("Error posting comment:", error);
       alert("Failed to post comment");
-  
+
       // Rollback UI update on failure
       setData((prevData) => ({
         ...prevData,
@@ -147,8 +147,7 @@ const Feed = ({ countryCode, flag, countryName, handleCountryChange }) => {
       }));
     }
   };
-  
-  
+
   const openCommentPopup = async (post) => {
     await getCommets(post);
     setSelectedPost(post);
@@ -156,11 +155,11 @@ const Feed = ({ countryCode, flag, countryName, handleCountryChange }) => {
   };
 
   const closeCommentPopup = () => {
-    setShowEmojiPicker(false); 
+    setShowEmojiPicker(false);
     setSelectedPost(null);
     setCommentPopupOpen(false);
   };
-  
+
   const loadMoreComments = () => {
     setVisibleComments((prev) => prev + 10); // Load 10 more comments on click
   };
@@ -170,24 +169,33 @@ const Feed = ({ countryCode, flag, countryName, handleCountryChange }) => {
   // Handle Delete Comment
   const handleDeleteComment = async () => {
     if (!commentToDelete) return;
-  
+
     const { postId, commentId } = commentToDelete;
-  
+
     try {
       const token = localStorage.getItem("api_token");
       if (!token) return alert("Authorization token missing.");
-  
+
       const res = await axios.delete(
         `https://${window.APP_DOMAIN}/admin/api/del_posts/${postId}/comments/${commentId}`,
         { headers: { Authorization: `Bearer ${token}` } }
       );
-  
+
       if (res.status === 200) {
-        setComments((prevComments) => prevComments.filter((comment) => comment.comment_id !== commentId));
+        setComments((prevComments) =>
+          prevComments.filter((comment) => comment.comment_id !== commentId)
+        );
         setData((prevData) => ({
           ...prevData,
           posts: prevData.posts.map((post) =>
-            post.id === postId ? { ...post, comments: { count: Math.max((post.comments?.count || 1) - 1, 0) } } : post
+            post.id === postId
+              ? {
+                  ...post,
+                  comments: {
+                    count: Math.max((post.comments?.count || 1) - 1, 0),
+                  },
+                }
+              : post
           ),
         }));
         console.log("Comment deleted successfully.");
@@ -198,75 +206,79 @@ const Feed = ({ countryCode, flag, countryName, handleCountryChange }) => {
       console.error("Error deleting comment:", error);
       alert("An error occurred while deleting the comment.");
     }
-  
+
     setShowDeletePopup(false);
   };
-  
-const [editingCommentId, setEditingCommentId] = useState(null);
-const [editedComment, setEditedComment] = useState("");
-const [isEditCommentPopupOpen, setIsEditCommentPopupOpen] = useState(false);
-const [commentToEdit, setCommentToEdit] = useState(null); // ✅ Define it properly
 
+  const [editingCommentId, setEditingCommentId] = useState(null);
+  const [editedComment, setEditedComment] = useState("");
+  const [isEditCommentPopupOpen, setIsEditCommentPopupOpen] = useState(false);
+  const [commentToEdit, setCommentToEdit] = useState(null); // ✅ Define it properly
 
-// Open Edit Comment Popup
-const openEditCommentPopup = (comment) => {
-  setEditingCommentId(comment.comment_id);  
-  setEditedComment(comment.message);  // ✅ Use "message" consistently
-  setIsEditCommentPopupOpen(true);
-};
+  // Open Edit Comment Popup
+  const openEditCommentPopup = (comment) => {
+    setEditingCommentId(comment.comment_id);
+    setEditedComment(comment.message); // ✅ Use "message" consistently
+    setIsEditCommentPopupOpen(true);
+  };
 
-// Handle Save Comment (Consistent with handleEditComment)
-const handleSaveComment = async () => {
-  if (!editedComment.trim()) return alert("Comment cannot be empty.");
+  // Handle Save Comment (Consistent with handleEditComment)
+  const handleSaveComment = async () => {
+    if (!editedComment.trim()) return alert("Comment cannot be empty.");
 
-  try {
-    const token = localStorage.getItem("api_token");
-    if (!token) return alert("Authorization token missing.");
+    try {
+      const token = localStorage.getItem("api_token");
+      if (!token) return alert("Authorization token missing.");
 
-    // **Instantly update UI before API call (Optimistic Update)**
-    setComments((prevComments) =>
-      prevComments.map((comment) =>
-        comment.comment_id === editingCommentId
-          ? { ...comment, message: editedComment } // ✅ Update state immediately
-          : comment
-      )
-    );
-
-    // **API Call to Save Comment**
-    const res = await axios.put(
-      `https://${window.APP_DOMAIN}/admin/api/put_comment/${editingCommentId}`,
-      { comment: editedComment },
-      { headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" } }
-    );
-
-    // **Ensure API response is valid**
-    if (res.status === 200) {
+      // **Instantly update UI before API call (Optimistic Update)**
       setComments((prevComments) =>
         prevComments.map((comment) =>
           comment.comment_id === editingCommentId
-            ? { ...comment, message: res.data.data.comment } // ✅ Update from response
+            ? { ...comment, message: editedComment } // ✅ Update state immediately
             : comment
         )
       );
-    } else {
-      alert("Failed to save comment.");
-    }
-    // **Close Popup**
-    closeEditCommentPopup();
-    closeCommentPopup();
-  } catch (error) {
-    console.error("Error saving comment:", error);
-    alert("An error occurred while saving the comment.");
-  }
-};
 
-// Close Edit Comment Popup
-const closeEditCommentPopup = () => {
-  setCommentToEdit(null);  // ✅ Reset edited comment
-  setEditingCommentId(null);
-  setEditedComment("");
-  setIsEditCommentPopupOpen(false);
-};
+      // **API Call to Save Comment**
+      const res = await axios.put(
+        `https://${window.APP_DOMAIN}/admin/api/put_comment/${editingCommentId}`,
+        { comment: editedComment },
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "application/json",
+          },
+        }
+      );
+
+      // **Ensure API response is valid**
+      if (res.status === 200) {
+        setComments((prevComments) =>
+          prevComments.map((comment) =>
+            comment.comment_id === editingCommentId
+              ? { ...comment, message: res.data.data.comment } // ✅ Update from response
+              : comment
+          )
+        );
+      } else {
+        alert("Failed to save comment.");
+      }
+      // **Close Popup**
+      closeEditCommentPopup();
+      closeCommentPopup();
+    } catch (error) {
+      console.error("Error saving comment:", error);
+      alert("An error occurred while saving the comment.");
+    }
+  };
+
+  // Close Edit Comment Popup
+  const closeEditCommentPopup = () => {
+    setCommentToEdit(null); // ✅ Reset edited comment
+    setEditingCommentId(null);
+    setEditedComment("");
+    setIsEditCommentPopupOpen(false);
+  };
   // Open Delete Popup
   const openDeletePopup = (post) => {
     setPostToDelete(post);
@@ -467,7 +479,7 @@ const closeEditCommentPopup = () => {
         const newPost = {
           id: response.data.id,
           message: message,
-           created_time: new Date().toISOString(),
+          created_time: new Date().toISOString(),
           from: {
             name: userData.users.username,
             profile_image: userData.profile_image_url,
@@ -607,23 +619,27 @@ const closeEditCommentPopup = () => {
   const token = localStorage.getItem("api_token");
   const currentUserId = userData?.users?.id || localStorage.getItem("user_id");
 
-
   const [dislikeInProgress, setDislikeInProgress] = useState({});
   const [likeInProgress, setLikeInProgress] = useState({});
 
   const handleLikeClick = async (post) => {
     if (likeInProgress[post.id]) return;
-  
+
     setLikeInProgress((prev) => ({ ...prev, [post.id]: true }));
-  
+
     const currentUser = {
       user_id: currentUserId,
       name: userData?.users?.username || "Unknown User",
+      is_like: 1, // Setting like as true
     };
-  
-    const alreadyLiked = post.likes?.liked_users?.some((user) => user.user_id === currentUserId);
-    const alreadyDisliked = post?.disliked_users?.some((user) => user.user_id === currentUserId);
-  
+
+    const alreadyLiked = post.likes?.liked_users?.some(
+      (user) => user.user_id === currentUserId
+    );
+    const alreadyDisliked = post?.disliked_users?.some(
+      (user) => user.user_id === currentUserId
+    );
+
     setData((prevData) =>
       prevData?.posts?.length
         ? {
@@ -637,12 +653,16 @@ const closeEditCommentPopup = () => {
                         ? Math.max((p.likes?.count || 0) - 1, 0)
                         : (p.likes?.count || 0) + 1,
                       liked_users: alreadyLiked
-                        ? p.likes?.liked_users?.filter((user) => user.user_id !== currentUserId)
+                        ? p.likes?.liked_users?.filter(
+                            (user) => user.user_id !== currentUserId
+                          )
                         : [...(p.likes?.liked_users || []), currentUser],
                     },
                     // Remove dislike if previously disliked
                     disliked_users: alreadyDisliked
-                      ? p.disliked_users?.filter((user) => user.user_id !== currentUserId)
+                      ? p.disliked_users?.filter(
+                          (user) => user.user_id !== currentUserId
+                        )
                       : p.disliked_users,
                   }
                 : p
@@ -650,14 +670,15 @@ const closeEditCommentPopup = () => {
           }
         : prevData
     );
-  
+
     try {
+      // Minimal change here: toggle the like by checking if alreadyLiked
       const res = await axios.post(
         `https://${window.APP_DOMAIN}/admin/api/set_posts_like/${post.id}/like`,
-        { is_like: true },
+        { is_like: alreadyLiked ? false : true },
         { headers: { Authorization: `Bearer ${token}` } }
       );
-  
+
       if (res.status !== 200) {
         console.error("Failed to save the like in the database.");
         revertLike(post);
@@ -669,7 +690,8 @@ const closeEditCommentPopup = () => {
       setLikeInProgress((prev) => ({ ...prev, [post.id]: false }));
     }
   };
-    const revertLike = (post) => {
+
+  const revertLike = (post) => {
     setData((prevData) =>
       prevData?.posts?.length
         ? {
@@ -691,64 +713,74 @@ const closeEditCommentPopup = () => {
         : prevData
     );
   };
- const handleDislikeClick = async (post) => {
-  if (dislikeInProgress[post.id]) return;
 
-  setDislikeInProgress((prev) => ({ ...prev, [post.id]: true }));
+  const handleDislikeClick = async (post) => {
+    if (dislikeInProgress[post.id]) return;
 
-  const currentUser = {
-    user_id: currentUserId,
-    name: userData?.users?.username || "Unknown User",
-  };
+    setDislikeInProgress((prev) => ({ ...prev, [post.id]: true }));
 
-  const alreadyDisliked = post?.disliked_users?.some((user) => user.user_id === currentUserId);
-  const alreadyLiked = post.likes?.liked_users?.some((user) => user.user_id === currentUserId);
+    const currentUser = {
+      user_id: currentUserId,
+      name: userData?.users?.username || "Unknown User",
+    };
 
-  setData((prevData) =>
-    prevData?.posts?.length
-      ? {
-          ...prevData,
-          posts: prevData.posts.map((p) =>
-            p.id === post.id
-              ? {
-                  ...p,
-                  disliked_users: alreadyDisliked
-                    ? p.disliked_users?.filter((user) => user.user_id !== currentUserId)
-                    : [...(p.disliked_users || []), currentUser],
-                  // Remove like if previously liked
-                  likes: {
-                    count: alreadyLiked ? Math.max((p.likes?.count || 0) - 1, 0) : p.likes?.count,
-                    liked_users: alreadyLiked
-                      ? p.likes?.liked_users?.filter((user) => user.user_id !== currentUserId)
-                      : p.likes?.liked_users,
-                  },
-                }
-              : p
-          ),
-        }
-      : prevData
-  );
-
-  try {
-    const res = await axios.post(
-      `https://${window.APP_DOMAIN}/admin/api/set_posts_like/${post.id}/dislike`,
-      { is_like: false },
-      { headers: { Authorization: `Bearer ${token}` } }
+    const alreadyDisliked = post?.disliked_users?.some(
+      (user) => user.user_id === currentUserId
+    );
+    const alreadyLiked = post.likes?.liked_users?.some(
+      (user) => user.user_id === currentUserId
     );
 
-    if (res.status !== 200) {
-      console.error("Failed to save the dislike in the database.");
-      revertDislike(post);
-    }
-  } catch (error) {
-    console.error("Error disliking the post:", error);
-    revertDislike(post);
-  } finally {
-    setDislikeInProgress((prev) => ({ ...prev, [post.id]: false }));
-  }
-};
+    setData((prevData) =>
+      prevData?.posts?.length
+        ? {
+            ...prevData,
+            posts: prevData.posts.map((p) =>
+              p.id === post.id
+                ? {
+                    ...p,
+                    disliked_users: alreadyDisliked
+                      ? p.disliked_users?.filter(
+                          (user) => user.user_id !== currentUserId
+                        )
+                      : [...(p.disliked_users || []), currentUser],
+                    // Remove like if previously liked
+                    likes: {
+                      count: alreadyLiked
+                        ? Math.max((p.likes?.count || 0) - 1, 0)
+                        : p.likes?.count,
+                      liked_users: alreadyLiked
+                        ? p.likes?.liked_users?.filter(
+                            (user) => user.user_id !== currentUserId
+                          )
+                        : p.likes?.liked_users,
+                    },
+                  }
+                : p
+            ),
+          }
+        : prevData
+    );
 
-  
+    try {
+      const res = await axios.post(
+        `https://${window.APP_DOMAIN}/admin/api/set_posts_like/${post.id}/dislike`,
+        { is_like: false },
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+
+      if (res.status !== 200) {
+        console.error("Failed to save the dislike in the database.");
+        revertDislike(post);
+      }
+    } catch (error) {
+      console.error("Error disliking the post:", error);
+      revertDislike(post);
+    } finally {
+      setDislikeInProgress((prev) => ({ ...prev, [post.id]: false }));
+    }
+  };
+
   const revertDislike = (post) => {
     setData((prevData) =>
       prevData?.posts?.length
@@ -768,7 +800,109 @@ const closeEditCommentPopup = () => {
         : prevData
     );
   };
-  
+
+  const getPost = async () => {
+    // console.log("📌 Checking location before API call:", location.pathname);
+
+    const token = localStorage.getItem("api_token");
+    if (!token) {
+      console.warn("⚠️ No token found, user may not be logged in.");
+      return;
+    }
+
+    // Get userId from userData or localStorage (changed "user_Id" to "user_id")
+    const userId = userData?.users?.id || localStorage.getItem("user_id");
+    // console.log("👤 Current User ID:", userId);
+
+    // Determine countryParam using isWorld and isDashboard
+    const countryParam = isWorld ? "99" : isDashboard ? "" : countryCode || "";
+
+    // Construct API URL dynamically
+    let apiUrl = `https://${window.APP_DOMAIN}/admin/api/get_posts${
+      countryParam ? `/${countryParam}` : ""
+    }`;
+
+    // console.log("📌 Fetching posts from:", apiUrl);
+
+    try {
+      const res = await axios.get(apiUrl, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+          Accept: "application/json",
+        },
+      });
+
+      // console.log("📌 API Response:", res.data);
+
+      if (
+        res.data?.status &&
+        Array.isArray(res.data.posts) &&
+        res.data.posts.length > 0
+      ) {
+        const formattedPosts = res.data.posts.map((post) => ({
+          ...post,
+          created_time: post.created_time || new Date().toISOString(),
+          timeAgo: getTimeAgo(post.created_time),
+          isLiked: post.likes?.liked_users?.some(
+            (user) => user.user_id === userId
+          ),
+        }));
+
+        setData({ posts: formattedPosts });
+
+        // Ensure selectedPost is valid, otherwise select the first post
+        if (
+          !selectedPost ||
+          !formattedPosts.some((p) => p.id === selectedPost.id)
+        ) {
+          setSelectedPost(formattedPosts[0]);
+          // console.log("✅ Selected Post ID:", formattedPosts[0].id);
+        }
+      } else {
+        console.warn("⚠️ No posts found for:", countryParam);
+        setSelectedPost(null); // Reset selected post if no posts are available
+      }
+    } catch (error) {
+      console.error("❌ Error fetching posts:", error);
+    }
+  };
+
+  const [likedUsers, setLikedUsers] = useState([]);
+  const [showLikedUsers, setShowLikedUsers] = useState(false);
+
+  useEffect(() => {
+    console.log("Selected Post ID:", selectedPost?.id);
+
+    if (!selectedPost?.id || !showLikedUsers) return;
+
+    const fetchLikedUsers = async () => {
+      try {
+        const token = localStorage.getItem("api_token");
+        if (!token) {
+          console.error("No token found");
+          return;
+        }
+
+        const response = await axios.get(
+          `https://${window.APP_DOMAIN}/admin/api/posts/${selectedPost.id}/liked-users`,
+          { headers: { Authorization: `Bearer ${token}` } }
+        );
+
+        console.log("Fetched Liked Users:", response.data.liked_users);
+
+        if (response.status === 200 && response.data?.liked_users) {
+          setLikedUsers(response.data.liked_users);
+        } else {
+          console.error("Failed to fetch liked users");
+        }
+      } catch (error) {
+        console.error("Error fetching liked users:", error);
+      }
+    };
+
+    fetchLikedUsers();
+  }, [showLikedUsers, selectedPost]);
+
   // const getPost = async () => {
   //   const token = localStorage.getItem("api_token");
 
@@ -795,49 +929,9 @@ const closeEditCommentPopup = () => {
   // };
 
   // Fetch posts function
-  const getPost = async () => {
-    const token = localStorage.getItem("api_token");
-    if (!token) {
-      console.log("No token found, user may not be logged in.");
-      return;
-    }
-  
-    // Ensure countryCode is valid (fallback to empty string)
-    const countryParam = countryCode ? countryCode : "";
-  
-    try {
-      const res = await axios.get(
-        `https://${window.APP_DOMAIN}/admin/api/get_posts/${countryParam}`,
-        {
-          headers: { Authorization: `Bearer ${token}` },
-        }
-      );
-    
-      if (res.data?.status && Array.isArray(res.data.posts)) {
-        const formattedPosts = res.data.posts.map((post) => {
-          const isLiked = post.likes?.liked_users?.some((user) => user.user_id === currentUserId);
-          return {
-            ...post,
-            created_time: post.created_time || new Date().toISOString(),
-            timeAgo: getTimeAgo(post.created_time),
-            isLiked,
-          };
-        });
-  
-        setData({ posts: formattedPosts });
-  
-        // Select first post as default (only if available)
-        if (formattedPosts.length > 0) {
-          setSelectedPost(formattedPosts[0]);
-        }
-      } else {
-        console.log("Invalid API response structure:", res.data);
-      }
-    } catch (error) {
-      console.error("Error fetching posts:", error);
-    }
-  };
-    useEffect(() => {
+  const isWorld = location.pathname === "/world"; // Determines if we're in the "world" section
+  const isDashboard = location.pathname === "/dashboard"; // Determines if we're in the "dashboard" section
+  useEffect(() => {
     // Cleanup the preview URL to avoid memory leaks
     return () => {
       if (mediaPreview) {
@@ -875,44 +969,6 @@ const closeEditCommentPopup = () => {
       window.removeEventListener("resize", updateNavbarHeight);
     };
   }, [countryCode]);
-  
-  // view the who is like the post 
-  const [likedUsers, setLikedUsers] = useState([]);
-  const [showLikedUsers, setShowLikedUsers] = useState(false);
-  
-  useEffect(() => {
-    console.log("Selected Post ID:", selectedPost?.id);
-  
-    if (!selectedPost?.id || !showLikedUsers) return;
-  
-    const fetchLikedUsers = async () => {
-      try {
-        const token = localStorage.getItem("api_token");
-        if (!token) {
-          console.error("No token found");
-          return;
-        }
-  
-        const response = await axios.get(
-          `https://${window.APP_DOMAIN}/admin/api/posts/${selectedPost.id}/liked-users`,
-          { headers: { Authorization: `Bearer ${token}` } }
-        );
-  
-        console.log("Fetched Liked Users:", response.data.liked_users);
-  
-        if (response.status === 200 && response.data?.liked_users) {
-          setLikedUsers(response.data.liked_users);
-        } else {
-          console.error("Failed to fetch liked users");
-        }
-      } catch (error) {
-        console.error("Error fetching liked users:", error);
-      }
-    };
-  
-    fetchLikedUsers();
-  }, [showLikedUsers, selectedPost]); // Depend on selectedPost 
-  
   return (
     <div
       className="col-12 col-md-6 offset-md-3 p-1"
@@ -1332,86 +1388,137 @@ const closeEditCommentPopup = () => {
                         className="comments-section flex-grow-1 overflow-auto"
                         style={{ maxHeight: "40vh", paddingRight: "10px" }}
                       >
-                  <h6>Comments</h6>
-                  {comments?.length > 0 ? (
-                    comments.slice(0, visibleComments).map((comment, index) => {
-                      const isUserComment = Number(comment.comment_user_id) === Number(userId);
-                      // console.log("Comment User ID:", comment.comment_user_id);
-                      // console.log("User ID:", userId);
-                      //  console.log("Comparison Result:", Number(comment.comment_user_id) === Number(userId));
+                        <h6>Comments</h6>
+                        {comments?.length > 0 ? (
+                          comments
+                            .slice(0, visibleComments)
+                            .map((comment, index) => {
+                              const isUserComment =
+                                Number(comment.comment_user_id) ===
+                                Number(userId);
+                              // console.log("Comment User ID:", comment.comment_user_id);
+                              // console.log("User ID:", userId);
+                              //  console.log("Comparison Result:", Number(comment.comment_user_id) === Number(userId));
 
-                      return (
-                        <div key={comment.comment_id || index} className="d-flex align-items-start mb-3">
-                          {/* User Avatar */}
-                          <img
-                            src={comment.comment_user_profile_picture || defaultUserImage}
-                            alt="User Avatar"
-                            className="rounded-circle me-2"
-                            style={{ width: "35px", height: "35px" }}
-                          />
+                              return (
+                                <div
+                                  key={comment.comment_id || index}
+                                  className="d-flex align-items-start mb-3"
+                                >
+                                  {/* User Avatar */}
+                                  <img
+                                    src={
+                                      comment.comment_user_profile_picture ||
+                                      defaultUserImage
+                                    }
+                                    alt="User Avatar"
+                                    className="rounded-circle me-2"
+                                    style={{ width: "35px", height: "35px" }}
+                                  />
 
-                          {/* Comment Content */}
-                          <div className="flex-grow-1">
-                            <div className="d-flex justify-content-between align-items-center">
-                              <h6 className="mb-0">{comment.comment_user_name || "Anonymous"}</h6>
+                                  {/* Comment Content */}
+                                  <div className="flex-grow-1">
+                                    <div className="d-flex justify-content-between align-items-center">
+                                      <h6 className="mb-0">
+                                        {comment.comment_user_name ||
+                                          "Anonymous"}
+                                      </h6>
 
-                              {/* Edit & Delete Buttons for the User's Own Comment */}
-                              {isUserComment && (
-                                <div className="d-flex">
-                                  <i
-                                    className="bi bi-pencil-square me-2"
-                                    onClick={() => openEditCommentPopup(comment)}
-                                    style={{ cursor: "pointer", fontSize: "16px" }}
-                                  ></i>
-                                 <i
-                                      className="bi bi-trash"
-                                      onClick={() => {
-                                        if (!selectedPost || !comment.comment_id) {
-                                          console.error("Post ID or Comment ID missing");
-                                          return;
-                                        }
-                                        setCommentToDelete({ postId: selectedPost.id, commentId: comment.comment_id });
-                                        setShowDeletePopup(true);
-                                      }}
-                                      style={{ cursor: "pointer", fontSize: "16px" }}
-                                    ></i>
+                                      {/* Edit & Delete Buttons for the User's Own Comment */}
+                                      {isUserComment && (
+                                        <div className="d-flex">
+                                          <i
+                                            className="bi bi-pencil-square me-2"
+                                            onClick={() =>
+                                              openEditCommentPopup(comment)
+                                            }
+                                            style={{
+                                              cursor: "pointer",
+                                              fontSize: "16px",
+                                            }}
+                                          ></i>
+                                          <i
+                                            className="bi bi-trash"
+                                            onClick={() => {
+                                              if (
+                                                !selectedPost ||
+                                                !comment.comment_id
+                                              ) {
+                                                console.error(
+                                                  "Post ID or Comment ID missing"
+                                                );
+                                                return;
+                                              }
+                                              setCommentToDelete({
+                                                postId: selectedPost.id,
+                                                commentId: comment.comment_id,
+                                              });
+                                              setShowDeletePopup(true);
+                                            }}
+                                            style={{
+                                              cursor: "pointer",
+                                              fontSize: "16px",
+                                            }}
+                                          ></i>
+                                        </div>
+                                      )}
+                                    </div>
 
+                                    {/* Edit Mode: Show Input Field When Editing */}
+                                    {editingCommentId === comment.comment_id ? (
+                                      <div className="d-flex align-items-center mt-2">
+                                        <input
+                                          type="text"
+                                          className="form-control form-control-sm me-2"
+                                          value={editedComment}
+                                          onChange={(e) =>
+                                            setEditedComment(e.target.value)
+                                          }
+                                        />
+                                        <button
+                                          className="btn btn-sm btn-success"
+                                          onClick={() =>
+                                            handleSaveComment(
+                                              comment.comment_id
+                                            )
+                                          }
+                                        >
+                                          Save
+                                        </button>
+                                        <button
+                                          className="btn btn-sm btn-secondary ms-2"
+                                          onClick={() =>
+                                            setEditingCommentId(null)
+                                          }
+                                        >
+                                          Cancel
+                                        </button>
+                                      </div>
+                                    ) : (
+                                      /* Normal Comment Display */
+                                      <>
+                                        {comment.comment_content &&
+                                        comment.comment_content.trim() ? (
+                                          <p className="mb-1">
+                                            {comment.comment_content}
+                                          </p>
+                                        ) : (
+                                          <p className="mb-1 text-muted">
+                                            No content available
+                                          </p>
+                                        )}
+                                        <small className="text-muted">
+                                          {getTimeAgo(
+                                            comment.comment_updated_datetime
+                                          )}
+                                        </small>
+                                      </>
+                                    )}
+                                  </div>
                                 </div>
-                              )}
-                            </div>
-
-                            {/* Edit Mode: Show Input Field When Editing */}
-                            {editingCommentId === comment.comment_id ? (
-                              <div className="d-flex align-items-center mt-2">
-                                <input
-                                  type="text"
-                                  className="form-control form-control-sm me-2"
-                                  value={editedComment}
-                                  onChange={(e) => setEditedComment(e.target.value)}
-                                />
-                                <button className="btn btn-sm btn-success" onClick={() => handleSaveComment(comment.comment_id)}>
-                                  Save
-                                </button>
-                                <button className="btn btn-sm btn-secondary ms-2" onClick={() => setEditingCommentId(null)}>
-                                  Cancel
-                                </button>
-                              </div>
-                            ) : (
-                              /* Normal Comment Display */
-                              <>
-                                {comment.comment_content && comment.comment_content.trim() ? (
-                                  <p className="mb-1">{comment.comment_content}</p>
-                                ) : (
-                                  <p className="mb-1 text-muted">No content available</p>
-                                )}
-                                <small className="text-muted">{getTimeAgo(comment.comment_updated_datetime)}</small>
-                              </>
-                            )}
-                          </div>
-                        </div>
-                      );
-                    })
-                  ) : (
+                              );
+                            })
+                        ) : (
                           // Mock Comments for Testing
                           <>
                             {/* <div className="d-flex align-items-start mb-3">
@@ -1472,13 +1579,21 @@ const closeEditCommentPopup = () => {
                               <h4>Confirm Deletion</h4>
                             </div>
                             <div className="modal-body">
-                              <p>Are you sure you want to delete this comment?</p>
+                              <p>
+                                Are you sure you want to delete this comment?
+                              </p>
                             </div>
                             <div style={modalStyles.modalFooter}>
-                              <button className="btn btn-secondary" onClick={() => setShowDeletePopup(false)}>
+                              <button
+                                className="btn btn-secondary"
+                                onClick={() => setShowDeletePopup(false)}
+                              >
                                 Cancel
                               </button>
-                              <button className="btn btn-danger" onClick={handleDeleteComment}>
+                              <button
+                                className="btn btn-danger"
+                                onClick={handleDeleteComment}
+                              >
                                 Confirm
                               </button>
                             </div>
@@ -1488,7 +1603,7 @@ const closeEditCommentPopup = () => {
 
                       {/* Add a Comment */}
                       <div className="mt-3">
-                       {/* Comment Input with Emoji Button */}
+                        {/* Comment Input with Emoji Button */}
                         <div style={{ position: "relative" }}>
                           <textarea
                             style={{
@@ -1498,7 +1613,7 @@ const closeEditCommentPopup = () => {
                               borderRadius: "5px",
                               border: "1px solid #ccc",
                               resize: "none",
-                              fontFamily: `"Noto Color Emoji", sans-serif`
+                              fontFamily: `"Noto Color Emoji", sans-serif`,
                             }}
                             rows="2"
                             placeholder="Write a comment..."
@@ -1536,7 +1651,11 @@ const closeEditCommentPopup = () => {
                                 padding: "10px",
                               }}
                             >
-                              <EmojiPicker onEmojiClick={handleEmojiClick} width={300} height={350} />
+                              <EmojiPicker
+                                onEmojiClick={handleEmojiClick}
+                                width={300}
+                                height={350}
+                              />
                             </div>
                           )}
                         </div>
@@ -1568,10 +1687,12 @@ const closeEditCommentPopup = () => {
 
         {/* Dynamically Render Posts */}
         <div className="text-white p-0 rounded">
-        {data && data.posts &&
+          {data &&
+            data.posts &&
             Array.isArray(data.posts) &&
             data.posts.map((post) => {
-              const loggedInUserId = userData?.users?.id || localStorage.getItem("user_Id"); // Get logged-in user ID
+              const loggedInUserId =
+                userData?.users?.id || localStorage.getItem("user_Id"); // Get logged-in user ID
               const isOwner = loggedInUserId == post.from.user_id; // Check if the logged-in user is the post owner
 
               return (
@@ -1579,7 +1700,8 @@ const closeEditCommentPopup = () => {
                   className="card mb-1"
                   key={post.id}
                   style={{
-                    height: post.attachments.data.length === 0 ? "auto" : "550px",
+                    height:
+                      post.attachments.data.length === 0 ? "auto" : "550px",
                     display: "flex",
                     flexDirection: "column",
                   }}
@@ -1596,7 +1718,9 @@ const closeEditCommentPopup = () => {
 
                     {/* Name & Timestamp */}
                     <div>
-                      <h6 className="mb-0">{post.from?.name || "Unknown User"}</h6>
+                      <h6 className="mb-0">
+                        {post.from?.name || "Unknown User"}
+                      </h6>
                       <small>{post.timeAgo}</small>
                     </div>
 
@@ -1611,8 +1735,14 @@ const closeEditCommentPopup = () => {
                           gap: "20px",
                         }}
                       >
-                        <i className="bi bi-pencil" onClick={() => openEditPopup(post)}></i>
-                        <i className="bi bi-trash" onClick={() => openDeletePopup(post)}></i>
+                        <i
+                          className="bi bi-pencil"
+                          onClick={() => openEditPopup(post)}
+                        ></i>
+                        <i
+                          className="bi bi-trash"
+                          onClick={() => openDeletePopup(post)}
+                        ></i>
                       </div>
                     )}
                   </div>
@@ -1655,7 +1785,10 @@ const closeEditCommentPopup = () => {
                                 backgroundColor: "black",
                               }}
                             >
-                              <source src={attachment.media[0].url} type="video/mp4" />
+                              <source
+                                src={attachment.media[0].url}
+                                type="video/mp4"
+                              />
                               Your browser does not support the video tag.
                             </video>
                           );
@@ -1666,66 +1799,95 @@ const closeEditCommentPopup = () => {
 
                   {/* Post Footer */}
                   <div className="card-footer bg-white d-flex justify-content-between align-items-center border-0 px-1">
-                  <span
-                        className="text-muted"
-                        onClick={() => {
-                          setSelectedPost(post); // Ensure correct post is selected
-                          setShowLikedUsers(true);
-                        }}
-                        style={{ cursor: "pointer", color: "blue" }}
+                    <span
+                      className="text-muted"
+                      onClick={() => {
+                        setSelectedPost(post); // Ensure correct post is selected
+                        setShowLikedUsers(true);
+                      }}
+                      style={{ cursor: "pointer", color: "blue" }}
+                    >
+                      {post.likes?.count
+                        ? `${post.likes.count} likes`
+                        : "0 likes"}
+                    </span>
+
+                    {showLikedUsers && (
+                      <div
+                        className="modal fade show d-block"
+                        style={{ background: "rgba(0, 0, 0, 0.08)" }}
                       >
-                        {post.likes?.count ? `${post.likes.count} likes` : "0 likes"}
-                      </span>
-
-                      {showLikedUsers && (
                         <div
-                        className="modal fade show d-block"  style={{ background: "rgba(0, 0, 0, 0.08)" }}>
-                          <div className="modal-dialog modal-dialog-centered modal-lg" style={{ maxWidth: "400px" }}>
-                            <div className="modal-content">
-                              <div className="modal-header">
-                                <h5 className="modal-title">Users Who Liked This Post</h5>
-                                <button className="btn-close" onClick={() => {
+                          className="modal-dialog modal-dialog-centered modal-lg"
+                          style={{ maxWidth: "400px" }}
+                        >
+                          <div className="modal-content">
+                            <div className="modal-header">
+                              <h5 className="modal-title">
+                                Users Who Liked This Post
+                              </h5>
+                              <button
+                                className="btn-close"
+                                onClick={() => {
                                   setShowLikedUsers(false);
                                   setSelectedPost(null); // Reset post
-                                }}></button>
-                              </div>
+                                }}
+                              ></button>
+                            </div>
 
-                              <div className="modal-body d-flex flex-column" style={{ maxHeight: "80vh", overflowY: "auto" }}>
-                                {likedUsers.length > 0 ? (
-                                  <ul className="list-group">
-                                    {likedUsers.map((user) => (
-                                      <li key={user.user_id} className="list-group-item d-flex align-items-center">
-                                        <img
-                                          src={user.profile_image || "https://via.placeholder.com/40"}
-                                          alt={user.name}
-                                          className="rounded-circle me-2"
-                                          style={{ width: "40px", height: "40px" }}
-                                        />
-                                        {user.name}
-                                      </li>
-                                    ))}
-                                  </ul>
-                                ) : (
-                                  <p>No likes yet.</p>
-                                )}
-                              </div>
+                            <div
+                              className="modal-body d-flex flex-column"
+                              style={{ maxHeight: "80vh", overflowY: "auto" }}
+                            >
+                              {likedUsers.length > 0 ? (
+                                <ul className="list-group">
+                                  {likedUsers.map((user) => (
+                                    <li
+                                      key={user.user_id}
+                                      className="list-group-item d-flex align-items-center"
+                                    >
+                                      <img
+                                        src={
+                                          user.profile_image ||
+                                          "https://via.placeholder.com/40"
+                                        }
+                                        alt={user.name}
+                                        className="rounded-circle me-2"
+                                        style={{
+                                          width: "40px",
+                                          height: "40px",
+                                        }}
+                                      />
+                                      {user.name}
+                                    </li>
+                                  ))}
+                                </ul>
+                              ) : (
+                                <p>No likes yet.</p>
+                              )}
+                            </div>
 
-                              <div className="modal-footer">
-                                <button className="btn btn-primary" onClick={() => {
+                            <div className="modal-footer">
+                              <button
+                                className="btn btn-primary"
+                                onClick={() => {
                                   setShowLikedUsers(false);
                                   setSelectedPost(null); // Reset post
-                                }}>
-                                  Close
-                                </button>
-                              </div>
+                                }}
+                              >
+                                Close
+                              </button>
                             </div>
                           </div>
                         </div>
-                      )}
+                      </div>
+                    )}
                     <div className="d-flex">
                       <button
                         className={`btn btn-sm me-2 ${
-                          post.likes?.liked_users?.some((user) => user.user_id === currentUserId)
+                          post.likes?.liked_users?.some(
+                            (user) => user.user_id === currentUserId
+                          )
                             ? "btn-primary text-white"
                             : "btn-light"
                         }`}
@@ -1747,7 +1909,9 @@ const closeEditCommentPopup = () => {
 
                       <button
                         className={`btn btn-sm me-2 ${
-                          post?.disliked_users?.some((user) => user.user_id === currentUserId)
+                          post?.disliked_users?.some(
+                            (user) => user.user_id === currentUserId
+                          )
                             ? "btn-danger text-white"
                             : "btn-light"
                         }`}
@@ -1766,14 +1930,22 @@ const closeEditCommentPopup = () => {
                         />
                         Dislike
                       </button>
-
-                      <button className="btn btn-light btn-sm me-2" onClick={() => openCommentPopup(post)}>
-                        <CommentIcon sx={{ fontSize: 18, marginRight: "5px" }} /> Comment{" "}
-                        <span className="text-muted">{post.comments?.count}</span>
+                      <button
+                        className="btn btn-light btn-sm me-2"
+                        onClick={() => openCommentPopup(post)}
+                      >
+                        <CommentIcon
+                          sx={{ fontSize: 18, marginRight: "5px" }}
+                        />{" "}
+                        Comment{" "}
+                        <span className="text-muted">
+                          {post.comments?.count}
+                        </span>
                       </button>
 
                       <button className="btn btn-light btn-sm">
-                        <ShareIcon sx={{ fontSize: 18, marginRight: "5px" }} /> Share
+                        <ShareIcon sx={{ fontSize: 18, marginRight: "5px" }} />{" "}
+                        Share
                       </button>
                     </div>
                   </div>
@@ -1846,6 +2018,5 @@ const modalStyles = {
     marginTop: "10px",
   },
 };
-
 
 export default Feed;

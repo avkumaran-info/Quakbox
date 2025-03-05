@@ -70,7 +70,7 @@ const RightSidebar = ({ countryCode, countryName, flag }) => {
     shares: 0,
   });
   // console.log(countryCode);
-  
+
   const country = flagsData.find((c) => c.code === countryCode);
   // console.log("County",country);
   const userId = userData?.users?.id || localStorage.getItem("user_Id");
@@ -122,28 +122,28 @@ const RightSidebar = ({ countryCode, countryName, flag }) => {
   const isWorld = location.pathname === "/world"; // Determines if we're in the "world" section
   const isDashboaed = location.pathname === "/dashboard";
 
-  const currentUser = userData?.name || "Guest";  // ✅ Ensure currentUser is always defined
+  const currentUser = userData?.name || "Guest"; // ✅ Ensure currentUser is always defined
   const [visibleCount, setVisibleCount] = useState(5); // ✅ Start with 5 comments
   // 🔹 Load initial comments when showComments is toggled
   const handleCommentClick = () => {
-      fetchComments();   // Ensure comments are fetched
-      setShowMore(false);
-      setVisibleCount(5);  // ✅ Reset visibleCount when opening comments
-      setShowComments(!showComments);
+    fetchComments(); // Ensure comments are fetched
+    setShowMore(false);
+    setVisibleCount(5); // ✅ Reset visibleCount when opening comments
+    setShowComments(!showComments);
   };
-  
-  const [currentComments, setCurrentComments] = useState([]); 
+
+  const [currentComments, setCurrentComments] = useState([]);
   useEffect(() => {
-      setCurrentComments(comments.slice(0, visibleCount));
+    setCurrentComments(comments.slice(0, visibleCount));
   }, [comments, visibleCount]);
-  
+
   // 🔹 Scroll event to load more comments
   const handleScroll = (event) => {
-      const { scrollTop, scrollHeight, clientHeight } = event.target;
-  
-      if (scrollTop + clientHeight >= scrollHeight - 10) {
-          setVisibleCount((prev) => prev + 5); // ✅ Load 5 more comments
-      }
+    const { scrollTop, scrollHeight, clientHeight } = event.target;
+
+    if (scrollTop + clientHeight >= scrollHeight - 10) {
+      setVisibleCount((prev) => prev + 5); // ✅ Load 5 more comments
+    }
   };
   const [editingCommentId, setEditingCommentId] = useState(false);
   const [newCommentText, setNewCommentText] = useState("");
@@ -165,51 +165,50 @@ const RightSidebar = ({ countryCode, countryName, flag }) => {
       console.error("Error updating comment:", error);
     }
   };
-  const[isEditCommentPopupOpen,setIsEditCommentPopupOpen] = useState(false);
-    const openEditCommentPopup = (comment) => {
-      if (comment && comment.id) {
-        setEditingCommentId(comment.id);
-        setNewCommentText(comment.text || ""); // Set text only if it exists
-        setIsEditCommentPopupOpen(true);
-      }
-    };
-    
+  const [isEditCommentPopupOpen, setIsEditCommentPopupOpen] = useState(false);
+  const openEditCommentPopup = (comment) => {
+    if (comment && comment.id) {
+      setEditingCommentId(comment.id);
+      setNewCommentText(comment.text || ""); // Set text only if it exists
+      setIsEditCommentPopupOpen(true);
+    }
+  };
+
   // Delete comment API
-const deleteComment = async () => {
-  if (!commentToDelete) return; // Ensure a comment is selected
+  const deleteComment = async () => {
+    if (!commentToDelete) return; // Ensure a comment is selected
 
-  // Optimistically update UI before API call
-  setCounts((prev) => ({
-    ...prev,
-    comments: prev.comments - 1, // Decrease count immediately
-  }));
-
-  setCurrentComments((prev) =>
-    prev.filter((comment) => comment.id !== commentToDelete)
-  );
-
-  try {
-    const token = localStorage.getItem("api_token");
-    await axios.delete(
-      `https://${window.APP_DOMAIN}/admin/api/delete_country_comment/${commentToDelete}`,
-      { headers: { Authorization: `Bearer ${token}` } }
-    );
-
-    setCommentToDelete(null);
-    closeCommentPopup();
-  } catch (error) {
-    console.error("Error deleting comment:", error);
-
-    // Revert UI on failure
+    // Optimistically update UI before API call
     setCounts((prev) => ({
       ...prev,
-      comments: prev.comments + 1, // Restore the original count
+      comments: prev.comments - 1, // Decrease count immediately
     }));
 
-    fetchComments(); // Fetch actual count again to avoid inconsistency
-  }
-};
+    setCurrentComments((prev) =>
+      prev.filter((comment) => comment.id !== commentToDelete)
+    );
 
+    try {
+      const token = localStorage.getItem("api_token");
+      await axios.delete(
+        `https://${window.APP_DOMAIN}/admin/api/delete_country_comment/${commentToDelete}`,
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+
+      setCommentToDelete(null);
+      closeCommentPopup();
+    } catch (error) {
+      console.error("Error deleting comment:", error);
+
+      // Revert UI on failure
+      setCounts((prev) => ({
+        ...prev,
+        comments: prev.comments + 1, // Restore the original count
+      }));
+
+      fetchComments(); // Fetch actual count again to avoid inconsistency
+    }
+  };
 
   useEffect(() => {
     const updateNavbarHeight = () => {
@@ -229,23 +228,23 @@ const deleteComment = async () => {
     // Check if user has liked this country before
     setIsLiked(counts.likes > 0); // Adjust based on API response
   }, [counts]);
-  
+
   const handleLikeDislike = async (countryCode, isLike) => {
     const token = localStorage.getItem("api_token");
-  
+
     // Optimistically update UI
     setCounts((prev) => ({
       ...prev,
       likes: isLike ? prev.likes + 1 : prev.likes - 1,
     }));
     setIsLiked(isLike);
-  
+
     const data = {
       country_code: countryCode,
       user_id: userId,
       is_like: isLike,
     };
-  
+
     try {
       const response = await axios.post(
         `https://${window.APP_DOMAIN}/admin/api/set_country_likes`,
@@ -257,13 +256,13 @@ const deleteComment = async () => {
           },
         }
       );
-      
+
       if (!response.data.success) {
         throw new Error("Like action failed");
       }
     } catch (error) {
       console.error("Request failed", error);
-  
+
       // Revert UI on failure
       setCounts((prev) => ({
         ...prev,
@@ -272,7 +271,7 @@ const deleteComment = async () => {
       setIsLiked(!isLike);
     }
   };
-  
+
   const handleFavouriteToggle = async () => {
     console.log("Favourite icon clicked");
   };
@@ -294,28 +293,33 @@ const deleteComment = async () => {
           headers: { Authorization: `Bearer ${token}` },
         }
       );
-  
+
       if (response.data && Array.isArray(response.data)) {
         setComments(
           response.data.map((comment) => ({
             id: comment.comment_id,
             user: comment.userName, // Fallback if username is missing
             text: comment.comment,
-            user_id: comment.userID ,
+            user_id: comment.userID,
             profilePic: comment.comment_user_profile_picture, // Ensure a default image
-            createdAt: comment.created_at ? new Date(comment.created_at).toLocaleString() : "Unknown time",
+            createdAt: comment.created_at
+              ? new Date(comment.created_at).toLocaleString()
+              : "Unknown time",
           }))
         );
       } else {
         setComments([]); // If no valid data, reset the comments array
       }
-  
+
       fetchCountryCounts();
     } catch (error) {
-      console.error("Error fetching comments:", error.response?.data || error.message);
+      console.error(
+        "Error fetching comments:",
+        error.response?.data || error.message
+      );
     }
   };
-  
+
   const closeCommentPopup = () => {
     setShowComments(false);
     setShowEmojiPicker(false);
@@ -331,13 +335,13 @@ const deleteComment = async () => {
 
   const handlePostComment = async () => {
     if (!newComment.trim() || isPosting) return;
-  
+
     setIsPosting(true); // Disable button
-  
+
     const tempComment = { user: currentUser, text: newComment };
     setCurrentComments((prev) => [...prev, tempComment]); // Optimistic UI update
     setNewComment("");
-  
+
     try {
       const token = localStorage.getItem("api_token");
       await axios.post(
@@ -345,18 +349,17 @@ const deleteComment = async () => {
         { country_code: countryCode, comment: newComment },
         { headers: { Authorization: `Bearer ${token}` } }
       );
-  
+
       fetchComments(); // Fetch actual data to sync with backend
     } catch (error) {
       console.error("Error posting comment:", error);
-  
+
       // Revert UI if API request fails
       setCurrentComments((prev) => prev.filter((c) => c !== tempComment));
     } finally {
       setIsPosting(false);
     }
   };
-  
 
   // Calculate total pages
   // const totalPages = Math.ceil(comments.length / commentsPerPage);
@@ -371,10 +374,10 @@ const deleteComment = async () => {
       setCommentToDelete(null);
     }
   }, [currentComments]);
-  
+
   const getTimeAgo = (timestamp) => {
-  const timeDifference = Date.now() - new Date(timestamp);
-  const seconds = Math.floor(timeDifference / 1000);
+    const timeDifference = Date.now() - new Date(timestamp);
+    const seconds = Math.floor(timeDifference / 1000);
     if (seconds < 60) return "Just now";
     const minutes = Math.floor(seconds / 60);
     if (minutes < 60) return `${minutes} min ago`;
@@ -388,7 +391,7 @@ const deleteComment = async () => {
     if (months < 12) return `${months} month${months > 1 ? "s" : ""} ago`;
     const years = Math.floor(days / 365);
     return `${years} year${years > 1 ? "s" : ""} ago`;
-};
+  };
 
   return (
     <>
@@ -429,20 +432,30 @@ const deleteComment = async () => {
                 <hr />
                 {/* Scrollable Comments Section */}
                 <div
-                    className="comments-section flex-grow-1 overflow-auto"
-                    style={{ maxHeight: "40vh", paddingRight: "10px" }}
-                    onScroll={handleScroll}
-                  >
-                    <h6>Comments</h6>
+                  className="comments-section flex-grow-1 overflow-auto"
+                  style={{ maxHeight: "40vh", paddingRight: "10px" }}
+                  onScroll={handleScroll}
+                >
+                  <h6>Comments</h6>
 
-                    {currentComments && Array.isArray(currentComments) && 
-                    currentComments.filter(comment => comment && comment.user_id).length > 0 ? (currentComments
-                      .filter(comment => comment && comment.user_id && comment.text) // Remove invalid comments
+                  {currentComments &&
+                  Array.isArray(currentComments) &&
+                  currentComments.filter(
+                    (comment) => comment && comment.user_id
+                  ).length > 0 ? (
+                    currentComments
+                      .filter(
+                        (comment) => comment && comment.user_id && comment.text
+                      ) // Remove invalid comments
                       .map((comment, index) => {
-                       const isUserComment = Number(comment.user_id) === Number(userId);
-                       
+                        const isUserComment =
+                          Number(comment.user_id) === Number(userId);
+
                         return (
-                          <div key={comment.id || index} className="d-flex align-items-start mb-3">
+                          <div
+                            key={comment.id || index}
+                            className="d-flex align-items-start mb-3"
+                          >
                             <img
                               src={comment.profilePic}
                               alt="User Avatar"
@@ -457,13 +470,23 @@ const deleteComment = async () => {
                                   <div className="d-flex">
                                     <i
                                       className="bi bi-pencil-square me-2"
-                                      onClick={() => openEditCommentPopup(comment)}
-                                      style={{ cursor: "pointer", fontSize: "16px" }}
+                                      onClick={() =>
+                                        openEditCommentPopup(comment)
+                                      }
+                                      style={{
+                                        cursor: "pointer",
+                                        fontSize: "16px",
+                                      }}
                                     ></i>
                                     <i
                                       className="bi bi-trash"
-                                      onClick={() => setCommentToDelete(comment.id)}
-                                      style={{ cursor: "pointer", fontSize: "16px" }}
+                                      onClick={() =>
+                                        setCommentToDelete(comment.id)
+                                      }
+                                      style={{
+                                        cursor: "pointer",
+                                        fontSize: "16px",
+                                      }}
                                     ></i>
                                   </div>
                                 )}
@@ -475,7 +498,9 @@ const deleteComment = async () => {
                                     type="text"
                                     className="form-control form-control-sm me-2"
                                     value={newCommentText}
-                                    onChange={(e) => setNewCommentText(e.target.value)}
+                                    onChange={(e) =>
+                                      setNewCommentText(e.target.value)
+                                    }
                                   />
                                   <button
                                     className="btn btn-sm btn-success"
@@ -495,23 +520,28 @@ const deleteComment = async () => {
                                   {comment.text && comment.text.trim() ? (
                                     <p className="mb-1">{comment.text}</p>
                                   ) : (
-                                    <p className="mb-1 text-muted">No content available</p>
+                                    <p className="mb-1 text-muted">
+                                      No content available
+                                    </p>
                                   )}
-                                  <small className="text-muted">{getTimeAgo(comment.createdAt)}</small>
+                                  <small className="text-muted">
+                                    {getTimeAgo(comment.createdAt)}
+                                  </small>
                                 </>
                               )}
                             </div>
                           </div>
                         );
                       })
-                    ) : (
-                      <p className="text-center text-muted mt-3">No comments yet.</p>
-                    )}
+                  ) : (
+                    <p className="text-center text-muted mt-3">
+                      No comments yet.
+                    </p>
+                  )}
 
-
-                 {/* Delete Confirmation Modal */}
+                  {/* Delete Confirmation Modal */}
                   {commentToDelete && (
-                      <div
+                    <div
                       style={{
                         position: "fixed",
                         top: 0,
@@ -545,14 +575,19 @@ const deleteComment = async () => {
                         >
                           <h4 style={{ margin: 0 }}>Confirm Deletion</h4>
                         </div>
-                  
+
                         {/* Body */}
                         <div style={{ marginBottom: "15px" }}>
                           <p>Are you sure you want to delete this comment?</p>
                         </div>
-                  
+
                         {/* Footer */}
-                        <div style={{ display: "flex", justifyContent: "space-between" }}>
+                        <div
+                          style={{
+                            display: "flex",
+                            justifyContent: "space-between",
+                          }}
+                        >
                           <button
                             style={{
                               background: "#6c757d",
@@ -610,9 +645,12 @@ const deleteComment = async () => {
                   </div>
                 )} */}
 
-                      {/* Post Comment Section */}
-              <div className="mt-3 d-flex align-items-center" style={{ position: "relative" }}>
-               {/* Textarea */}
+                {/* Post Comment Section */}
+                <div
+                  className="mt-3 d-flex align-items-center"
+                  style={{ position: "relative" }}
+                >
+                  {/* Textarea */}
                   <textarea
                     className="form-control me-2"
                     rows="1"
@@ -637,20 +675,20 @@ const deleteComment = async () => {
                     😀
                   </button>
                   {/* Send Button */}
-                    <motion.button
-                      className="btn btn-primary btn-sm"
-                      onClick={handlePostComment}
-                      whileTap={{ scale: 0.9 }} // Click animation
-                      tabIndex="0"
-                      style={{
-                        transform: "none",
-                        paddingTop: "4px",
-                        paddingBottom: "6px",
-                        paddingRight: "10px",
-                      }}
-                    >
-                      <FaPaperPlane />
-                    </motion.button>
+                  <motion.button
+                    className="btn btn-primary btn-sm"
+                    onClick={handlePostComment}
+                    whileTap={{ scale: 0.9 }} // Click animation
+                    tabIndex="0"
+                    style={{
+                      transform: "none",
+                      paddingTop: "4px",
+                      paddingBottom: "6px",
+                      paddingRight: "10px",
+                    }}
+                  >
+                    <FaPaperPlane />
+                  </motion.button>
                   {/* Emoji Picker Popup */}
                   {showEmojiPicker && (
                     <div
@@ -665,7 +703,11 @@ const deleteComment = async () => {
                         padding: "10px",
                       }}
                     >
-                      <EmojiPicker onEmojiClick={handleEmojiClick} width={300} height={350} />
+                      <EmojiPicker
+                        onEmojiClick={handleEmojiClick}
+                        width={300}
+                        height={350}
+                      />
                     </div>
                   )}
                 </div>
@@ -760,19 +802,21 @@ const deleteComment = async () => {
                     <Tooltip title="Like" arrow disableInteractive>
                       <div style={{ textAlign: "center" }}>
                         <ThumbUpIcon
-                            sx={{
-                              fontSize: 30,
-                              color: counts.likes > 0 ? "blue" : "#263238", // Change color if liked
-                              "&:hover": {
-                                color: "blue",
-                                transform: "scale(1.2)",
-                              },
-                              transition: "all 0.3s ease",
-                              fontWeight: "bold",
-                              opacity: 0.8,
-                              cursor: "pointer",
-                            }}
-                            onClick={() => handleLikeDislike(`${countryCode}`, true)}
+                          sx={{
+                            fontSize: 30,
+                            color: counts.likes > 0 ? "blue" : "#263238", // Change color if liked
+                            "&:hover": {
+                              color: "blue",
+                              transform: "scale(1.2)",
+                            },
+                            transition: "all 0.3s ease",
+                            fontWeight: "bold",
+                            opacity: 0.8,
+                            cursor: "pointer",
+                          }}
+                          onClick={() =>
+                            handleLikeDislike(`${countryCode}`, true)
+                          }
                         />
                         <div style={{ fontSize: "16px", marginTop: "4px" }}>
                           {counts.likes}

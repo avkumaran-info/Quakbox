@@ -1,4 +1,5 @@
 <?php
+
 namespace App\Http\Controllers;
 
 use Illuminate\Support\Facades\Auth;
@@ -15,13 +16,13 @@ class PostController extends Controller
     {
         try {
             $userId = auth()->id();
-            
+
             if (!$userId) {
                 return response()->json(["status" => false, "error" => "Unauthorized"], 401);
             }
-    
+
             $query = Post::with(['user', 'likes', 'comments'])->latest();
-    
+
             if ($cc === '99') {
                 // ✅ Fetch only posts with country_code = '99'
                 $query->where('country_code', '99');
@@ -32,7 +33,7 @@ class PostController extends Controller
                 // ✅ Fetch only logged-in user's posts
                 $query->where('user_id', $userId);
             }
-    
+
             $posts = $query->get()->map(function ($post) {
                 return [
                     'id' => $post->id,
@@ -47,8 +48,8 @@ class PostController extends Controller
                         'data' => $this->getPostAttachments($post),
                     ],
                     'likes' => [
-                        'count' => $post->likes->count(),
-                        'liked_users' => $post->likes->map(function ($like) {
+                        'count' => $post->likes->where('is_like', true)->count(),
+                        'liked_users' => $post->likes->where('is_like', true)->map(function ($like) {
                             return [
                                 'user_id' => $like->user->id,
                                 'name' => $like->user->username,
@@ -60,13 +61,13 @@ class PostController extends Controller
                     ],
                 ];
             });
-    
+
             return response()->json(["status" => true, 'posts' => $posts], 200);
         } catch (\Exception $e) {
             return response()->json(["status" => false, 'error' => $e->getMessage()], 500);
         }
     }
-    
+
     // Helper Method to Fetch Post Attachments
     private function getPostAttachments($post)
     {
@@ -146,16 +147,20 @@ class PostController extends Controller
     {
         $post = Post::findOrFail($id);
         $userId = $request->user()->id;
-    
+
         // Check if user has already liked/disliked
         $existingLike = Like::where('post_id', $id)->where('user_id', $userId)->first();
-    
+
         if ($existingLike) {
             if ($existingLike->is_like == true) {
                 // If already liked, remove it (toggle off)
                 $existingLike->delete();
                 $message = "Like removed";
-            } 
+            } else {
+                // If already disliked, switch to like
+                $existingLike->update(['is_like' => true]);
+                $message = "Liked";
+            }
         } else {
             // Add new like
             Like::create([
@@ -165,7 +170,7 @@ class PostController extends Controller
             ]);
             $message = "Liked";
         }
-    
+
         // Refresh like & dislike counts
         $likeCount = $post->likes()->where('is_like', true)->count();
 
@@ -174,15 +179,15 @@ class PostController extends Controller
             "message" => $message,
             "like_count" => $likeCount,
         ]);
-    }    
+    }
     public function postDislike(Request $request, $id)
     {
         $post = Post::findOrFail($id);
         $userId = $request->user()->id;
-    
+
         // Check if user already disliked the post
         $existingLike = Like::where('post_id', $id)->where('user_id', $userId)->first();
-    
+
         if ($existingLike) {
             if ($existingLike->is_like == false) {
                 // If already disliked, remove it
@@ -202,16 +207,16 @@ class PostController extends Controller
             ]);
             $message = "Disliked";
         }
-    
+
         // Refresh like count after the update
         $likeCount = $post->likes()->where('is_like', true)->count();
-    
+
         return response()->json([
             "status" => true,
             "message" => $message,
             "like_count" => $likeCount
         ]);
-    }    
+    }
 
     public function getComment(Request $request, $pid)
     {
@@ -219,20 +224,21 @@ class PostController extends Controller
         $postComment = $post->Comments()->with('user')->latest()->get();
         $formattedcomments = $postComment->map(function ($comment) {
             return [
-                        'comment_id' => $comment->id,
-                        'comment_post_id' => $comment->post_id,
-                        'comment_content' => $comment->comment,
-                        'comment_user_id' => $comment->user_id,
-                        'comment_user_name' => $comment->user->username,
-                        'comment_user_profile_picture' => env('APP_URL') . '/api/images/' . $comment->user->profile_image,
-                        'comment_updated_datetime' => $comment->updated_at
-                    ];
+                'comment_id' => $comment->id,
+                'comment_post_id' => $comment->post_id,
+                'comment_content' => $comment->comment,
+                'comment_user_id' => $comment->user_id,
+                'comment_user_name' => $comment->user->username,
+                'comment_user_profile_picture' => env('APP_URL') . '/api/images/' . $comment->user->profile_image,
+                'comment_updated_datetime' => $comment->updated_at
+            ];
         });
 
-        return response()->json(["status" => true, 
-                                    'message' => 'Post Comment Fetched', 
-                                    'data' => $formattedcomments
-                                ]);
+        return response()->json([
+            "status" => true,
+            'message' => 'Post Comment Fetched',
+            'data' => $formattedcomments
+        ]);
     }
 
     // Comment on a post
@@ -276,31 +282,31 @@ class PostController extends Controller
     {
         // Find the post by ID
         $post = Post::find($postId);
-    
+
         if (!$post) {
             return response()->json(['message' => 'Post not found'], 404);
         }
-    
+
         // Find the comment by ID within the post
         $comment = $post->comments()->find($commentId);
-    
+
         if (!$comment) {
             return response()->json(['message' => 'Comment not found'], 404);
         }
-    
+
         // Get the authenticated user's ID from the token
         $userId = $request->user()->id;
-    
+
         // Check if the logged-in user is the owner of the comment
         if ($comment->user_id !== $userId) {
             return response()->json(['message' => 'You can only delete your own comment'], 403);
         }
-    
+
         // Delete the comment
         $comment->delete();
-    
+
         return response()->json(['message' => 'Comment deleted successfully'], 200);
-    }    
+    }
     // Get list of users who liked a post
     public function getLikedUsers($postId)
     {
@@ -348,5 +354,4 @@ class PostController extends Controller
             ]
         ]);
     }
-
 }
