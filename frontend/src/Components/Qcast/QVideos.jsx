@@ -36,6 +36,7 @@ const QVideos = () => {
   const [currentIndex, setCurrentIndex] = useState(0);
   const navigate = useNavigate();
   const { id } = useParams();
+  
 
   useEffect(() => {
     fetchVideos();

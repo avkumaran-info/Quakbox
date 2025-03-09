@@ -18,8 +18,14 @@ const Login = () => {
     emailOrUsername: "",
     password: "",
   });
-  const { setUserData, fetchUserData, fetchCountries } =
-    useContext(StoreContext);
+  const {
+    setUserData,
+    fetchUserData,
+    fetchCountries,
+    handleLoginSuccess,
+    loading,
+    setLoading,
+  } = useContext(StoreContext);
 
   const changeLanguage = (lng) => {
     i18n.changeLanguage(lng);
@@ -89,13 +95,9 @@ const Login = () => {
       );
       if (response.data.result) {
         localStorage.setItem("api_token", response.data.token);
-        await fetchUserData();
-        await fetchCountries();
+        await handleLoginSuccess(); // Automatically call functions after login success, // Expose this function
         navigate("/dashboard", {});
       }
-      toast.error("Login Unsuccessful! Please Provide Correct Credentials", {
-        transition: Bounce,
-      });
     } catch (error) {
       // Handle errors
       if (error.response) {

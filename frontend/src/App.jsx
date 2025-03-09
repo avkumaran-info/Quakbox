@@ -26,10 +26,13 @@ import MySubscriptions from "./Components/Qcast/MySubscriptions";
 import MyVideos from "./Components/Qcast/MyVideos";
 import SessionExpiredPopup from "./Components/SessionExpiredPopup";
 import WebcamRecorder from "./Components/Qcast/WebcamRecorder";
+import UseLogout from "./Components/useLogout";
 const App = () => {
+ 
   return (
     <Provider store={store}>
       <Router>
+        <UseLogout/>
         <SessionExpiredPopup />
         <Routes>
           <Route path="/" element={<Login />} />
