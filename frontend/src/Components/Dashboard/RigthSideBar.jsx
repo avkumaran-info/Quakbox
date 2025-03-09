@@ -19,9 +19,6 @@ import ScreenShareIcon from "@mui/icons-material/ScreenShare";
 import { Tooltip } from "@mui/material";
 import { StoreContext } from "../../Context/StoreContext";
 import { flagsData } from "../flags";
-import { FaPaperPlane } from "react-icons/fa";
-import EmojiPicker from "emoji-picker-react";
-import { motion } from "framer-motion";
 const updates = [
   {
     id: 1,
@@ -70,10 +67,9 @@ const RightSidebar = ({ countryCode, countryName, flag }) => {
     shares: 0,
   });
   // console.log(countryCode);
-
+  
   const country = flagsData.find((c) => c.code === countryCode);
-  // console.log("County",country);
-  const userId = userData?.users?.id || localStorage.getItem("user_Id");
+  // console.log("COunty",country);
 
   const [navbarHeight, setNavbarHeight] = useState(56);
   const [comments, setComments] = useState([]); // Store comments
@@ -122,92 +118,11 @@ const RightSidebar = ({ countryCode, countryName, flag }) => {
   const isWorld = location.pathname === "/world"; // Determines if we're in the "world" section
   const isDashboaed = location.pathname === "/dashboard";
 
-  const currentUser = userData?.name || "Guest"; // ✅ Ensure currentUser is always defined
-  const [visibleCount, setVisibleCount] = useState(5); // ✅ Start with 5 comments
-  // 🔹 Load initial comments when showComments is toggled
   const handleCommentClick = () => {
-    fetchComments(); // Ensure comments are fetched
+    fetchComments();
+    setCurrentPage(1);
     setShowMore(false);
-    setVisibleCount(5); // ✅ Reset visibleCount when opening comments
     setShowComments(!showComments);
-  };
-
-  const [currentComments, setCurrentComments] = useState([]);
-  useEffect(() => {
-    setCurrentComments(comments.slice(0, visibleCount));
-  }, [comments, visibleCount]);
-
-  // 🔹 Scroll event to load more comments
-  const handleScroll = (event) => {
-    const { scrollTop, scrollHeight, clientHeight } = event.target;
-
-    if (scrollTop + clientHeight >= scrollHeight - 10) {
-      setVisibleCount((prev) => prev + 5); // ✅ Load 5 more comments
-    }
-  };
-  const [editingCommentId, setEditingCommentId] = useState(false);
-  const [newCommentText, setNewCommentText] = useState("");
-  const [commentToDelete, setCommentToDelete] = useState(false);
-
-  // Update comment API
-  const updateComment = async (commentId) => {
-    try {
-      const token = localStorage.getItem("api_token");
-      await axios.put(
-        `https://${window.APP_DOMAIN}/admin/api/update_country_comment/${commentId}`,
-        { comment: newCommentText },
-        { headers: { Authorization: `Bearer ${token}` } }
-      );
-      fetchComments();
-      setEditingCommentId(null);
-      setNewCommentText("");
-    } catch (error) {
-      console.error("Error updating comment:", error);
-    }
-  };
-  const [isEditCommentPopupOpen, setIsEditCommentPopupOpen] = useState(false);
-  const openEditCommentPopup = (comment) => {
-    if (comment && comment.id) {
-      setEditingCommentId(comment.id);
-      setNewCommentText(comment.text || ""); // Set text only if it exists
-      setIsEditCommentPopupOpen(true);
-    }
-  };
-
-  // Delete comment API
-  const deleteComment = async () => {
-    if (!commentToDelete) return; // Ensure a comment is selected
-
-    // Optimistically update UI before API call
-    setCounts((prev) => ({
-      ...prev,
-      comments: prev.comments - 1, // Decrease count immediately
-    }));
-
-    setCurrentComments((prev) =>
-      prev.filter((comment) => comment.id !== commentToDelete)
-    );
-
-    try {
-      const token = localStorage.getItem("api_token");
-      await axios.delete(
-        `https://${window.APP_DOMAIN}/admin/api/delete_country_comment/${commentToDelete}`,
-        { headers: { Authorization: `Bearer ${token}` } }
-      );
-
-      setCommentToDelete(null);
-      closeCommentPopup();
-    } catch (error) {
-      console.error("Error deleting comment:", error);
-
-      // Revert UI on failure
-      setCounts((prev) => ({
-        ...prev,
-        comments: prev.comments + 1, // Restore the original count
-      }));
-
-      fetchComments(); // Fetch actual count again to avoid inconsistency
-    }
   };
 
   useEffect(() => {
@@ -222,26 +137,12 @@ const RightSidebar = ({ countryCode, countryName, flag }) => {
       window.removeEventListener("resize", updateNavbarHeight);
     };
   });
-  const [isLiked, setIsLiked] = useState(false); // Default not liked
-
-  useEffect(() => {
-    // Check if user has liked this country before
-    setIsLiked(counts.likes > 0); // Adjust based on API response
-  }, [counts]);
 
   const handleLikeDislike = async (countryCode, isLike) => {
     const token = localStorage.getItem("api_token");
-
-    // Optimistically update UI
-    setCounts((prev) => ({
-      ...prev,
-      likes: isLike ? prev.likes + 1 : prev.likes - 1,
-    }));
-    setIsLiked(isLike);
-
     const data = {
       country_code: countryCode,
-      user_id: userId,
+      // user_id: userId,
       is_like: isLike,
     };
 
@@ -256,19 +157,12 @@ const RightSidebar = ({ countryCode, countryName, flag }) => {
           },
         }
       );
-
-      if (!response.data.success) {
-        throw new Error("Like action failed");
+      if (response.data.success) {
+        fetchCountryCounts();
       }
+      // console.log("Response:", response.data);
     } catch (error) {
       console.error("Request failed", error);
-
-      // Revert UI on failure
-      setCounts((prev) => ({
-        ...prev,
-        likes: isLike ? prev.likes - 1 : prev.likes + 1,
-      }));
-      setIsLiked(!isLike);
     }
   };
 
@@ -293,55 +187,28 @@ const RightSidebar = ({ countryCode, countryName, flag }) => {
           headers: { Authorization: `Bearer ${token}` },
         }
       );
-
       if (response.data && Array.isArray(response.data)) {
         setComments(
           response.data.map((comment) => ({
             id: comment.comment_id,
-            user: comment.userName, // Fallback if username is missing
+            user: comment.userName,
             text: comment.comment,
-            user_id: comment.userID,
-            profilePic: comment.comment_user_profile_picture, // Ensure a default image
-            createdAt: comment.created_at
-              ? new Date(comment.created_at).toLocaleString()
-              : "Unknown time",
           }))
         );
-      } else {
-        setComments([]); // If no valid data, reset the comments array
-      }
 
-      fetchCountryCounts();
+        fetchCountryCounts();
+      }
     } catch (error) {
-      console.error(
-        "Error fetching comments:",
-        error.response?.data || error.message
-      );
+      console.error("Error fetching comments:", error);
     }
   };
 
   const closeCommentPopup = () => {
     setShowComments(false);
-    setShowEmojiPicker(false);
-    setEditingCommentId(null);
   };
-  const [showEmojiPicker, setShowEmojiPicker] = useState(false);
-
-  const handleEmojiClick = (emojiObject) => {
-    setNewComment((prev) => prev + emojiObject.emoji);
-  };
-
-  const [isPosting, setIsPosting] = useState(false); // Track posting state
 
   const handlePostComment = async () => {
-    if (!newComment.trim() || isPosting) return;
-
-    setIsPosting(true); // Disable button
-
-    const tempComment = { user: currentUser, text: newComment };
-    setCurrentComments((prev) => [...prev, tempComment]); // Optimistic UI update
-    setNewComment("");
-
+    if (!newComment.trim()) return;
     try {
       const token = localStorage.getItem("api_token");
       await axios.post(
@@ -349,49 +216,23 @@ const RightSidebar = ({ countryCode, countryName, flag }) => {
         { country_code: countryCode, comment: newComment },
         { headers: { Authorization: `Bearer ${token}` } }
       );
-
-      fetchComments(); // Fetch actual data to sync with backend
+      setNewComment("");
+      fetchComments();
     } catch (error) {
       console.error("Error posting comment:", error);
-
-      // Revert UI if API request fails
-      setCurrentComments((prev) => prev.filter((c) => c !== tempComment));
-    } finally {
-      setIsPosting(false);
     }
   };
 
   // Calculate total pages
-  // const totalPages = Math.ceil(comments.length / commentsPerPage);
+  const totalPages = Math.ceil(comments.length / commentsPerPage);
 
-  // // Get comments for the current page
-  // const indexOfLastComment = currentPage * commentsPerPage;
-  // const indexOfFirstComment = indexOfLastComment - commentsPerPage;
-  // const currentComments = comments.slice(0,5);
-  useEffect(() => {
-    if (!currentComments || currentComments.length === 0) {
-      setEditingCommentId(null);
-      setCommentToDelete(null);
-    }
-  }, [currentComments]);
-
-  const getTimeAgo = (timestamp) => {
-    const timeDifference = Date.now() - new Date(timestamp);
-    const seconds = Math.floor(timeDifference / 1000);
-    if (seconds < 60) return "Just now";
-    const minutes = Math.floor(seconds / 60);
-    if (minutes < 60) return `${minutes} min ago`;
-    const hours = Math.floor(minutes / 60);
-    if (hours < 24) return `${hours} hour${hours > 1 ? "s" : ""} ago`;
-    const days = Math.floor(hours / 24);
-    if (days < 7) return `${days} day${days > 1 ? "s" : ""} ago`;
-    const weeks = Math.floor(days / 7);
-    if (weeks < 4) return `${weeks} week${weeks > 1 ? "s" : ""} ago`;
-    const months = Math.floor(days / 30);
-    if (months < 12) return `${months} month${months > 1 ? "s" : ""} ago`;
-    const years = Math.floor(days / 365);
-    return `${years} year${years > 1 ? "s" : ""} ago`;
-  };
+  // Get comments for the current page
+  const indexOfLastComment = currentPage * commentsPerPage;
+  const indexOfFirstComment = indexOfLastComment - commentsPerPage;
+  const currentComments = comments.slice(
+    indexOfFirstComment,
+    indexOfLastComment
+  );
 
   return (
     <>
@@ -430,197 +271,35 @@ const RightSidebar = ({ countryCode, countryName, flag }) => {
                 </div>
 
                 <hr />
+
                 {/* Scrollable Comments Section */}
                 <div
                   className="comments-section flex-grow-1 overflow-auto"
                   style={{ maxHeight: "40vh", paddingRight: "10px" }}
-                  onScroll={handleScroll}
                 >
                   <h6>Comments</h6>
 
-                  {currentComments &&
-                  Array.isArray(currentComments) &&
-                  currentComments.filter(
-                    (comment) => comment && comment.user_id
-                  ).length > 0 ? (
-                    currentComments
-                      .filter(
-                        (comment) => comment && comment.user_id && comment.text
-                      ) // Remove invalid comments
-                      .map((comment, index) => {
-                        const isUserComment =
-                          Number(comment.user_id) === Number(userId);
-
-                        return (
-                          <div
-                            key={comment.id || index}
-                            className="d-flex align-items-start mb-3"
-                          >
-                            <img
-                              src={comment.profilePic}
-                              alt="User Avatar"
-                              className="rounded-circle me-2"
-                              style={{ width: "35px", height: "35px" }}
-                            />
-                            <div className="flex-grow-1">
-                              <div className="d-flex justify-content-between align-items-center">
-                                <h6 className="mb-0">{comment.user}</h6>
-
-                                {isUserComment && ( // Only show edit & delete for the user's own comments
-                                  <div className="d-flex">
-                                    <i
-                                      className="bi bi-pencil-square me-2"
-                                      onClick={() =>
-                                        openEditCommentPopup(comment)
-                                      }
-                                      style={{
-                                        cursor: "pointer",
-                                        fontSize: "16px",
-                                      }}
-                                    ></i>
-                                    <i
-                                      className="bi bi-trash"
-                                      onClick={() =>
-                                        setCommentToDelete(comment.id)
-                                      }
-                                      style={{
-                                        cursor: "pointer",
-                                        fontSize: "16px",
-                                      }}
-                                    ></i>
-                                  </div>
-                                )}
-                              </div>
-
-                              {editingCommentId === comment.id ? (
-                                <div className="d-flex align-items-center mt-2">
-                                  <input
-                                    type="text"
-                                    className="form-control form-control-sm me-2"
-                                    value={newCommentText}
-                                    onChange={(e) =>
-                                      setNewCommentText(e.target.value)
-                                    }
-                                  />
-                                  <button
-                                    className="btn btn-sm btn-success"
-                                    onClick={() => updateComment(comment.id)}
-                                  >
-                                    Save
-                                  </button>
-                                  <button
-                                    className="btn btn-sm btn-secondary ms-2"
-                                    onClick={() => setEditingCommentId(null)}
-                                  >
-                                    Cancel
-                                  </button>
-                                </div>
-                              ) : (
-                                <>
-                                  {comment.text && comment.text.trim() ? (
-                                    <p className="mb-1">{comment.text}</p>
-                                  ) : (
-                                    <p className="mb-1 text-muted">
-                                      No content available
-                                    </p>
-                                  )}
-                                  <small className="text-muted">
-                                    {getTimeAgo(comment.createdAt)}
-                                  </small>
-                                </>
-                              )}
-                            </div>
-                          </div>
-                        );
-                      })
-                  ) : (
-                    <p className="text-center text-muted mt-3">
-                      No comments yet.
-                    </p>
-                  )}
-
-                  {/* Delete Confirmation Modal */}
-                  {commentToDelete && (
-                    <div
-                      style={{
-                        position: "fixed",
-                        top: 0,
-                        left: 0,
-                        width: "100%",
-                        height: "100%",
-                        background: "rgba(0, 0, 0, 0.5)",
-                        display: "flex",
-                        justifyContent: "center",
-                        alignItems: "center",
-                        zIndex: 1050,
-                      }}
-                    >
+                  {currentComments.length > 0 ? (
+                    currentComments.map((comment, index) => (
                       <div
-                        style={{
-                          background: "#fff",
-                          padding: "20px",
-                          borderRadius: "8px",
-                          boxShadow: "0 0 10px rgba(0, 0, 0, 0.3)",
-                          width: "350px",
-                          textAlign: "center",
-                        }}
+                        key={index}
+                        className="d-flex align-items-start mb-3"
                       >
-                        {/* Header */}
-                        <div
-                          style={{
-                            borderBottom: "1px solid #ddd",
-                            paddingBottom: "10px",
-                            marginBottom: "15px",
-                          }}
-                        >
-                          <h4 style={{ margin: 0 }}>Confirm Deletion</h4>
-                        </div>
-
-                        {/* Body */}
-                        <div style={{ marginBottom: "15px" }}>
-                          <p>Are you sure you want to delete this comment?</p>
-                        </div>
-
-                        {/* Footer */}
-                        <div
-                          style={{
-                            display: "flex",
-                            justifyContent: "space-between",
-                          }}
-                        >
-                          <button
-                            style={{
-                              background: "#6c757d",
-                              color: "#fff",
-                              padding: "8px 15px",
-                              border: "none",
-                              borderRadius: "5px",
-                              cursor: "pointer",
-                            }}
-                            onClick={() => setCommentToDelete(null)}
-                          >
-                            Cancel
-                          </button>
-                          <button
-                            style={{
-                              background: "#dc3545",
-                              color: "#fff",
-                              padding: "8px 15px",
-                              border: "none",
-                              borderRadius: "5px",
-                              cursor: "pointer",
-                            }}
-                            onClick={deleteComment}
-                          >
-                            Confirm
-                          </button>
+                        <div>
+                          <h6 className="mb-0">{comment.user}</h6>
+                          <p className="mb-1">{comment.text}</p>
+                          <small className="text-muted">
+                            {/* {getTimeAgo(comment.comment_updated_datetime)} */}
+                          </small>
                         </div>
                       </div>
-                    </div>
+                    ))
+                  ) : (
+                    <>No comments</>
                   )}
                 </div>
 
-                {/* Pagination Controls
+                {/* Pagination Controls */}
                 {totalPages > 1 && (
                   <div className="d-flex justify-content-center mt-3">
                     <nav>
@@ -643,73 +322,23 @@ const RightSidebar = ({ countryCode, countryName, flag }) => {
                       </ul>
                     </nav>
                   </div>
-                )} */}
+                )}
 
-                {/* Post Comment Section */}
-                <div
-                  className="mt-3 d-flex align-items-center"
-                  style={{ position: "relative" }}
-                >
-                  {/* Textarea */}
+                {/* Add a Comment */}
+                <div className="mt-3">
                   <textarea
-                    className="form-control me-2"
-                    rows="1"
+                    className="form-control"
+                    rows="2"
                     placeholder="Write a comment..."
                     value={newComment}
                     onChange={(e) => setNewComment(e.target.value)}
-                    style={{ paddingRight: "80px" }} // Space for emoji button
-                  />
-
-                  {/* Emoji Button */}
+                  ></textarea>
                   <button
-                    onClick={() => setShowEmojiPicker(!showEmojiPicker)}
-                    style={{
-                      position: "absolute",
-                      right: "50px",
-                      background: "transparent",
-                      border: "none",
-                      cursor: "pointer",
-                      fontSize: "20px",
-                    }}
-                  >
-                    😀
-                  </button>
-                  {/* Send Button */}
-                  <motion.button
-                    className="btn btn-primary btn-sm"
+                    className="btn btn-primary btn-sm mt-2"
                     onClick={handlePostComment}
-                    whileTap={{ scale: 0.9 }} // Click animation
-                    tabIndex="0"
-                    style={{
-                      transform: "none",
-                      paddingTop: "4px",
-                      paddingBottom: "6px",
-                      paddingRight: "10px",
-                    }}
                   >
-                    <FaPaperPlane />
-                  </motion.button>
-                  {/* Emoji Picker Popup */}
-                  {showEmojiPicker && (
-                    <div
-                      style={{
-                        position: "absolute",
-                        bottom: "40px",
-                        right: "50px",
-                        zIndex: "1000",
-                        background: "white",
-                        borderRadius: "10px",
-                        boxShadow: "0px 4px 10px rgba(0, 0, 0, 0.2)",
-                        padding: "10px",
-                      }}
-                    >
-                      <EmojiPicker
-                        onEmojiClick={handleEmojiClick}
-                        width={300}
-                        height={350}
-                      />
-                    </div>
-                  )}
+                    Post Comment
+                  </button>
                 </div>
               </div>
             </div>
@@ -804,9 +433,8 @@ const RightSidebar = ({ countryCode, countryName, flag }) => {
                         <ThumbUpIcon
                           sx={{
                             fontSize: 30,
-                            color: counts.likes > 0 ? "blue" : "#263238", // Change color if liked
+                            color: "#263238",
                             "&:hover": {
-                              color: "blue",
                               transform: "scale(1.2)",
                             },
                             transition: "all 0.3s ease",
@@ -831,7 +459,7 @@ const RightSidebar = ({ countryCode, countryName, flag }) => {
                             fontSize: 30,
                             color: "#263238",
                             "&:hover": {
-                              color: "blue",
+                              //color: "red",
                               transform: "scale(1.2)",
                             },
                             transition: "all 0.3s ease",
@@ -857,7 +485,7 @@ const RightSidebar = ({ countryCode, countryName, flag }) => {
                               ? "red"
                               : "#263238",
                             "&:hover": {
-                              color: "red",
+                              //color: "red",
                               transform: "scale(1.2)",
                             },
                             transition: "all 0.3s ease",
@@ -883,7 +511,7 @@ const RightSidebar = ({ countryCode, countryName, flag }) => {
                               ? "blue"
                               : "#263238",
                             "&:hover": {
-                              color: "blue",
+                              //color: "red",
                               transform: "scale(1.2)",
                             },
                             transition: "all 0.3s ease",
@@ -905,7 +533,7 @@ const RightSidebar = ({ countryCode, countryName, flag }) => {
                             fontSize: 30,
                             color: "#263238",
                             "&:hover": {
-                              color: "blue",
+                              //color: "red",
                               transform: "scale(1.2)",
                             },
                             transition: "all 0.3s ease",
