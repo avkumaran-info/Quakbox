@@ -199,7 +199,7 @@ const QVideos = () => {
   const timeAgo = (dateString) => {
     if (!dateString) return "Unknown"; // ✅ Prevent errors
   
-    const date = new Date(dateString + "Z"); // ✅ Force UTC interpretation
+    const date = new Date(dateString);
     if (isNaN(date.getTime())) return "Invalid date"; // ✅ Check for invalid timestamps
   
     const now = new Date();
