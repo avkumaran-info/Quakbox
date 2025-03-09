@@ -1,5 +1,5 @@
 import axios from "axios";
-import { createContext, useEffect, useState } from "react";
+import { createContext, useState, useEffect } from "react";
 
 // CSS for the spinner (can be moved to a separate CSS file if preferred)
 const spinnerStyle = {
@@ -23,10 +23,14 @@ const containerStyle = {
 export const StoreContext = createContext(null);
 
 const StoreContextProvider = (props) => {
-  const [userData, setUserData] = useState(null);
+  const [userData, setUserData] = useState(() => {
+    const storedUserData = localStorage.getItem("user_Details");
+    return storedUserData ? JSON.parse(storedUserData) : null;
+  });
   const [favCountries, setFavCountries] = useState([]);
   const [fanCountries, setFanCountries] = useState([]);
-  const [loading, setLoading] = useState(true);
+
+  const [loading, setLoading] = useState(false);
 
   // Fetch user data when needed
   const fetchUserData = async () => {
@@ -43,12 +47,13 @@ const StoreContextProvider = (props) => {
           headers: { Authorization: `Bearer ${token}` },
         }
       );
-      localStorage.setItem("user_Details", JSON.stringify(res.data));
+
       const userDetails = res.data.user_details;
       const defaultCountryCode = userDetails.country;
-      // setUserCountry(defaultCountryCode); // Store user’s country
 
-      localStorage.setItem("user_country", defaultCountryCode); // Store in localStorage
+      localStorage.setItem("user_Details", JSON.stringify(res.data));
+      localStorage.setItem("user_country", defaultCountryCode);
+
       setUserData(res.data);
     } catch (error) {
       console.error("Error fetching user data:", error);
@@ -57,9 +62,11 @@ const StoreContextProvider = (props) => {
     }
   };
 
-  // Fetch favorite and fan countries
+  // Fetch favorite and fan countries manually
   const fetchCountries = async () => {
-    const token = localStorage.getItem("api_token"); // Get token from localStorage
+    console.log("Fetching favorite and fan countries...");
+    const token = localStorage.getItem("api_token");
+
     if (!token) {
       console.error("Authorization token not found. Please log in.");
       return;
@@ -72,17 +79,25 @@ const StoreContextProvider = (props) => {
         }
       );
 
-      // Filter countries
+      console.log("API Response:", favCountriesRes.data);
+
+      if (!favCountriesRes.data || !favCountriesRes.data.favourite_country) {
+        console.error("Invalid API response structure.");
+        return;
+      }
+
+      // Extract favorite countries (favourite_country === "1")
       const favouriteCountries = favCountriesRes.data.favourite_country.filter(
         (country) => country.favourite_country === "1"
       );
 
+      // Extract fan countries (both favourite_country === "1" and "0")
       const fanCountriesOnly = favCountriesRes.data.favourite_country.filter(
         (country) =>
           country.favourite_country === "1" || country.favourite_country === "0"
       );
 
-      // Use a Set to filter out duplicates based on the country code
+      // Remove duplicates based on country code
       const uniqueCountries = [
         ...new Map(
           fanCountriesOnly.map((country) => [country.code, country])
@@ -90,17 +105,26 @@ const StoreContextProvider = (props) => {
       ];
 
       // Update state
-      setFavCountries(favouriteCountries || []);
-      setFanCountries(uniqueCountries || []);
+      setFavCountries(favouriteCountries);
+      setFanCountries(uniqueCountries);
+
+      // Store in local storage
+      // localStorage.setItem("favCountries", JSON.stringify(favouriteCountries));
+      // localStorage.setItem("fanCountries", JSON.stringify(uniqueCountries));
     } catch (error) {
       console.error("Error fetching countries:", error);
     }
   };
 
+  const handleLoginSuccess = async () => {
+    await fetchUserData(); // Call User Data
+    await fetchCountries(); // Call Countries
+  };
   useEffect(() => {
-    // console.log("Fetching user data...");
-    fetchUserData();
-    fetchCountries();
+    const token = localStorage.getItem("api_token");
+    if (token) {
+      fetchCountries();
+    }
   }, []);
 
   // Function to update userData and store it in localStorage after login
@@ -124,6 +148,9 @@ const StoreContextProvider = (props) => {
     favCountries,
     fanCountries,
     fetchCountries,
+    handleLoginSuccess,
+    loading, // Provide loading state in context
+    setLoading, // Provide setLoading to update from other components
   };
 
   return (

@@ -7,6 +7,7 @@ import ThumbDownIcon from "@mui/icons-material/ThumbDown";
 import ShareIcon from "@mui/icons-material/Share";
 import { StoreContext } from "../../Context/StoreContext";
 import EmojiPicker from "emoji-picker-react"; // Import Emoji Picker
+import { useLocation, useParams } from "react-router-dom";
 
 const Feed = ({ countryCode, flag, countryName, handleCountryChange }) => {
   const { userData } = useContext(StoreContext);
@@ -27,6 +28,13 @@ const Feed = ({ countryCode, flag, countryName, handleCountryChange }) => {
   const [editedMediaPreview, setEditedMediaPreview] = useState(null);
 
   const userId = userData?.users?.id || localStorage.getItem("user_Id");
+  const location = useLocation(); // Get current path
+  const isWorld = location.pathname === "/world";
+  const isDashboard = location.pathname === "/dashboard";
+  const { Code } = useParams();
+  // Ensure Code is defined when on "/country/:code"
+  const pathParts = location.pathname.split("/");
+  const urlCountryCode = pathParts[1] === "country" ? pathParts[2] : null;
 
   // Functions to handle popup visibility
   const openPopup = () => setIsPopupOpen(true);
@@ -38,14 +46,12 @@ const Feed = ({ countryCode, flag, countryName, handleCountryChange }) => {
   const [comments, setComments] = useState([]); // Store comments
   const [newComment, setNewComment] = useState(""); // Store new comment input
   const [loading, setLoading] = useState(false);
-  const [isDisabled, setIsDisabled] = useState(false);
+
   const [commentText, setCommentText] = useState("");
   const [showEmojiPicker, setShowEmojiPicker] = useState(false);
 
   const handleEmojiClick = (emoji) => {
-    const emojiChar = String.fromCodePoint(`0x${emoji.unified}`);
-    setCommentText((prevText) => prevText + emojiChar);
-    console.log(emojiChar);
+    setCommentText((prev) => prev + emoji.emoji);
   };
 
   const getCommets = async (post) => {
@@ -61,7 +67,7 @@ const Feed = ({ countryCode, flag, countryName, handleCountryChange }) => {
         }
       );
       setComments(response.data.data || []);
-      console.log(response.data.data);
+      // console.log(response.data.data);
     } catch (error) {
       console.error("Error fetching comments:", error);
     } finally {
@@ -399,19 +405,20 @@ const Feed = ({ countryCode, flag, countryName, handleCountryChange }) => {
     const postTime = new Date(timestamp);
     const seconds = Math.floor((now - postTime) / 1000);
 
-    if (seconds < 60) return "Just now";
+    if (seconds < 5) return `Now`;
+    if (seconds < 60) return `${seconds} sec ago`;
     const minutes = Math.floor(seconds / 60);
     if (minutes < 60) return `${minutes} min ago`;
     const hours = Math.floor(minutes / 60);
-    if (hours < 24) return `${hours} hour${hours > 1 ? "s" : ""} ago`;
+    if (hours < 24) return `${hours} hr ago`;
     const days = Math.floor(hours / 24);
-    if (days < 7) return `${days} day${days > 1 ? "s" : ""} ago`;
+    if (days < 7) return `${days} day ago`;
     const weeks = Math.floor(days / 7);
-    if (weeks < 4) return `${weeks} week${weeks > 1 ? "s" : ""} ago`;
+    if (weeks < 4) return `${weeks} week ago`;
     const months = Math.floor(days / 30);
-    if (months < 12) return `${months} month${months > 1 ? "s" : ""} ago`;
+    if (months < 12) return `${months} month ago`;
     const years = Math.floor(days / 365);
-    return `${years} year${years > 1 ? "s" : ""} ago`;
+    return `${years} year ago`;
   };
 
   const handleMessageChange = (event) => {
@@ -630,7 +637,6 @@ const Feed = ({ countryCode, flag, countryName, handleCountryChange }) => {
     const currentUser = {
       user_id: currentUserId,
       name: userData?.users?.username || "Unknown User",
-      is_like: 1, // Setting like as true
     };
 
     const alreadyLiked = post.likes?.liked_users?.some(
@@ -672,10 +678,9 @@ const Feed = ({ countryCode, flag, countryName, handleCountryChange }) => {
     );
 
     try {
-      // Minimal change here: toggle the like by checking if alreadyLiked
       const res = await axios.post(
         `https://${window.APP_DOMAIN}/admin/api/set_posts_like/${post.id}/like`,
-        { is_like: alreadyLiked ? false : true },
+        { is_like: true },
         { headers: { Authorization: `Bearer ${token}` } }
       );
 
@@ -690,7 +695,6 @@ const Feed = ({ countryCode, flag, countryName, handleCountryChange }) => {
       setLikeInProgress((prev) => ({ ...prev, [post.id]: false }));
     }
   };
-
   const revertLike = (post) => {
     setData((prevData) =>
       prevData?.posts?.length
@@ -713,7 +717,6 @@ const Feed = ({ countryCode, flag, countryName, handleCountryChange }) => {
         : prevData
     );
   };
-
   const handleDislikeClick = async (post) => {
     if (dislikeInProgress[post.id]) return;
 
@@ -801,108 +804,6 @@ const Feed = ({ countryCode, flag, countryName, handleCountryChange }) => {
     );
   };
 
-  const getPost = async () => {
-    // console.log("📌 Checking location before API call:", location.pathname);
-
-    const token = localStorage.getItem("api_token");
-    if (!token) {
-      console.warn("⚠️ No token found, user may not be logged in.");
-      return;
-    }
-
-    // Get userId from userData or localStorage (changed "user_Id" to "user_id")
-    const userId = userData?.users?.id || localStorage.getItem("user_id");
-    // console.log("👤 Current User ID:", userId);
-
-    // Determine countryParam using isWorld and isDashboard
-    const countryParam = isWorld ? "99" : isDashboard ? "" : countryCode || "";
-
-    // Construct API URL dynamically
-    let apiUrl = `https://${window.APP_DOMAIN}/admin/api/get_posts${
-      countryParam ? `/${countryParam}` : ""
-    }`;
-
-    // console.log("📌 Fetching posts from:", apiUrl);
-
-    try {
-      const res = await axios.get(apiUrl, {
-        headers: {
-          Authorization: `Bearer ${token}`,
-          Accept: "application/json",
-        },
-      });
-
-      // console.log("📌 API Response:", res.data);
-
-      if (
-        res.data?.status &&
-        Array.isArray(res.data.posts) &&
-        res.data.posts.length > 0
-      ) {
-        const formattedPosts = res.data.posts.map((post) => ({
-          ...post,
-          created_time: post.created_time || new Date().toISOString(),
-          timeAgo: getTimeAgo(post.created_time),
-          isLiked: post.likes?.liked_users?.some(
-            (user) => user.user_id === userId
-          ),
-        }));
-
-        setData({ posts: formattedPosts });
-
-        // Ensure selectedPost is valid, otherwise select the first post
-        if (
-          !selectedPost ||
-          !formattedPosts.some((p) => p.id === selectedPost.id)
-        ) {
-          setSelectedPost(formattedPosts[0]);
-          // console.log("✅ Selected Post ID:", formattedPosts[0].id);
-        }
-      } else {
-        console.warn("⚠️ No posts found for:", countryParam);
-        setSelectedPost(null); // Reset selected post if no posts are available
-      }
-    } catch (error) {
-      console.error("❌ Error fetching posts:", error);
-    }
-  };
-
-  const [likedUsers, setLikedUsers] = useState([]);
-  const [showLikedUsers, setShowLikedUsers] = useState(false);
-
-  useEffect(() => {
-    console.log("Selected Post ID:", selectedPost?.id);
-
-    if (!selectedPost?.id || !showLikedUsers) return;
-
-    const fetchLikedUsers = async () => {
-      try {
-        const token = localStorage.getItem("api_token");
-        if (!token) {
-          console.error("No token found");
-          return;
-        }
-
-        const response = await axios.get(
-          `https://${window.APP_DOMAIN}/admin/api/posts/${selectedPost.id}/liked-users`,
-          { headers: { Authorization: `Bearer ${token}` } }
-        );
-
-        console.log("Fetched Liked Users:", response.data.liked_users);
-
-        if (response.status === 200 && response.data?.liked_users) {
-          setLikedUsers(response.data.liked_users);
-        } else {
-          console.error("Failed to fetch liked users");
-        }
-      } catch (error) {
-        console.error("Error fetching liked users:", error);
-      }
-    };
-
-    fetchLikedUsers();
-  }, [showLikedUsers, selectedPost]);
-
   // const getPost = async () => {
   //   const token = localStorage.getItem("api_token");
 
@@ -929,8 +830,53 @@ const Feed = ({ countryCode, flag, countryName, handleCountryChange }) => {
   // };
 
   // Fetch posts function
-  const isWorld = location.pathname === "/world"; // Determines if we're in the "world" section
-  const isDashboard = location.pathname === "/dashboard"; // Determines if we're in the "dashboard" section
+  const getPost = async () => {
+    const token = localStorage.getItem("api_token");
+    if (!token) {
+      console.log("No token found, user may not be logged in.");
+      return;
+    }
+
+    const countryParam = isWorld
+      ? "99"
+      : isDashboard
+      ? localStorage.getItem("user_country") || Code
+      : urlCountryCode || Code || "defaultCode"; // Ensures countryParam is always set
+
+    try {
+      const res = await axios.get(
+        `https://${window.APP_DOMAIN}/admin/api/get_posts/${countryParam}`,
+        {
+          headers: { Authorization: `Bearer ${token}` },
+        }
+      );
+
+      if (res.data?.status && Array.isArray(res.data.posts)) {
+        const formattedPosts = res.data.posts.map((post) => {
+          const isLiked = post.likes?.liked_users?.some(
+            (user) => user.user_id === currentUserId
+          );
+          return {
+            ...post,
+            created_time: post.created_time || new Date().toISOString(),
+            timeAgo: getTimeAgo(post.created_time),
+            isLiked,
+          };
+        });
+
+        setData({ posts: formattedPosts });
+
+        // Select first post as default (only if available)
+        if (formattedPosts.length > 0) {
+          setSelectedPost(formattedPosts[0]);
+        }
+      } else {
+        console.log("Invalid API response structure:", res.data);
+      }
+    } catch (error) {
+      console.error("Error fetching posts:", error);
+    }
+  };
   useEffect(() => {
     // Cleanup the preview URL to avoid memory leaks
     return () => {
@@ -969,6 +915,44 @@ const Feed = ({ countryCode, flag, countryName, handleCountryChange }) => {
       window.removeEventListener("resize", updateNavbarHeight);
     };
   }, [countryCode]);
+
+  // view the who is like the post
+  const [likedUsers, setLikedUsers] = useState([]);
+  const [showLikedUsers, setShowLikedUsers] = useState(false);
+
+  useEffect(() => {
+    // console.log("Selected Post ID:", selectedPost?.id);
+
+    if (!selectedPost?.id || !showLikedUsers) return;
+
+    const fetchLikedUsers = async () => {
+      try {
+        const token = localStorage.getItem("api_token");
+        if (!token) {
+          console.error("No token found");
+          return;
+        }
+
+        const response = await axios.get(
+          `https://${window.APP_DOMAIN}/admin/api/posts/${selectedPost.id}/liked-users`,
+          { headers: { Authorization: `Bearer ${token}` } }
+        );
+
+        console.log("Fetched Liked Users:", response.data.liked_users);
+
+        if (response.status === 200 && response.data?.liked_users) {
+          setLikedUsers(response.data.liked_users);
+        } else {
+          console.error("Failed to fetch liked users");
+        }
+      } catch (error) {
+        console.error("Error fetching liked users:", error);
+      }
+    };
+
+    fetchLikedUsers();
+  }, [showLikedUsers, selectedPost]); // Depend on selectedPost
+
   return (
     <div
       className="col-12 col-md-6 offset-md-3 p-1"
@@ -982,7 +966,8 @@ const Feed = ({ countryCode, flag, countryName, handleCountryChange }) => {
         <div className="card p-1 mb-1">
           <div className="d-flex align-items-center">
             <img
-              src={userData.profile_image_url}
+              // src={userData.profile_image_url}
+              src={userData?.profile_image_url || "default-profile.png"}
               alt="Profile"
               className="rounded-circle me-2"
               style={{ width: "40px", height: "40px" }}
@@ -1131,7 +1116,6 @@ const Feed = ({ countryCode, flag, countryName, handleCountryChange }) => {
                         type="button"
                         className="btn btn-primary w-100"
                         onClick={handleSubmit}
-                        disabled={isDisabled}
                       >
                         Post
                       </button>
@@ -1396,9 +1380,16 @@ const Feed = ({ countryCode, flag, countryName, handleCountryChange }) => {
                               const isUserComment =
                                 Number(comment.comment_user_id) ===
                                 Number(userId);
-                              // console.log("Comment User ID:", comment.comment_user_id);
-                              // console.log("User ID:", userId);
-                              //  console.log("Comparison Result:", Number(comment.comment_user_id) === Number(userId));
+                              console.log(
+                                "Comment User ID:",
+                                comment.comment_user_id
+                              );
+                              console.log("User ID:", userId);
+                              console.log(
+                                "Comparison Result:",
+                                Number(comment.comment_user_id) ===
+                                  Number(userId)
+                              );
 
                               return (
                                 <div
@@ -1613,7 +1604,6 @@ const Feed = ({ countryCode, flag, countryName, handleCountryChange }) => {
                               borderRadius: "5px",
                               border: "1px solid #ccc",
                               resize: "none",
-                              fontFamily: `"Noto Color Emoji", sans-serif`,
                             }}
                             rows="2"
                             placeholder="Write a comment..."
@@ -1930,6 +1920,7 @@ const Feed = ({ countryCode, flag, countryName, handleCountryChange }) => {
                         />
                         Dislike
                       </button>
+
                       <button
                         className="btn btn-light btn-sm me-2"
                         onClick={() => openCommentPopup(post)}

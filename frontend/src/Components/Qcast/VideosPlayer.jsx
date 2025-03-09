@@ -58,6 +58,9 @@ const VideosPlayer = () => {
   const [editingComment, setEditingComment] = useState(null);
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
   const [isLoaded, setIsLoaded] = useState(false);
+  const [allVideos, setAllVideos] = useState([]);
+  const [searchQuery, setSearchQuery] = useState("");
+
 
   const toggleSidebar = () => {
     setIsSidebarCollapsed(!isSidebarCollapsed);
@@ -199,7 +202,7 @@ const VideosPlayer = () => {
           // ✅ Check if user is subscribed
           setIsSubscribed(
             fetchedVideo.subscribers_user_id?.some(
-              (user) => user.subscriber_id === userData.users.id
+              (user) => user === userData.users.id
             ) || false
           );
         }
@@ -358,41 +361,109 @@ const VideosPlayer = () => {
     fetchComments();
   }, [video]);
 
-  useEffect(() => {
-    const fetchVideos = async () => {
-      if (!passedVideo) return; // Ensure passedVideo is available
+  // useEffect(() => {
+  //   const fetchVideos = async () => {
+  //     if (!passedVideo) return; // Ensure passedVideo is available
 
-      try {
-        const token = localStorage.getItem("api_token");
-        if (!token) {
-          console.error("❌ Authorization token missing. Please log in.");
-          return;
-        }
+  //     try {
+  //       const token = localStorage.getItem("api_token");
+  //       if (!token) {
+  //         console.error("❌ Authorization token missing. Please log in.");
+  //         return;
+  //       }
 
-        const response = await axios.get(
-          `https://${window.APP_DOMAIN}/admin/api/videos/qlist`,
-          { headers: { Authorization: `Bearer ${token}` } }
-        );
+  //       const response = await axios.get(
+  //         `https://${window.APP_DOMAIN}/admin/api/videos/qlist`,
+  //         { headers: { Authorization: `Bearer ${token}` } }
+  //       );
 
-        const allVideos = response.data.data;
+  //       const allVideos = response.data.data;
 
-        // ✅ Always use `passedVideo.category_name` to filter recommendations
-        const relatedVideos = allVideos.filter(
+  //       // ✅ Always use `passedVideo.category_name` to filter recommendations
+  //       const relatedVideos = allVideos.filter(
+  //         (v) =>
+  //           v.category_name === passedVideo.category_name &&
+  //           v.video_id !== passedVideo.video_id
+  //       );
+
+  //       setRecommendedVideos(relatedVideos);
+  //     } catch (error) {
+  //       console.error("Error fetching recommended videos:", error);
+  //     }
+  //   };
+
+  //   fetchVideos();
+  // }, [passedVideo]); // ✅ Fetch recommendations based on passedVideo
+
+  // ✅ Fix: Ensure video updates when clicking a recommended video
+ 
+  const fetchVideos = async () => {
+    if (!passedVideo) return;
+
+    try {
+      const token = localStorage.getItem("api_token");
+      if (!token) {
+        console.error("❌ Authorization token missing. Please log in.");
+        return;
+      }
+
+      const response = await axios.get(
+        `https://${window.APP_DOMAIN}/admin/api/videos/qlist`,
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+
+      const videos = response.data.data;
+      setAllVideos(videos); // Store all videos
+
+      // Filter recommended videos
+      const relatedVideos = videos.filter(
+        (v) =>
+          v.category_name === passedVideo.category_name &&
+          v.video_id !== passedVideo.video_id
+      );
+
+      setRecommendedVideos(relatedVideos);
+    } catch (error) {
+      console.error("Error fetching recommended videos:", error);
+    }
+  };
+
+  // Call fetchVideos when the component initializes
+  if (allVideos.length === 0) {
+    fetchVideos();
+  }
+
+  // Filter videos when search text changes
+  const handleSearch = (e) => {
+    setSearchQuery(e.target.value);
+
+    if (e.target.value.trim() === "") {
+      // If search is cleared, reset to recommended videos
+      setRecommendedVideos(
+        allVideos.filter(
           (v) =>
             v.category_name === passedVideo.category_name &&
             v.video_id !== passedVideo.video_id
-        );
+        )
+      );
+    }
+  };
 
-        setRecommendedVideos(relatedVideos);
-      } catch (error) {
-        console.error("Error fetching recommended videos:", error);
-      }
-    };
+  const handleKeyPress = (e) => {
+    if (e.key === "Enter") {
+      // Filter videos based on search query
+      const filteredVideos = allVideos.filter(
+        (v) =>
+          v.category_name === passedVideo.category_name &&
+          v.video_id !== passedVideo.video_id &&
+          v.title.toLowerCase().includes(searchQuery.toLowerCase())
+      );
+      setRecommendedVideos(filteredVideos);
+    }
+  };
 
-    fetchVideos();
-  }, [passedVideo]); // ✅ Fetch recommendations based on passedVideo
 
-  // ✅ Fix: Ensure video updates when clicking a recommended video
+
   const handleVideoClick = (recVideo) => {
     setVideo(null); // ✅ Clear current video before navigating
     navigate(`/videos/${recVideo.video_id}`, { state: { video: recVideo } });
@@ -729,7 +800,7 @@ const VideosPlayer = () => {
                     }}
                     onClick={toggleComments}
                   >
-                     <div
+                    <div
                       style={{
                         fontSize: "18px",
                         fontWeight: "bold",
@@ -961,12 +1032,25 @@ const VideosPlayer = () => {
                     className="form-control"
                     placeholder="Search..."
                     autoFocus
+                    value={searchQuery}
+                    onChange={handleSearch}
+                    onKeyDown={handleKeyPress}
                     style={{ fontSize: "12px", padding: "2px 8px" }} // Adjust font size and padding
                   />
                   <i
                     className="fa-solid fa-xmark position-absolute end-0 top-50 translate-middle-y me-2"
                     style={{ cursor: "pointer", color: "#333" }}
-                    onClick={() => setIsSearching(false)}
+                    onClick={() => {
+                      setIsSearching(false);
+                      setSearchQuery("");
+                      setRecommendedVideos(
+                        allVideos.filter(
+                          (v) =>
+                            v.category_name === passedVideo.category_name &&
+                            v.video_id !== passedVideo.video_id
+                        )
+                      );
+                    }}
                   ></i>
                 </div>
               ) : (

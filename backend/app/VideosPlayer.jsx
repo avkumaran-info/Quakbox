@@ -450,10 +450,7 @@ if (Hls.isSupported()) {
     const now = new Date();
     const seconds = Math.floor((now - date) / 1000);
 
-    if (isNaN(date.getTime())) return "Invalid date"; // Handle invalid date input
-    if (seconds < 0) return "just now"; // Future dates
-
-    if (seconds < 60) return "now";
+    if (seconds < 60) return "now"; // Less than 1 minute
     const minutes = Math.floor(seconds / 60);
     if (minutes < 60) return `${minutes} min ago`;
     const hours = Math.floor(minutes / 60);
@@ -462,11 +459,12 @@ if (Hls.isSupported()) {
     if (days < 7) return `${days} day${days > 1 ? "s" : ""} ago`;
     const weeks = Math.floor(days / 7);
     if (weeks < 4) return `${weeks} week${weeks > 1 ? "s" : ""} ago`;
-    const months = now.getMonth() - date.getMonth() + (now.getFullYear() - date.getFullYear()) * 12;
+    const months = Math.floor(days / 30);
     if (months < 12) return `${months} month${months > 1 ? "s" : ""} ago`;
-    const years = Math.floor(days / 365.25); // Handle leap years
+    const years = Math.floor(days / 365);
     return `${years} year${years > 1 ? "s" : ""} ago`;
-};
+  };
+
   // // Ensure video exists before running useEffect
   // useEffect(() => {
   //   console.log("hiii");

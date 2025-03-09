@@ -112,25 +112,11 @@ const NavBar = () => {
     .sort((a, b) => a.country_name.localeCompare(b.country_name)); // Sort A-Z
 
   // Shuffle flags for random display
-  // Shuffle function
-
-  const shuffleArray = (array) => {
-    return [...array].sort(() => Math.random() - 0.5);
-  };
-
-  // Shuffle on initial render and when countries change
-
   useEffect(() => {
     if (countries.length > 0) {
-      setShuffledCountries(shuffleArray(countries)); // Shuffle the array
+      setShuffledCountries([...countries].sort(() => Math.random() - 0.5)); // Shuffle the array
     }
   }, [countries]);
-
-  // Function to handle flag click
-  const handleFlagClick = (country) => {
-    navigate(`/country/${country.code}`);
-    setShuffledCountries(shuffleArray(countries)); // Reshuffle flags on click
-  };
 
   return (
     <div>
@@ -208,7 +194,11 @@ const NavBar = () => {
                       alignItems: "center",
                       cursor: "pointer",
                     }}
-                    onClick={() => handleFlagClick(country)}
+                    onClick={(e) => {
+                      e.preventDefault();
+                      navigate(`/country/${country.code}`);
+                      setShowAllFlags(false);
+                    }}
                   >
                     <img
                       src={
@@ -313,7 +303,6 @@ const NavBar = () => {
                           e.preventDefault();
                           navigate(`/country/${country.code}`);
                           setShowAllFlags(false);
-                          setShuffledCountries(shuffleArray(countries));
                         }}
                       >
                         <img
@@ -660,10 +649,19 @@ const NavBar = () => {
                               console.log(fav);
                             }}
                           >
+                         
+                            {console.log(
+                              flagsData.find(
+                                (item) => item.code === matchedCountry.code
+                              )?.flag
+                            )}
                             <img
                               src={
                                 matchedCountry.code
-                                  ? `/assets/flags/${matchedCountry.code}.png`
+                                  ? flagsData.find(
+                                      (item) =>
+                                        item.code === matchedCountry.code
+                                    )?.flag
                                   : "default-flag.png"
                               }
                               alt={matchedCountry.country_name}
@@ -674,6 +672,7 @@ const NavBar = () => {
                                 objectFit: "cover",
                               }}
                             />
+
                             <span
                               style={{
                                 fontSize: "0.6rem",
@@ -722,7 +721,8 @@ const NavBar = () => {
                   onClick={() => setShowDropdown((prev) => !prev)}
                 >
                   <img
-                    src={userData.profile_image_url}
+                    // src={userData.profile_image_url}
+                    src={userData?.profile_image_url || "default-profile.png"}
                     alt="User"
                     style={{
                       width: "100%",
